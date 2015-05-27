@@ -1,0 +1,14 @@
+Im Dateimenü befinden sich folgende Funktionalitäten:
+	Kartenpfad ändern
+		Falls eine Karte einer anderen Stadt oder eine aktuellere Karte in den Routenplaner eingelesen werden soll, kann in diesem Menüpunkt der Pfad der .tsk Datei angegeben werden um diese zu importieren. 
+	Karte exportieren
+		Der aktuell auf dem Bildschirm angezeigte Ausschnitt der Karte kann als Bilddatei exportiert werden.
+	Beenden
+		Beendet den Routenplaner
+Durch einen Klick auf die Karte wird ein Routenpunkt in die Punktliste eingefügt. Die Position des Punktes kann so lange korrigiert werden bis die Eingabe mit einem Klick auf den + Button bestätigt wird oder die Entertaste gedrückt wird. 
+Routenpunkte lassen sich außerdem per Texteingabe hinzufügen. Dazu muss in das Textfeld geklickt werden.
+Punkte lassen sich bearbeiten wenn diese in der Punktliste durch einen Klick auf den entsprechenden Straßennamen bzw. auf die zugehörige Nummer in der Karte ausgewählt werden. 
+Klickt man in die Karte und hält die Maustaste wird die Karte verschoben. Betätigt man das Mausrad wird die Zoomstufe geändert. 
+Die Routenberechnung wird durch einen Klick auf den Start-Button gestartet.
+Die Routenberechnung wird durch einen Klick auf den Routenberechnung abbrechen- Button angebrochen
+Die Punktliste wird durch einen Klick auf den Reset-Button geleert. 
