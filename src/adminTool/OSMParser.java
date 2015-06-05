@@ -32,9 +32,6 @@ import crosby.binary.file.BlockReaderAdapter;
 
 public class OSMParser implements IOSMParser {
 
-    // private HashMap<Long, UnprocessedStreet> streetMap;
-    // private HashMap<Long, Building> buildingMap;
-
     private final Collection<model.elements.Way> wayList;
     private final Collection<UnprocessedStreet> streetList;
     private final Collection<Area> areaList;
@@ -49,9 +46,6 @@ public class OSMParser implements IOSMParser {
         poiList = new HashSet<POI>();
         buildingList = new HashSet<Building>();
         bBox = new Rectangle();
-
-        // buildingMap = new HashMap<Long, Building>();
-        // streetMap = new HashMap<Long, UnprocessedStreet>();
     }
 
     @Override
@@ -260,7 +254,9 @@ public class OSMParser implements IOSMParser {
                             tunnel = true;
                             break;
                         case "area":
-                            area = true;
+                            if (value.equals("yes")) {
+                                area = true;
+                            }
                             break;
                         case "barrier":
                             wayTag = value;
@@ -474,81 +470,10 @@ public class OSMParser implements IOSMParser {
                     }
                 }
             }
-            // else if (relationType.equals("associatedStreet") ||
-            // relationType.equals("street")) {
-            // String name = "";
-            // for (int i = 0; i < relation.getKeysCount(); i++) {
-            // final String key = getStringById(relation.getKeys(i));
-            // final String value = getStringById(relation.getVals(i));
-            // if (key.equals("name")) {
-            // name = value;
-            // break;
-            // }
-            // }
-            // if (!name.isEmpty()) {
-            // long id = 0;
-            // for (int j = 0; j < relation.getRolesSidCount(); j++) {
-            // final String role = getStringById(relation.getRolesSid(j));
-            // id += relation.getMemids(j);
-            // if (role.equals("street")) {
-            // final UnprocessedStreet street = streetMap.get(id);
-            // if (street != null) {
-            // streetList.add(new UnprocessedStreet(street.getNodes(),
-            // street.getType(), name));
-            // streetMap.remove(id);
-            // }
-            // } else if (role.equals("house") || role.equals("address")) {
-            // final Building building = buildingMap.get(id);
-            // if (building != null) {
-            // buildingMap.remove(id);
-            // buildingList.add(new Building(building.getNodes(), name +
-            // building.getAddress(),
-            // null));
-            // }
-            // }
-            // }
-            // }
-            // } else if (relationType.equals("route")) {
-            // String type = "";
-            // String name = "";
-            // for (int i = 0; i < relation.getKeysCount(); i++) {
-            // final String key = getStringById(relation.getKeys(i));
-            // final String value = getStringById(relation.getVals(i));
-            //
-            // if (key.equals("route")) {
-            // type = value;
-            // } else if (key.equals("name")) {
-            // name = value;
-            // }
-            // }
-            // if (type.equals("hiking") || type.equals("foot") ||
-            // type.equals("bicycle") || type.equals("mtb")
-            // || type.equals("fitness_trail") || type.equals("inline_skates")
-            // || type.equals("road")) {
-            //
-            // if (name.length() <= 30 && name.matches("[ 'öÖäÄüÜßa-zA-Z]+")) {
-            // long id = 0;
-            //
-            // for (int j = 0; j < relation.getRolesSidCount(); j++) {
-            // id += relation.getMemids(j);
-            // final UnprocessedStreet street = streetMap.get(id);
-            // if (street != null) {
-            // streetList.add(new UnprocessedStreet(street.getNodes(),
-            // street.getType(), name));
-            // streetMap.remove(id);
-            // }
-            // }
-            // }
-            // }
-            // }
-            // }
         }
 
         @Override
         public void complete() {
-            // streetList.addAll(streetMap.values());
-            // buildingList.addAll(buildingMap.values());
-
             for (final Node node : nodeMap.values()) {
                 final double lat = parseLat(node.getY());
                 final double lon = parseLon(node.getX());
@@ -567,8 +492,6 @@ public class OSMParser implements IOSMParser {
             }
 
             nodeMap = null;
-            // streetMap = null;
-            // buildingMap = null;
             areaMap = null;
             wayMap = null;
         }
@@ -600,36 +523,27 @@ public class OSMParser implements IOSMParser {
 
     private int getWayType(final String value) {
 
-        // Fluesse (keine multipolygone)
         if (value.equals("river")) {
             return 1;
         }
-
         if (value.equals("stream") || value.equals("canal")) {
             return 2;
         }
-
-        // Bahnlinien
         if (value.equals("rail")) {
             return 3;
         }
-
         if (value.equals("tram") || value.equals("light_rail")) {
             return 4;
         }
-
-        // nicht befahrbare Straßen
         if (value.equals("primary")) {
             return 5;
         }
-
         if (value.equals("motorway")) {
             return 6;
         }
         if (value.equals("trunk")) {
             return 7;
         }
-
         if (value.equals("primary_link")) {
             return 8;
         }

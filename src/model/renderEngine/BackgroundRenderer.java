@@ -417,10 +417,8 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             g.addRenderingHints(map);
         }
 
-        if (drawAreas(tile, g) && drawWays(tile, g) && drawBuildings(tile, g)) {// &&
-                                                                                // drawStreetNames(tile,
-                                                                                // g))
-                                                                                // {
+        if (drawAreas(tile, g) && drawWays(tile, g) && drawBuildings(tile, g)) {
+            // && drawStreetNames(tile, g)) {
 
             g.dispose();
             fireChange();

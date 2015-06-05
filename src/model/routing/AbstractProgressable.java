@@ -6,7 +6,7 @@ import java.util.List;
 public abstract class AbstractProgressable implements Progressable {
 
     private final List<IProgressListener> listeners;
-    private int progress;
+    private double progress;
 
     public AbstractProgressable() {
         listeners = new ArrayList<IProgressListener>();
@@ -23,7 +23,7 @@ public abstract class AbstractProgressable implements Progressable {
         listeners.remove(listener);
     }
 
-    protected void fireProgressDone(final int progress) {
+    protected void fireProgressDone(final double progress) {
         if (progress < 0) {
             this.progress = 0;
         } else if (this.progress + progress < 100) {
@@ -33,7 +33,7 @@ public abstract class AbstractProgressable implements Progressable {
         }
 
         for (final IProgressListener l : listeners) {
-            l.progressDone(this.progress);
+            l.progressDone((int) this.progress);
         }
     }
 

@@ -93,6 +93,8 @@ public class POIRenderer extends AbstractModel implements IRenderer {
             return false;
         }
 
+        boolean ret = false;
+
         final Point location = tile.getLocation();
         final int zoom = tile.getZoomStep();
 
@@ -102,6 +104,7 @@ public class POIRenderer extends AbstractModel implements IRenderer {
             }
 
             if (zoom >= poiMinZoomStep[poi.getType()] + minZoomstepOffset) {
+                ret = true;
                 g.drawImage(poiImage[poi.getType()], converter.getPixelDistance(poi.getX() - location.x, zoom)
                         - imageSize.width / 2, converter.getPixelDistance(poi.getY() - location.y, zoom)
                         - imageSize.height / 2, null);
@@ -109,7 +112,7 @@ public class POIRenderer extends AbstractModel implements IRenderer {
 
         }
 
-        return true;
+        return ret;
     }
 
     @Override

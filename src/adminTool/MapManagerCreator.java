@@ -32,7 +32,7 @@ import model.elements.StreetNode;
 import model.elements.Way;
 import model.map.PixelConverter;
 
-public class MapManagerCreator extends AbstractTSKCreator {
+public class MapManagerCreator extends AbstractMapCreator {
 
     private static final int MAX_ZOOM_STEPS = 11;
 

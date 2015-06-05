@@ -49,9 +49,9 @@ public class Area extends MultiElement {
     }
 
     private void calculatePolygon() {
-        // if (polygon == null) {
-        polygon = calculatePolygon(getNodes());
-        // }
+        if (polygon == null) {
+            polygon = calculatePolygon(getNodes());
+        }
     }
 
     public int getType() {

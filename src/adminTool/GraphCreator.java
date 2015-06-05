@@ -14,7 +14,7 @@ import java.util.List;
 import model.elements.Node;
 import model.elements.Street;
 
-public class GraphCreator extends AbstractTSKCreator {
+public class GraphCreator extends AbstractMapCreator {
 
     private final File file;
     private DataOutputStream stream;

@@ -36,6 +36,7 @@ public class LRUCache implements ICache {
         unsynchronizedLRUMap.setCapacity(capacity);
     }
 
+    @Override
     public int getSize() {
         return unsynchronizedLRUMap.capacity;
     }

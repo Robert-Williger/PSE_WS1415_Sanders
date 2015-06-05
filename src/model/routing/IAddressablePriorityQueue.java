@@ -8,6 +8,8 @@ public interface IAddressablePriorityQueue<T> {
 
     void addAll(List<T> elements);
 
+    boolean isEmpty();
+
     int size();
 
     void insert(T element, int key);

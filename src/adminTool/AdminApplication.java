@@ -28,7 +28,7 @@ public class AdminApplication {
                 outFileName = outFileName.substring(0, outFileName.length() - 4);
             }
 
-            outFileName = outFileName.concat(".tsk");
+            outFileName = outFileName.concat(".map");
 
             outputPath = new File(outputPath.toString() + "/" + outFileName);
         }

@@ -128,13 +128,13 @@ public class ApplicationController extends AbstractController<IApplicationView> 
 
         importer.setAcceptAllFileFilterUsed(false);
         importer.setDialogTitle("Kartendatei auswählen");
-        importer.setFileFilter(new FileNameExtensionFilter("TSK (*.tsk)", "tsk"));
+        importer.setFileFilter(new FileNameExtensionFilter("MAP (*.map)", "map"));
 
         exporter.setAcceptAllFileFilterUsed(false);
         exporter.setDialogTitle("Speichern unter");
         exporter.setFileFilter(new FileNameExtensionFilter("PNG (*.png)", "png"));
 
-        final File file = new File("default.tsk");
+        final File file = new File("default.map");
         if (file.exists()) {
             importMap(file);
         }

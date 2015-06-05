@@ -7,13 +7,13 @@ import model.map.IPixelConverter;
 
 public class DefaultOSMColorPattern implements IColorPattern {
 
-    private int[] streetType;
-    private int[] wayMinZoomstep;
-    private WayStyle[] wayStyles;
-    private int[] wayType;
-    private ShapeStyle[] areaStyles;
-    private int[] areaType;
-    private ShapeStyle[] buildingStyles;
+    private final int[] streetType;
+    private final int[] wayMinZoomstep;
+    private final WayStyle[] wayStyles;
+    private final int[] wayType;
+    private final ShapeStyle[] areaStyles;
+    private final int[] areaType;
+    private final ShapeStyle[] buildingStyles;
 
     public DefaultOSMColorPattern() {
         final int streets = 14;
@@ -321,25 +321,25 @@ public class DefaultOSMColorPattern implements IColorPattern {
     }
 
     @Override
-    public WayStyle getWayStyle(int type) {
+    public WayStyle getWayStyle(final int type) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public ShapeStyle getAreaStyle(int type) {
+    public ShapeStyle getAreaStyle(final int type) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public ShapeStyle getBuildingStyle(int type) {
+    public ShapeStyle getBuildingStyle(final int type) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void setConverter(IPixelConverter converter) {
+    public void setConverter(final IPixelConverter converter) {
         // TODO Auto-generated method stub
 
     }

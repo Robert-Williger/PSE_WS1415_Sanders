@@ -15,7 +15,7 @@ import javax.swing.filechooser.FileView;
 public class FileChooserView extends JFileChooser {
     private static final long serialVersionUID = 1L;
     private final Image icon;
-    private static ImageIcon tskIcon;
+    private static ImageIcon mapIcon;
 
     public FileChooserView(final String currentDirectoryPath, final Image icon) {
         super(currentDirectoryPath);
@@ -23,10 +23,15 @@ public class FileChooserView extends JFileChooser {
         setFileView(new FileView() {
             @Override
             public Icon getIcon(final File f) {
-                if (!f.getName().endsWith(".tsk")) {
-                    return FileSystemView.getFileSystemView().getSystemIcon(f);
-                }
-                return tskIcon;
+
+                return !f.getName().endsWith(".map") ? FileSystemView.getFileSystemView().getSystemIcon(f) : mapIcon;
+
+            }
+
+            @Override
+            public String getName(final File f) {
+                final String name = f.getName();
+                return !name.endsWith(".map") ? name : name.substring(0, name.length() - 4);
             }
         });
     }
@@ -51,6 +56,6 @@ public class FileChooserView extends JFileChooser {
     }
 
     static {
-        tskIcon = new ImageIcon(FileChooserView.class.getResource("tsk.png"));
+        mapIcon = new ImageIcon(FileChooserView.class.getResource("map.png"));
     }
 }

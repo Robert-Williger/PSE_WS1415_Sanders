@@ -5,16 +5,15 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
+public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolver {
     private final IGraph graph;
     private final int[] distance;
     private final int[] parent;
     private IAddressablePriorityQueue<Integer> queue;
-    private int[] endNodes;
-    private int achievedNodes;
-    private int state;
+    private boolean canceled;
+    private InterNode start;
 
-    public Dijkstra(final IGraph graph) {
+    public ReusableDijkstra(final IGraph graph) {
         this.graph = graph;
         final int nodes = graph.getNodes();
         distance = new int[nodes];
@@ -27,83 +26,74 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
 
     @Override
     public void cancelCalculation() {
-        state = 2;
+        this.start = null;
+        canceled = true;
     }
 
     @Override
     public Path calculateShortestPath(final InterNode start, final InterNode end) {
         initializeDijkstra(start, end);
-        executeDijkstra();
-        fireReadyEvent();
+        execute();
 
-        return state == 1 ? createPath(start, end) : state == 2 ? null : fireNoRouteError();
+        return !canceled ? createPath(start, end) : null;
     }
 
     private void initializeDijkstra(final InterNode start, final InterNode end) {
-        queue = createQueue();
-        endNodes = new int[2];
-        // 0 working, 1 ready, 2 cancel/error
-        state = 0;
-        achievedNodes = 0;
+        if (!start.equals(this.start)) {
+            this.start = start;
 
-        for (int i = 0; i < graph.getNodes(); i++) {
-            distance[i] = Integer.MAX_VALUE;
-            parent[i] = -1;
+            queue = createQueue();
+
+            canceled = false;
+
+            for (int i = 0; i < graph.getNodes(); i++) {
+                distance[i] = Integer.MAX_VALUE;
+                parent[i] = -1;
+            }
+
+            final int[] startNodes = {graph.getFirstNode(start.getEdge()), graph.getSecondNode(start.getEdge())};
+            final int weight = graph.getWeight(start.getEdge());
+            final float offset = start.getOffset();
+
+            distance[startNodes[0]] = (int) (weight * offset);
+            distance[startNodes[1]] = (int) (weight * (1 - offset));
+
+            for (int i = 0; i < 2; i++) {
+                parent[startNodes[i]] = startNodes[i];
+            }
+
+            queue.insert(startNodes[0], (int) (weight * offset));
+            queue.insert(startNodes[1], (int) (weight * (1 - offset)));
         }
-
-        final int[] startNodes = {graph.getFirstNode(start.getEdge()), graph.getSecondNode(start.getEdge())};
-        final int weight = graph.getWeight(start.getEdge());
-        final float offset = start.getOffset();
-
-        endNodes[0] = graph.getFirstNode(end.getEdge());
-        endNodes[1] = graph.getSecondNode(end.getEdge());
-
-        distance[startNodes[0]] = (int) (weight * offset);
-        distance[startNodes[1]] = (int) (weight * (1 - offset));
-
-        for (int i = 0; i < 2; i++) {
-            parent[startNodes[i]] = startNodes[i];
-        }
-
-        queue.insert(startNodes[0], (int) (weight * offset));
-        queue.insert(startNodes[1], (int) (weight * (1 - offset)));
     }
 
-    private void executeDijkstra() {
-        while (state == 0 && queue.size() != 0) {
-            final int u = queue.deleteMin();
+    private void execute() {
 
-            if (u == endNodes[0] || u == endNodes[1]) {
-                if (++achievedNodes >= 2) {
-                    state = 1;
-                }
-            }
+        while (!canceled && !queue.isEmpty()) {
+            final int u = queue.deleteMin();
 
             scan(u);
         }
 
     }
 
-    private void scan(final int u) {
-        if (state == 0) {
-            final Iterator<Integer> it = graph.getAdjacentNode(u);
-            while (it.hasNext()) {
-                relax(u, it.next());
-            }
+    private final void scan(final int u) {
+        final Iterator<Integer> it = graph.getAdjacentNode(u);
+        while (it.hasNext()) {
+            relax(u, it.next());
         }
-
     }
 
-    private void relax(final int firstNode, final int secondNode) {
+    private final void relax(final int firstNode, final int secondNode) {
         final int totalDistance = distance[firstNode] + graph.getWeight(graph.getEdge(firstNode, secondNode));
         if (totalDistance < distance[secondNode]) {
             distance[secondNode] = totalDistance;
             parent[secondNode] = firstNode;
 
-            if (queue.contains(secondNode)) {
-                queue.changeKey(secondNode, totalDistance);
-            } else {
+            if (!queue.contains(secondNode)) {
                 queue.insert(secondNode, totalDistance);
+            } else {
+                queue.changeKey(secondNode, totalDistance);
             }
         }
     }
@@ -111,7 +101,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     private List<Integer> createListOfPoints(final int endNode) {
         final List<Integer> ret = new ArrayList<Integer>();
 
-        int node = endNodes[endNode];
+        int node = endNode;
         ret.add(node);
 
         while (parent[node] != node) {
@@ -134,8 +124,15 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     private Path createPath(final InterNode start, final InterNode end) {
         final int[] weights = {0, 0};
 
+        final int[] endNodes = {graph.getFirstNode(end.getEdge()), graph.getSecondNode(end.getEdge())};
+
         weights[0] = distance[endNodes[0]];
         weights[1] = distance[endNodes[1]];
+
+        if (weights[0] == Integer.MAX_VALUE && weights[1] == Integer.MAX_VALUE) {
+            fireNoRouteError();
+            return null;
+        }
 
         if (endNodes[0] < endNodes[1]) {
             weights[0] += graph.getWeight(end.getEdge()) * end.getOffset();
@@ -150,11 +147,13 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
         List<Long> edges;
         if (weights[0] < weights[1]) {
             weight = weights[0];
-            edges = createListOfEdges(createListOfPoints(0));
+            edges = createListOfEdges(createListOfPoints(endNodes[0]));
         } else {
             weight = weights[1];
-            edges = createListOfEdges(createListOfPoints(1));
+            edges = createListOfEdges(createListOfPoints(endNodes[1]));
         }
+
+        fireReadyEvent();
 
         if (start.getEdge() == end.getEdge()) {
             final int temp = (int) (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
@@ -165,9 +164,8 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
         return new Path(weight, edges, start, end);
     }
 
-    private Path fireNoRouteError() {
+    private void fireNoRouteError() {
         fireErrorOccured("Es existiert keine Verbindung zwischen den angegebenen Punkten.");
-        return null;
     }
 
     private void fireReadyEvent() {

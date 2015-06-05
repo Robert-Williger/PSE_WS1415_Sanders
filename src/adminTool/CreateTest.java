@@ -16,7 +16,7 @@ public class CreateTest {
         } catch (final Exception e) {
             e.printStackTrace();
         }
-        final File output = new File("default.tsk");
+        final File output = new File("default.map");
 
         System.out.println(System.currentTimeMillis() - start);
         start = System.currentTimeMillis();

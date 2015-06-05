@@ -1,6 +1,6 @@
 package adminTool;
 
-public abstract class AbstractTSKCreator {
+public abstract class AbstractMapCreator {
 
     public abstract void create();
 

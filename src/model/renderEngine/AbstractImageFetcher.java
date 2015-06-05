@@ -16,7 +16,7 @@ public abstract class AbstractImageFetcher implements IImageFetcher {
 
     private IMapManager mapManager;
     private final IRenderer renderer;
-    private final ICache cache;
+    protected final LRUCache cache;
     private final RenderPool threadPool;
     private final ConcurrentLinkedQueue<Image> freeList;
 

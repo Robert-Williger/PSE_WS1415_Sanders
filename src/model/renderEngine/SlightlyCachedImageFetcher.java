@@ -4,14 +4,13 @@ import model.map.IMapManager;
 
 public class SlightlyCachedImageFetcher extends AbstractImageFetcher {
 
-    public SlightlyCachedImageFetcher(IRenderer renderer, IMapManager manager) {
+    public SlightlyCachedImageFetcher(final IRenderer renderer, final IMapManager manager) {
         super(renderer, manager);
-        // TODO Auto-generated constructor stub
     }
 
     @Override
     protected int getCacheSize() {
-        return 512;
+        return 128;
     }
 
 }

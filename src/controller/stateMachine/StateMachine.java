@@ -20,6 +20,7 @@ public class StateMachine extends AbstractStateMachine {
     protected void initialize(final IApplication model, final IApplicationView view) {
         view.getSidebar().setPointOrderChangable(false);
         view.getSidebar().setAddable(false);
+        model.getImageLoader().setRenderRoute(null);
     }
 
     @Override

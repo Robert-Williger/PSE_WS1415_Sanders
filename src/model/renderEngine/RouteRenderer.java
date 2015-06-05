@@ -45,7 +45,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         }
 
         if (route == null) {
-            return true;
+            return false;
         }
 
         final Graphics2D g = (Graphics2D) image.getGraphics();
@@ -90,7 +90,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         }
 
         if (map.isEmpty()) {
-            return true;
+            return false;
         }
 
         for (final Entry<Long, Collection<Street>> entry : map.entrySet()) {

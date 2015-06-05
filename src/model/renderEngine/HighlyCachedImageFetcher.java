@@ -10,7 +10,7 @@ public class HighlyCachedImageFetcher extends AbstractImageFetcher {
 
     @Override
     protected int getCacheSize() {
-        return 4096;
+        return 2048;
     }
 
 }

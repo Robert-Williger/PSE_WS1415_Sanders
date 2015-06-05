@@ -33,7 +33,7 @@ public class ImageLoader implements IImageLoader {
     private Point lastGridLocation;
     private int lastRowCount;
     private int lastColumnCount;
-    private final int prefetchCount = 1;
+    private final int prefetchCount = 2;
 
     private int priority;
 
@@ -244,9 +244,7 @@ public class ImageLoader implements IImageLoader {
         if (lastRouteVisibility != routeAccessor.isVisible()) {
             lastRouteVisibility = routeAccessor.isVisible();
             if (lastRouteVisibility) {
-                if (lastTiles != null) {
-                    lastTiles = getLastViewTiles();
-                }
+                lastTiles = getLastViewTiles();
 
                 for (final Long tileID : lastTiles) {
                     routeFetcher.loadImage(tileID, priority + 1);
@@ -303,10 +301,12 @@ public class ImageLoader implements IImageLoader {
         routeFetcher.flush();
 
         if (route == null) {
+            routeAccessor.setVisible(false);
             routeSet = false;
             return;
         }
 
+        routeAccessor.setVisible(true);
         routeSet = true;
 
         for (final Long tileID : getLastViewTiles()) {
