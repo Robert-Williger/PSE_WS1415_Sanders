@@ -8,7 +8,7 @@ public interface IGraph {
 
     int getEdges();
 
-    Iterator<Integer> getAdjacentNode(int node);
+    Iterator<Integer> getAdjacentNodes(int node);
 
     int getFirstNode(long edge);
 

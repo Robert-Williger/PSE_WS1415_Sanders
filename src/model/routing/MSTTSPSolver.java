@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class TSPSolver extends AbstractComplexRouteSolver {
+public class MSTTSPSolver extends AbstractComplexRouteSolver {
     private final IGraph graph;
     private IGraph mst;
     private HashMap<Long, Path> mapping;
@@ -13,7 +13,7 @@ public class TSPSolver extends AbstractComplexRouteSolver {
     private boolean canceled;
     private final ISPSPSolver solver;
 
-    public TSPSolver(final IGraph graph) {
+    public MSTTSPSolver(final IGraph graph) {
         this.graph = graph;
         solver = createSPSPSolver();
         solver.addProgressListener(new IProgressListener() {
@@ -81,7 +81,7 @@ public class TSPSolver extends AbstractComplexRouteSolver {
 
     private void dfs(final int u, final int v) {
 
-        final Iterator<Integer> it = mst.getAdjacentNode(v);
+        final Iterator<Integer> it = mst.getAdjacentNodes(v);
         while (it.hasNext()) {
             final int w = it.next();
             if (w != u) {

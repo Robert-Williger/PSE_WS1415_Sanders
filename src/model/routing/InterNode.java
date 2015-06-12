@@ -27,7 +27,7 @@ public class InterNode {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
@@ -37,7 +37,7 @@ public class InterNode {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        InterNode other = (InterNode) obj;
+        final InterNode other = (InterNode) obj;
         if (edge != other.edge) {
             return false;
         }

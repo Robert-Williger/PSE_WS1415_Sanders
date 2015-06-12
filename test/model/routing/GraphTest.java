@@ -116,7 +116,7 @@ public class GraphTest {
         nodes.add(12);
         nodes.add(17);
 
-        final Iterator<Integer> it = graph.getAdjacentNode(13);
+        final Iterator<Integer> it = graph.getAdjacentNodes(13);
         while (it.hasNext()) {
             ret.add(it.next());
         }

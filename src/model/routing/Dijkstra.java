@@ -86,7 +86,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
 
     private void scan(final int u) {
         if (state == 0) {
-            final Iterator<Integer> it = graph.getAdjacentNode(u);
+            final Iterator<Integer> it = graph.getAdjacentNodes(u);
             while (it.hasNext()) {
                 relax(u, it.next());
             }

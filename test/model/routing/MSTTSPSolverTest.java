@@ -10,9 +10,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TSPSolverTest {
+public class MSTTSPSolverTest {
 
-    private TSPSolver routing;
+    private MSTTSPSolver routing;
     private boolean error;
 
     public static long getEdge(final int node1, final int node2) {
@@ -75,7 +75,7 @@ public class TSPSolverTest {
         weights.add(200);
 
         final IGraph graph = new Graph(21, edges, weights);
-        routing = new TSPSolver(graph);
+        routing = new MSTTSPSolver(graph);
     }
 
     @Test

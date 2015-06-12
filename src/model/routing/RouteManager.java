@@ -14,7 +14,7 @@ import model.targets.PointList;
 import model.targets.RoutePoint;
 
 public class RouteManager implements IRouteManager {
-    IGraph graph;
+    private IGraph graph;
     private final IMapManager manager;
     private final IPointList pointList;
 
@@ -143,7 +143,7 @@ public class RouteManager implements IRouteManager {
     }
 
     protected IComplexRouteSolver createTSPSolver() {
-        return new TSPSolver(graph);
+        return new ChristofidesTSPSolver(graph);
     }
 
     protected IComplexRouteSolver createViaRouteSolver() {

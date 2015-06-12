@@ -86,7 +86,7 @@ public class JPMSTTest {
         final Integer[][] adj = {{1, 2}, {0, 5}, {0, 4}, {4, 6}, {2, 3}, {1}, {3, 7}, {6, 8}, {7, 9}, {8}};
 
         for (int i = 0; i < mst.getNodes(); i++) {
-            final Iterator<Integer> it = mst.getAdjacentNode(i);
+            final Iterator<Integer> it = mst.getAdjacentNodes(i);
             final List<Integer> temp = new ArrayList<Integer>();
 
             while (it.hasNext()) {

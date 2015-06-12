@@ -101,7 +101,7 @@ public class Graph implements IGraph {
     }
 
     @Override
-    public Iterator<Integer> getAdjacentNode(final int node) {
+    public Iterator<Integer> getAdjacentNodes(final int node) {
         return new It(node);
     }
 

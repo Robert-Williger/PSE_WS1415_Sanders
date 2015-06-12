@@ -26,7 +26,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
 
     @Override
     public void cancelCalculation() {
-        this.start = null;
+        start = null;
         canceled = true;
     }
 
@@ -78,7 +78,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     private final void scan(final int u) {
-        final Iterator<Integer> it = graph.getAdjacentNode(u);
+        final Iterator<Integer> it = graph.getAdjacentNodes(u);
         while (it.hasNext()) {
             relax(u, it.next());
         }
