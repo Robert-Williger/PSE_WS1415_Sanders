@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.IProgressListener;
 import model.elements.StreetNode;
 import model.map.IMapManager;
 import model.renderEngine.IRenderRoute;

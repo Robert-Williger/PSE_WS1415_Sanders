@@ -27,7 +27,6 @@ import model.map.PixelConverter;
 import model.map.Tile;
 import model.routing.Graph;
 import model.routing.IGraph;
-import model.routing.IProgressListener;
 import model.routing.IRouteManager;
 import model.routing.RouteManager;
 
@@ -118,7 +117,7 @@ public class Reader implements IReader {
      * Reads the Graph-section of the tsk file and generates the Graph.
      */
     private IGraph readGraph() throws IOException {
-
+        fireStepCommenced("Lade Graph...");
         int nodeCount = 0;
         final List<Long> edges = new ArrayList<Long>();
         final List<Integer> weights = new ArrayList<Integer>();
@@ -228,55 +227,90 @@ public class Reader implements IReader {
         }
 
         private void readElements() throws IOException {
+            int count = 0;
+
+            fireStepCommenced("Lade Knoten...");
             nodes = new Node[reader.readInt()];
-            for (int i = 0; i < nodes.length; i++) {
-                nodes[i] = new Node(reader.readInt(), reader.readInt());
+            for (count = 0; count < nodes.length; count++) {
+                nodes[count] = new Node(reader.readInt(), reader.readInt());
             }
 
+            fireStepCommenced("Lade Adressen...");
             names = new String[reader.readInt()];
-            for (int i = 0; i < names.length; i++) {
-                names[i] = reader.readUTF();
+            for (count = 0; count < names.length; count++) {
+                names[count] = reader.readUTF();
             }
             names[0] = "Unbekannte Straße";
 
             numbers = new String[reader.readInt()];
-            for (int i = 0; i < numbers.length; i++) {
-                numbers[i] = reader.readUTF();
+            for (count = 0; count < numbers.length; count++) {
+                numbers[count] = reader.readUTF();
             }
 
-            streets = new Street[reader.readInt()];
-            for (int i = 0; i < streets.length; i++) {
-                streets[i] = new Street(readNodeList(), reader.read(), names[reader.readShort()], reader.readLong());
+            fireStepCommenced("Lade Straßen...");
+
+            int[] distribution = readDistribution();
+            streets = new Street[distribution[distribution.length - 1]];
+            int type = 0;
+            count = 0;
+
+            for (final int number : distribution) {
+                for (; count < number; count++) {
+                    streets[count] = new Street(readNodeList(), type, names[reader.readShort()], reader.readLong());
+                }
+                ++type;
             }
 
-            ways = new Way[reader.readInt()];
-            for (int i = 0; i < ways.length; i++) {
-                ways[i] = new Way(readNodeList(), reader.read(), names[reader.readShort()]);
+            fireStepCommenced("Lade Wege...");
+            distribution = readDistribution();
+            ways = new Way[distribution[distribution.length - 1]];
+            type = 0;
+            count = 0;
+            for (final int number : distribution) {
+                for (; count < number; count++) {
+                    ways[count] = new Way(readNodeList(), type, names[reader.readShort()]);
+                }
+                ++type;
             }
 
-            areas = new Area[reader.readInt()];
-            for (int i = 0; i < areas.length; i++) {
-                areas[i] = new Area(readNodeList(), reader.read());
+            fireStepCommenced("Lade Gelände...");
+            distribution = readDistribution();
+            areas = new Area[distribution[distribution.length - 1]];
+            type = 0;
+            count = 0;
+            for (final int number : distribution) {
+                for (; count < number; count++) {
+                    areas[count] = new Area(readNodeList(), type);
+                }
+                ++type;
             }
 
-            pois = new POI[reader.readInt()];
-            for (int i = 0; i < pois.length; i++) {
-                pois[i] = new POI(reader.readInt(), reader.readInt(), reader.read());
+            fireStepCommenced("Lade Points of Interest...");
+            distribution = readDistribution();
+            pois = new POI[distribution[distribution.length - 1]];
+            type = 0;
+            count = 0;
+            for (final int number : distribution) {
+                for (; count < number; count++) {
+                    pois[count] = new POI(reader.readInt(), reader.readInt(), type);
+                }
+                ++type;
             }
 
+            fireStepCommenced("Lade Gebäude...");
             buildings = new Building[reader.readInt()];
             final int streetNodes = reader.readInt();
 
-            for (int i = 0; i < streetNodes; i++) {
+            for (count = 0; count < streetNodes; count++) {
                 final List<Node> nodes = readNodeList();
                 final Street street = streets[reader.readInt()];
 
-                buildings[i] = new Building(nodes, street.getName() + " " + numbers[reader.readShort()],
+                buildings[count] = new Building(nodes, street.getName() + " " + numbers[reader.readShort()],
                         new StreetNode(reader.readFloat(), street));
             }
 
-            for (int i = streetNodes; i < buildings.length; i++) {
-                buildings[i] = new Building(readNodeList(), "", null);
+            for (; count < buildings.length; count++) {
+                buildings[count] = new Building(readNodeList(), "", null);
             }
         }
 
@@ -293,6 +327,8 @@ public class Reader implements IReader {
         }
 
         private void readTiles() throws IOException {
+            fireStepCommenced("Lade Kacheln...");
+
             int currentRows = rows;
             int currentCols = columns;
             for (int zoom = zoomSteps - 1; zoom >= 0; zoom--) {
@@ -353,6 +389,15 @@ public class Reader implements IReader {
             }
         }
 
+        private int[] readDistribution() throws IOException {
+            final int[] ret = new int[reader.readInt()];
+            for (int i = 0; i < ret.length; i++) {
+                ret[i] = reader.readInt();
+            }
+
+            return ret;
+        }
+
         private void cleanUp() {
             nodes = null;
             pois = null;
@@ -392,6 +437,12 @@ public class Reader implements IReader {
     protected void fireErrorOccured(final String message) {
         for (final IProgressListener listener : list) {
             listener.errorOccured(message);
+        }
+    }
+
+    protected void fireStepCommenced(final String step) {
+        for (final IProgressListener listener : list) {
+            listener.stepCommenced(step);
         }
     }
 

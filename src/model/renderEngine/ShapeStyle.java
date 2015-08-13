@@ -10,20 +10,6 @@ import model.map.IPixelConverter;
 
 public class ShapeStyle {
 
-    public class CompositeStroke implements Stroke {
-        private final Stroke mainStroke, outlineStroke;
-
-        public CompositeStroke(final Stroke mainStroke, final Stroke outlineStroke) {
-            this.mainStroke = mainStroke;
-            this.outlineStroke = outlineStroke;
-        }
-
-        @Override
-        public Shape createStrokedShape(final Shape shape) {
-            return outlineStroke.createStrokedShape(mainStroke.createStrokedShape(shape));
-        }
-    }
-
     public static final float SCALE_FACTOR = 120f;
 
     protected static IPixelConverter converter = null;
@@ -38,11 +24,14 @@ public class ShapeStyle {
     protected final float maxMainWidth;
     protected final float maxOutlineWidth;
 
+    protected final float minMainWidth;
+    protected final float minOutlineWidth;
+
     // add minZoomstep & maxZoomstep -> zoom only in range (-> width)
     public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor,
             final int cap, final int join) {
-        this.mainWidth = mainWidth;
-        this.outlineWidth = outlineWidth;
+        this.mainWidth = SCALE_FACTOR * mainWidth;
+        this.outlineWidth = SCALE_FACTOR * outlineWidth;
 
         this.mainColor = mainColor;
         this.outlineColor = outlineColor;
@@ -52,6 +41,8 @@ public class ShapeStyle {
 
         maxMainWidth = Float.MAX_VALUE;
         maxOutlineWidth = Float.MAX_VALUE;
+        minMainWidth = 0;
+        minOutlineWidth = 0;
     }
 
     public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor) {
@@ -68,10 +59,12 @@ public class ShapeStyle {
 
     public ShapeStyle(final float[] mainWidth, final float[] outlineWidth, final Color mainColor,
             final Color outlineColor, final int cap, final int join) {
-        this.mainWidth = mainWidth[0];
-        maxMainWidth = mainWidth[1];
-        this.outlineWidth = outlineWidth[0];
-        maxOutlineWidth = outlineWidth[1];
+        this.mainWidth = SCALE_FACTOR * mainWidth[1];
+        maxMainWidth = mainWidth[2];
+        minMainWidth = mainWidth[0];
+        this.outlineWidth = SCALE_FACTOR * outlineWidth[1];
+        maxOutlineWidth = outlineWidth[2];
+        minOutlineWidth = outlineWidth[0];
 
         this.mainColor = mainColor;
         this.outlineColor = outlineColor;
@@ -99,8 +92,7 @@ public class ShapeStyle {
 
     public boolean mainStroke(final Graphics2D g, final int zoomStep) {
         if (mainColor != null) {
-            g.setStroke(new BasicStroke(Math.min(maxMainWidth,
-                    converter.getPixelDistancef((SCALE_FACTOR * mainWidth), zoomStep)), cap, join));
+            g.setStroke(new BasicStroke(getValue(minMainWidth, mainWidth, maxMainWidth, zoomStep), cap, join));
             g.setColor(mainColor);
             return true;
         }
@@ -110,8 +102,7 @@ public class ShapeStyle {
 
     public boolean outlineStroke(final Graphics2D g, final int zoomStep) {
         if (outlineColor != null) {
-            g.setStroke(new BasicStroke(Math.min(maxOutlineWidth,
-                    converter.getPixelDistancef((SCALE_FACTOR * outlineWidth), zoomStep)), cap, join));
+            g.setStroke(new BasicStroke(getValue(minOutlineWidth, outlineWidth, maxOutlineWidth, zoomStep), cap, join));
             g.setColor(outlineColor);
             return true;
         }
@@ -121,9 +112,8 @@ public class ShapeStyle {
 
     public boolean outlineCompositeStroke(final Graphics2D g, final int zoomStep) {
         if (mainColor == null) {
-            g.setStroke(new CompositeStroke(new BasicStroke(Math.min(maxMainWidth,
-                    converter.getPixelDistancef((SCALE_FACTOR * mainWidth), zoomStep)), cap, join), new BasicStroke(
-                    Math.min(maxOutlineWidth, converter.getPixelDistancef((SCALE_FACTOR * outlineWidth), zoomStep)),
+            g.setStroke(new CompositeStroke(new BasicStroke(getValue(minMainWidth, mainWidth, maxMainWidth, zoomStep),
+                    cap, join), new BasicStroke(getValue(minOutlineWidth, outlineWidth, maxOutlineWidth, zoomStep),
                     cap, join)));
             g.setColor(outlineColor);
             return true;
@@ -131,5 +121,23 @@ public class ShapeStyle {
 
         return false;
 
+    }
+
+    protected final float getValue(final float min, final float normal, final float max, final int zoom) {
+        return Math.max(min, Math.min(converter.getPixelDistancef(normal, zoom), max));
+    }
+
+    private class CompositeStroke implements Stroke {
+        private final Stroke mainStroke, outlineStroke;
+
+        public CompositeStroke(final Stroke mainStroke, final Stroke outlineStroke) {
+            this.mainStroke = mainStroke;
+            this.outlineStroke = outlineStroke;
+        }
+
+        @Override
+        public Shape createStrokedShape(final Shape shape) {
+            return outlineStroke.createStrokedShape(mainStroke.createStrokedShape(shape));
+        }
     }
 }

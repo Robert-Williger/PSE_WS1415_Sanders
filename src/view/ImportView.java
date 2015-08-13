@@ -13,6 +13,7 @@ public class ImportView extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final JProgressBar progressBar;
+    private final JLabel info;
 
     public ImportView() {
         progressBar = new JProgressBar(0, 100);
@@ -25,7 +26,7 @@ public class ImportView extends JDialog {
             add(dummy, element);
         }
 
-        final JLabel info = new JLabel("Lade Kartendaten...");
+        info = new JLabel("Lade Kartendaten...");
         info.setPreferredSize(new Dimension(100, 30));
         info.setHorizontalAlignment(SwingConstants.CENTER);
         add(info, BorderLayout.NORTH);
@@ -40,5 +41,9 @@ public class ImportView extends JDialog {
 
     public void setProgress(final int progress) {
         progressBar.setValue(progress);
+    }
+
+    public void setStep(final String step) {
+        info.setText(step);
     }
 }

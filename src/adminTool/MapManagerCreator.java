@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -29,6 +30,7 @@ import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
+import model.elements.Typeable;
 import model.elements.Way;
 import model.map.PixelConverter;
 
@@ -61,6 +63,9 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     private StreetNodeFinder finder;
     private POISorter poiSorter;
+    private TypeSorter<Way> waySorter;
+    private TypeSorter<Street> streetSorter;
+    private TypeSorter<Area> terrainSorter;
 
     private PixelConverter converter;
     private ReferencedTile[][] tiles;
@@ -111,8 +116,17 @@ public class MapManagerCreator extends AbstractMapCreator {
         finder = new StreetNodeFinder();
         finder.start();
 
-        poiSorter = new POISorter();
+        poiSorter = new POISorter(pois);
         poiSorter.start();
+
+        waySorter = new TypeSorter<Way>(ways);
+        waySorter.start();
+
+        streetSorter = new TypeSorter<Street>(streets);
+        streetSorter.start();
+
+        terrainSorter = new TypeSorter<Area>(terrain);
+        terrainSorter.start();
 
         ElementWriter elementWriter = new ElementWriter();
         elementWriter.start();
@@ -154,6 +168,11 @@ public class MapManagerCreator extends AbstractMapCreator {
         streetPartitioner = null;
         terrainPartitioner = null;
         poiPartitioner = null;
+
+        poiSorter = null;
+        waySorter = null;
+        streetSorter = null;
+        terrainSorter = null;
 
         buildings = null;
         streets = null;
@@ -360,6 +379,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             } catch (final InterruptedException e) {
                 e.printStackTrace();
             }
+            pois = poiSorter.getSorting();
 
             partitionPOIs(zoomSteps - 1, tiles);
         }
@@ -373,6 +393,13 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            try {
+                terrainSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            terrain = terrainSorter.getSorting();
+
             int id = 0;
             for (final Area area : terrain) {
                 final Polygon poly = area.getPolygon();
@@ -401,6 +428,13 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            try {
+                waySorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            ways = waySorter.getSorting();
+
             final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, zoomSteps - 1);
 
             int id = 0;
@@ -425,6 +459,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 ++id;
             }
         }
+
     }
 
     private class StreetPartitioner extends Thread {
@@ -435,6 +470,13 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            try {
+                streetSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            streets = streetSorter.getSorting();
+
             final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, zoomSteps - 1);
 
             int id = 0;
@@ -677,7 +719,9 @@ public class MapManagerCreator extends AbstractMapCreator {
 
                 writeNames();
                 writeNumbers();
+
                 writeStreets();
+
                 writeWays();
                 writeTerrain();
 
@@ -776,10 +820,9 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writePOIs() throws IOException {
-            stream.writeInt(pois.size());
+            writeDistribution(poiSorter.getTypeDistribution());
             for (final POI poi : pois) {
                 writePoint(poi.getLocation());
-                stream.writeByte(poi.getType());
             }
         }
 
@@ -798,7 +841,13 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeStreets() throws IOException {
-            stream.writeInt(streets.size());
+            try {
+                streetSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            streets = streetSorter.getSorting();
+            writeDistribution(streetSorter.getTypeDistribution());
             for (final Street street : streets) {
                 writeWay(street);
                 stream.writeLong(street.getID());
@@ -806,7 +855,13 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeWays() throws IOException {
-            stream.writeInt(ways.size());
+            try {
+                waySorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            ways = waySorter.getSorting();
+            writeDistribution(waySorter.getTypeDistribution());
             for (final Way way : ways) {
                 writeWay(way);
             }
@@ -815,14 +870,15 @@ public class MapManagerCreator extends AbstractMapCreator {
         private void writeBuildings() throws IOException {
             stream.writeInt(buildings.size());
             stream.writeInt(finder.getSuccess().size());
+
             for (final Building building : finder.getSuccess()) {
                 final StreetNode node = building.getStreetNode();
-                if (node != null) {
-                    writeMultiElement(building);
-                    stream.writeInt(streetMap.get(node.getStreet()));
-                    stream.writeShort(numberMap.get(getHouseNumber(building.getAddress()).trim()));
-                    stream.writeFloat(node.getOffset());
-                }
+
+                writeMultiElement(building);
+                assert streetMap.containsKey(node.getStreet()) : streets.contains(node.getStreet());
+                stream.writeInt(streetMap.get(node.getStreet()));
+                stream.writeShort(numberMap.get(getHouseNumber(building.getAddress()).trim()));
+                stream.writeFloat(node.getOffset());
             }
 
             for (final Building building : finder.getFailure()) {
@@ -833,11 +889,16 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeTerrain() throws IOException {
-            stream.writeInt(terrain.size());
+            try {
+                terrainSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            terrain = terrainSorter.getSorting();
 
+            writeDistribution(terrainSorter.getTypeDistribution());
             for (final Area area : terrain) {
                 writeMultiElement(area);
-                stream.writeByte(area.getType());
             }
         }
 
@@ -868,8 +929,16 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         private void writeWay(final Way way) throws IOException {
             writeMultiElement(way);
-            stream.writeByte(way.getType());
             stream.writeShort(nameMap.get(way.getName().trim()));
+        }
+
+        private void writeDistribution(final int[] array) throws IOException {
+            stream.writeInt(array.length);
+            int total = 0;
+            for (final int value : array) {
+                total += value;
+                stream.writeInt(total);
+            }
         }
     }
 
@@ -925,42 +994,83 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
     }
 
-    private class POISorter extends Thread {
+    private class TypeSorter<T extends Typeable> extends Thread {
+
+        private Collection<T> typeables;
+        private int[] typeDistribution;
+
+        public TypeSorter(final Collection<T> collection) {
+            this.typeables = collection;
+        }
 
         @Override
         public void run() {
             int maxValue = 0;
-            int poiCount = 0;
-            for (final POI poi : pois) {
-                if (poi.getType() > maxValue) {
-                    maxValue = poi.getType();
+            int count = 0;
+            for (final Typeable t : typeables) {
+                if (t.getType() > maxValue) {
+                    maxValue = t.getType();
                 }
-                ++poiCount;
+                ++count;
             }
 
-            List<List<POI>> poiLists = new ArrayList<List<POI>>(maxValue + 1);
+            List<List<T>> typeLists = new ArrayList<List<T>>(maxValue + 1);
+            typeDistribution = new int[maxValue + 1];
 
             for (int i = 0; i < maxValue + 1; i++) {
-                poiLists.add(new ArrayList<POI>());
+                typeLists.add(new LinkedList<T>());
             }
 
-            for (final POI poi : pois) {
-                poiLists.get(poi.getType()).add(poi);
+            for (final T t : typeables) {
+                typeLists.get(t.getType()).add(t);
             }
 
-            final List<POI> pois = new ArrayList<POI>(poiCount);
-            MapManagerCreator.this.pois = pois;
-            referencedPOIs = new ArrayList<ReferencedPOI>(poiCount);
+            final List<T> typeables = new ArrayList<T>(count);
 
-            for (final List<POI> p : poiLists) {
-                for (final POI poi : p) {
-                    pois.add(poi);
-                    referencedPOIs.add(new ReferencedPOI(poi.getX(), poi.getY()));
+            beforeMerge(count);
+
+            for (int i = 0; i <= maxValue; i++) {
+                final List<T> list = typeLists.get(i);
+                typeDistribution[i] = list.size();
+                for (final T t : list) {
+                    typeables.add(t);
+                    processTypeable(t);
                 }
             }
 
-            poiLists = null;
+            typeLists = null;
+            this.typeables = typeables;
+        }
+
+        public Collection<T> getSorting() {
+            return typeables;
+        }
+
+        public int[] getTypeDistribution() {
+            return typeDistribution;
+        }
+
+        protected void processTypeable(final T t) {
+        }
+
+        protected void beforeMerge(final int count) {
         }
     }
 
+    private class POISorter extends TypeSorter<POI> {
+
+        public POISorter(final Collection<POI> collection) {
+            super(collection);
+        }
+
+        @Override
+        protected void processTypeable(final POI poi) {
+            referencedPOIs.add(new ReferencedPOI(poi.getX(), poi.getY()));
+        }
+
+        @Override
+        protected void beforeMerge(final int count) {
+            referencedPOIs = new ArrayList<ReferencedPOI>(count);
+        }
+    }
 }

@@ -3,6 +3,8 @@ package model.routing;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.IProgressListener;
+
 public abstract class AbstractProgressable implements Progressable {
 
     private final List<IProgressListener> listeners;

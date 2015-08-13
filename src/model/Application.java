@@ -14,7 +14,6 @@ import model.map.MapManager;
 import model.renderEngine.IImageLoader;
 import model.renderEngine.ImageLoader;
 import model.routing.Graph;
-import model.routing.IProgressListener;
 import model.routing.IRouteManager;
 import model.routing.RouteManager;
 

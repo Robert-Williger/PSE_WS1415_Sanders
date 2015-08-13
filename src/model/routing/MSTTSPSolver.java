@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import model.IProgressListener;
+
 public class MSTTSPSolver extends AbstractComplexRouteSolver {
     private final IGraph graph;
     private IGraph mst;
@@ -26,6 +28,11 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
             @Override
             public void errorOccured(final String message) {
                 fireErrorOccured(message);
+            }
+
+            @Override
+            public void stepCommenced(String step) {
+
             }
         });
     }

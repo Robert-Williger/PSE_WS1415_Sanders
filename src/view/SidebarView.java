@@ -29,7 +29,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentListener;
 
-import model.routing.IProgressListener;
+import model.IProgressListener;
 import model.routing.IRouteManager;
 import model.targets.IPointList;
 import model.targets.IPointListListener;
@@ -649,6 +649,11 @@ public class SidebarView extends JPanel implements ISidebarView {
                 }
 
             });
+        }
+
+        @Override
+        public void stepCommenced(final String step) {
+
         }
     }
 }

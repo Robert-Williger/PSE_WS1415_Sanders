@@ -2,7 +2,7 @@ package model.elements;
 
 import java.util.List;
 
-public class Way extends MultiElement {
+public class Way extends MultiElement implements Typeable {
 
     private final int type;
     private final String name;
@@ -14,6 +14,7 @@ public class Way extends MultiElement {
         this.name = name;
     }
 
+    @Override
     public int getType() {
         return type;
     }

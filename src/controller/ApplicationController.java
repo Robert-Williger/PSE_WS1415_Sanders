@@ -16,7 +16,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import model.IApplication;
-import model.routing.IProgressListener;
+import model.IProgressListener;
 import view.FileChooserView;
 import view.IApplicationView;
 import view.ImportView;
@@ -82,6 +82,18 @@ public class ApplicationController extends AbstractController<IApplicationView> 
                     public void run() {
                         JOptionPane.showMessageDialog(null, message, "Fehler beim Import", JOptionPane.ERROR_MESSAGE);
                     }
+                });
+            }
+
+            @Override
+            public void stepCommenced(final String step) {
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        importView.setStep(step);
+                    }
+
                 });
             }
         });

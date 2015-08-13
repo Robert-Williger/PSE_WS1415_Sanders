@@ -4,7 +4,7 @@ import java.awt.Polygon;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Area extends MultiElement {
+public class Area extends MultiElement implements Typeable {
 
     private static List<List<Node>> cuttings = new LinkedList<List<Node>>();
     private static List<Polygon> inner = new LinkedList<Polygon>();
@@ -49,9 +49,9 @@ public class Area extends MultiElement {
     }
 
     private void calculatePolygon() {
-        if (polygon == null) {
-            polygon = calculatePolygon(getNodes());
-        }
+        // if (polygon == null) {
+        polygon = calculatePolygon(getNodes());
+        // }
     }
 
     public int getType() {

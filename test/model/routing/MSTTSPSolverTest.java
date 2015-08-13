@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import model.IProgressListener;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -158,6 +160,11 @@ public class MSTTSPSolverTest {
             public void errorOccured(final String message) {
                 error = true;
             }
+
+            @Override
+            public void stepCommenced(String step) {
+
+            }
         });
 
         routing.calculateRoute(edges);
@@ -182,6 +189,11 @@ public class MSTTSPSolverTest {
 
             @Override
             public void errorOccured(final String message) {
+            }
+
+            @Override
+            public void stepCommenced(String step) {
+
             }
         });
 

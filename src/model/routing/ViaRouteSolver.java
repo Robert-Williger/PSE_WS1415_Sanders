@@ -3,6 +3,8 @@ package model.routing;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.IProgressListener;
+
 public class ViaRouteSolver extends AbstractComplexRouteSolver {
     private final IGraph graph;
     private int state;
@@ -22,6 +24,11 @@ public class ViaRouteSolver extends AbstractComplexRouteSolver {
             @Override
             public void errorOccured(final String message) {
                 fireErrorOccured(message);
+            }
+
+            @Override
+            public void stepCommenced(String step) {
+
             }
         });
     }

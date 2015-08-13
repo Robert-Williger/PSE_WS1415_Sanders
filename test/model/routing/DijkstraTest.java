@@ -8,6 +8,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.IProgressListener;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -121,6 +123,10 @@ public class DijkstraTest {
             public void errorOccured(final String message) {
                 error = true;
             }
+
+            @Override
+            public void stepCommenced(String step) {
+            }
         });
 
         routing.calculateShortestPath(new InterNode(getEdge(16, 15), 0F), new InterNode(getEdge(19, 20), 1F));
@@ -139,6 +145,11 @@ public class DijkstraTest {
 
             @Override
             public void errorOccured(final String message) {
+            }
+
+            @Override
+            public void stepCommenced(String step) {
+
             }
         });
 

@@ -94,7 +94,9 @@ public abstract class AbstractImageFetcher implements IImageFetcher {
                 @Override
                 public void run() {
                     for (int i = 0; i < getCacheSize(); i++) {
-                        freeList.add(new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB));
+                        final BufferedImage img = new BufferedImage(imageSize.width, imageSize.height,
+                                BufferedImage.TYPE_INT_ARGB);
+                        freeList.add(img);
                     }
                 }
 
