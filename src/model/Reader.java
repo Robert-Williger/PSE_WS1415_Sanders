@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -19,6 +20,7 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.Way;
+import model.map.EmptyTile;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
 import model.map.ITile;
@@ -227,15 +229,16 @@ public class Reader implements IReader {
         }
 
         private void readElements() throws IOException {
-            int count = 0;
-
             fireStepCommenced("Lade Knoten...");
+
+            int count = 0;
             nodes = new Node[reader.readInt()];
             for (count = 0; count < nodes.length; count++) {
                 nodes[count] = new Node(reader.readInt(), reader.readInt());
             }
 
             fireStepCommenced("Lade Adressen...");
+
             names = new String[reader.readInt()];
             for (count = 0; count < names.length; count++) {
                 names[count] = reader.readUTF();
@@ -249,52 +252,66 @@ public class Reader implements IReader {
 
             fireStepCommenced("Lade Straßen...");
 
-            int[] distribution = readDistribution();
-            streets = new Street[distribution[distribution.length - 1]];
-            int type = 0;
             count = 0;
+            int size = reader.readInt();
+            int[] distribution = readIntArray(size);
+            int[] types = readIntArray(size);
+            streets = new Street[distribution[size - 1]];
 
-            for (final int number : distribution) {
+            for (int i = 0; i < size; i++) {
+                final int type = types[i];
+                final int number = distribution[i];
                 for (; count < number; count++) {
                     streets[count] = new Street(readNodeList(), type, names[reader.readShort()], reader.readLong());
                 }
-                ++type;
             }
 
             fireStepCommenced("Lade Wege...");
-            distribution = readDistribution();
-            ways = new Way[distribution[distribution.length - 1]];
-            type = 0;
+
             count = 0;
-            for (final int number : distribution) {
+            size = reader.readInt();
+            distribution = readIntArray(size);
+            types = readIntArray(size);
+            ways = new Way[distribution[size - 1]];
+
+            for (int i = 0; i < size; i++) {
+                final int type = types[i];
+                final int number = distribution[i];
                 for (; count < number; count++) {
                     ways[count] = new Way(readNodeList(), type, names[reader.readShort()]);
                 }
-                ++type;
             }
 
             fireStepCommenced("Lade Gelände...");
-            distribution = readDistribution();
-            areas = new Area[distribution[distribution.length - 1]];
-            type = 0;
+
             count = 0;
-            for (final int number : distribution) {
+            size = reader.readInt();
+            distribution = readIntArray(size);
+            types = readIntArray(size);
+            areas = new Area[distribution[size - 1]];
+
+            for (int i = 0; i < size; i++) {
+                final int type = types[i];
+                final int number = distribution[i];
                 for (; count < number; count++) {
                     areas[count] = new Area(readNodeList(), type);
                 }
-                ++type;
             }
 
             fireStepCommenced("Lade Points of Interest...");
-            distribution = readDistribution();
-            pois = new POI[distribution[distribution.length - 1]];
-            type = 0;
+
             count = 0;
-            for (final int number : distribution) {
+            size = reader.readInt();
+            distribution = readIntArray(size);
+            types = readIntArray(size);
+            pois = new POI[distribution[size - 1]];
+
+            for (int i = 0; i < size; i++) {
+                final int type = types[i];
+                final int number = distribution[i];
                 for (; count < number; count++) {
                     pois[count] = new POI(reader.readInt(), reader.readInt(), type);
                 }
-                ++type;
             }
 
             fireStepCommenced("Lade Gebäude...");
@@ -317,13 +334,12 @@ public class Reader implements IReader {
         private List<Node> readNodeList() throws IOException {
             final int nodes = reader.readUnsignedShort();
 
-            final List<Node> ret = new ArrayList<Node>(nodes);
-
+            final Node[] n = new Node[nodes];
             for (int j = 0; j < nodes; j++) {
-                ret.add(this.nodes[reader.readInt()]);
+                n[j] = this.nodes[reader.readInt()];
             }
 
-            return ret;
+            return Arrays.asList(n);
         }
 
         private void readTiles() throws IOException {
@@ -341,43 +357,72 @@ public class Reader implements IReader {
                 for (int row = 0; row < currentRows; row++) {
                     int x = 0;
                     for (int column = 0; column < currentCols; column++) {
-                        final int poiCount = reader.readInt();
-                        final int streetCount = reader.readInt();
-                        final int wayCount = reader.readInt();
-                        final int buildingCount = reader.readInt();
-                        final int areaCount = reader.readInt();
+                        byte flags = reader.readByte();
+                        final ITile tile;
+                        if (flags == 0) {
+                            tile = new EmptyTile(zoom, row, column);
+                        } else {
+                            final Collection<POI> tilePOIs;
+                            final Collection<Street> tileStreets;
+                            final Collection<Way> tileWays;
+                            final Collection<Building> tileBuildings;
+                            final Collection<Area> tileAreas;
 
-                        final Collection<POI> tilePOIs = poiCount == 0 ? EMPTY_POIS : new ArrayList<POI>(poiCount);
-                        final Collection<Street> tileStreets = streetCount == 0 ? EMPTY_STREETS
-                                : new ArrayList<Street>(streetCount);
-                        final Collection<Way> tileWays = wayCount == 0 ? EMPTY_WAYS : new ArrayList<Way>(wayCount);
-                        final Collection<Building> tileBuildings = buildingCount == 0 ? EMPTY_BUILDINGS
-                                : new ArrayList<Building>(buildingCount);
-                        final Collection<Area> tileAreas = areaCount == 0 ? EMPTY_AREAS
-                                : new ArrayList<Area>(areaCount);
+                            if ((flags & 1) == 0) {
+                                tilePOIs = EMPTY_POIS;
+                            } else {
+                                final POI[] p = new POI[reader.readInt()];
+                                for (int i = 0; i < p.length; i++) {
+                                    p[i] = pois[reader.readInt()];
+                                }
+                                tilePOIs = Arrays.asList(p);
+                            }
 
-                        for (int i = 0; i < poiCount; i++) {
-                            tilePOIs.add(pois[reader.readInt()]);
+                            if ((flags >> 1 & 1) == 0) {
+                                tileStreets = EMPTY_STREETS;
+                            } else {
+                                final Street[] s = new Street[reader.readInt()];
+                                for (int i = 0; i < s.length; i++) {
+                                    s[i] = streets[reader.readInt()];
+                                }
+                                tileStreets = Arrays.asList(s);
+                            }
+
+                            if ((flags >> 2 & 1) == 0) {
+                                tileWays = EMPTY_WAYS;
+                            } else {
+                                final Way[] w = new Way[reader.readInt()];
+                                for (int i = 0; i < w.length; i++) {
+                                    w[i] = ways[reader.readInt()];
+                                }
+                                tileWays = Arrays.asList(w);
+                            }
+
+                            if ((flags >> 3 & 1) == 0) {
+                                tileBuildings = EMPTY_BUILDINGS;
+                            } else {
+                                final Building[] b = new Building[reader.readInt()];
+                                for (int i = 0; i < b.length; i++) {
+                                    b[i] = buildings[reader.readInt()];
+                                }
+                                tileBuildings = Arrays.asList(b);
+                            }
+
+                            if ((flags >> 4 & 1) == 0) {
+                                tileAreas = EMPTY_AREAS;
+                            } else {
+                                final Area[] a = new Area[reader.readInt()];
+                                for (int i = 0; i < a.length; i++) {
+                                    a[i] = areas[reader.readInt()];
+                                }
+                                tileAreas = Arrays.asList(a);
+                            }
+
+                            tile = new Tile(zoom, row, column, x, y, tileWays, tileStreets, tileAreas, tileBuildings,
+                                    tilePOIs);
                         }
 
-                        for (int i = 0; i < streetCount; i++) {
-                            tileStreets.add(streets[reader.readInt()]);
-                        }
-
-                        for (int i = 0; i < wayCount; i++) {
-                            tileWays.add(ways[reader.readInt()]);
-                        }
-
-                        for (int i = 0; i < buildingCount; i++) {
-                            tileBuildings.add(buildings[reader.readInt()]);
-                        }
-
-                        for (int i = 0; i < areaCount; i++) {
-                            tileAreas.add(areas[reader.readInt()]);
-                        }
-
-                        tiles[zoom][row][column] = new Tile(zoom, row, column, x, y, tileWays, tileStreets, tileAreas,
-                                tileBuildings, tilePOIs);
+                        tiles[zoom][row][column] = tile;
 
                         x += tileCoordWidth;
                     }
@@ -389,8 +434,8 @@ public class Reader implements IReader {
             }
         }
 
-        private int[] readDistribution() throws IOException {
-            final int[] ret = new int[reader.readInt()];
+        private int[] readIntArray(final int length) throws IOException {
+            final int[] ret = new int[length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = reader.readInt();
             }

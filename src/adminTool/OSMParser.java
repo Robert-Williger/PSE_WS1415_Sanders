@@ -204,13 +204,13 @@ public class OSMParser implements IOSMParser {
                             }
                         case "amenity":
                         case "tourism":
-                            if (getAmenityType(value) > 0) {
+                            if (getAmenityType(value) >= 0) {
                                 amenityTag = value;
                             }
                         case "landuse":
                         case "natural":
                         case "man_made":
-                            if (terrainTag.isEmpty() && getAreaType(value, true) > 0) {
+                            if (terrainTag.isEmpty() && getAreaType(value, true) >= 0) {
                                 terrainTag = value;
                             }
                             break;
@@ -321,7 +321,7 @@ public class OSMParser implements IOSMParser {
                     }
 
                     type = getAmenityType(amenityTag);
-                    if (type > 0) {
+                    if (type >= 0) {
                         final Point center = calculateCenter(new Area(nodes, 0).getPolygon());
                         final int poiX = (int) (getXCoord(parseLon(center.x)) * SHIFT) - xOffset;
                         final int poiY = (int) Math.abs((getYCoord(parseLat(center.y)) * SHIFT) - yOffset);
@@ -364,7 +364,7 @@ public class OSMParser implements IOSMParser {
                                 break;
                             }
                         } else if (key.equals("building")) {
-                            areaType = 0;
+                            areaType = Integer.MAX_VALUE;
                             break;
                         }
                     }
@@ -435,7 +435,7 @@ public class OSMParser implements IOSMParser {
                                         }
                                     }
 
-                                    if (my.get(0).equals(my.get(my.size() - 1)) && areaType != 0) {
+                                    if (my.get(0).equals(my.get(my.size() - 1)) && areaType != Integer.MAX_VALUE) {
                                         areaList.add(new Area(my, areaType));
                                     } else {
                                         map.put(my.get(my.size() - 1), my);
@@ -445,7 +445,7 @@ public class OSMParser implements IOSMParser {
                             }
                         }
 
-                        if (areaType == 0) {
+                        if (areaType == Integer.MAX_VALUE) {
                             String housenumber = "";
                             String address = "";
 
@@ -521,96 +521,87 @@ public class OSMParser implements IOSMParser {
         }
     }
 
-    private int getWayType(final String value) {
+    private int getStreetType(final String value) {
 
-        if (value.equals("river")) {
+        if (value.equals("unclassified") || value.equals("residential") || value.equals("living_street")
+                || value.equals("pedestrian")) {
+            return 0;
+        }
+        if (value.equals("service")) {
             return 1;
         }
-        if (value.equals("stream") || value.equals("canal")) {
+        if (value.equals("secondary") || value.equals("secondary_link")) {
             return 2;
         }
-        if (value.equals("rail")) {
+        if (value.equals("tertiary") || value.equals("tertiary_link")) {
             return 3;
         }
-        if (value.equals("tram") || value.equals("light_rail")) {
+        if (value.equals("road")) {
             return 4;
         }
-        if (value.equals("primary")) {
+        if (value.equals("track")) {
             return 5;
         }
-        if (value.equals("motorway")) {
+        if (value.equals("footway")) {
             return 6;
         }
-        if (value.equals("trunk")) {
+        if (value.equals("cycleway")) {
             return 7;
         }
-        if (value.equals("primary_link")) {
+        if (value.equals("bridleway")) {
             return 8;
         }
-        if (value.equals("motorway_link")) {
+        if (value.equals("path")) {
             return 9;
-        }
-        if (value.equals("trunk_link")) {
-            return 10;
-        }
-        if (value.equals("career")) {
-            return 11;
-        }
-        if (value.equals("steps")) {
-            return 12;
-        }
-        if (value.equals("wall") || value.equals("fence") || value.equals("retaining_wall")
-                || value.equals("city_wall")) {
-            return 13;
-        }
-        if (value.equals("hedge")) {
-            return 14;
         }
 
         return -1;
-
     }
 
-    private int getStreetType(final String value) {
+    private int getWayType(final String value) {
 
-        if (value.equals("secondary") || value.equals("secondary_link")) {
-            return 1;
-        }
-        if (value.equals("tertiary") || value.equals("tertiary_link")) {
-            return 2;
-        }
-        if (value.equals("unclassified")) {
-            return 3;
-        }
-        if (value.equals("residential")) {
-            return 4;
-        }
-        if (value.equals("service")) {
-            return 5;
-        }
-        if (value.equals("living_street")) {
-            return 6;
-        }
-        if (value.equals("pedestrian")) {
-            return 7;
-        }
-        if (value.equals("road")) {
-            return 8;
-        }
-        if (value.equals("track")) {
-            return 9;
-        }
-        if (value.equals("footway")) {
+        if (value.equals("river")) {
             return 10;
         }
-        if (value.equals("cycleway")) {
+        if (value.equals("stream") || value.equals("canal")) {
             return 11;
         }
-        if (value.equals("bridleway")) {
+        if (value.equals("rail")) {
             return 12;
         }
-        if (value.equals("path")) {
+        if (value.equals("tram") || value.equals("light_rail")) {
             return 13;
+        }
+        if (value.equals("primary")) {
+            return 14;
+        }
+        if (value.equals("motorway")) {
+            return 15;
+        }
+        if (value.equals("trunk")) {
+            return 16;
+        }
+        if (value.equals("primary_link")) {
+            return 17;
+        }
+        if (value.equals("motorway_link")) {
+            return 18;
+        }
+        if (value.equals("trunk_link")) {
+            return 19;
+        }
+        if (value.equals("career")) {
+            return 20;
+        }
+        if (value.equals("steps")) {
+            return 21;
+        }
+        if (value.equals("wall") || value.equals("fence") || value.equals("retaining_wall")
+                || value.equals("city_wall")) {
+            return 22;
+        }
+        if (value.equals("hedge")) {
+            return 23;
         }
 
         return -1;
@@ -619,28 +610,31 @@ public class OSMParser implements IOSMParser {
 
     private int getAreaType(final String value, final boolean area) {
         if (value.equals("forest") || value.equals("woodland") || value.equals("scrub")) {
-            return 1;
+            return 0;
         }
         if (value.equals("wood")) {
-            return 2;
+            return 1;
         }
         if (value.equals("grass") || value.equals("meadow") || value.equals("orchard") || value.equals("grassland")
                 || value.equals("village_green") || value.equals("vineyard") || value.equals("allotments")
                 || value.equals("recreation_ground") || value.equals("garden")) {
-            return 3;
+            return 2;
         }
         if (value.equals("greenfield") || value.equals("landfill") || value.equals("brownfield")
                 || value.equals("construction") || value.equals("paddock")) {
-            return 4;
+            return 3;
         }
         if (value.equals("residential") || value.equals("railway") || value.equals("garages") || value.equals("garage")
                 || value.equals("traffic_island") || value.equals("road") || value.equals("plaza")) {
-            return 5;
+            return 4;
         }
         if (value.equals("water") || value.equals("reservoir") || value.equals("basin")) {
-            return 6;
+            return 5;
         }
         if (value.equals("industrial")) {
+            return 6;
+        }
+        if (value.equals("park")) {
             return 7;
         }
         if (value.equals("retail") || value.equals("commercial")) {
@@ -692,9 +686,6 @@ public class OSMParser implements IOSMParser {
         if (value.equals("zoo")) {
             return 23;
         }
-        if (value.equals("park")) {
-            return 24;
-        }
 
         return -1;
 
@@ -703,49 +694,49 @@ public class OSMParser implements IOSMParser {
     private int getAmenityType(final String amenity) {
 
         if (amenity.equals("viewpoint")) {
-            return 1;
+            return 0;
         }
         if (amenity.equals("school")) {
-            return 2;
+            return 1;
         }
         if (amenity.equals("library")) {
-            return 3;
+            return 2;
         }
         if (amenity.equals("hospital")) {
-            return 4;
+            return 3;
         }
         if (amenity.equals("bank")) {
-            return 5;
+            return 4;
         }
         if (amenity.equals("cinema")) {
-            return 6;
+            return 5;
         }
         if (amenity.equals("museum")) {
-            return 7;
+            return 6;
         }
         if (amenity.equals("theatre")) {
-            return 8;
+            return 7;
         }
         if (amenity.equals("courthouse")) {
-            return 9;
+            return 8;
         }
         if (amenity.equals("playground")) {
-            return 10;
+            return 9;
         }
         if (amenity.equals("restaurant")) {
-            return 11;
+            return 10;
         }
         if (amenity.equals("cafe")) {
-            return 12;
+            return 11;
         }
         if (amenity.equals("bar")) {
-            return 13;
+            return 12;
         }
         if (amenity.equals("parking")) {
-            return 14;
+            return 13;
         }
         if (amenity.equals("fuel")) {
-            return 15;
+            return 14;
         }
 
         return -1;

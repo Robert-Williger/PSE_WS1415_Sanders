@@ -36,20 +36,19 @@ public class POIRenderer extends AbstractModel implements IRenderer {
         final BufferedImage defaultImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         final String[] amenities = {"viewpoint", "school", "library", "hospital", "bank", "cinema", "museum",
                 "theatre", "courthouse", "playground", "restaurant", "cafe", "bar", "parking", "fuel"};
-        poiMinZoomStep = new int[]{0, 6, 7, 6, 6, 7, 6, 6, 6, 6, 7, 7, 7, 7, 6, 7};
-        poiImage = new Image[amenities.length + 1];
-        poiImage[0] = defaultImage;
+        poiMinZoomStep = new int[]{6, 7, 6, 6, 7, 6, 6, 6, 6, 7, 7, 7, 7, 6, 7};
+        poiImage = new Image[amenities.length];
 
         for (int i = 0; i < amenities.length; i++) {
             final URL resource = POIRenderer.class.getResource(amenities[i] + ".png");
             if (resource != null) {
                 try {
-                    poiImage[i + 1] = ImageIO.read(resource);
+                    poiImage[i] = ImageIO.read(resource);
                 } catch (final IOException e) {
-                    poiImage[i + 1] = defaultImage;
+                    poiImage[i] = defaultImage;
                 }
             } else {
-                poiImage[i + 1] = defaultImage;
+                poiImage[i] = defaultImage;
                 System.err.println("WARNING: Failed to load image " + amenities[i] + ".png");
             }
         }
