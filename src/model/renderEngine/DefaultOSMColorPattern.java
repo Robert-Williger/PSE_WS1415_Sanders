@@ -322,25 +322,21 @@ public class DefaultOSMColorPattern implements IColorPattern {
 
     @Override
     public WayStyle getWayStyle(final int type) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public ShapeStyle getAreaStyle(final int type) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public ShapeStyle getBuildingStyle(final int type) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void setConverter(final IPixelConverter converter) {
-        // TODO Auto-generated method stub
 
     }
 

@@ -61,7 +61,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private int coordTileLength;
 
     private StreetNodeFinder finder;
-    private POISorter poiSorter;
+    private TypeSorter<POI> poiSorter;
     private TypeSorter<Way> waySorter;
     private TypeSorter<Street> streetSorter;
     private TypeSorter<Area> terrainSorter;
@@ -78,7 +78,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         this.boundingBox = boundingBox;
         this.file = file;
 
-        poiSorter = new POISorter(pois, config.getPOIOrder());
+        poiSorter = new TypeSorter<POI>(pois, config.getPOIOrder());
         waySorter = new TypeSorter<Way>(ways, config.getWayOrder());
         streetSorter = new TypeSorter<Street>(streets, config.getStreetOrder());
         terrainSorter = new TypeSorter<Area>(terrain, config.getTerrainOrder());
@@ -207,7 +207,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 mergeTiles[2] = getTile(i, j + 1);
                 mergeTiles[3] = getTile(i + 1, j + 1);
 
-                array[i / 2][j / 2] = new ReferencedTile(config, zoom, mergeTiles);
+                array[i / 2][j / 2] = new ReferencedTile(config, mergeTiles);
             }
         }
 
@@ -217,12 +217,12 @@ public class MapManagerCreator extends AbstractMapCreator {
     }
 
     private void partitionPOIs(final int zoom, final ReferencedTile[][] tiles) {
-        final int maxPOIWidth = converter.getCoordDistance(POI_WIDTH, zoom);
+        final int poiWidth = converter.getCoordDistance(POI_WIDTH, zoom);
 
         for (final Iterator<ReferencedPOI> it = referencedPOIs.iterator(); it.hasNext();) {
             final ReferencedPOI poi = it.next();
-            final Rectangle poiBounds = new Rectangle(poi.getX() - maxPOIWidth / 2, poi.getY() - maxPOIWidth / 2,
-                    maxPOIWidth, maxPOIWidth);
+            final Rectangle poiBounds = new Rectangle(poi.getX() - poiWidth / 2, poi.getY() - poiWidth / 2, poiWidth,
+                    poiWidth);
             final Point poiLocation = poiBounds.getLocation();
             final Rectangle poiTileBounds = locateRectangle(poiBounds, zoom);
 
@@ -231,8 +231,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
                     final ReferencedTile tile = getTile(row, column, tiles);
                     for (final ReferencedPOI other : tile.getPOIs()) {
-                        final Point otherPoint = new Point(other.getX() - maxPOIWidth / 2, other.getY() - maxPOIWidth
-                                / 2);
+                        final Point otherPoint = new Point(other.getX() - poiWidth / 2, other.getY() - poiWidth / 2);
                         final int distance = (int) poiLocation.distance(otherPoint);
                         if (converter.getPixelDistance(distance, zoom) < MIN_POI_DISTANCE) {
                             intersection = true;
@@ -664,7 +663,6 @@ public class MapManagerCreator extends AbstractMapCreator {
                 return minDist <= MAX_BUILDING_STREET_DISTANCE ? ret : null;
             }
         }
-
     }
 
     private class ElementWriter extends Thread {
@@ -764,16 +762,18 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeHeader() throws IOException {
-            stream.writeInt(zoomSteps);
-            stream.writeInt(tiles.length);
-            stream.writeInt(tiles[0].length);
+            writeInt(zoomSteps);
+            writeInt(tiles.length);
+            writeInt(tiles[0].length);
             stream.writeDouble(converter.getCoordDistance(1, 0));
-            stream.writeInt(TILE_LENGTH);
-            stream.writeInt(TILE_LENGTH);
+            writeInt(TILE_LENGTH);
+            writeInt(TILE_LENGTH);
         }
 
         private void writeNodes() throws IOException {
-            stream.writeInt(nodeMap.size());
+            writeInt(nodeMap.size());
+
+            // TODO compress
             for (final Entry<Node, Integer> entry : nodeMap.entrySet()) {
                 writePoint(entry.getKey().getLocation());
             }
@@ -786,20 +786,22 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
             writeDistribution(poiSorter.getTypeDistribution(), config.getPOIOrder());
+
+            // TODO compress
             for (final POI poi : poiSorter.getSorting()) {
                 writePoint(poi.getLocation());
             }
         }
 
         private void writeNames() throws IOException {
-            stream.writeInt(nameMap.size());
+            writeInt(nameMap.size());
             for (final Entry<String, Integer> entry : nameMap.entrySet()) {
                 stream.writeUTF(entry.getKey());
             }
         }
 
         private void writeNumbers() throws IOException {
-            stream.writeInt(numberMap.size());
+            writeInt(numberMap.size());
             for (final Entry<String, Integer> entry : numberMap.entrySet()) {
                 stream.writeUTF(entry.getKey());
             }
@@ -813,9 +815,14 @@ public class MapManagerCreator extends AbstractMapCreator {
             }
 
             writeDistribution(streetSorter.getTypeDistribution(), config.getStreetOrder());
+
             for (final Street street : streetSorter.getSorting()) {
+                int node1 = (int) (street.getID() >> 32);
+                int node2 = (int) (street.getID() & 0xFFFFFFFF);
+                writeInt(node1);
+                writeInt(node2 - node1);
+
                 writeWay(street);
-                stream.writeLong(street.getID());
             }
         }
 
@@ -839,16 +846,16 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            stream.writeInt(buildings.size());
-            stream.writeInt(finder.getSuccess().size());
+            writeInt(buildings.size());
+            writeInt(finder.getSuccess().size());
 
             for (final Building building : finder.getSuccess()) {
                 final StreetNode node = building.getStreetNode();
 
                 writeMultiElement(building);
                 assert streetMap.containsKey(node.getStreet()) : streetSorter.getSorting().contains(node.getStreet());
-                stream.writeInt(streetMap.get(node.getStreet()));
-                stream.writeShort(numberMap.get(getHouseNumber(building.getAddress()).trim()));
+                writeInt(streetMap.get(node.getStreet()));
+                writeInt(numberMap.get(getHouseNumber(building.getAddress()).trim()));
                 stream.writeFloat(node.getOffset());
             }
 
@@ -885,32 +892,36 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writePoint(final Point location) throws IOException {
-            stream.writeInt(location.x);
-            stream.writeInt(location.y);
+            writeInt(location.x);
+            writeInt(location.y);
         }
 
         private void writeMultiElement(final MultiElement element) throws IOException {
             final Collection<Node> nodes = element.getNodes();
-            stream.writeShort(nodes.size());
+            writeInt(nodes.size());
+
+            int last = 0;
             for (final Node node : nodes) {
-                stream.writeInt(nodeMap.get(node));
+                int current = nodeMap.get(node);
+                writeInt(current - last);
+                last = current;
             }
         }
 
         private void writeWay(final Way way) throws IOException {
             writeMultiElement(way);
-            stream.writeShort(nameMap.get(way.getName().trim()));
+            writeInt(nameMap.get(way.getName().trim()));
         }
 
         private void writeDistribution(final int[] distribution, final int[] typeOrder) throws IOException {
             int total = 0;
-            stream.writeInt(typeOrder.length);
+            writeInt(typeOrder.length);
             for (final int type : typeOrder) {
                 total += distribution[type];
-                stream.writeInt(total);
+                writeInt(total);
             }
             for (final int type : typeOrder) {
-                stream.writeInt(type);
+                writeInt(type);
             }
         }
     }
@@ -939,39 +950,68 @@ public class MapManagerCreator extends AbstractMapCreator {
                     stream.write(tile.getFlags());
                     if (flags != 0) {
                         if (!tile.getPOIs().isEmpty()) {
-                            stream.writeInt(tile.getPOIs().size());
+                            writeInt(tile.getPOIs().size());
+                            int last = 0;
                             for (final ReferencedPOI poi : tile.getPOIs()) {
-                                stream.writeInt(poi.getID());
+                                writeInt(poi.getID() - last);
+                                last = poi.getID();
                             }
                         }
                         if (!tile.getStreets().isEmpty()) {
-                            stream.writeInt(tile.getStreets().size());
-                            for (final Integer street : tile.getStreets()) {
-                                stream.writeInt(street);
-                            }
+                            writeInts(tile.getStreets());
                         }
                         if (!tile.getWays().isEmpty()) {
-                            stream.writeInt(tile.getWays().size());
-                            for (final Integer way : tile.getWays()) {
-                                stream.writeInt(way);
-                            }
+                            writeInts(tile.getWays());
                         }
                         if (!tile.getBuildings().isEmpty()) {
-                            stream.writeInt(tile.getBuildings().size());
-                            for (final Integer building : tile.getBuildings()) {
-                                stream.writeInt(building);
-                            }
+                            writeInts(tile.getBuildings());
                         }
                         if (!tile.getTerrain().isEmpty()) {
-                            stream.writeInt(tile.getTerrain().size());
-                            for (final Integer area : tile.getTerrain()) {
-                                stream.writeInt(area);
-                            }
+                            writeInts(tile.getTerrain());
                         }
                     }
                 }
             }
         }
+
+        private void writeInts(final Collection<Integer> collection) throws IOException {
+            writeInt(collection.size());
+            int last = 0;
+            for (final Integer building : collection) {
+                writeInt(building - last);
+                last = building;
+            }
+        }
+    }
+
+    private void writeInt(final int value) throws IOException {
+        int temp = value >>> 28;
+
+        if (temp == 0) {
+            temp = (value >> 21) & 0x7F;
+            if (temp == 0) {
+                temp = (value >> 14) & 0x7F;
+                if (temp == 0) {
+                    temp = (value >> 7) & 0x7F;
+                    if (temp != 0) {
+                        stream.write(temp);
+                    }
+                } else {
+                    stream.write(temp);
+                    stream.write((value >> 7 & 0x7F));
+                }
+            } else {
+                stream.write(temp);
+                stream.write((value >> 14) & 0x7F);
+                stream.write((value >> 7) & 0x7F);
+            }
+        } else {
+            stream.write(temp);
+            stream.write((value >> 21) & 0x7F);
+            stream.write((value >> 14) & 0x7F);
+            stream.write((value >> 7) & 0x7F);
+        }
+        stream.write((value & 0x7F) | 0x80);
     }
 
     private class TypeSorter<T extends Typeable> extends Thread {
@@ -1026,12 +1066,5 @@ public class MapManagerCreator extends AbstractMapCreator {
             return typeDistribution;
         }
 
-    }
-
-    private class POISorter extends TypeSorter<POI> {
-
-        public POISorter(final Collection<POI> collection, final int[] typeOrder) {
-            super(collection, typeOrder);
-        }
     }
 }

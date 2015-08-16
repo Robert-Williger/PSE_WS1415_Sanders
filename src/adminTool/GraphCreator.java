@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,8 +27,7 @@ public class GraphCreator extends AbstractMapCreator {
     private int idCount;
     private HashMap<Node, Integer> idMap;
 
-    private List<Long> edgesList;
-    private List<Integer> weightsList;
+    private List<WeightedEdge> edgesList;
     private final List<Street> processedStreets;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
@@ -50,8 +50,8 @@ public class GraphCreator extends AbstractMapCreator {
         idCount = 0;
         idMap = new HashMap<Node, Integer>();
         nodeCount = new HashMap<Node, Integer>();
-        edgesList = new ArrayList<>();
-        weightsList = new ArrayList<>();
+
+        edgesList = new ArrayList<WeightedEdge>();
 
         // Step one: count the appearance of every node in the given streets and
         for (final UnprocessedStreet s : unprocessedStreets) {
@@ -87,22 +87,6 @@ public class GraphCreator extends AbstractMapCreator {
                 final int id2 = generateID(nodeList.get(currentCut));
 
                 final List<Node> streetNodes;
-                final long id;
-                if (id1 > id2) {
-                    id = ((long) id2 << 32) | id1;
-                    streetNodes = new ArrayList<Node>();
-                    for (int j = currentCut; j >= lastCut; j--) {
-                        streetNodes.add(nodeList.get(j));
-                    }
-                } else {
-                    id = ((long) id1 << 32) | id2;
-                    streetNodes = nodeList.subList(lastCut, currentCut + 1);
-                }
-
-                final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
-
-                processedStreets.add(newStreet);
-                edgesList.add(newStreet.getID());
 
                 double weight = 0;
                 for (int j = lastCut; j < currentCut; j++) {
@@ -110,7 +94,25 @@ public class GraphCreator extends AbstractMapCreator {
                             degrees.get(j + 1).getX());
                 }
 
-                weightsList.add((int) weight);
+                final WeightedEdge edge;
+                final long id;
+                if (id1 > id2) {
+                    edge = new WeightedEdge(id2, id1, (int) weight);
+                    id = ((long) id2 << 32) | id1;
+                    streetNodes = new ArrayList<Node>();
+                    for (int j = currentCut; j >= lastCut; j--) {
+                        streetNodes.add(nodeList.get(j));
+                    }
+                } else {
+                    edge = new WeightedEdge(id1, id2, (int) weight);
+                    id = ((long) id1 << 32) | id2;
+                    streetNodes = nodeList.subList(lastCut, currentCut + 1);
+                }
+
+                final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
+
+                processedStreets.add(newStreet);
+                edgesList.add(edge);
 
                 lastCut = currentCut;
             }
@@ -120,18 +122,20 @@ public class GraphCreator extends AbstractMapCreator {
         idMap = null;
         nodeCount = null;
 
+        Collections.sort(edgesList);
+
         try {
             stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, false)));
 
-            stream.writeInt(idCount);
-            stream.writeInt(edgesList.size());
+            writeInt(idCount);
+            writeInt(edgesList.size());
 
-            for (final Long id : edgesList) {
-                stream.writeLong(id);
-            }
-
-            for (final Integer weight : weightsList) {
-                stream.writeInt(weight);
+            int lastWeight = 0;
+            for (final WeightedEdge edge : edgesList) {
+                writeInt(edge.node1);
+                writeInt(edge.node2 - edge.node1);
+                writeInt(edge.weight - lastWeight);
+                lastWeight = edge.weight;
             }
 
             stream.close();
@@ -139,7 +143,6 @@ public class GraphCreator extends AbstractMapCreator {
         }
 
         edgesList = null;
-        weightsList = null;
     }
 
     /*
@@ -161,6 +164,36 @@ public class GraphCreator extends AbstractMapCreator {
         intersections.add(nodes.size() - 1);
 
         return intersections;
+    }
+
+    private void writeInt(final int value) throws IOException {
+        int temp = value >>> 28;
+
+        if (temp == 0) {
+            temp = (value >> 21) & 0x7F;
+            if (temp == 0) {
+                temp = (value >> 14) & 0x7F;
+                if (temp == 0) {
+                    temp = (value >> 7) & 0x7F;
+                    if (temp != 0) {
+                        stream.write(temp);
+                    }
+                } else {
+                    stream.write(temp);
+                    stream.write((value >> 7 & 0x7F));
+                }
+            } else {
+                stream.write(temp);
+                stream.write((value >> 14) & 0x7F);
+                stream.write((value >> 7) & 0x7F);
+            }
+        } else {
+            stream.write(temp);
+            stream.write((value >> 21) & 0x7F);
+            stream.write((value >> 14) & 0x7F);
+            stream.write((value >> 7) & 0x7F);
+        }
+        stream.write((value & 0x7F) | 0x80);
     }
 
     private void incrementCount(final HashMap<Node, Integer> hm, final Node n) {
@@ -198,5 +231,22 @@ public class GraphCreator extends AbstractMapCreator {
         final double dist = (earthRadius * c);
 
         return (int) (dist * 1000); // in meter
+    }
+
+    private class WeightedEdge implements Comparable<WeightedEdge> {
+        private final int node1;
+        private final int node2;
+        private final int weight;
+
+        public WeightedEdge(final int node1, final int node2, final int weight) {
+            this.node1 = node1;
+            this.node2 = node2;
+            this.weight = weight;
+        }
+
+        @Override
+        public int compareTo(final WeightedEdge o) {
+            return weight - o.weight;
+        }
     }
 }

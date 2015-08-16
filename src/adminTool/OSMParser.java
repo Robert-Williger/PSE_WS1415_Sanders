@@ -299,11 +299,11 @@ public class OSMParser implements IOSMParser {
                                     degrees.add(new Point2D.Double(lat, lon));
                                 }
 
-                                if (type == 13) {
+                                if (wayTag.equals("path")) {
                                     if (bicycle) {
-                                        type = 11;
+                                        type = getStreetType("cycleway");
                                     } else if (foot) {
-                                        type = 10;
+                                        type = getStreetType("footway");
                                     }
                                 }
 

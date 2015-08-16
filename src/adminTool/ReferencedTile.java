@@ -24,9 +24,9 @@ public class ReferencedTile {
         pois = new LinkedList<ReferencedPOI>();
     }
 
-    public ReferencedTile(final IElementOrder config, final int zoomStep, final ReferencedTile[] tiles) {
+    public ReferencedTile(final IElementOrder config, final ReferencedTile[] tiles) {
         this();
-        merge(config, zoomStep, tiles);
+        merge(config, tiles);
     }
 
     public Set<Integer> getStreets() {
@@ -73,7 +73,7 @@ public class ReferencedTile {
         return terrain.isEmpty() ? 0b00000000 : 0b00010000;
     }
 
-    private void merge(final IElementOrder config, final int zoomStep, final ReferencedTile[] tiles) {
+    private void merge(final IElementOrder config, final ReferencedTile[] tiles) {
         for (final ReferencedTile tile : tiles) {
             terrain.addAll(tile.getTerrain());
             streets.addAll(tile.getStreets());

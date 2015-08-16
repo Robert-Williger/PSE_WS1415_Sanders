@@ -149,7 +149,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         // motorway (red/pink + gray red outline)
         wayStyles[15] = new WayStyle(new float[]{1.5f, 37, 15}, new float[]{1.5f, 39, 17}, new Color(220, 158, 158),
                 new Color(194, 108, 108));
-        wayMinZoomstep[15] = 0;
+        wayMinZoomstep[15] = Integer.MIN_VALUE;
 
         // trunk (green + gray green outline)
         wayStyles[16] = new WayStyle(new float[]{1.2f, 14, 15}, new float[]{1.2f, 15, 17}, new Color(148, 212, 148),
@@ -202,15 +202,15 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         // wood (dark green [brighter])
         areaStyles[1] = new ShapeStyle(1f, new Color(174, 209, 160));
-        areaMinZoomstep[1] = Integer.MIN_VALUE;
+        areaMinZoomstep[1] = 0;
 
         // grass / meadow / grassland ... (light yellow-green)
         areaStyles[2] = new ShapeStyle(1f, new Color(205, 236, 165));
-        areaMinZoomstep[2] = Integer.MIN_VALUE;
+        areaMinZoomstep[2] = 0;
 
         // grassfield (ligth grey-brown)
         areaStyles[3] = new ShapeStyle(1f, new Color(181, 181, 141));
-        areaMinZoomstep[3] = Integer.MIN_VALUE;
+        areaMinZoomstep[3] = 0;
 
         // residential / railway (gray)
         areaStyles[4] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(218, 218, 218),
@@ -267,7 +267,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         // farmland (light orange-brown)
         areaStyles[16] = new ShapeStyle(1f, new Color(235, 221, 199));
-        areaMinZoomstep[16] = Integer.MIN_VALUE;
+        areaMinZoomstep[16] = 0;
 
         // playground (very light turquoise + light blue outline)
         areaStyles[17] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 2f, 2f}, new Color(204, 255, 241),
