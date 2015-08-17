@@ -34,7 +34,7 @@ public class MapTest {
             }
         }
 
-        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(8));
+        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(8), 0);
         map = new Map(manager);
     }
 
@@ -58,14 +58,14 @@ public class MapTest {
 
     @Test
     public void testMove() {
-        map.zoom(3);
+        map.zoom(3, new Point(50, 50));
         map.moveView(257, 257);
         assertEquals(new Point(1, 1), map.getViewLocation());
     }
 
     @Test
     public void testZoom() {
-        map.zoom(2);
+        map.zoom(2, new Point(50, 50));
         assertEquals(2, manager.getMapState().getZoomStep());
     }
 }

@@ -3,6 +3,8 @@ package view;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
@@ -217,6 +219,16 @@ public class MapView extends JPanel implements IMapView {
 
         public void add(final IRoutePoint point) {
             final RoutePointView view = new RoutePointView(point);
+            view.addMouseWheelListener(new MouseWheelListener() {
+
+                @Override
+                public void mouseWheelMoved(final MouseWheelEvent e) {
+                    // TODO improve this?
+                    MapView.this.processMouseWheelEvent(new MouseWheelEvent(MapView.this, e.getID(), e.getWhen(), e
+                            .getModifiers(), e.getX() - viewport.getX(), e.getY() - viewport.getY(), e.getClickCount(),
+                            e.isPopupTrigger(), e.getScrollType(), e.getScrollAmount(), e.getWheelRotation()));
+                }
+            });
             add(view);
             routePoints.put(point, view);
             for (final IDragListener listener : listenerList.getListeners(IDragListener.class)) {

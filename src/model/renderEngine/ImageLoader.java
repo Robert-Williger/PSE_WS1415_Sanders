@@ -47,9 +47,9 @@ public class ImageLoader implements IImageLoader {
         lastPOIVisibility = true;
         lastRouteVisibility = true;
 
-        // set zoomStep to -1, so on first update all tiles in current view will
-        // be rendered
-        lastZoomStep = -1;
+        // set zoomStep to minZoomStep - 1, so on first update all tiles in
+        // current view will be rendered
+        lastZoomStep = mapManager.getMapState().getMinZoomStep() - 1;
         lastGridLocation = new Point(mapManager.getCurrentGridLocation());
 
         backgroundRenderer = new BackgroundRenderer(mapManager.getConverter());
@@ -71,7 +71,7 @@ public class ImageLoader implements IImageLoader {
 
         // set zoomStep to -1, so on first update all tiles in current view will
         // be rendered
-        lastZoomStep = -1;
+        lastZoomStep = mapManager.getMapState().getMinZoomStep() - 1;
         lastGridLocation = new Point(mapManager.getCurrentGridLocation());
 
         backgroundRenderer.setConverter(manager.getConverter());
@@ -145,13 +145,13 @@ public class ImageLoader implements IImageLoader {
         final int zoom = state.getZoomStep();
         final IPixelConverter converter = mapManager.getConverter();
         final Dimension tileSize = mapManager.getTileSize();
-        final double zoomFactor = 1.0 / (1 << zoom);
+        final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
         final int height = (int) (state.getSize().height * zoomFactor);
         final int width = (int) (state.getSize().width * zoomFactor);
         final int x = state.getLocation().x;
         final int y = state.getLocation().y;
 
-        if (zoom > 0) {
+        if (zoom > state.getMinZoomStep()) {
             final int zoomedStep = zoom - 1;
             final int zoomedHeight = height * 2;
             final int zoomedWidth = width * 2;

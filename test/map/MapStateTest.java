@@ -18,7 +18,7 @@ public class MapStateTest {
 
     @Before
     public void setUp() {
-        state = new MapState(new Dimension(200, 200), 15);
+        state = new MapState(new Dimension(200, 200), 15, 0);
     }
 
     @Test

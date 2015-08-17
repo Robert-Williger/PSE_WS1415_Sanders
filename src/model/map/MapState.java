@@ -8,34 +8,29 @@ public class MapState implements IMapState {
 
     private int zoomStep;
     private final Rectangle bounds;
+    private final int minZoomStep;
     private final int maxZoomStep;
     private final int height;
     private final int width;
 
-    public MapState(final Dimension coordSize, final int maxZoomStep) {
+    public MapState(final Dimension coordSize, final int maxZoomStep, final int minZoomStep) {
+        this.minZoomStep = minZoomStep;
         this.maxZoomStep = maxZoomStep;
         height = coordSize.height;
         width = coordSize.width;
 
         bounds = new Rectangle();
-        zoomStep = 0;
+        zoomStep = minZoomStep;
     }
 
     @Override
     public void setZoomStep(final int zoomStep) {
-        if (zoomStep > maxZoomStep) {
-            this.zoomStep = maxZoomStep;
-        } else if (zoomStep < 0) {
-            this.zoomStep = 0;
-        } else {
-            this.zoomStep = zoomStep;
-        }
+        this.zoomStep = Math.min(maxZoomStep, Math.max(zoomStep, minZoomStep));
     }
 
     @Override
     public void setSize(final int width, final int height) {
-        bounds.setSize(width, height);// Math.min(width, coordWidth),
-                                      // Math.min(height, coordHeight));
+        bounds.setSize(width, height);
         setLocation(getLocation());
     }
 
@@ -49,7 +44,7 @@ public class MapState implements IMapState {
         int xCoord = x;
         int yCoord = y;
 
-        final double zoomFactor = 1.0 / (1 << zoomStep);
+        final double zoomFactor = 1.0 / (1 << (zoomStep - minZoomStep));
         final int coordWidth = (int) (bounds.width * zoomFactor);
         final int coordHeight = (int) (bounds.height * zoomFactor);
         if (coordWidth <= width) {
@@ -93,6 +88,11 @@ public class MapState implements IMapState {
     @Override
     public int getMaxZoomStep() {
         return maxZoomStep;
+    }
+
+    @Override
+    public int getMinZoomStep() {
+        return minZoomStep;
     }
 
     @Override

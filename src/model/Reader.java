@@ -65,6 +65,7 @@ public class Reader implements IReader {
         } catch (final Exception e) {
             managerReader = null;
 
+            e.printStackTrace();
             if (!canceled) {
                 fireErrorOccured("Beim Kartenimport ist ein Fehler aufgetreten.");
             }
@@ -199,7 +200,8 @@ public class Reader implements IReader {
         private String[] names;
         private String[] numbers;
 
-        private int zoomSteps;
+        private int minZoomStep;
+        private int maxZoomStep;
         private int rows;
         private int columns;
 
@@ -212,7 +214,7 @@ public class Reader implements IReader {
             readTiles();
             cleanUp();
 
-            return new MapManager(tiles, tileSize, converter);
+            return new MapManager(tiles, tileSize, converter, minZoomStep);
         }
 
         public Street[] getStreets() {
@@ -220,10 +222,11 @@ public class Reader implements IReader {
         }
 
         private void readHeader() throws IOException {
-            zoomSteps = readInt();
+            minZoomStep = readInt();
+            maxZoomStep = readInt();
             rows = readInt();
             columns = readInt();
-            tiles = new ITile[zoomSteps][][];
+            tiles = new ITile[maxZoomStep - minZoomStep + 1][][];
             converter = new PixelConverter(reader.readDouble());
             tileSize = new Dimension(readInt(), readInt());
         }
@@ -350,8 +353,8 @@ public class Reader implements IReader {
 
             int currentRows = rows;
             int currentCols = columns;
-            for (int zoom = zoomSteps - 1; zoom >= 0; zoom--) {
-                tiles[zoom] = new ITile[currentRows][currentCols];
+            for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
+                tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
 
                 final int tileCoordWidth = converter.getCoordDistance(tileSize.width, zoom);
                 final int tileCoordHeight = converter.getCoordDistance(tileSize.height, zoom);
@@ -440,7 +443,7 @@ public class Reader implements IReader {
                                     tilePOIs);
                         }
 
-                        tiles[zoom][row][column] = tile;
+                        tiles[zoom - minZoomStep][row][column] = tile;
 
                         x += tileCoordWidth;
                     }

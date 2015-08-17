@@ -198,7 +198,7 @@ public class MapController extends AbstractController<IMapView> {
 
             @Override
             public void mouseWheelMoved(final MouseWheelEvent e) {
-                application.getMap().zoom(-e.getWheelRotation());
+                application.getMap().zoom(-e.getWheelRotation(), e.getPoint());
                 application.getImageLoader().update();
             }
 

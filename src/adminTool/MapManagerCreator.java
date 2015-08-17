@@ -57,7 +57,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     private Rectangle boundingBox;
 
-    private int zoomSteps;
+    private int minZoomStep;
+    private int maxZoomStep;
     private int coordTileLength;
 
     private StreetNodeFinder finder;
@@ -86,12 +87,14 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     @Override
     public void create() {
-        final int topTileLength = (1 << (int) Math.ceil(log2(Math.min(boundingBox.getWidth(), boundingBox.getHeight())
-                / MIN_TILES)));
-        final int conversionFactor = topTileLength / TILE_LENGTH;
+        final int zoomOffset = (int) Math.ceil(log2(Math.min(boundingBox.getWidth(), boundingBox.getHeight())
+                / MIN_TILES));
+        final int topTileLength = (1 << zoomOffset);
+        minZoomStep = 29 - zoomOffset;
+        final int conversionFactor = 1 << 21;
 
-        zoomSteps = Math.min(Math.max(1, (int) log2(conversionFactor)), MAX_ZOOM_STEPS);
-        coordTileLength = topTileLength >> (zoomSteps - 1);
+        maxZoomStep = Math.min(19, minZoomStep + MAX_ZOOM_STEPS - 1);
+        coordTileLength = topTileLength >> (maxZoomStep - minZoomStep);
 
         final int xTiles = (int) Math.ceil(boundingBox.getWidth() / coordTileLength);
         final int yTiles = (int) Math.ceil(boundingBox.getHeight() / coordTileLength);
@@ -170,7 +173,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         buildings = null;
 
-        for (int zoom = zoomSteps - 2; zoom >= 0; zoom--) {
+        for (int zoom = maxZoomStep - 1; zoom >= minZoomStep; zoom--) {
             final TileWriter writer = new TileWriter();
             writer.start();
 
@@ -286,7 +289,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     }
 
     private Rectangle locateRectangle(final Rectangle rect) {
-        return locateRectangle(rect, zoomSteps - 1);
+        return locateRectangle(rect, maxZoomStep);
     }
 
     private Rectangle locateRectangle(final Rectangle rect, final int zoom) {
@@ -299,7 +302,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     }
 
     private Point locatePoint(final int x, final int y, final int zoom) {
-        final int coordLength = coordTileLength << (zoomSteps - zoom - 1);
+        final int coordLength = coordTileLength << (maxZoomStep - zoom);
         return new Point(x / coordLength, y / coordLength);
     }
 
@@ -354,7 +357,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             for (final POI poi : poiSorter.getSorting()) {
                 referencedPOIs.add(new ReferencedPOI(poi.getX(), poi.getY()));
             }
-            partitionPOIs(zoomSteps - 1, tiles);
+            partitionPOIs(maxZoomStep, tiles);
         }
     }
 
@@ -406,7 +409,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, zoomSteps - 1);
+            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, maxZoomStep);
 
             int id = 0;
             for (final Way way : waySorter.getSorting()) {
@@ -447,7 +450,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, zoomSteps - 1);
+            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, maxZoomStep);
 
             int id = 0;
             for (final Street street : streetSorter.getSorting()) {
@@ -762,7 +765,8 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeHeader() throws IOException {
-            writeInt(zoomSteps);
+            writeInt(minZoomStep);
+            writeInt(maxZoomStep);
             writeInt(tiles.length);
             writeInt(tiles[0].length);
             stream.writeDouble(converter.getCoordDistance(1, 0));
@@ -915,12 +919,13 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         private void writeDistribution(final int[] distribution, final int[] typeOrder) throws IOException {
             int total = 0;
-            writeInt(typeOrder.length);
-            for (final int type : typeOrder) {
+            // TODO type order
+            writeInt(distribution.length);
+            for (int type = 0; type < distribution.length; type++) {
                 total += distribution[type];
                 writeInt(total);
             }
-            for (final int type : typeOrder) {
+            for (int type = 0; type < distribution.length; type++) {
                 writeInt(type);
             }
         }
@@ -1023,6 +1028,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         public TypeSorter(final Collection<T> source, final int[] typeOrder) {
             this.typeables = source;
             this.typeOrder = typeOrder;
+            // TODO type order
         }
 
         @Override
@@ -1047,11 +1053,16 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             final List<T> typeables = new ArrayList<T>(this.typeables.size());
 
-            for (final int type : typeOrder) {
-                final List<T> list = typeLists.get(type);
-                typeDistribution[type] = list.size();
+            for (int i = 0; i < typeLists.size(); i++) {
+                final List<T> list = typeLists.get(i);
+                typeDistribution[i] = list.size();
                 typeables.addAll(list);
             }
+            // for (final int type : typeOrder) {
+            // final List<T> list = typeLists.get(type);
+            // typeDistribution[type] = list.size();
+            // typeables.addAll(list);
+            // }
 
             typeLists = null;
             this.typeables = typeables;

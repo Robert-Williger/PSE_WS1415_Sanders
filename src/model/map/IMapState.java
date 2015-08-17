@@ -22,6 +22,8 @@ public interface IMapState {
 
     int getMaxZoomStep();
 
+    int getMinZoomStep();
+
     Rectangle getBounds();
 
     Point getLocation();

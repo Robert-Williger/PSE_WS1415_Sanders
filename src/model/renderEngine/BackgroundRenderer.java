@@ -32,9 +32,6 @@ import model.map.ITile;
 
 public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
-    private static final float REFERENCE_DISTANCE_COORD;
-    private static final float REFERENCE_DISTANCE_PIXEL;
-    private static int minZoomstepOffset;
     // streets
     private static final Font streetNameFont;
     private static final int streetNameMinZoomstep;
@@ -58,13 +55,9 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
     // defines the render styles for all types of streets, ways, areas and
     // buildings
     static {
-
-        REFERENCE_DISTANCE_COORD = 10000f;
-        REFERENCE_DISTANCE_PIXEL = 39f;
-
         // // STREETS AND WAYS ////
         streetNameFont = new Font("Times New Roman", Font.PLAIN, 12);
-        streetNameMinZoomstep = 7;
+        streetNameMinZoomstep = 17;
         wayMinZoomstep = new int[24];
         wayStyles = new WayStyle[24];
 
@@ -72,122 +65,122 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         // light gray outline)
         wayStyles[0] = new WayStyle(new float[]{1, 8, 15}, new float[]{1.2f, 9, 17}, Color.WHITE, new Color(200, 200,
                 200));
-        wayMinZoomstep[0] = 3;
+        wayMinZoomstep[0] = 13;
 
         // service (white + light gray outline, small)
         wayStyles[1] = new WayStyle(new float[]{1f, 4, 7}, new float[]{1f, 5, 9}, Color.WHITE, new Color(200, 200, 200));
-        wayMinZoomstep[1] = 4;
+        wayMinZoomstep[1] = 14;
 
         // secondary (orange)
         wayStyles[2] = new WayStyle(new float[]{1.2f, 13, 15}, new float[]{1.2f, 15, 17}, new Color(248, 213, 168),
                 new Color(208, 167, 114));
-        wayMinZoomstep[2] = 2;
+        wayMinZoomstep[2] = 12;
 
         // tertiary (yellow)
         wayStyles[3] = new WayStyle(new float[]{1.2f, 8, 15}, new float[]{1.2f, 9, 17}, new Color(248, 248, 186),
                 new Color(200, 200, 200));
-        wayMinZoomstep[3] = 3;
+        wayMinZoomstep[3] = 13;
 
         // road (gray + darker gray outline)
         wayStyles[4] = new WayStyle(new float[]{1.2f, 8, 15}, new float[]{1.2f, 9, 17}, new Color(200, 200, 200),
                 new Color(170, 170, 170));
-        wayMinZoomstep[4] = 3;
+        wayMinZoomstep[4] = 13;
 
         // track (transparent white + brown dots/short lines)
         wayStyles[5] = new WayStyle(new float[]{0f, 2.5f, 8}, new float[]{0, 0, 0}, new float[]{0f, 1.5f, 4},
                 new Color(255, 255, 255, 90), null, new Color(139, 69, 19), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND, new float[]{0, 3, 9}, new float[]{0, 4, 12});
-        wayMinZoomstep[5] = 5;
+        wayMinZoomstep[5] = 15;
 
         // footway (transparent white + light pink dots/short lines)
         wayStyles[6] = new WayStyle(new float[]{0f, 2.5f, 8}, new float[]{0, 0, 0}, new float[]{0f, 1.5f, 4},
                 new Color(255, 255, 255, 90), null, new Color(250, 150, 150), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND, new float[]{0, 3, 9}, new float[]{0, 4, 12});
-        wayMinZoomstep[6] = 5;
+        wayMinZoomstep[6] = 15;
 
         // cycleway (transparent white + blue dots/short lines)
         wayStyles[7] = new WayStyle(new float[]{0f, 2.5f, 8}, new float[]{0, 0, 0}, new float[]{0f, 1.5f, 4},
                 new Color(255, 255, 255, 90), null, new Color(64, 71, 245, 200), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND, new float[]{0, 3, 9}, new float[]{0, 4, 12});
-        wayMinZoomstep[7] = 5;
+        wayMinZoomstep[7] = 15;
 
         // bridleway (transparent white + short green lines)
         wayStyles[8] = new WayStyle(new float[]{0f, 2.5f, 8}, new float[]{0, 0, 0}, new float[]{0f, 1.5f, 4},
                 new Color(255, 255, 255, 90), null, new Color(76, 164, 75), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND, new float[]{0, 3, 9}, new float[]{0, 4, 12});
-        wayMinZoomstep[8] = 5;
+        wayMinZoomstep[8] = 15;
 
         // path (transparent white + short black lines)
         wayStyles[9] = new WayStyle(new float[]{0f, 2.5f, 8}, new float[]{0, 0, 0}, new float[]{0f, 1.5f, 4},
                 new Color(255, 255, 255, 90), null, new Color(50, 50, 50, 200), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND, new float[]{0, 3, 9}, new float[]{0, 4, 12});
-        wayMinZoomstep[9] = 5;
+        wayMinZoomstep[9] = 15;
 
         // river (light blue big)
         wayStyles[10] = new WayStyle(new float[]{0, 20, 20}, new Color(181, 208, 208));
-        wayMinZoomstep[10] = 0;
+        wayMinZoomstep[10] = 10;
 
         // stream (light blue small)
         wayStyles[11] = new WayStyle(5, new Color(181, 208, 208));
-        wayMinZoomstep[11] = 1;
+        wayMinZoomstep[11] = 11;
 
         // rail/light_rail (black outline + black middleline - large)
         wayStyles[12] = new WayStyle(new float[]{0, 1.1f, 4.125f}, new float[]{0, 0.3f, 1.125f}, new float[]{0, 2.2f,
                 8.25f}, null, Color.DARK_GRAY, Color.DARK_GRAY, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
                 new float[]{0, 0.6f, 2.25f}, new float[]{0, 2.5f, 9.375f});
-        wayMinZoomstep[12] = 4;
+        wayMinZoomstep[12] = 14;
 
         // tram (small gray)
         wayStyles[13] = new WayStyle(new float[]{0, 0.3f, 2}, new Color(68, 68, 68));
-        wayMinZoomstep[13] = 6;
+        wayMinZoomstep[13] = 16;
 
         // primary street (orange + dark orange outline)
         wayStyles[14] = new WayStyle(new float[]{1.2f, 14, 15}, new float[]{1.2f, 16, 17}, new Color(230, 165, 65),
                 new Color(189, 113, 0));
-        wayMinZoomstep[14] = 1;
+        wayMinZoomstep[14] = 11;
 
         // motorway (red/pink + gray red outline)
         wayStyles[15] = new WayStyle(new float[]{1.5f, 37, 15}, new float[]{1.5f, 39, 17}, new Color(220, 158, 158),
                 new Color(194, 108, 108));
-        wayMinZoomstep[15] = Integer.MIN_VALUE;
+        wayMinZoomstep[15] = 0;
 
         // trunk (green + gray green outline)
         wayStyles[16] = new WayStyle(new float[]{1.2f, 14, 15}, new float[]{1.2f, 15, 17}, new Color(148, 212, 148),
                 new Color(131, 158, 131));
-        wayMinZoomstep[16] = 1;
+        wayMinZoomstep[16] = 11;
 
         // primary_link (see primary)
         wayStyles[17] = new WayStyle(new float[]{1.2f, 10, 12}, new float[]{1.2f, 12, 14}, new Color(230, 165, 65),
                 new Color(189, 113, 0));
-        wayMinZoomstep[17] = 4;
+        wayMinZoomstep[17] = 14;
 
         // motorway_link (see motorway)
         wayStyles[18] = new WayStyle(new float[]{1.5f, 10, 12}, new float[]{1.5f, 12, 14}, new Color(220, 158, 158),
                 new Color(194, 108, 108));
-        wayMinZoomstep[18] = 3;
+        wayMinZoomstep[18] = 13;
 
         // trunk_link (see trunk)
         wayStyles[19] = new WayStyle(new float[]{1.2f, 10, 12}, new float[]{1.2f, 12, 14}, new Color(148, 212, 148),
                 new Color(131, 158, 131));
-        wayMinZoomstep[19] = 4;
+        wayMinZoomstep[19] = 14;
 
         // track[career] (dark green)
         wayStyles[20] = new WayStyle(new float[]{1.2f, 1f, 3f}, new Color(111, 170, 141));
-        wayMinZoomstep[20] = 7;
+        wayMinZoomstep[20] = 17;
 
         // steps (light gray + red lines)
         wayStyles[21] = new WayStyle(new float[]{0, 2f, 6f}, new float[]{0f, 0f, 0f}, new float[]{0, 2f, 6f},
                 new Color(230, 230, 230), null, new Color(250, 128, 114), BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
                 new float[]{0, 0.75f, 3f}, new float[]{0, 0.25f, 1f});
-        wayMinZoomstep[21] = 7;
+        wayMinZoomstep[21] = 17;
 
         // wall (dark gray)
         wayStyles[22] = new WayStyle(new float[]{0, 0.3f, 1}, new Color(158, 158, 158));
-        wayMinZoomstep[22] = 5;
+        wayMinZoomstep[22] = 15;
 
         // hedge (green)
         wayStyles[23] = new WayStyle(new float[]{0, 0.75f, 2.5f}, new Color(174, 209, 160));
-        wayMinZoomstep[23] = 5;
+        wayMinZoomstep[23] = 15;
 
         wayOrder = new int[][]{{10}, {11}, {19}, {17}, {18}, {12}, {22}, {23}, {0, 1}, {3}, {2}, {4}, {16}, {14}, {13},
                 {15}, {5}, {6}, {7}, {8}, {9}, {20}, {21}};
@@ -198,109 +191,109 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         // forest (dark green)
         areaStyles[0] = new ShapeStyle(1f, new Color(160, 206, 133));
-        areaMinZoomstep[0] = Integer.MIN_VALUE;
+        areaMinZoomstep[0] = 8;
 
         // wood (dark green [brighter])
         areaStyles[1] = new ShapeStyle(1f, new Color(174, 209, 160));
-        areaMinZoomstep[1] = 0;
+        areaMinZoomstep[1] = 10;
 
         // grass / meadow / grassland ... (light yellow-green)
         areaStyles[2] = new ShapeStyle(1f, new Color(205, 236, 165));
-        areaMinZoomstep[2] = 0;
+        areaMinZoomstep[2] = 10;
 
         // grassfield (ligth grey-brown)
         areaStyles[3] = new ShapeStyle(1f, new Color(181, 181, 141));
-        areaMinZoomstep[3] = 0;
+        areaMinZoomstep[3] = 10;
 
         // residential / railway (gray)
         areaStyles[4] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(218, 218, 218),
                 new Color(200, 200, 200));
-        areaMinZoomstep[4] = 2;
+        areaMinZoomstep[4] = 12;
 
         // water / reservoir (light blue)
         areaStyles[5] = new ShapeStyle(1f, new Color(181, 208, 208));
-        areaMinZoomstep[5] = Integer.MIN_VALUE;
+        areaMinZoomstep[5] = 8;
 
         // industrial (light purple)
         areaStyles[6] = new ShapeStyle(1f, new Color(223, 209, 214));
-        areaMinZoomstep[6] = 2;
+        areaMinZoomstep[6] = 12;
 
         // park (very light green)
         areaStyles[7] = new ShapeStyle(1f, new Color(205, 247, 201));
-        areaMinZoomstep[7] = 4;
+        areaMinZoomstep[7] = 14;
 
         // retail (light pink)
         areaStyles[8] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(240, 216, 216),
                 new Color(226, 200, 198));
-        areaMinZoomstep[8] = 2;
+        areaMinZoomstep[8] = 12;
 
         // heath / fell (light brown)
         areaStyles[9] = new ShapeStyle(1f, new Color(214, 217, 159));
-        areaMinZoomstep[9] = 2;
+        areaMinZoomstep[9] = 12;
 
         // sand (light yellow)
         areaStyles[10] = new ShapeStyle(1f, new Color(240, 228, 184));
-        areaMinZoomstep[10] = 3;
+        areaMinZoomstep[10] = 13;
 
         // mud /scree (very light pink-grey)
         areaStyles[11] = new ShapeStyle(1f, new Color(228, 219, 208));
-        areaMinZoomstep[11] = 2;
+        areaMinZoomstep[11] = 12;
 
         // quarry (gray)
         areaStyles[12] = new ShapeStyle(1f, new Color(195, 195, 195));
-        areaMinZoomstep[12] = 2;
+        areaMinZoomstep[12] = 12;
 
         // cemetery (darker green)
         areaStyles[13] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(170, 202, 174),
                 new Color(134, 149, 135));
-        areaMinZoomstep[13] = 3;
+        areaMinZoomstep[13] = 13;
 
         // parking (light yellow)
         areaStyles[14] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(246, 238, 182),
                 new Color(239, 221, 236));
-        areaMinZoomstep[14] = 5;
+        areaMinZoomstep[14] = 15;
 
         // pedestrian (light gray)
         areaStyles[15] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(237, 237, 237),
                 new Color(200, 200, 200));
-        areaMinZoomstep[15] = 3;
+        areaMinZoomstep[15] = 13;
 
         // farmland (light orange-brown)
         areaStyles[16] = new ShapeStyle(1f, new Color(235, 221, 199));
-        areaMinZoomstep[16] = 0;
+        areaMinZoomstep[16] = 10;
 
         // playground (very light turquoise + light blue outline)
         areaStyles[17] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 2f, 2f}, new Color(204, 255, 241),
                 new Color(148, 217, 197));
-        areaMinZoomstep[17] = 5;
+        areaMinZoomstep[17] = 15;
 
         // pitch (light turquoise + dark green outline)
         areaStyles[18] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(138, 211, 175),
                 new Color(111, 170, 141));
-        areaMinZoomstep[18] = 4;
+        areaMinZoomstep[18] = 14;
 
         // sports_centre stadium (turquoise)
         areaStyles[19] = new ShapeStyle(1f, new Color(51, 204, 153));
-        areaMinZoomstep[19] = 4;
+        areaMinZoomstep[19] = 14;
 
         // track (light turquoise + dark green outline)
         areaStyles[20] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(116, 220, 186),
                 new Color(111, 170, 141));
-        areaMinZoomstep[20] = 4;
+        areaMinZoomstep[20] = 14;
 
         // golf_course (light green)
         areaStyles[21] = new ShapeStyle(1f, new Color(181, 226, 181));
-        areaMinZoomstep[21] = 5;
+        areaMinZoomstep[21] = 15;
 
         // school university college kindergarten (very light yellow)
         areaStyles[22] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(240, 240, 216),
                 new Color(217, 180, 169));
-        areaMinZoomstep[22] = 3;
+        areaMinZoomstep[22] = 13;
 
         // zoo (very light green)
         areaStyles[23] = new ShapeStyle(new float[]{1f, 1f, 1f}, new float[]{0f, 1f, 1f}, new Color(164, 242, 161),
                 new Color(111, 170, 141));
-        areaMinZoomstep[23] = 4;
+        areaMinZoomstep[23] = 14;
 
         areaOrder = new int[]{7, 1, 22, 3, 4, 2, 9, 12, 16, 10, 6, 8, 13, 19, 21, 17, 15, 0, 23, 18, 20, 11, 5, 14};
 
@@ -310,22 +303,14 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         // default (light gray + gray outline)
         buildingStyles[0] = new ShapeStyle(new float[]{0, 15f, 15f}, new float[]{0, 0.5f, 1f},
                 new Color(216, 208, 201), new Color(170, 170, 170));
-        buildingMinZoomstep = 5;
-        buildingNumberMinZoomstep = 8;
+        buildingMinZoomstep = 15;
+        buildingNumberMinZoomstep = 18;
         buildingNumberFont = new Font("Times New Roman", Font.PLAIN, 10);
         buildingNumberColor = new Color(96, 96, 96);
     }
 
     public BackgroundRenderer(final IPixelConverter converter) {
         setConverter(converter);
-    }
-
-    private static void calculateZoomOffset(final IPixelConverter converter) {
-        minZoomstepOffset = 9;
-        while (converter.getPixelDistancef(REFERENCE_DISTANCE_COORD, 5 + minZoomstepOffset) - REFERENCE_DISTANCE_PIXEL > 10f
-                && Math.abs(minZoomstepOffset) < 10) {
-            minZoomstepOffset--;
-        }
     }
 
     @Override
@@ -349,7 +334,6 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         if (drawAreas(tile, g) && drawWays(tile, g) && drawBuildings(tile, g)) {
             // && drawStreetNames(tile, g)) {
-
             g.dispose();
             fireChange();
             return true;
@@ -369,7 +353,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         for (final Street street : tile.getStreets()) {
             final String text = street.getName();
-            if (streetNameMinZoomstep + minZoomstepOffset <= tile.getZoomStep() && !text.equals("Unbekannte Straße")) {
+            if (streetNameMinZoomstep <= tile.getZoomStep() && !text.equals("Unbekannte Straße")) {
 
                 final int textSize = metrics.stringWidth(text);
                 int distanceCount = 0;
@@ -535,7 +519,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             if (area == null) {
                 return false;
             }
-            if (areaMinZoomstep[area.getType()] + minZoomstepOffset <= zoom) {
+            if (areaMinZoomstep[area.getType()] <= zoom) {
                 path[area.getType()].append(convertPolygon(area.getPolygon(), tileLoc, zoom).getPathIterator(null),
                         false);
             }
@@ -573,7 +557,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         for (final int[] layer : wayOrder) {
             for (final int way : layer) {
-                if (wayMinZoomstep[way] + minZoomstepOffset <= zoom) {
+                if (wayMinZoomstep[way] <= zoom) {
                     if (wayStyles[way].outlineCompositeStroke(g, zoom)) {
                         g.draw(path[way]);
                     } else if (wayStyles[way].outlineStroke(g, zoom)) {
@@ -582,14 +566,14 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
                 }
             }
             for (final int way : layer) {
-                if (wayMinZoomstep[way] + minZoomstepOffset <= zoom) {
+                if (wayMinZoomstep[way] <= zoom) {
                     if (wayStyles[way].mainStroke(g, zoom)) {
                         g.draw(path[way]);
                     }
                 }
             }
             for (final int way : layer) {
-                if (wayMinZoomstep[way] + minZoomstepOffset <= zoom) {
+                if (wayMinZoomstep[way] <= zoom) {
                     if (wayStyles[way].middleLineStroke(g, zoom)) {
                         g.draw(path[way]);
                     }
@@ -603,7 +587,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
     private boolean drawBuildings(final ITile tile, final Graphics2D g) {
         final int zoom = tile.getZoomStep();
 
-        if (zoom < buildingMinZoomstep + minZoomstepOffset) {
+        if (zoom < buildingMinZoomstep) {
             return true;
         }
 
@@ -635,7 +619,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         }
 
         // draw building numbers
-        if (zoom >= buildingNumberMinZoomstep + minZoomstepOffset) {
+        if (zoom >= buildingNumberMinZoomstep) {
             g.setFont(buildingNumberFont);
             g.setColor(buildingNumberColor);
 
@@ -693,7 +677,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             if (way == null) {
                 return false;
             }
-            if (wayMinZoomstep[way.getType()] + minZoomstepOffset <= zoom) {
+            if (wayMinZoomstep[way.getType()] <= zoom) {
                 appendPath(way.getNodes(), tileLoc, zoom, path[way.getType()]);
             }
         }
@@ -719,7 +703,6 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
     public void setConverter(final IPixelConverter converter) {
         this.converter = converter;
         ShapeStyle.setConverter(converter);
-        calculateZoomOffset(converter);
     }
 
     private Point2D.Float calculateCenter(final Polygon poly) {

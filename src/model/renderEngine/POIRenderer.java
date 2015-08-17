@@ -18,10 +18,6 @@ import model.map.ITile;
 
 public class POIRenderer extends AbstractModel implements IRenderer {
 
-    private static final float REFERENCE_DISTANCE_COORD;
-    private static final float REFERENCE_DISTANCE_PIXEL;
-    private static int minZoomstepOffset;
-
     private static final Image[] poiImage;
     private static final int[] poiMinZoomStep;
     private static final Dimension imageSize;
@@ -29,14 +25,12 @@ public class POIRenderer extends AbstractModel implements IRenderer {
     private IPixelConverter converter;
 
     static {
-        REFERENCE_DISTANCE_COORD = 10000f;
-        REFERENCE_DISTANCE_PIXEL = 39f;
         imageSize = new Dimension(20, 20);
 
         final BufferedImage defaultImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         final String[] amenities = {"viewpoint", "school", "library", "hospital", "bank", "cinema", "museum",
                 "theatre", "courthouse", "playground", "restaurant", "cafe", "bar", "parking", "fuel"};
-        poiMinZoomStep = new int[]{6, 7, 6, 6, 7, 6, 6, 6, 6, 7, 7, 7, 7, 6, 7};
+        poiMinZoomStep = new int[]{16, 17, 16, 16, 17, 16, 16, 16, 16, 17, 17, 17, 17, 16, 17};
         poiImage = new Image[amenities.length];
 
         for (int i = 0; i < amenities.length; i++) {
@@ -56,14 +50,6 @@ public class POIRenderer extends AbstractModel implements IRenderer {
 
     public POIRenderer(final IPixelConverter converter) {
         setConverter(converter);
-    }
-
-    private static void calculateZoomOffset(final IPixelConverter converter) {
-        minZoomstepOffset = 9;
-        while (converter.getPixelDistancef(REFERENCE_DISTANCE_COORD, 5 + minZoomstepOffset) - REFERENCE_DISTANCE_PIXEL > 10f
-                && Math.abs(minZoomstepOffset) < 10) {
-            minZoomstepOffset--;
-        }
     }
 
     @Override
@@ -102,7 +88,7 @@ public class POIRenderer extends AbstractModel implements IRenderer {
                 return false;
             }
 
-            if (zoom >= poiMinZoomStep[poi.getType()] + minZoomstepOffset) {
+            if (zoom >= poiMinZoomStep[poi.getType()]) {
                 ret = true;
                 g.drawImage(poiImage[poi.getType()], converter.getPixelDistance(poi.getX() - location.x, zoom)
                         - imageSize.width / 2, converter.getPixelDistance(poi.getY() - location.y, zoom)
@@ -117,6 +103,5 @@ public class POIRenderer extends AbstractModel implements IRenderer {
     @Override
     public void setConverter(final IPixelConverter converter) {
         this.converter = converter;
-        calculateZoomOffset(converter);
     }
 }

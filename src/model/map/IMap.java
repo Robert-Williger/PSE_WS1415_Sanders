@@ -8,7 +8,7 @@ import model.IModel;
 
 public interface IMap extends IModel {
 
-    void zoom(int steps);
+    void zoom(int steps, Point location);
 
     void moveView(int deltaX, int deltaY);
 

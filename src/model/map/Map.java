@@ -19,15 +19,34 @@ public class Map extends AbstractModel implements IMap {
     }
 
     @Override
-    public void zoom(final int steps) {
+    public void zoom(final int steps, final Point location) {
         final Dimension size = state.getSize();
-        final int width = (int) (size.width * (1.0 / (1 << state.getZoomStep())));
-        final int height = (int) (size.height * (1.0 / (1 << state.getZoomStep())));
+        int zoom = state.getZoomStep() - state.getMinZoomStep();
+        final int width = (int) (size.width * (1.0 / (1 << zoom)));
+        final int height = (int) (size.height * (1.0 / (1 << zoom)));
+
         final Point midPoint = state.getLocation();
         midPoint.translate(width / 2, height / 2);
 
-        state.setZoomStep(state.getZoomStep() + steps);
-        center(midPoint);
+        final Point coordLocation = manager.getCoord(location);
+
+        final int weightedX;
+        final int weightedY;
+        final int trueSteps;
+        if (steps > 0) {
+            trueSteps = Math.min(steps, state.getMaxZoomStep() - state.getZoomStep());
+            weightedX = (coordLocation.x - midPoint.x) >> trueSteps;
+            weightedY = (coordLocation.y - midPoint.y) >> trueSteps;
+        } else {
+            trueSteps = Math.max(steps, state.getMinZoomStep() - state.getZoomStep());
+            weightedX = (coordLocation.x - midPoint.x) << -steps;
+            weightedY = (coordLocation.y - midPoint.y) << -steps;
+        }
+
+        if (trueSteps != 0) {
+            state.setZoomStep(state.getZoomStep() + steps);
+            center(coordLocation.x - weightedX, coordLocation.y - weightedY);
+        }
     }
 
     @Override
@@ -45,7 +64,9 @@ public class Map extends AbstractModel implements IMap {
 
     @Override
     public void setViewSize(final Dimension size) {
-        state.setSize(converter.getCoordDistance(size.width, 0), converter.getCoordDistance(size.height, 0));
+        final int minZoomStep = state.getMinZoomStep();
+        state.setSize(converter.getCoordDistance(size.width, minZoomStep),
+                converter.getCoordDistance(size.height, minZoomStep));
 
         fireChange();
     }
@@ -67,7 +88,7 @@ public class Map extends AbstractModel implements IMap {
         final int steps = (int) Math.ceil(Math.max(log2(bounds.width / size.getWidth()),
                 log2(bounds.height / size.getHeight())));
 
-        state.setZoomStep(-steps);
+        state.setZoomStep(state.getMinZoomStep() - steps);
         center(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     }
 
@@ -76,18 +97,20 @@ public class Map extends AbstractModel implements IMap {
         center(point.x, point.y);
     }
 
-    private double log2(final double value) {
-        return Math.log(value) / Math.log(2);
-    }
-
     private void center(final int x, final int y) {
         final Dimension size = state.getSize();
-        final int coordWidth = (int) ((double) size.width / (1 << state.getZoomStep()));
-        final int coordHeight = (int) ((double) size.height / (1 << state.getZoomStep()));
+
+        final int zoomFactor = (1 << state.getZoomStep() - state.getMinZoomStep());
+        final int coordWidth = (int) ((double) size.width / zoomFactor);
+        final int coordHeight = (int) ((double) size.height / zoomFactor);
 
         state.setLocation(x - coordWidth / 2, y - coordHeight / 2);
 
         fireChange();
+    }
+
+    private double log2(final double value) {
+        return Math.log(value) / Math.log(2);
     }
 
 }

@@ -17,21 +17,22 @@ public class MapManager implements IMapManager {
     private final ITile emptyTile;
 
     public MapManager() {
-        this(new ITile[1][1][0], new Dimension(256, 256), new PixelConverter(1));
+        this(new ITile[1][1][0], new Dimension(256, 256), new PixelConverter(1), 0);
     }
 
-    public MapManager(final ITile[][][] tiles, final Dimension tileSize, final IPixelConverter converter) {
+    public MapManager(final ITile[][][] tiles, final Dimension tileSize, final IPixelConverter converter,
+            final int minZoomStep) {
         this.converter = converter;
         this.tileSize = tileSize;
         this.tiles = tiles;
         emptyTile = new Tile();
 
-        final int maxZoomStep = tiles.length - 1;
-        final ITile[][] lowestZoomedLevel = tiles[maxZoomStep];
+        final int maxZoomStep = tiles.length - 1 + minZoomStep;
+        final ITile[][] lowestZoomedLevel = tiles[tiles.length - 1];
         final int width = converter.getCoordDistance(tileSize.width, maxZoomStep) * lowestZoomedLevel[0].length;
         final int height = converter.getCoordDistance(tileSize.height, maxZoomStep) * lowestZoomedLevel.length;
 
-        state = new MapState(new Dimension(width, height), maxZoomStep);
+        state = new MapState(new Dimension(width, height), maxZoomStep, minZoomStep);
     }
 
     @Override
@@ -53,10 +54,11 @@ public class MapManager implements IMapManager {
 
     @Override
     public ITile getTile(final int row, final int column, final int zoomStep) {
-        if (zoomStep >= 0 && zoomStep < tiles.length) {
-            if (row >= 0 && row < tiles[zoomStep].length) {
-                if (column >= 0 && column < tiles[zoomStep][row].length) {
-                    return tiles[zoomStep][row][column];
+        if (zoomStep >= state.getMinZoomStep() && zoomStep <= state.getMaxZoomStep()) {
+            int zoom = zoomStep - state.getMinZoomStep();
+            if (row >= 0 && row < tiles[zoom].length) {
+                if (column >= 0 && column < tiles[zoom][row].length) {
+                    return tiles[zoom][row][column];
                 }
             }
         }
@@ -74,7 +76,6 @@ public class MapManager implements IMapManager {
         final AddressNode ret;
 
         final ITile zoomedTile = getTile(coordinate, state.getMaxZoomStep());
-
         final Building building = zoomedTile.getBuilding(coordinate);
 
         if (building != null && building.getStreetNode() != null) {
@@ -183,8 +184,9 @@ public class MapManager implements IMapManager {
     public int getRows() {
         final Rectangle bounds = state.getBounds();
         final int zoom = state.getZoomStep();
-        final double zoomFactor = 1.0 / (1 << zoom);
+        final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
         final int coordHeight = (int) (bounds.height * zoomFactor);
+
         return (bounds.y + coordHeight) / converter.getCoordDistance(tileSize.height, zoom) - bounds.y
                 / converter.getCoordDistance(tileSize.height, zoom) + 1;
     }
@@ -193,8 +195,9 @@ public class MapManager implements IMapManager {
     public int getColumns() {
         final Rectangle bounds = state.getBounds();
         final int zoom = state.getZoomStep();
-        final double zoomFactor = 1.0 / (1 << zoom);
+        final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
         final int coordWidth = (int) (bounds.width * zoomFactor);
+
         return (bounds.x + coordWidth) / converter.getCoordDistance(tileSize.width, zoom) - bounds.x
                 / converter.getCoordDistance(tileSize.width, zoom) + 1;
     }
@@ -205,7 +208,6 @@ public class MapManager implements IMapManager {
         final int zoomStep = state.getZoomStep();
         final int column = location.x / converter.getCoordDistance(tileSize.width, zoomStep);
         final int row = location.y / converter.getCoordDistance(tileSize.height, zoomStep);
-
         return new Point(column, row);
     }
 

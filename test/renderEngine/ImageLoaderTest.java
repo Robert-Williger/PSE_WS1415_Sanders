@@ -148,7 +148,7 @@ public class ImageLoaderTest {
             }
         }
 
-        mapManager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1));
+        mapManager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1), 0);
         mapManager.getMapState().setSize(10, 10);
         loader = new ImageLoader(mapManager);
     }

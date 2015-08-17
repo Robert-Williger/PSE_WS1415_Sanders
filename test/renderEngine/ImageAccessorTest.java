@@ -89,7 +89,7 @@ public class ImageAccessorTest {
             }
         }
 
-        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1));
+        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1), 0);
     }
 
     private boolean changed;

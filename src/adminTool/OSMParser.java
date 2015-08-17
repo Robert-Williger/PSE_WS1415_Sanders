@@ -141,7 +141,6 @@ public class OSMParser implements IOSMParser {
 
                 final int x = (int) lastLon;
                 final int y = (int) lastLat;
-
                 int keyValId;
 
                 while ((keyValId = iterator.next()) != 0) {
@@ -746,11 +745,11 @@ public class OSMParser implements IOSMParser {
      * Umwandlung lat/lon zu mercator-Koordianten
      */
     public double getXCoord(final double lon) {
-        return lon * Math.PI / 180;
+        return lon / 180;
     }
 
     public double getYCoord(final double lat) {
-        return Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+        return Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI;
     }
 
     private Point calculateCenter(final Polygon poly) {

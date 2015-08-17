@@ -147,7 +147,7 @@ public class MapManagerTest {
             }
         }
         converter = new PixelConverter(4);
-        manager = new MapManager(tiles, new Dimension(256, 256), converter);// mmReader.readMapManager(reader);
+        manager = new MapManager(tiles, new Dimension(256, 256), converter, 0);// mmReader.readMapManager(reader);
     }
 
     @Test

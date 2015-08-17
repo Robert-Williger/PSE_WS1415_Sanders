@@ -10,7 +10,7 @@ import model.map.IPixelConverter;
 
 public class ShapeStyle {
 
-    public static final float SCALE_FACTOR = 120f;
+    public static final float SCALE_FACTOR = 120f / (float) Math.PI;
 
     protected static IPixelConverter converter = null;
 
