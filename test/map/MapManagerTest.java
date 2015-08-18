@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNull;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,33 +50,33 @@ public class MapManagerTest {
         final Node n10 = new Node(1900, 1900);
         final Node n11 = new Node(2750, 1800);
 
-        final ArrayList<Street> streets = new ArrayList<Street>();
+        final Street[] streets = new Street[5];
 
         final LinkedList<Node> sn0 = new LinkedList<Node>();
         sn0.add(n0);
         sn0.add(n1);
         sn0.add(n2);
         sn0.add(n3);
-        streets.add(new Street(sn0, 3, "Haid und Neu Straße", 0));
+        streets[0] = new Street(sn0, 3, "Haid und Neu Straße", 0);
 
         final LinkedList<Node> sn1 = new LinkedList<Node>();
         sn1.add(n1);
         sn1.add(n4);
         sn1.add(n5);
         sn1.add(n6);
-        streets.add(new Street(sn1, 4, "Tullastraße", 0));
+        streets[1] = new Street(sn1, 4, "Tullastraße", 0);
 
         final LinkedList<Node> sn2 = new LinkedList<Node>();
         sn2.add(n2);
         sn2.add(n7);
         sn2.add(n8);
         sn2.add(n9);
-        streets.add(new Street(sn2, 5, "Helmertstraße", 0));
+        streets[2] = new Street(sn2, 5, "Helmertstraße", 0);
 
         final LinkedList<Node> sn3 = new LinkedList<Node>();
         sn3.add(n4);
         sn3.add(n7);
-        streets.add(street = new Street(sn3, 5, "Gaußstraße", 0));
+        streets[3] = street = new Street(sn3, 5, "Gaußstraße", 0);
 
         final LinkedList<Node> sn4 = new LinkedList<Node>();
         sn4.add(n5);
@@ -85,54 +84,54 @@ public class MapManagerTest {
         sn4.add(n8);
         sn4.add(n10);
         sn4.add(n11);
-        streets.add(new Street(sn4, 5, "Jordanstraße", 0));
+        streets[4] = new Street(sn4, 5, "Jordanstraße", 0);
 
-        final LinkedList<Way> ways = new LinkedList<Way>();
-        final LinkedList<POI> pois = new LinkedList<POI>();
-        final LinkedList<Area> areas = new LinkedList<Area>();
-        final LinkedList<Building> buildings = new LinkedList<Building>();
+        final Way[] ways = new Way[0];
+        final POI[] pois = new POI[0];
+        final Area[] areas = new Area[0];
+        final Building[] buildings = new Building[6];
 
         final List<Node> bn1 = new LinkedList<Node>();
         bn1.add(new Node(362, 946));
         bn1.add(new Node(362, 1046));
         bn1.add(new Node(462, 1046));
         bn1.add(new Node(462, 946));
-        buildings.add(building = new Building(bn1, "Tullastraße 10", new StreetNode(0.125f, streets.get(1))));
+        buildings[0] = building = new Building(bn1, "Tullastraße 10", new StreetNode(0.125f, streets[1]));
 
         final List<Node> bn2 = new LinkedList<Node>();
         bn2.add(new Node(358, 1626));
         bn2.add(new Node(358, 1726));
         bn2.add(new Node(458, 1726));
         bn2.add(new Node(458, 1626));
-        buildings.add(new Building(bn2, "Tullastraße 30", new StreetNode(0.475f, streets.get(1))));
+        buildings[1] = new Building(bn2, "Tullastraße 30", new StreetNode(0.475f, streets[1]));
 
         final List<Node> bn4 = new LinkedList<Node>();
         bn4.add(new Node(852, 1386));
         bn4.add(new Node(852, 1286));
         bn4.add(new Node(952, 1286));
         bn4.add(new Node(952, 1386));
-        buildings.add(new Building(bn4, "Gaußstraße 21", new StreetNode(0.5f, streets.get(3))));
+        buildings[2] = new Building(bn4, "Gaußstraße 21", new StreetNode(0.5f, streets[3]));
 
         final List<Node> bn5 = new LinkedList<Node>();
         bn5.add(new Node(682, 1826));
         bn5.add(new Node(682, 1926));
         bn5.add(new Node(782, 1926));
         bn5.add(new Node(782, 1826));
-        buildings.add(new Building(bn5, "Jordanstraße 8", new StreetNode(0.1f, streets.get(4))));
+        buildings[3] = new Building(bn5, "Jordanstraße 8", new StreetNode(0.1f, streets[4]));
 
         final List<Node> bn7 = new LinkedList<Node>();
         bn7.add(new Node(1274, 850));
         bn7.add(new Node(1274, 950));
         bn7.add(new Node(1374, 950));
         bn7.add(new Node(1374, 850));
-        buildings.add(new Building(bn7, "Helmertstraße 7", new StreetNode(0.1f, streets.get(2))));
+        buildings[4] = new Building(bn7, "Helmertstraße 7", new StreetNode(0.1f, streets[2]));
 
         final List<Node> bn8 = new LinkedList<Node>();
         bn8.add(new Node(1118, 1474));
         bn8.add(new Node(1118, 1574));
         bn8.add(new Node(1218, 1574));
         bn8.add(new Node(1218, 1474));
-        buildings.add(new Building(bn8, "Helmertstraße 22", new StreetNode(0.4f, streets.get(2))));
+        buildings[5] = new Building(bn8, "Helmertstraße 22", new StreetNode(0.4f, streets[2]));
 
         tiles = new Tile[3][][];
         for (int zoom = 0; zoom < 3; zoom++) {
@@ -146,7 +145,7 @@ public class MapManagerTest {
                 }
             }
         }
-        converter = new PixelConverter(4);
+        converter = new PixelConverter(2);
         manager = new MapManager(tiles, new Dimension(256, 256), converter, 0);// mmReader.readMapManager(reader);
     }
 
@@ -179,20 +178,20 @@ public class MapManagerTest {
 
     @Test
     public void testGridLocation() {
-        manager.getMapState().setLocation(1024, 1024);
+        manager.getMapState().setLocation(512, 512);
         assertEquals(new Point(1, 1), manager.getCurrentGridLocation());
     }
 
     @Test
     public void testCoordConversion() {
         manager.getMapState().setLocation(280, 230);
-        assertEquals(new Point(360, 310), manager.getCoord(new Point(20, 20)));
+        assertEquals(new Point(360, 310), manager.getCoord(new Point(40, 40)));
     }
 
     @Test
     public void testPixelConversion() {
         manager.getMapState().setLocation(280, 230);
-        assertEquals(new Point(20, 20), manager.getPixel(new Point(360, 310)));
+        assertEquals(new Point(40, 40), manager.getPixel(new Point(360, 310)));
     }
 
     @Test
@@ -202,7 +201,7 @@ public class MapManagerTest {
 
     @Test
     public void testTileByCoord() {
-        assertEquals(tiles[1][2][2], manager.getTile(new Point(1024, 1024), 1));
+        assertEquals(tiles[1][2][2], manager.getTile(new Point(512, 512), 1));
     }
 
     @Test

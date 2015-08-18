@@ -2,7 +2,6 @@ package model.map;
 
 import java.awt.Point;
 import java.util.Iterator;
-import java.util.List;
 
 import model.elements.Building;
 import model.elements.Node;
@@ -49,15 +48,16 @@ public abstract class AbstractTile implements ITile {
 
         int minDist = Integer.MAX_VALUE;
 
-        for (final Street street : getStreets()) {
-            final List<Node> nodes = street.getNodes();
-            final Iterator<Node> iterator = nodes.iterator();
+        for (final Iterator<Street> streetIt = getStreets(); streetIt.hasNext();) {
+            final Street street = streetIt.next();
+
+            final Iterator<Node> nodeIt = street.getNodes().iterator();
             float totalLength = 0;
             final int maxLength = street.getLength();
 
-            Point lastPoint = iterator.next().getLocation();
-            while (iterator.hasNext()) {
-                final Point currentPoint = iterator.next().getLocation();
+            Point lastPoint = nodeIt.next().getLocation();
+            while (nodeIt.hasNext()) {
+                final Point currentPoint = nodeIt.next().getLocation();
 
                 if (!currentPoint.equals(lastPoint)) {
                     final long dx = currentPoint.x - lastPoint.x;
@@ -93,7 +93,8 @@ public abstract class AbstractTile implements ITile {
 
     @Override
     public final Building getBuilding(final Point coordinate) {
-        for (final Building building : getBuildings()) {
+        for (final Iterator<Building> iterator = getBuildings(); iterator.hasNext();) {
+            final Building building = iterator.next();
             if (building.getPolygon().contains(coordinate)) {
                 return building;
             }

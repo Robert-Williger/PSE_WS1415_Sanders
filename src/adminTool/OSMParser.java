@@ -21,9 +21,9 @@ import model.elements.Area;
 import model.elements.Building;
 import model.elements.Node;
 import model.elements.POI;
+import model.elements.StreetNode;
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat.DenseNodes;
-import crosby.binary.Osmformat.HeaderBBox;
 import crosby.binary.Osmformat.HeaderBlock;
 import crosby.binary.Osmformat.Relation;
 import crosby.binary.Osmformat.Way;
@@ -90,9 +90,7 @@ public class OSMParser implements IOSMParser {
         private HashMap<Integer, Byte> areaMap;
         private HashMap<Integer, List<Node>> wayMap;
 
-        private final int SHIFT = 1 << 28;
-        private int xOffset;
-        private int yOffset;
+        private final int SHIFT = 1 << 29;
 
         public Parser() {
             nodeMap = new HashMap<Integer, Node>();
@@ -114,8 +112,8 @@ public class OSMParser implements IOSMParser {
                     if (key.equals("amenity") || key.equals("tourism")) {
                         final int type = getAmenityType(value);
                         if (type >= 0) {
-                            final int poiX = (int) (getXCoord(parseLon(x)) * SHIFT) - xOffset;
-                            final int poiY = (int) Math.abs((getYCoord(parseLat(y)) * SHIFT) - yOffset);
+                            final int poiX = translateX(x);
+                            final int poiY = translateY(y);
                             poiList.add(new POI(poiX, poiY, type));
                         }
                     }
@@ -150,8 +148,8 @@ public class OSMParser implements IOSMParser {
                     if (key.equals("amenity") || key.equals("tourism")) {
                         final int type = getAmenityType(value);
                         if (type >= 0) {
-                            final int poiX = (int) (getXCoord(parseLon(x)) * SHIFT) - xOffset;
-                            final int poiY = (int) Math.abs((getYCoord(parseLat(y)) * SHIFT) - yOffset);
+                            final int poiX = translateX(x);
+                            final int poiY = translateY(y);
                             poiList.add(new POI(poiX, poiY, type));
                         }
                     }
@@ -276,14 +274,15 @@ public class OSMParser implements IOSMParser {
                     int type;
 
                     if (!buildingTag.isEmpty()) {
-                        buildingList.add(new Building(nodes, (addrStreetTag + " " + addrNumberTag), null));
+                        buildingList
+                                .add(new InvalidateableBuilding(nodes, (addrStreetTag + " " + addrNumberTag), null));
                     } else {
                         type = getAreaType(terrainTag, area);
 
                         if (type >= 0) {
                             areaMap.put((int) w.getId(), (byte) type);
                             if (nodes.get(0).equals(nodes.get(nodes.size() - 1))) {
-                                areaList.add(new Area(nodes, type));
+                                areaList.add(new InvalidateableArea(nodes, type));
                             }
                         }
 
@@ -322,8 +321,8 @@ public class OSMParser implements IOSMParser {
                     type = getAmenityType(amenityTag);
                     if (type >= 0) {
                         final Point center = calculateCenter(new Area(nodes, 0).getPolygon());
-                        final int poiX = (int) (getXCoord(parseLon(center.x)) * SHIFT) - xOffset;
-                        final int poiY = (int) Math.abs((getYCoord(parseLat(center.y)) * SHIFT) - yOffset);
+                        final int poiX = translateX(center.x);
+                        final int poiY = translateY(center.y);
                         poiList.add(new POI(poiX, poiY, type));
                     }
 
@@ -354,7 +353,7 @@ public class OSMParser implements IOSMParser {
                         final String value = getStringById(relation.getVals(i));
 
                         if (key.equals("waterway") && value.equals("riverbank")) {
-                            areaType = 6;
+                            areaType = getAreaType("water", true);
                             break;
                         } else if (key.equals("leisure") || key.equals("natural") || key.equals("landuse")
                                 || key.equals("highway") || key.equals("amenity") || key.equals("tourism")) {
@@ -435,7 +434,7 @@ public class OSMParser implements IOSMParser {
                                     }
 
                                     if (my.get(0).equals(my.get(my.size() - 1)) && areaType != Integer.MAX_VALUE) {
-                                        areaList.add(new Area(my, areaType));
+                                        areaList.add(new InvalidateableArea(my, areaType));
                                     } else {
                                         map.put(my.get(my.size() - 1), my);
                                         map.put(my.get(0), my);
@@ -460,10 +459,10 @@ public class OSMParser implements IOSMParser {
                             }
 
                             for (final List<Node> list : maps.get(0).values()) {
-                                buildingList.add(new Building(list, address + " " + housenumber, null));
+                                buildingList.add(new InvalidateableBuilding(list, address + " " + housenumber, null));
                             }
                             for (final List<Node> list : maps.get(1).values()) {
-                                buildingList.add(new Building(list, " ", null));
+                                buildingList.add(new InvalidateableBuilding(list, " ", null));
                             }
                         }
                     }
@@ -473,21 +472,94 @@ public class OSMParser implements IOSMParser {
 
         @Override
         public void complete() {
+            int x = Integer.MAX_VALUE;
+            int y = Integer.MAX_VALUE;
+            int width = Integer.MIN_VALUE;
+            int height = Integer.MIN_VALUE;
+
+            // TODO improve this
+            for (final model.elements.Way way : wayList) {
+                for (final Node node : way.getNodes()) {
+                    final int nodeX = translateX(node.getX());
+                    final int nodeY = translateY(node.getY());
+
+                    if (nodeX < x) {
+                        x = nodeX;
+                    } else if (nodeX > width) {
+                        width = nodeX;
+                    }
+                    if (nodeY < y) {
+                        y = nodeY;
+                    } else if (nodeY > height) {
+                        height = nodeY;
+                    }
+                }
+            }
+            for (final UnprocessedStreet street : streetList) {
+                for (final Node node : street.getNodes()) {
+                    final int nodeX = translateX(node.getX());
+                    final int nodeY = translateY(node.getY());
+
+                    if (nodeX < x) {
+                        x = nodeX;
+                    } else if (nodeX > width) {
+                        width = nodeX;
+                    }
+                    if (nodeY < y) {
+                        y = nodeY;
+                    } else if (nodeY > height) {
+                        height = nodeY;
+                    }
+                }
+            }
+            for (final Area area : areaList) {
+                for (final Node node : area.getNodes()) {
+                    final int nodeX = translateX(node.getX());
+                    final int nodeY = translateY(node.getY());
+
+                    if (nodeX < x) {
+                        x = nodeX;
+                    } else if (nodeX > width) {
+                        width = nodeX;
+                    }
+                    if (nodeY < y) {
+                        y = nodeY;
+                    } else if (nodeY > height) {
+                        height = nodeY;
+                    }
+                }
+            }
+            for (final Building building : buildingList) {
+                for (final Node node : building.getNodes()) {
+                    final int nodeX = translateX(node.getX());
+                    final int nodeY = translateY(node.getY());
+
+                    if (nodeX < x) {
+                        x = nodeX;
+                    } else if (nodeX > width) {
+                        width = nodeX;
+                    }
+                    if (nodeY < y) {
+                        y = nodeY;
+                    } else if (nodeY > height) {
+                        height = nodeY;
+                    }
+                }
+            }
+
+            bBox.setBounds(x, y, width - x, height - y);
+
             for (final Node node : nodeMap.values()) {
-                final double lat = parseLat(node.getY());
-                final double lon = parseLon(node.getX());
-
-                final int x = (int) (getXCoord(lon) * SHIFT) - xOffset;
-                final int y = (int) Math.abs((getYCoord(lat) * SHIFT) - yOffset);
-
-                if (x > bBox.width) {
-                    bBox.setSize(x, bBox.height);
-                }
-                if (y > bBox.height) {
-                    bBox.setSize(bBox.width, y);
-                }
-
-                node.setLocation(x, y);
+                node.setLocation(translateX(node.getX()) - x, translateY(node.getY()) - y);
+            }
+            for (final POI poi : poiList) {
+                poi.setLocation(poi.getX() - x, poi.getY() - y);
+            }
+            for (final Area area : areaList) {
+                ((InvalidateableArea) area).invalidate();
+            }
+            for (final Building building : buildingList) {
+                ((InvalidateableBuilding) building).invalidate();
             }
 
             nodeMap = null;
@@ -497,26 +569,15 @@ public class OSMParser implements IOSMParser {
 
         @Override
         protected void parse(final HeaderBlock header) {
+            // Bounding box not usefull, cause it is not exact
+        }
 
-            // LON=x
-            // LAT=y
+        private final int translateX(final int x) {
+            return (int) (getXCoord(parseLon(x)) * SHIFT);
+        }
 
-            final HeaderBBox hb = header.getBbox();
-
-            final int lonLeft = (int) (getXCoord(.000000001 * hb.getLeft()) * SHIFT);
-            final int lonRight = (int) (getXCoord(.000000001 * hb.getRight()) * SHIFT);
-            final int latTop = (int) (getYCoord(.000000001 * hb.getTop()) * SHIFT);
-            final int latBottom = (int) (getYCoord(.000000001 * hb.getBottom()) * SHIFT);
-
-            xOffset = lonLeft;
-            yOffset = latTop;
-
-            final double xDif = Math.abs(lonLeft - lonRight);
-
-            final double yDif = Math.abs(latTop - latBottom);
-
-            bBox.setSize((int) xDif, (int) yDif);
-
+        private int translateY(final int y) {
+            return (int) (getYCoord(parseLat(y)) * SHIFT);
         }
     }
 
@@ -745,11 +806,11 @@ public class OSMParser implements IOSMParser {
      * Umwandlung lat/lon zu mercator-Koordianten
      */
     public double getXCoord(final double lon) {
-        return lon / 180;
+        return (lon / 180 + 1) / 2;
     }
 
     public double getYCoord(final double lat) {
-        return Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI;
+        return (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2;
     }
 
     private Point calculateCenter(final Polygon poly) {
@@ -773,4 +834,26 @@ public class OSMParser implements IOSMParser {
         return new Point((int) x, (int) y);
     }
 
+    private class InvalidateableArea extends Area {
+
+        public InvalidateableArea(final List<Node> nodes, final int type) {
+            super(nodes, type);
+        }
+
+        public void invalidate() {
+            polygon = null;
+        }
+    }
+
+    private class InvalidateableBuilding extends Building {
+
+        public InvalidateableBuilding(final List<Node> nodes, final String address, final StreetNode node) {
+            super(nodes, address, node);
+        }
+
+        public void invalidate() {
+            polygon = null;
+        }
+
+    }
 }

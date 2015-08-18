@@ -1,15 +1,11 @@
 package model.elements;
 
 import java.awt.Polygon;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Area extends MultiElement implements Typeable {
 
-    private static List<List<Node>> cuttings = new LinkedList<List<Node>>();
-    private static List<Polygon> inner = new LinkedList<Polygon>();
-
-    private Polygon polygon;
+    protected Polygon polygon;
     private final int type;
 
     public Area(final List<Node> nodes, final int type) {
@@ -23,14 +19,6 @@ public class Area extends MultiElement implements Typeable {
         calculatePolygon();
 
         return polygon;
-    }
-
-    public List<List<Node>> getCuttings() {
-        return cuttings;
-    }
-
-    public List<Polygon> getCuttingPolygons() {
-        return inner;
     }
 
     protected Polygon calculatePolygon(final List<Node> nodes) {
@@ -49,9 +37,9 @@ public class Area extends MultiElement implements Typeable {
     }
 
     private void calculatePolygon() {
-        // if (polygon == null) {
-        polygon = calculatePolygon(getNodes());
-        // }
+        if (polygon == null) {
+            polygon = calculatePolygon(getNodes());
+        }
     }
 
     public int getType() {

@@ -32,13 +32,13 @@ import org.junit.Test;
 
 public class RouteRendererTest {
 
-    private static LinkedList<Street> streets;
+    private static Street[] streets;
     private static BufferedImage emptyImage;
     private static BufferedImage renderImage;
     private static RouteRenderer renderer;
     private static Street street;
     private static PointList pList;
-    private static LinkedList<Street> doubleStreets;
+    private static Street[] doubleStreets;
     private RenderRoute route;
 
     private final static int streetId = 7;
@@ -50,27 +50,27 @@ public class RouteRendererTest {
     public static void setUpClass() {
         renderer = new RouteRenderer(new PixelConverter(1));
 
-        streets = new LinkedList<Street>();
+        streets = new Street[1];
         final List<Node> streetNodes = new LinkedList<Node>();
         streetNodes.add(new Node(0, 0));
         streetNodes.add(new Node(5, 5));
         streetNodes.add(new Node(0, 1));
         street = new Street(streetNodes, 1, "Kaiserstrasse", streetId);
-        streets.add(street);
+        streets[0] = street;
 
-        doubleStreets = new LinkedList<Street>();
+        doubleStreets = new Street[2];
         final List<Node> doubleStreetNodes = new LinkedList<Node>();
         doubleStreetNodes.add(new Node(0, 0));
         doubleStreetNodes.add(new Node(2, 2));
         doubleStreetNodes.add(new Node(0, 1));
         final Street newStreet = new Street(doubleStreetNodes, 1, "Teststraße", doubleStreetID);
-        doubleStreets.add(newStreet);
+        doubleStreets[0] = newStreet;
 
         final List<Node> doubleStreetNodes2 = new LinkedList<Node>();
         doubleStreetNodes2.add(new Node(0, 0));
         doubleStreetNodes2.add(new Node(5, 5));
         doubleStreetNodes2.add(new Node(0, 1));
-        doubleStreets.add(new Street(doubleStreetNodes2, 1, "Testgasse", doubleStreetID));
+        doubleStreets[1] = new Street(doubleStreetNodes2, 1, "Testgasse", doubleStreetID);
 
         final MapManager emptyMapManager = new MapManager();
         final RoutePoint rPoint1 = new RoutePoint(emptyMapManager);
@@ -127,8 +127,7 @@ public class RouteRendererTest {
     public void testFullStreetRouteRendering() {
         route.addStreet(streetId);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -137,8 +136,7 @@ public class RouteRendererTest {
     public void testStreetPartRouteRendering() {
         route.addStreetPart(streetId, 0.1f, 0.4f);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -150,8 +148,7 @@ public class RouteRendererTest {
         route.addStreetPart(streetId, 0.3f, 0.2f);
         route.addStreetPart(streetId, 0.7f, 0.8f);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -160,8 +157,7 @@ public class RouteRendererTest {
     public void testInvalidRouteRendering() {
         route.addStreet(streetId + 3);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
@@ -169,8 +165,7 @@ public class RouteRendererTest {
     @Test
     public void testNullRouteRendering() {
         renderer.setRenderRoute(null);
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
@@ -179,8 +174,7 @@ public class RouteRendererTest {
     public void testNullSteetsRendering() {
         route.addStreet(streetId);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), null, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], null, new Area[0], new Building[0], new POI[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
@@ -189,8 +183,7 @@ public class RouteRendererTest {
     public void testFullSameStreetIDRendering() {
         route.addStreet(doubleStreetID);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), doubleStreets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], doubleStreets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -199,8 +192,7 @@ public class RouteRendererTest {
     public void testPartSameStreetIDRendering() {
         route.addStreetPart(doubleStreetID, 0.2f, 0.8f);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), doubleStreets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], doubleStreets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -210,8 +202,7 @@ public class RouteRendererTest {
         route.addStreetPart(doubleStreetID, 0.2f, 0.3f);
         route.addStreetPart(doubleStreetID, 0.5f, 0.8f);
 
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), doubleStreets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], doubleStreets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }

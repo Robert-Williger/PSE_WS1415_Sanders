@@ -191,7 +191,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         // forest (dark green)
         areaStyles[0] = new ShapeStyle(1f, new Color(160, 206, 133));
-        areaMinZoomstep[0] = 8;
+        areaMinZoomstep[0] = 7;
 
         // wood (dark green [brighter])
         areaStyles[1] = new ShapeStyle(1f, new Color(174, 209, 160));
@@ -351,7 +351,8 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         final int middleOffset = (metrics.getAscent() - metrics.getDescent()) / 2;
         g.setColor(Color.BLACK);
 
-        for (final Street street : tile.getStreets()) {
+        for (final Iterator<Street> streetIt = tile.getStreets(); streetIt.hasNext();) {
+            final Street street = streetIt.next();
             final String text = street.getName();
             if (streetNameMinZoomstep <= tile.getZoomStep() && !text.equals("Unbekannte Straße")) {
 
@@ -361,13 +362,11 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
                 if (length > textSize) {
 
-                    final List<Node> nodes = street.getNodes();
+                    final Iterator<Node> nodeIt = street.getNodes().iterator();
+                    Point fromCoord = nodeIt.next().getLocation();
 
-                    final Iterator<Node> iterator = nodes.iterator();
-                    Point fromCoord = iterator.next().getLocation();
-
-                    while (iterator.hasNext()) {
-                        final Point toCoord = iterator.next().getLocation();
+                    while (nodeIt.hasNext()) {
+                        final Point toCoord = nodeIt.next().getLocation();
 
                         final int distance = converter.getPixelDistance((int) toCoord.distance(fromCoord), zoom);
                         final int start = (distance - textSize) / 2;
@@ -502,8 +501,8 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
     }
 
     private boolean drawAreas(final ITile tile, final Graphics2D g) {
-        final Collection<Area> areas = tile.getTerrain();
-        if (areas == null) {
+        final Iterator<Area> iterator = tile.getTerrain();
+        if (iterator == null) {
             return false;
         }
 
@@ -515,7 +514,9 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             path[i] = new Path2D.Float(i != 18 ? Path2D.WIND_EVEN_ODD : Path2D.WIND_NON_ZERO);
         }
 
-        for (final Area area : areas) {
+        while (iterator.hasNext()) {
+            final Area area = iterator.next();
+
             if (area == null) {
                 return false;
             }
@@ -591,6 +592,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             return true;
         }
 
+        Iterator<Building> iterator = tile.getBuildings();
         if (tile.getBuildings() == null) {
             return false;
         }
@@ -599,7 +601,8 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
 
         final Path2D.Float path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
-        for (final Building building : tile.getBuildings()) {
+        while (iterator.hasNext()) {
+            final Building building = iterator.next();
             if (building == null) {
                 return false;
             }
@@ -623,7 +626,9 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             g.setFont(buildingNumberFont);
             g.setColor(buildingNumberColor);
 
-            for (final Building building : tile.getBuildings()) {
+            iterator = tile.getBuildings();
+            while (iterator.hasNext()) {
+                final Building building = iterator.next();
                 final Polygon poly = convertPolygon(building.getPolygon(), tileLoc, zoom);
 
                 final Matcher matcher = Pattern.compile("\\d+[a-z]*").matcher(building.getAddress());
@@ -671,9 +676,10 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return Math.atan2(dy, dx);
     }
 
-    private boolean appendWays(final Collection<? extends Way> ways, final int zoom, final Path2D.Float[] path,
+    private boolean appendWays(final Iterator<? extends Way> iterator, final int zoom, final Path2D.Float[] path,
             final Point tileLoc) {
-        for (final Way way : ways) {
+        while (iterator.hasNext()) {
+            final Way way = iterator.next();
             if (way == null) {
                 return false;
             }

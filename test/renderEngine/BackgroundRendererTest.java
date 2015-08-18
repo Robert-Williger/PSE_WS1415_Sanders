@@ -31,10 +31,10 @@ public class BackgroundRendererTest {
     private static BufferedImage emptyImage;
     private static BufferedImage renderImage;
     private static BackgroundRenderer renderer;
-    private static LinkedList<Area> areas;
-    private static LinkedList<Way> ways;
-    private static LinkedList<Street> streets;
-    private static LinkedList<Building> buildings;
+    private static Area[] areas;
+    private static Way[] ways;
+    private static Street[] streets;
+    private static Building[] buildings;
 
     private final static int IMAGE_HEIGHT = 256;
     private final static int IMAGE_WIDTH = 256;
@@ -43,45 +43,50 @@ public class BackgroundRendererTest {
     public static void setUpClass() {
         renderer = new BackgroundRenderer(new PixelConverter(1));
 
-        areas = new LinkedList<Area>();
+        List<Area> areaList = new LinkedList<Area>();
         final List<Node> areaNodes = new LinkedList<Node>();
         areaNodes.add(new Node(2, 2));
         areaNodes.add(new Node(5, 5));
         areaNodes.add(new Node(10, 3));
         areaNodes.add(new Node(3, 0));
-        areas.add(new Area(areaNodes, 1));
+        areaList.add(new Area(areaNodes, 1));
+        areas = areaList.toArray(new Area[1]);
 
-        ways = new LinkedList<Way>();
+        List<Way> wayList = new LinkedList<Way>();
         final List<Node> wayNodes = new LinkedList<Node>();
         wayNodes.add(new Node(90, 0));
         wayNodes.add(new Node(120, 150));
         wayNodes.add(new Node(10, 300));
-        ways.add(new Way(wayNodes, 3, "Testweg"));
+        wayList.add(new Way(wayNodes, 3, "Testweg"));
+        ways = wayList.toArray(new Way[1]);
 
-        streets = new LinkedList<Street>();
+        List<Street> streetList = new LinkedList<Street>();
         final List<Node> streetNodes = new LinkedList<Node>();
         streetNodes.add(new Node(0, 0));
         streetNodes.add(new Node(5, 5));
         streetNodes.add(new Node(20, 10));
         final Street street = new Street(streetNodes, 1, "Kaiserstrasse", 0);
-        streets.add(street);
+        streetList.add(street);
 
         final LinkedList<Node> streetNodes2 = new LinkedList<Node>();
         streetNodes2.add(new Node(60, 150));
         streetNodes2.add(new Node(60, 150));
         streetNodes2.add(new Node(210, 80));
         streetNodes2.add(new Node(200, 30));
-        streets.add(new Street(streetNodes2, 2, "Waldstrasse", 1));
+        streetList.add(new Street(streetNodes2, 2, "Waldstrasse", 1));
+
+        streets = streetList.toArray(new Street[2]);
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
-        buildings = new LinkedList<Building>();
+        List<Building> buildingList = new LinkedList<Building>();
         final List<Node> buildingNodes = new LinkedList<Node>();
         buildingNodes.add(new Node(2, 2));
         buildingNodes.add(new Node(5, 5));
         buildingNodes.add(new Node(10, 3));
         buildingNodes.add(new Node(3, 0));
-        buildings.add(new Building(buildingNodes, "Teststraße 15", streetNode));
+        buildingList.add(new Building(buildingNodes, "Teststraße 15", streetNode));
+        buildings = buildingList.toArray(new Building[1]);
 
         renderImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         emptyImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -123,71 +128,63 @@ public class BackgroundRendererTest {
 
     @Test
     public void testAreaRendering() {
-        final Tile tile = new Tile(1, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(), areas,
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(1, 1, 1, 1, 1, new Way[0], new Street[0], areas, new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullAreaRendering() {
-        final Tile tile = new Tile(1, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(), null,
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(1, 1, 1, 1, 1, new Way[0], new Street[0], null, new Building[0], new POI[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testWayRendering() {
-        final Tile tile = new Tile(1, 1, 1, 1, 1, ways, new LinkedList<Street>(), new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(1, 1, 1, 1, 1, ways, new Street[0], new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullWayRendering() {
-        final Tile tile = new Tile(1, 1, 1, 1, 1, null, new LinkedList<Street>(), new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(1, 1, 1, 1, 1, null, new Street[0], new Area[0], new Building[0], new POI[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testStreetRendering() {
-        final Tile tile = new Tile(4, 1, 1, 1, 1, new LinkedList<Way>(), streets, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(4, 1, 1, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullStreetRendering() {
-        final Tile tile = new Tile(4, 1, 1, 1, 1, new LinkedList<Way>(), null, new LinkedList<Area>(),
-                new LinkedList<Building>(), new LinkedList<POI>());
+        final Tile tile = new Tile(4, 1, 1, 1, 1, new Way[0], null, new Area[0], new Building[0], new POI[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testBuildingRendering() {
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(),
-                new LinkedList<Area>(), buildings, new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], new Street[0], new Area[0], buildings, new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullBuildingRendering() {
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(),
-                new LinkedList<Area>(), null, new LinkedList<POI>());
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], new Street[0], new Area[0], null, new POI[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testFullTileRendering() {
-        final Tile tile = new Tile(1, 1, 1, 1, 1, ways, streets, areas, buildings, new LinkedList<POI>());
+        final Tile tile = new Tile(1, 1, 1, 1, 1, ways, streets, areas, buildings, new POI[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }

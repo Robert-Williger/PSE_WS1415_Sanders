@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import model.IProgressListener;
+
 public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements IComplexRouteSolver {
 
     private boolean canceled;
@@ -19,6 +21,23 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
     public ChristofidesTSPSolver(final IGraph graph) {
         this.graph = graph;
         this.solver = createSPSPSolver();
+        solver.addProgressListener(new IProgressListener() {
+
+            @Override
+            public void progressDone(final int i) {
+
+            }
+
+            @Override
+            public void errorOccured(final String message) {
+                fireErrorOccured(message);
+            }
+
+            @Override
+            public void stepCommenced(String step) {
+
+            }
+        });
     }
 
     @Override

@@ -38,10 +38,10 @@ import model.map.PixelConverter;
 
 public class MapManagerCreator extends AbstractMapCreator {
 
-    private static final int MAX_ZOOM_STEPS = 11;
+    private static final int MAX_ZOOM_STEPS = 13;
 
     // minimum amount of tiles in a row / column on lowest zoom level
-    private static final int MIN_TILES = 4;
+    private static final int MIN_TILES = 2;
     private static final int TILE_LENGTH = 256;
     private static final int POI_WIDTH = 20;
     private static final int WAY_WIDTH = 30;

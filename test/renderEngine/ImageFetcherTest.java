@@ -10,7 +10,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Iterator;
 
 import javax.swing.event.ChangeListener;
 
@@ -174,27 +174,27 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public Collection<Street> getStreets() {
+        public Iterator<Street> getStreets() {
             return null;
         }
 
         @Override
-        public Collection<Way> getWays() {
+        public Iterator<Way> getWays() {
             return null;
         }
 
         @Override
-        public Collection<Building> getBuildings() {
+        public Iterator<Building> getBuildings() {
             return null;
         }
 
         @Override
-        public Collection<Area> getTerrain() {
+        public Iterator<Area> getTerrain() {
             return null;
         }
 
         @Override
-        public Collection<POI> getPOIs() {
+        public Iterator<POI> getPOIs() {
             return null;
         }
 

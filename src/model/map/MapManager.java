@@ -3,6 +3,7 @@ package model.map;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Iterator;
 
 import model.elements.Building;
 import model.elements.Node;
@@ -164,7 +165,8 @@ public class MapManager implements IMapManager {
         final String streetName = streetNode.getStreet().getName();
         final Point nodeLocation = streetNode.getLocation();
 
-        for (final Building building : tile.getBuildings()) {
+        for (final Iterator<Building> iterator = tile.getBuildings(); iterator.hasNext();) {
+            final Building building = iterator.next();
             final StreetNode buildingNode = building.getStreetNode();
             if (buildingNode != null && buildingNode.getStreet().getName().equals(streetName)) {
                 for (final Node node : building.getNodes()) {

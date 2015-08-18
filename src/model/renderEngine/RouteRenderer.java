@@ -64,6 +64,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
     }
 
     private boolean drawRoute(final ITile tile, final Graphics2D g) {
+        final Iterator<Street> iterator = tile.getStreets();
         if (tile.getStreets() == null) {
             return false;
         }
@@ -73,7 +74,8 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
 
         final Map<Long, Collection<Street>> map = new HashMap<Long, Collection<Street>>();
 
-        for (final Street street : tile.getStreets()) {
+        while (iterator.hasNext()) {
+            final Street street = iterator.next();
             if (street == null) {
                 return false;
             }

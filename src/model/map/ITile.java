@@ -1,7 +1,7 @@
 package model.map;
 
 import java.awt.Point;
-import java.util.Collection;
+import java.util.Iterator;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -22,15 +22,15 @@ public interface ITile {
 
     Point getLocation();
 
-    Collection<Street> getStreets();
+    Iterator<Street> getStreets();
 
-    Collection<Way> getWays();
+    Iterator<Way> getWays();
 
-    Collection<Building> getBuildings();
+    Iterator<Building> getBuildings();
 
-    Collection<Area> getTerrain();
+    Iterator<Area> getTerrain();
 
-    Collection<POI> getPOIs();
+    Iterator<POI> getPOIs();
 
     String getAddress(Point coordinate);
 

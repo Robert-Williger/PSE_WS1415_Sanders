@@ -1,8 +1,8 @@
 package model.map;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -13,11 +13,11 @@ import model.elements.Way;
 public class EmptyTile extends AbstractTile {
 
     private static final Point location;
-    private static final Collection<Way> ways;
-    private static final Collection<Street> streets;
-    private static final Collection<Building> buildings;
-    private static final Collection<POI> pois;
-    private static final Collection<Area> terrain;
+    private static final Iterator<Way> ways;
+    private static final Iterator<Street> streets;
+    private static final Iterator<Building> buildings;
+    private static final Iterator<POI> pois;
+    private static final Iterator<Area> terrain;
 
     public EmptyTile(int zoomStep, int row, int column) {
         super(zoomStep, row, column);
@@ -29,36 +29,50 @@ public class EmptyTile extends AbstractTile {
     }
 
     @Override
-    public Collection<Street> getStreets() {
+    public Iterator<Street> getStreets() {
         return streets;
     }
 
     @Override
-    public Collection<Way> getWays() {
+    public Iterator<Way> getWays() {
         return ways;
     }
 
     @Override
-    public Collection<Building> getBuildings() {
+    public Iterator<Building> getBuildings() {
         return buildings;
     }
 
     @Override
-    public Collection<Area> getTerrain() {
+    public Iterator<Area> getTerrain() {
         return terrain;
     }
 
     @Override
-    public Collection<POI> getPOIs() {
+    public Iterator<POI> getPOIs() {
         return pois;
+    }
+
+    private static class EmptyIterator<T> implements Iterator<T> {
+
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public T next() {
+            throw new NoSuchElementException();
+        }
+
     }
 
     static {
         location = new Point(0, 0);
-        ways = new ArrayList<Way>(0);
-        streets = new ArrayList<Street>(0);
-        buildings = new ArrayList<Building>(0);
-        pois = new ArrayList<POI>(0);
-        terrain = new ArrayList<Area>(0);
+        ways = new EmptyIterator<Way>();
+        streets = new EmptyIterator<Street>();
+        buildings = new EmptyIterator<Building>();
+        pois = new EmptyIterator<POI>();
+        terrain = new EmptyIterator<Area>();
     }
 }

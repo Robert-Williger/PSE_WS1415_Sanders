@@ -58,9 +58,10 @@ public class MapTest {
 
     @Test
     public void testMove() {
-        map.zoom(3, new Point(50, 50));
+        map.zoom(3, new Point(1, 1));
         map.moveView(257, 257);
-        assertEquals(new Point(1, 1), map.getViewLocation());
+        System.out.println(map.getViewLocation());
+        assertEquals(new Point(8, 8), map.getViewLocation());
     }
 
     @Test

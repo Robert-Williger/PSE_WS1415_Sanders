@@ -8,7 +8,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
-import java.util.LinkedList;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -28,7 +27,7 @@ public class POIRendererTest {
     private static BufferedImage emptyImage;
     private static BufferedImage renderImage;
     private static POIRenderer renderer;
-    private static LinkedList<POI> pois;
+    private static POI[] pois;
 
     private final static int IMAGE_HEIGHT = 256;
     private final static int IMAGE_WIDTH = 256;
@@ -36,8 +35,8 @@ public class POIRendererTest {
     @BeforeClass
     public static void setUpClass() {
         renderer = new POIRenderer(new PixelConverter(1));
-        pois = new LinkedList<POI>();
-        pois.add(new POI(2, 2, 3));
+        pois = new POI[1];
+        pois[0] = new POI(0, 0, 3);
 
         renderImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         emptyImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -79,16 +78,14 @@ public class POIRendererTest {
 
     @Test
     public void testPOIRendering() {
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(),
-                new LinkedList<Area>(), new LinkedList<Building>(), pois);
+        final Tile tile = new Tile(17, 0, 0, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullPOIRendering() {
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new LinkedList<Way>(), new LinkedList<Street>(),
-                new LinkedList<Area>(), new LinkedList<Building>(), null);
+        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], null);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }

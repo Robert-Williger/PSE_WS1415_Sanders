@@ -8,6 +8,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
@@ -74,6 +75,7 @@ public class POIRenderer extends AbstractModel implements IRenderer {
     }
 
     private boolean drawPOIs(final ITile tile, final Graphics2D g) {
+        final Iterator<POI> iterator = tile.getPOIs();
         if (tile.getPOIs() == null) {
             return false;
         }
@@ -83,7 +85,8 @@ public class POIRenderer extends AbstractModel implements IRenderer {
         final Point location = tile.getLocation();
         final int zoom = tile.getZoomStep();
 
-        for (final POI poi : tile.getPOIs()) {
+        while (iterator.hasNext()) {
+            final POI poi = iterator.next();
             if (poi == null) {
                 return false;
             }

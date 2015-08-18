@@ -8,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,11 +42,11 @@ public class Reader implements IReader {
     private ITextProcessor tp;
     private boolean canceled;
 
-    private static final Collection<POI> EMPTY_POIS;
-    private static final Collection<Street> EMPTY_STREETS;
-    private static final Collection<Way> EMPTY_WAYS;
-    private static final Collection<Building> EMPTY_BUILDINGS;
-    private static final Collection<Area> EMPTY_AREAS;
+    private static final POI[] EMPTY_POIS;
+    private static final Street[] EMPTY_STREETS;
+    private static final Way[] EMPTY_WAYS;
+    private static final Building[] EMPTY_BUILDINGS;
+    private static final Area[] EMPTY_AREAS;
 
     public Reader() {
         list = new LinkedList<IProgressListener>();
@@ -351,8 +350,11 @@ public class Reader implements IReader {
         private void readTiles() throws IOException {
             fireStepCommenced("Lade Kacheln...");
 
+            int[] count = new int[6];
+
             int currentRows = rows;
             int currentCols = columns;
+            final ITile emptyTile = new EmptyTile(-1, -1, -1);
             for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
                 tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
 
@@ -364,79 +366,76 @@ public class Reader implements IReader {
                     int x = 0;
                     for (int column = 0; column < currentCols; column++) {
                         byte flags = reader.readByte();
+
+                        ++count[Integer.bitCount(flags)];
                         final ITile tile;
                         if (flags == 0) {
-                            tile = new EmptyTile(zoom, row, column);
+                            tile = emptyTile;
                         } else {
-                            final Collection<POI> tilePOIs;
-                            final Collection<Street> tileStreets;
-                            final Collection<Way> tileWays;
-                            final Collection<Building> tileBuildings;
-                            final Collection<Area> tileAreas;
+                            final POI[] tilePOIs;
+                            final Street[] tileStreets;
+                            final Way[] tileWays;
+                            final Building[] tileBuildings;
+                            final Area[] tileAreas;
 
                             if ((flags & 1) == 0) {
                                 tilePOIs = EMPTY_POIS;
                             } else {
                                 int last = 0;
-                                final POI[] p = new POI[readInt()];
-                                for (int i = 0; i < p.length; i++) {
+                                tilePOIs = new POI[readInt()];
+                                for (int i = 0; i < tilePOIs.length; i++) {
                                     int current = readInt() + last;
-                                    p[i] = pois[current];
+                                    tilePOIs[i] = pois[current];
                                     last = current;
                                 }
-                                tilePOIs = Arrays.asList(p);
                             }
 
                             if ((flags >> 1 & 1) == 0) {
                                 tileStreets = EMPTY_STREETS;
                             } else {
-                                final Street[] s = new Street[readInt()];
+                                tileStreets = new Street[readInt()];
                                 int last = 0;
-                                for (int i = 0; i < s.length; i++) {
+                                for (int i = 0; i < tileStreets.length; i++) {
                                     int current = readInt() + last;
-                                    s[i] = streets[current];
+                                    tileStreets[i] = streets[current];
                                     last = current;
                                 }
-                                tileStreets = Arrays.asList(s);
                             }
 
                             if ((flags >> 2 & 1) == 0) {
                                 tileWays = EMPTY_WAYS;
                             } else {
                                 int last = 0;
-                                final Way[] w = new Way[readInt()];
-                                for (int i = 0; i < w.length; i++) {
+                                tileWays = new Way[readInt()];
+                                for (int i = 0; i < tileWays.length; i++) {
                                     int current = readInt() + last;
-                                    w[i] = ways[current];
+                                    tileWays[i] = ways[current];
                                     last = current;
                                 }
-                                tileWays = Arrays.asList(w);
                             }
 
                             if ((flags >> 3 & 1) == 0) {
                                 tileBuildings = EMPTY_BUILDINGS;
                             } else {
                                 int last = 0;
-                                final Building[] b = new Building[readInt()];
-                                for (int i = 0; i < b.length; i++) {
+                                tileBuildings = new Building[readInt()];
+                                for (int i = 0; i < tileBuildings.length; i++) {
                                     int current = readInt() + last;
-                                    b[i] = buildings[current];
+                                    tileBuildings[i] = buildings[current];
                                     last = current;
                                 }
-                                tileBuildings = Arrays.asList(b);
                             }
 
                             if ((flags >> 4 & 1) == 0) {
                                 tileAreas = EMPTY_AREAS;
                             } else {
                                 int last = 0;
-                                final Area[] a = new Area[readInt()];
-                                for (int i = 0; i < a.length; i++) {
+                                tileAreas = new Area[readInt()];
+                                for (int i = 0; i < tileAreas.length; i++) {
                                     int current = readInt() + last;
-                                    a[i] = areas[current];
+                                    tileAreas[i] = areas[current];
                                     last = current;
                                 }
-                                tileAreas = Arrays.asList(a);
                             }
 
                             tile = new Tile(zoom, row, column, x, y, tileWays, tileStreets, tileAreas, tileBuildings,
@@ -453,6 +452,14 @@ public class Reader implements IReader {
                 currentRows = (currentRows + 1) / 2;
                 currentCols = (currentCols + 1) / 2;
             }
+
+            int sum = 0;
+            for (int i = 0; i < count.length; i++) {
+                final int number = count[i];
+                System.out.println(i + ": " + number);
+                sum += number;
+            }
+            System.out.println("Total: " + sum);
         }
 
         private int[] readIntArray(final int length) throws IOException {
@@ -526,10 +533,10 @@ public class Reader implements IReader {
     }
 
     static {
-        EMPTY_POIS = new ArrayList<POI>(0);
-        EMPTY_STREETS = new ArrayList<Street>(0);
-        EMPTY_WAYS = new ArrayList<Way>(0);
-        EMPTY_BUILDINGS = new ArrayList<Building>(0);
-        EMPTY_AREAS = new ArrayList<Area>(0);
+        EMPTY_POIS = new POI[0];
+        EMPTY_STREETS = new Street[0];
+        EMPTY_WAYS = new Way[0];
+        EMPTY_BUILDINGS = new Building[0];
+        EMPTY_AREAS = new Area[0];
     }
 }
