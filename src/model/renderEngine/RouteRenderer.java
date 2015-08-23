@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,9 +28,9 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
     private IRenderRoute route;
     // for error correction of floating point number comparison
     private static final float EPSILON = 1.0001f;
-    private static final float MIN_STROKE_WIDTH_PIXEL = 6f;
+    private static final float MIN_STROKE_WIDTH_PIXEL = 4f;
     private static final float MAX_STROKE_WIDTH_PIXEL = 8f;
-    private static final float NORMAL_STROKE_WIDTH = 5f;
+    private static final float NORMAL_STROKE_WIDTH = 240f;
     private static final Color routeColor = new Color(0, 175, 251);
 
     public RouteRenderer(final IPixelConverter converter) {
@@ -101,7 +100,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
                     switch (route.getStreetUse(street.getID())) {
                         case full:
                             path.append(
-                                    drawLines(street.getNodes(), tileLoc, tile.getZoomStep()).getPathIterator(null),
+                                    drawLines(street.iterator(), tileLoc, tile.getZoomStep()).getPathIterator(null),
                                     false);
                             break;
                         case part:
@@ -133,7 +132,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
                         }
 
                         path.append(
-                                drawLines(renderStreet.getNodes(), tileLoc, tile.getZoomStep()).getPathIterator(null),
+                                drawLines(renderStreet.iterator(), tileLoc, tile.getZoomStep()).getPathIterator(null),
                                 false);
                         break;
                     case part:
@@ -175,8 +174,8 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
             }
         }
 
-        final float thickness = Math.min(MAX_STROKE_WIDTH_PIXEL, Math.max(MIN_STROKE_WIDTH_PIXEL,
-                converter.getPixelDistancef((ShapeStyle.SCALE_FACTOR * NORMAL_STROKE_WIDTH), tile.getZoomStep())));
+        final float thickness = Math.min(MAX_STROKE_WIDTH_PIXEL,
+                Math.max(MIN_STROKE_WIDTH_PIXEL, converter.getPixelDistancef(NORMAL_STROKE_WIDTH, tile.getZoomStep())));
 
         final int cr = routeColor.getRed();
         final int cg = routeColor.getGreen();
@@ -195,7 +194,7 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
             final Intervall streetPart) {
         final Path2D.Float path = new Path2D.Float();
         float currentLength = 0f;
-        final Iterator<Node> iterator = street.getNodes().iterator();
+        final Iterator<Node> iterator = street.iterator();
 
         Point firstCoordPoint = iterator.next().getLocation();
         final Point firstPixelPoint = new Point(converter.getPixelDistance(firstCoordPoint.x - tileLoc.x, zoomStep),
@@ -254,11 +253,10 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         return path;
     }
 
-    private Path2D.Float drawLines(final List<Node> nodes, final Point tileLoc, final int zoomStep) {
+    private Path2D.Float drawLines(final Iterator<Node> nodes, final Point tileLoc, final int zoomStep) {
         final Path2D.Float path = new Path2D.Float();
-        final Iterator<Node> iter = nodes.iterator();
 
-        final Point firstCoordPoint = iter.next().getLocation();
+        final Point firstCoordPoint = nodes.next().getLocation();
         final Point firstPixelPoint = new Point(firstCoordPoint);
         firstPixelPoint.x = converter.getPixelDistance(firstPixelPoint.x - tileLoc.x, zoomStep);
         firstPixelPoint.y = converter.getPixelDistance(firstPixelPoint.y - tileLoc.y, zoomStep);
@@ -268,8 +266,8 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         final Point secondPixelPoint = new Point(firstPixelPoint);
         Point secondCoordPoint = null;
 
-        while (iter.hasNext()) {
-            secondCoordPoint = iter.next().getLocation();
+        while (nodes.hasNext()) {
+            secondCoordPoint = nodes.next().getLocation();
 
             secondPixelPoint.x = converter.getPixelDistance(secondCoordPoint.x - tileLoc.x, zoomStep);
             secondPixelPoint.y = converter.getPixelDistance(secondCoordPoint.y - tileLoc.y, zoomStep);

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.Point;
-import java.util.LinkedList;
 
 import model.elements.Node;
 import model.elements.Street;
@@ -22,11 +21,7 @@ public class StreetNodeTest {
 
     @Before
     public void setUp() {
-        final LinkedList<Node> nodes = new LinkedList<Node>();
-        nodes.add(new Node(0, 0));
-        nodes.add(new Node(5, 5));
-        nodes.add(new Node(10, 10));
-        nodes.add(new Node(20, 20));
+        final Node[] nodes = new Node[]{new Node(0, 0), new Node(5, 5), new Node(10, 10), new Node(20, 20)};
         street = new Street(nodes, 0, "Kaiserstraße 5", 1);
         offset = 0.5f;
         sNode = new StreetNode(offset, street);
@@ -43,23 +38,12 @@ public class StreetNodeTest {
     }
 
     @Test
-    public void testStreet() {
-        assertEquals(sNode.getStreet(), street);
-
-        final Street newStreet = new Street(street.getNodes(), 0, "NewStreet 1", 2);
-        assertFalse(sNode.getStreet().equals(newStreet));
-        sNode.setStreet(newStreet);
-        assertEquals(sNode.getStreet(), newStreet);
-    }
-
-    @Test
     public void testEquals() {
         assertEquals(sNode, sNode);
         assertFalse(sNode.equals(null));
         assertFalse(sNode.equals(new Node()));
         assertFalse(new StreetNode(0f, street).equals(sNode));
         assertFalse(new StreetNode(0.5f, null).equals(sNode));
-        assertFalse(new StreetNode(0.5f, new Street(street.getNodes(), 0, "NewStreet 1", 2)).equals(sNode));
         assertEquals(sNode, new StreetNode(0.5f, street));
     }
 

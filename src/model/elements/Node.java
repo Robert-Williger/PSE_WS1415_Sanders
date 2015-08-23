@@ -3,7 +3,7 @@ package model.elements;
 import java.awt.Point;
 
 public class Node {
-
+    // TODO exentends Point?
     private int x;
     private int y;
 

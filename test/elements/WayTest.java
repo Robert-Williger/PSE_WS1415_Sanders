@@ -3,8 +3,6 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.util.LinkedList;
-
 import model.elements.Node;
 import model.elements.Way;
 
@@ -16,15 +14,11 @@ public class WayTest {
     private Way way;
     private int type;
     private String name;
-    private static LinkedList<Node> nodes;
+    private static Node[] nodes;
 
     @BeforeClass
     public static void setUpClass() {
-        nodes = new LinkedList<Node>();
-        nodes.add(new Node(0, 0));
-        nodes.add(new Node(0, 1));
-        nodes.add(new Node(1, 1));
-        nodes.add(new Node(1, 0));
+        nodes = new Node[]{new Node(0, 0), new Node(0, 1), new Node(1, 1), new Node(1, 0)};
     }
 
     @Before

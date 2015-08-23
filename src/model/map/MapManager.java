@@ -165,11 +165,11 @@ public class MapManager implements IMapManager {
         final String streetName = streetNode.getStreet().getName();
         final Point nodeLocation = streetNode.getLocation();
 
-        for (final Iterator<Building> iterator = tile.getBuildings(); iterator.hasNext();) {
-            final Building building = iterator.next();
+        for (final Iterator<Building> buildingIt = tile.getBuildings(); buildingIt.hasNext();) {
+            final Building building = buildingIt.next();
             final StreetNode buildingNode = building.getStreetNode();
             if (buildingNode != null && buildingNode.getStreet().getName().equals(streetName)) {
-                for (final Node node : building.getNodes()) {
+                for (final Node node : building) {
                     final int distance = (int) nodeLocation.distance(node.getLocation());
                     if (distance < minDistance) {
                         ret = new DistancedBuilding(building, distance);

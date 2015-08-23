@@ -1,14 +1,13 @@
 package model.elements;
 
 import java.awt.Polygon;
-import java.util.List;
 
 public class Area extends MultiElement implements Typeable {
 
     protected Polygon polygon;
     private final int type;
 
-    public Area(final List<Node> nodes, final int type) {
+    public Area(final Node[] nodes, final int type) {
         super(nodes);
 
         this.type = type;
@@ -21,9 +20,9 @@ public class Area extends MultiElement implements Typeable {
         return polygon;
     }
 
-    protected Polygon calculatePolygon(final List<Node> nodes) {
-        final int[] xpoints = new int[nodes.size()];
-        final int[] ypoints = new int[nodes.size()];
+    protected Polygon calculatePolygon(final Node[] nodes) {
+        final int[] xpoints = new int[nodes.length];
+        final int[] ypoints = new int[nodes.length];
 
         int i = 0;
 
@@ -33,12 +32,12 @@ public class Area extends MultiElement implements Typeable {
             i++;
         }
 
-        return new Polygon(xpoints, ypoints, nodes.size());
+        return new Polygon(xpoints, ypoints, nodes.length);
     }
 
     private void calculatePolygon() {
         if (polygon == null) {
-            polygon = calculatePolygon(getNodes());
+            polygon = calculatePolygon(nodes);
         }
     }
 

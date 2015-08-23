@@ -8,8 +8,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -43,50 +41,21 @@ public class BackgroundRendererTest {
     public static void setUpClass() {
         renderer = new BackgroundRenderer(new PixelConverter(1));
 
-        List<Area> areaList = new LinkedList<Area>();
-        final List<Node> areaNodes = new LinkedList<Node>();
-        areaNodes.add(new Node(2, 2));
-        areaNodes.add(new Node(5, 5));
-        areaNodes.add(new Node(10, 3));
-        areaNodes.add(new Node(3, 0));
-        areaList.add(new Area(areaNodes, 1));
-        areas = areaList.toArray(new Area[1]);
+        areas = new Area[]{new Area(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3), new Node(3, 0)}, 1)};
+        ways = new Way[]{new Way(new Node[]{new Node(90, 0), new Node(120, 150), new Node(10, 300)}, 3, "Testweg")};
 
-        List<Way> wayList = new LinkedList<Way>();
-        final List<Node> wayNodes = new LinkedList<Node>();
-        wayNodes.add(new Node(90, 0));
-        wayNodes.add(new Node(120, 150));
-        wayNodes.add(new Node(10, 300));
-        wayList.add(new Way(wayNodes, 3, "Testweg"));
-        ways = wayList.toArray(new Way[1]);
+        final Street street = new Street(new Node[]{new Node(0, 0), new Node(5, 5), new Node(20, 10)}, 1,
+                "Kaiserstrasse", 0);
 
-        List<Street> streetList = new LinkedList<Street>();
-        final List<Node> streetNodes = new LinkedList<Node>();
-        streetNodes.add(new Node(0, 0));
-        streetNodes.add(new Node(5, 5));
-        streetNodes.add(new Node(20, 10));
-        final Street street = new Street(streetNodes, 1, "Kaiserstrasse", 0);
-        streetList.add(street);
-
-        final LinkedList<Node> streetNodes2 = new LinkedList<Node>();
-        streetNodes2.add(new Node(60, 150));
-        streetNodes2.add(new Node(60, 150));
-        streetNodes2.add(new Node(210, 80));
-        streetNodes2.add(new Node(200, 30));
-        streetList.add(new Street(streetNodes2, 2, "Waldstrasse", 1));
-
-        streets = streetList.toArray(new Street[2]);
+        streets = new Street[]{
+                street,
+                new Street(new Node[]{new Node(60, 150), new Node(60, 150), new Node(210, 80), new Node(200, 30)}, 2,
+                        "Waldstrasse", 1)};
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
-        List<Building> buildingList = new LinkedList<Building>();
-        final List<Node> buildingNodes = new LinkedList<Node>();
-        buildingNodes.add(new Node(2, 2));
-        buildingNodes.add(new Node(5, 5));
-        buildingNodes.add(new Node(10, 3));
-        buildingNodes.add(new Node(3, 0));
-        buildingList.add(new Building(buildingNodes, "Teststraße 15", streetNode));
-        buildings = buildingList.toArray(new Building[1]);
+        buildings = new Building[]{new Building(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3),
+                new Node(3, 0)}, "Teststraße 15", streetNode)};
 
         renderImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         emptyImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);

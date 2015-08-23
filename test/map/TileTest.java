@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNull;
 
 import java.awt.Point;
 import java.util.LinkedList;
-import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -32,36 +31,24 @@ public class TileTest {
     @Before
     public void setUp() {
         streets = new LinkedList<Street>();
-        final List<Node> streetNodes = new LinkedList<Node>();
-        streetNodes.add(new Node(50, 0));
-        streetNodes.add(new Node(80, 20));
-        streetNodes.add(new Node(256, 156));
-        final Street street = new Street(streetNodes, 3, "Kaiserstrasse", 0);
+
+        final Street street = new Street(new Node[]{new Node(50, 0), new Node(80, 20), new Node(256, 156)}, 3,
+                "Kaiserstrasse", 0);
         streets.add(street);
 
-        final List<Node> streetNodes2 = new LinkedList<Node>();
-        streetNodes2.add(new Node(60, 150));
-        streetNodes2.add(new Node(60, 150));
-        streetNodes2.add(new Node(210, 80));
-        streetNodes2.add(new Node(200, 30));
-        streets.add(new Street(streetNodes2, 2, "Waldstrasse", 1));
+        streets.add(new Street(new Node[]{new Node(60, 150), new Node(60, 150), new Node(210, 80), new Node(200, 30)},
+                2, "Waldstrasse", 1));
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
         ways = new LinkedList<Way>();
-        final List<Node> wayNodes = new LinkedList<Node>();
-        wayNodes.add(new Node(90, 0));
-        wayNodes.add(new Node(120, 150));
-        wayNodes.add(new Node(10, 300));
-        ways.add(new Way(wayNodes, 3, "Testweg"));
+
+        ways.add(new Way(new Node[]{new Node(90, 0), new Node(120, 150), new Node(10, 300)}, 3, "Testweg"));
 
         buildings = new LinkedList<Building>();
-        final List<Node> buildingNodes = new LinkedList<Node>();
-        buildingNodes.add(new Node(244, 119));
-        buildingNodes.add(new Node(235, 130));
-        buildingNodes.add(new Node(215, 115));
-        buildingNodes.add(new Node(224, 104));
-        buildings.add(new Building(buildingNodes, "Teststraße 15", streetNode));
+
+        buildings.add(new Building(new Node[]{new Node(244, 119), new Node(235, 130), new Node(215, 115),
+                new Node(224, 104)}, "Teststraße 15", streetNode));
 
         areas = new LinkedList<Area>();
 

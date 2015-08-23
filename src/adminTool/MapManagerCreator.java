@@ -17,14 +17,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import adminTool.configurations.IElementOrder;
-import adminTool.configurations.PerformantConfiguration;
+import util.Arrays;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.MultiElement;
@@ -38,18 +39,22 @@ import model.map.PixelConverter;
 
 public class MapManagerCreator extends AbstractMapCreator {
 
+    private static final int MIN_TILES = 1;
+    private static final int TILE_LENGTH = 256;
     private static final int MAX_ZOOM_STEPS = 13;
 
-    // minimum amount of tiles in a row / column on lowest zoom level
-    private static final int MIN_TILES = 2;
-    private static final int TILE_LENGTH = 256;
     private static final int POI_WIDTH = 20;
-    private static final int WAY_WIDTH = 30;
+    private static final int WAY_WIDTH = 20;
     private static final int MIN_POI_DISTANCE = 40;
     private static final int MAX_BUILDING_STREET_DISTANCE = 4000;
-    private static final ReferencedTile EMPTY_TILE = new ReferencedTile();
 
-    private final IElementOrder config;
+    private static final int BUILDING_MIN_ZOOMSTEP = 14;
+
+    private static final int AREA_THRESHHOLD = 2;
+    private static final int WAY_THRESHHOLD = 100;
+    private static final double AREA_SHRINK_FACTOR = 0.9;
+    private static final double WAY_SHRINK_FACTOR = 0.9;
+
     private Collection<Building> buildings;
     private Collection<ReferencedPOI> referencedPOIs;
     private File file;
@@ -67,6 +72,11 @@ public class MapManagerCreator extends AbstractMapCreator {
     private TypeSorter<Street> streetSorter;
     private TypeSorter<Area> terrainSorter;
 
+    private Node[][] areaNodes;
+    private int[][] areaSimplifications;
+    private Node[][] wayNodes;
+    private int[][] waySimplifications;
+
     private PixelConverter converter;
     private ReferencedTile[][] tiles;
 
@@ -74,15 +84,14 @@ public class MapManagerCreator extends AbstractMapCreator {
             final Collection<POI> pois, final Collection<Way> ways, final Collection<Area> terrain,
             final Rectangle boundingBox, final File file) {
 
-        config = new PerformantConfiguration();
         this.buildings = buildings;
         this.boundingBox = boundingBox;
         this.file = file;
 
-        poiSorter = new TypeSorter<POI>(pois, config.getPOIOrder());
-        waySorter = new TypeSorter<Way>(ways, config.getWayOrder());
-        streetSorter = new TypeSorter<Street>(streets, config.getStreetOrder());
-        terrainSorter = new TypeSorter<Area>(terrain, config.getTerrainOrder());
+        poiSorter = new TypeSorter<POI>(pois);
+        waySorter = new TypeSorter<Way>(ways);
+        streetSorter = new TypeSorter<Street>(streets);
+        terrainSorter = new TypeSorter<Area>(terrain);
     }
 
     @Override
@@ -173,11 +182,22 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         buildings = null;
 
+        areaSimplifications = new int[areaNodes.length][];
+        waySimplifications = new int[wayNodes.length][];
+        TileWriter writer = new TileWriter();
+
+        int[][] nextAreaSimplifications = new int[areaNodes.length][];
+        int[][] nextWaySimplifications = new int[wayNodes.length][];
+
         for (int zoom = maxZoomStep - 1; zoom >= minZoomStep; zoom--) {
-            final TileWriter writer = new TileWriter();
+
             writer.start();
 
-            final ReferencedTile[][] next = mergeUp(zoom);
+            final Set<Integer> removedAreas = new HashSet<Integer>();
+            final List<Integer> simplifiedAreas = simplifyAreas(nextAreaSimplifications, new HashSet<Integer>(), zoom);
+            final List<Integer> simplifiedWays = simplifyWays(nextWaySimplifications, zoom);
+
+            final ReferencedTile[][] next = mergeUp(removedAreas, zoom);
 
             try {
                 writer.join();
@@ -185,10 +205,19 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
+            int[][] swapAreaSimplifications = areaSimplifications;
+            int[][] swapWaySimplifications = waySimplifications;
+
+            areaSimplifications = nextAreaSimplifications;
+            waySimplifications = nextWaySimplifications;
+
+            nextAreaSimplifications = swapAreaSimplifications;
+            nextWaySimplifications = swapWaySimplifications;
+
             tiles = next;
+            writer = new TileWriter(simplifiedAreas, simplifiedWays);
         }
 
-        final TileWriter writer = new TileWriter();
         writer.run();
 
         try {
@@ -198,25 +227,95 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
     }
 
-    private ReferencedTile[][] mergeUp(final int zoom) {
+    private List<Integer> simplifyAreas(final int[][] simplifications, final Set<Integer> removedAreas, final int zoom) {
+        final List<Integer> simplifiedAreas = new LinkedList<Integer>();
+
+        final VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, AREA_THRESHHOLD);
+        for (int i = 0; i < areaNodes.length; i++) {
+            final Node[] nodes = areaNodes[i];
+            final int[] areaSimplification = areaSimplifications[i];
+
+            final int oldSize = areaSimplification != null ? areaSimplification.length : nodes.length;
+            if (oldSize != 0) {
+                final int[] simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes), zoom);
+
+                if (simplified.length == 0) {
+                    removedAreas.add(i);
+                    simplifications[i] = simplified;
+                } else if ((double) simplified.length / oldSize <= AREA_SHRINK_FACTOR) {
+                    simplifiedAreas.add(i);
+                    simplifications[i] = simplified;
+                } else {
+                    simplifications[i] = areaSimplification;
+                }
+            }
+        }
+
+        return simplifiedAreas;
+    }
+
+    private List<Integer> simplifyWays(final int[][] simplifications, final int zoom) {
+        final List<Integer> ret = new LinkedList<Integer>();
+
+        final VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, WAY_THRESHHOLD);
+        for (int i = 0; i < wayNodes.length; i++) {
+            final Node[] nodes = wayNodes[i];
+            final int[] waySimplification = waySimplifications[i];
+
+            final int oldSize = waySimplification != null ? waySimplification.length : nodes.length;
+            if (oldSize != 0) {
+                final int[] simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
+
+                if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
+                    ret.add(i);
+                    simplifications[i] = simplified;
+                } else {
+                    simplifications[i] = waySimplification;
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    private ReferencedTile[][] mergeUp(final Set<Integer> removedAreas, final int zoom) {
         final ReferencedTile[][] array = new ReferencedTile[(tiles.length + 1) / 2][(tiles[0].length + 1) / 2];
 
         for (int i = 0; i < tiles.length; i += 2) {
             for (int j = 0; j < tiles[0].length; j += 2) {
-                final ReferencedTile[] mergeTiles = new ReferencedTile[4];
+                final ReferencedTile destination = new ReferencedTile();
 
-                mergeTiles[0] = getTile(i, j);
-                mergeTiles[1] = getTile(i + 1, j);
-                mergeTiles[2] = getTile(i, j + 1);
-                mergeTiles[3] = getTile(i + 1, j + 1);
+                merge(getTile(i, j), destination, removedAreas, zoom);
+                merge(getTile(i + 1, j), destination, removedAreas, zoom);
+                merge(getTile(i, j + 1), destination, removedAreas, zoom);
+                merge(getTile(i + 1, j + 1), destination, removedAreas, zoom);
 
-                array[i / 2][j / 2] = new ReferencedTile(config, mergeTiles);
+                array[i / 2][j / 2] = destination;
             }
         }
 
         partitionPOIs(zoom, array);
 
         return array;
+    }
+
+    private void merge(final ReferencedTile source, final ReferencedTile destination, final Set<Integer> removedAreas,
+            final int zoom) {
+
+        final Collection<Integer> areas = destination.getTerrain();
+        for (final int area : source.getTerrain()) {
+            if (!removedAreas.contains(area)) {
+                areas.add(area);
+            }
+        }
+
+        destination.getStreets().addAll(source.getStreets());
+        destination.getWays().addAll(source.getWays());
+
+        if (zoom >= BUILDING_MIN_ZOOMSTEP) {
+            destination.getBuildings().addAll(source.getBuildings());
+        }
+
     }
 
     private void partitionPOIs(final int zoom, final ReferencedTile[][] tiles) {
@@ -266,22 +365,21 @@ public class MapManagerCreator extends AbstractMapCreator {
             }
         }
 
-        return EMPTY_TILE;
+        return ReferencedTile.EMPTY_TILE;
     }
 
     private double log2(final double value) {
         return (Math.log(value) / Math.log(2));
     }
 
-    private Path2D.Float createPath(final List<Node> nodes) {
+    private Path2D.Float createPath(final Iterator<Node> nodes) {
         final Path2D.Float path = new Path2D.Float();
-        final Iterator<Node> iter = nodes.iterator();
 
-        Point location = iter.next().getLocation();
+        Point location = nodes.next().getLocation();
         path.moveTo(location.x, location.y);
 
-        while (iter.hasNext()) {
-            location = iter.next().getLocation();
+        while (nodes.hasNext()) {
+            location = nodes.next().getLocation();
             path.lineTo(location.x, location.y);
         }
 
@@ -369,6 +467,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            areaNodes = new Node[terrainSorter.getSorting().size()][];
+
             try {
                 terrainSorter.join();
             } catch (final InterruptedException e) {
@@ -377,6 +477,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             int id = 0;
             for (final Area area : terrainSorter.getSorting()) {
+                areaNodes[id] = area.getNodes();
+
                 final Polygon poly = area.getPolygon();
                 final Rectangle areaTileBounds = locateRectangle(poly.getBounds());
                 final Rectangle tileRect = new Rectangle(coordTileLength, coordTileLength);
@@ -403,17 +505,20 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            wayNodes = new Node[waySorter.getSorting().size()][];
+
             try {
                 waySorter.join();
             } catch (final InterruptedException e) {
                 e.printStackTrace();
             }
 
-            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, maxZoomStep);
+            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, Math.min(15, maxZoomStep));
 
             int id = 0;
             for (final Way way : waySorter.getSorting()) {
-                final Path2D.Float path = createPath(way.getNodes());
+                wayNodes[id] = way.getNodes();
+                final Path2D.Float path = createPath(way.iterator());
                 final Stroke stroke = new BasicStroke(maxWayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 
                 final Shape wayShape = stroke.createStrokedShape(path);
@@ -433,7 +538,6 @@ public class MapManagerCreator extends AbstractMapCreator {
                 ++id;
             }
         }
-
     }
 
     private class StreetPartitioner extends Thread {
@@ -450,11 +554,12 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, maxZoomStep);
+            // TODO vergröbern
+            final int maxWayWidth = converter.getCoordDistance(WAY_WIDTH, Math.min(15, maxZoomStep));
 
             int id = 0;
             for (final Street street : streetSorter.getSorting()) {
-                final Path2D.Float path = createPath(street.getNodes());
+                final Path2D.Float path = createPath(street.iterator());
                 final Stroke stroke = new BasicStroke(maxWayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 
                 final Shape streetShape = stroke.createStrokedShape(path);
@@ -627,8 +732,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 long minDist = Long.MAX_VALUE;
 
                 for (final Street street : streetList) {
-                    final List<Node> nodes = street.getNodes();
-                    final Iterator<Node> iterator = nodes.iterator();
+                    final Iterator<Node> iterator = street.iterator();
                     float totalLength = 0;
                     final int maxLength = street.getLength();
 
@@ -789,7 +893,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             } catch (final InterruptedException e) {
                 e.printStackTrace();
             }
-            writeDistribution(poiSorter.getTypeDistribution(), config.getPOIOrder());
+            writeDistribution(poiSorter.getTypeDistribution());
 
             // TODO compress
             for (final POI poi : poiSorter.getSorting()) {
@@ -818,7 +922,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            writeDistribution(streetSorter.getTypeDistribution(), config.getStreetOrder());
+            writeDistribution(streetSorter.getTypeDistribution());
 
             for (final Street street : streetSorter.getSorting()) {
                 int node1 = (int) (street.getID() >> 32);
@@ -837,7 +941,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            writeDistribution(waySorter.getTypeDistribution(), config.getWayOrder());
+            writeDistribution(waySorter.getTypeDistribution());
             for (final Way way : waySorter.getSorting()) {
                 writeWay(way);
             }
@@ -877,7 +981,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            writeDistribution(terrainSorter.getTypeDistribution(), config.getTerrainOrder());
+            writeDistribution(terrainSorter.getTypeDistribution());
             for (final Area area : terrainSorter.getSorting()) {
                 writeMultiElement(area);
             }
@@ -885,7 +989,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         private int putNodes(final Collection<? extends MultiElement> elements, int nodeCount) {
             for (final MultiElement element : elements) {
-                for (final Node node : element.getNodes()) {
+                for (final Node node : element) {
                     if (!nodeMap.containsKey(node)) {
                         nodeMap.put(node, ++nodeCount);
                     }
@@ -901,11 +1005,10 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeMultiElement(final MultiElement element) throws IOException {
-            final Collection<Node> nodes = element.getNodes();
-            writeInt(nodes.size());
+            writeInt(element.size());
 
             int last = 0;
-            for (final Node node : nodes) {
+            for (final Node node : element) {
                 int current = nodeMap.get(node);
                 writeInt(current - last);
                 last = current;
@@ -917,32 +1020,70 @@ public class MapManagerCreator extends AbstractMapCreator {
             writeInt(nameMap.get(way.getName().trim()));
         }
 
-        private void writeDistribution(final int[] distribution, final int[] typeOrder) throws IOException {
+        private void writeDistribution(final int[] distribution) throws IOException {
             int total = 0;
-            // TODO type order
+
             writeInt(distribution.length);
             for (int type = 0; type < distribution.length; type++) {
                 total += distribution[type];
                 writeInt(total);
-            }
-            for (int type = 0; type < distribution.length; type++) {
-                writeInt(type);
             }
         }
     }
 
     private class TileWriter extends Thread {
 
+        final List<Integer> simplifiedAreas;
+        final List<Integer> simplifiedWays;
+
         public TileWriter() {
+            this(null, null);
+        }
+
+        public TileWriter(final List<Integer> simplifiedAreas, final List<Integer> simplifiedWays) {
             super("Tile writer");
+
+            this.simplifiedAreas = simplifiedAreas;
+            this.simplifiedWays = simplifiedWays;
         }
 
         @Override
         public void run() {
             try {
+                if (simplifiedAreas != null) {
+                    writeSimplifications();
+                }
                 writeTiles();
             } catch (final IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private void writeSimplifications() throws IOException {
+            writeSimplifications(simplifiedAreas, areaSimplifications);
+            writeSimplifications(simplifiedWays, waySimplifications);
+        }
+
+        private void writeSimplifications(final List<Integer> simplifiedElements, final int[][] simplifications)
+                throws IOException {
+
+            final int size = simplifiedElements.size();
+            final Iterator<Integer> elementsIt = simplifiedElements.iterator();
+
+            writeInt(size);
+
+            for (int i = 0; i < size; i++) {
+                final int element = elementsIt.next();
+                final int[] simplification = simplifications[element];
+
+                writeInt(element);
+                writeInt(simplification.length);
+
+                int last = 0;
+                for (final int index : simplification) {
+                    writeInt(index - last);
+                    last = index;
+                }
             }
         }
 
@@ -1023,12 +1164,9 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         private Collection<T> typeables;
         private int[] typeDistribution;
-        private int[] typeOrder;
 
-        public TypeSorter(final Collection<T> source, final int[] typeOrder) {
+        public TypeSorter(final Collection<T> source) {
             this.typeables = source;
-            this.typeOrder = typeOrder;
-            // TODO type order
         }
 
         @Override
@@ -1058,11 +1196,6 @@ public class MapManagerCreator extends AbstractMapCreator {
                 typeDistribution[i] = list.size();
                 typeables.addAll(list);
             }
-            // for (final int type : typeOrder) {
-            // final List<T> list = typeLists.get(type);
-            // typeDistribution[type] = list.size();
-            // typeables.addAll(list);
-            // }
 
             typeLists = null;
             this.typeables = typeables;

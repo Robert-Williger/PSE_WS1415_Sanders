@@ -8,8 +8,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -51,26 +49,15 @@ public class RouteRendererTest {
         renderer = new RouteRenderer(new PixelConverter(1));
 
         streets = new Street[1];
-        final List<Node> streetNodes = new LinkedList<Node>();
-        streetNodes.add(new Node(0, 0));
-        streetNodes.add(new Node(5, 5));
-        streetNodes.add(new Node(0, 1));
-        street = new Street(streetNodes, 1, "Kaiserstrasse", streetId);
+        street = new Street(new Node[]{new Node(0, 0), new Node(5, 5), new Node(0, 1)}, 1, "Kaiserstrasse", streetId);
         streets[0] = street;
 
         doubleStreets = new Street[2];
-        final List<Node> doubleStreetNodes = new LinkedList<Node>();
-        doubleStreetNodes.add(new Node(0, 0));
-        doubleStreetNodes.add(new Node(2, 2));
-        doubleStreetNodes.add(new Node(0, 1));
-        final Street newStreet = new Street(doubleStreetNodes, 1, "Teststraße", doubleStreetID);
+        final Street newStreet = new Street(new Node[]{new Node(0, 0), new Node(2, 2), new Node(0, 1)}, 1,
+                "Teststraße", doubleStreetID);
         doubleStreets[0] = newStreet;
-
-        final List<Node> doubleStreetNodes2 = new LinkedList<Node>();
-        doubleStreetNodes2.add(new Node(0, 0));
-        doubleStreetNodes2.add(new Node(5, 5));
-        doubleStreetNodes2.add(new Node(0, 1));
-        doubleStreets[1] = new Street(doubleStreetNodes2, 1, "Testgasse", doubleStreetID);
+        doubleStreets[1] = new Street(new Node[]{new Node(0, 0), new Node(5, 5), new Node(0, 1)}, 1, "Testgasse",
+                doubleStreetID);
 
         final MapManager emptyMapManager = new MapManager();
         final RoutePoint rPoint1 = new RoutePoint(emptyMapManager);

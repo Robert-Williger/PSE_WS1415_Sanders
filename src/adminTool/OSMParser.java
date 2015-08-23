@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,13 +89,13 @@ public class OSMParser implements IOSMParser {
     private class Parser extends BinaryParser {
         private HashMap<Integer, Node> nodeMap;
         private HashMap<Integer, Byte> areaMap;
-        private HashMap<Integer, List<Node>> wayMap;
+        private HashMap<Integer, Node[]> wayMap;
 
         private final int SHIFT = 1 << 29;
 
         public Parser() {
             nodeMap = new HashMap<Integer, Node>();
-            wayMap = new HashMap<Integer, List<Node>>();
+            wayMap = new HashMap<Integer, Node[]>();
             areaMap = new HashMap<Integer, Byte>();
         }
 
@@ -261,15 +262,15 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                final ArrayList<Node> nodes = new ArrayList<Node>(w.getRefsList().size());
-
+                final Node[] nodes = new Node[w.getRefsList().size()];
                 long lastRef = 0;
+                int count = 0;
                 for (final Long ref : w.getRefsList()) {
                     lastRef += ref;
-                    nodes.add(nodeMap.get((int) lastRef));
+                    nodes[count++] = nodeMap.get((int) lastRef);
                 }
 
-                if (nodes.size() > 1) {
+                if (nodes.length > 1) {
                     wayMap.put((int) w.getId(), nodes);
                     int type;
 
@@ -281,12 +282,14 @@ public class OSMParser implements IOSMParser {
 
                         if (type >= 0) {
                             areaMap.put((int) w.getId(), (byte) type);
-                            if (nodes.get(0).equals(nodes.get(nodes.size() - 1))) {
+                            // TODO equals instead of == ?
+                            if (nodes[0] == nodes[nodes.length - 1]) {
                                 areaList.add(new InvalidateableArea(nodes, type));
                             }
                         }
 
                         if (!area) {
+                            // TODO ways with area tag also valid...
                             type = getStreetType(wayTag);
                             if (type >= 0) {
                                 final List<Point2D.Double> degrees = new LinkedList<Point2D.Double>();
@@ -305,7 +308,7 @@ public class OSMParser implements IOSMParser {
                                     }
                                 }
 
-                                streetList.add(new UnprocessedStreet(degrees, nodes, type, nameTag));
+                                streetList.add(new UnprocessedStreet(degrees, Arrays.asList(nodes), type, nameTag));
                             } else {
                                 type = getWayType(wayTag);
 
@@ -392,7 +395,12 @@ public class OSMParser implements IOSMParser {
 
                             if ((role.equals("inner") || role.equals("outer"))) {
                                 if (wayMap.containsKey((int) id)) {
-                                    List<Node> my = new ArrayList<Node>(wayMap.get((int) id));
+                                    // TODO save as small parts of ways may
+                                    // reduce disc space
+                                    List<Node> my = new ArrayList<Node>(wayMap.get((int) id).length);
+                                    for (final Node node : wayMap.get((int) id)) {
+                                        my.add(node);
+                                    }
 
                                     final HashMap<Node, List<Node>> map = maps.get(role.equals("inner") ? 1 : 0);
                                     final Node myFirst = my.get(0);
@@ -434,7 +442,7 @@ public class OSMParser implements IOSMParser {
                                     }
 
                                     if (my.get(0).equals(my.get(my.size() - 1)) && areaType != Integer.MAX_VALUE) {
-                                        areaList.add(new InvalidateableArea(my, areaType));
+                                        areaList.add(new InvalidateableArea(my.toArray(new Node[my.size()]), areaType));
                                     } else {
                                         map.put(my.get(my.size() - 1), my);
                                         map.put(my.get(0), my);
@@ -459,10 +467,12 @@ public class OSMParser implements IOSMParser {
                             }
 
                             for (final List<Node> list : maps.get(0).values()) {
-                                buildingList.add(new InvalidateableBuilding(list, address + " " + housenumber, null));
+                                buildingList.add(new InvalidateableBuilding(list.toArray(new Node[list.size()]),
+                                        address + " " + housenumber, null));
                             }
                             for (final List<Node> list : maps.get(1).values()) {
-                                buildingList.add(new InvalidateableBuilding(list, " ", null));
+                                buildingList.add(new InvalidateableBuilding(list.toArray(new Node[list.size()]), " ",
+                                        null));
                             }
                         }
                     }
@@ -479,7 +489,7 @@ public class OSMParser implements IOSMParser {
 
             // TODO improve this
             for (final model.elements.Way way : wayList) {
-                for (final Node node : way.getNodes()) {
+                for (final Node node : way) {
                     final int nodeX = translateX(node.getX());
                     final int nodeY = translateY(node.getY());
 
@@ -513,7 +523,7 @@ public class OSMParser implements IOSMParser {
                 }
             }
             for (final Area area : areaList) {
-                for (final Node node : area.getNodes()) {
+                for (final Node node : area) {
                     final int nodeX = translateX(node.getX());
                     final int nodeY = translateY(node.getY());
 
@@ -530,7 +540,7 @@ public class OSMParser implements IOSMParser {
                 }
             }
             for (final Building building : buildingList) {
-                for (final Node node : building.getNodes()) {
+                for (final Node node : building) {
                     final int nodeX = translateX(node.getX());
                     final int nodeY = translateY(node.getY());
 
@@ -834,9 +844,9 @@ public class OSMParser implements IOSMParser {
         return new Point((int) x, (int) y);
     }
 
-    private class InvalidateableArea extends Area {
+    private static class InvalidateableArea extends Area {
 
-        public InvalidateableArea(final List<Node> nodes, final int type) {
+        public InvalidateableArea(final Node[] nodes, final int type) {
             super(nodes, type);
         }
 
@@ -845,9 +855,9 @@ public class OSMParser implements IOSMParser {
         }
     }
 
-    private class InvalidateableBuilding extends Building {
+    private static class InvalidateableBuilding extends Building {
 
-        public InvalidateableBuilding(final List<Node> nodes, final String address, final StreetNode node) {
+        public InvalidateableBuilding(final Node[] nodes, final String address, final StreetNode node) {
             super(nodes, address, node);
         }
 

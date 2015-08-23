@@ -33,6 +33,7 @@ public class Map extends AbstractModel implements IMap {
         final int weightedX;
         final int weightedY;
         final int trueSteps;
+
         if (steps > 0) {
             trueSteps = Math.min(steps, state.getMaxZoomStep() - state.getZoomStep());
             weightedX = (coordLocation.x - midPoint.x) >> trueSteps;

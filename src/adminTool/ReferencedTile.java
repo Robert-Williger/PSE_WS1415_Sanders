@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
 
-import adminTool.configurations.IElementOrder;
-
 public class ReferencedTile {
+
+    public static final ReferencedTile EMPTY_TILE = new ReferencedTile();
 
     private final TreeSet<Integer> streets;
     private final TreeSet<Integer> ways;
@@ -22,11 +22,6 @@ public class ReferencedTile {
         buildings = new HashSet<Integer>();
         terrain = new TreeSet<Integer>();
         pois = new LinkedList<ReferencedPOI>();
-    }
-
-    public ReferencedTile(final IElementOrder config, final ReferencedTile[] tiles) {
-        this();
-        merge(config, tiles);
     }
 
     public Set<Integer> getStreets() {
@@ -71,14 +66,5 @@ public class ReferencedTile {
 
     private int terrainFlag() {
         return terrain.isEmpty() ? 0b00000000 : 0b00010000;
-    }
-
-    private void merge(final IElementOrder config, final ReferencedTile[] tiles) {
-        for (final ReferencedTile tile : tiles) {
-            terrain.addAll(tile.getTerrain());
-            streets.addAll(tile.getStreets());
-            ways.addAll(tile.getWays());
-            buildings.addAll(tile.getBuildings());
-        }
     }
 }

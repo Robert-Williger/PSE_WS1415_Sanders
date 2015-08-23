@@ -3,8 +3,6 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.util.LinkedList;
-
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Node;
@@ -18,24 +16,16 @@ import org.junit.Test;
 public class BuildingTest {
 
     private Building building;
-    private static LinkedList<Node> nodes;
+    private static Node[] nodes;
     private static String address;
     private static StreetNode sNode;
 
     @BeforeClass
     public static void setUpClass() {
-        nodes = new LinkedList<Node>();
-        nodes.add(new Node(0, 0));
-        nodes.add(new Node(0, 1));
-        nodes.add(new Node(1, 1));
-        nodes.add(new Node(1, 0));
-
-        final LinkedList<Node> street = new LinkedList<Node>();
-        street.add(new Node(0, 0));
-        street.add(new Node(2, 2));
+        nodes = new Node[]{new Node(0, 0), new Node(0, 1), new Node(1, 1), new Node(1, 0)};
 
         address = "Kaiserstraße 5";
-        sNode = new StreetNode(0.5f, new Street(street, 1, "Kaiserstraße", 1));
+        sNode = new StreetNode(0.5f, new Street(new Node[]{new Node(0, 0), new Node(2, 2)}, 1, "Kaiserstraße", 1));
     }
 
     @Before
@@ -65,10 +55,7 @@ public class BuildingTest {
     public void testStreetNode() {
         assertEquals(sNode, building.getStreetNode());
 
-        final LinkedList<Node> n = new LinkedList<Node>();
-        n.add(new Node(0, 0));
-        n.add(new Node(2, 2));
-        final StreetNode s = new StreetNode(0.5f, new Street(n, 1, "Test", 1));
+        final StreetNode s = new StreetNode(0.5f, new Street(new Node[]{new Node(0, 0), new Node(2, 2)}, 1, "Test", 1));
 
         building.setStreetNode(s);
         assertEquals(s, building.getStreetNode());
@@ -80,8 +67,8 @@ public class BuildingTest {
         assertEquals(building, building);
         assertFalse(building.equals(new Area(nodes, 0)));
         assertFalse(building.equals(new Building(nodes, address + "x", sNode)));
-        assertFalse(building.equals(new Building(nodes, address, new StreetNode(0.5f, new Street(
-                new LinkedList<Node>(), 1, "Test", 1)))));
+        assertFalse(building.equals(new Building(nodes, address, new StreetNode(0.5f, new Street(new Node[0], 1,
+                "Test", 1)))));
         assertFalse(new Building(nodes, address, null).equals(building));
         assertFalse(new Building(nodes, null, sNode).equals(building));
         assertEquals(building, new Building(nodes, address, sNode));

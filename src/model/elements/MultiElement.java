@@ -1,16 +1,28 @@
 package model.elements;
 
-import java.util.List;
+import java.util.Iterator;
 
-public class MultiElement {
+import util.Arrays;
 
-    private final List<Node> nodes;
+public class MultiElement implements Iterable<Node> {
 
-    public MultiElement(final List<Node> nodes) {
+    protected final Node[] nodes;
+
+    public MultiElement(final Node[] nodes) {
         this.nodes = nodes;
     }
 
-    public List<Node> getNodes() {
+    @Override
+    public Iterator<Node> iterator() {
+        return Arrays.iterator(nodes);
+    }
+
+    public int size() {
+        return nodes.length;
+    }
+
+    // TODO remove this ?
+    public Node[] getNodes() {
         return nodes;
     }
 
@@ -18,7 +30,7 @@ public class MultiElement {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((nodes == null) ? 0 : nodes.hashCode());
+        result = prime * result + ((nodes == null) ? 0 : java.util.Arrays.hashCode(nodes));
         return result;
     }
 
@@ -38,7 +50,7 @@ public class MultiElement {
             if (other.nodes != null) {
                 return false;
             }
-        } else if (!nodes.equals(other.nodes)) {
+        } else if (!java.util.Arrays.equals(nodes, other.nodes)) {
             return false;
         }
         return true;

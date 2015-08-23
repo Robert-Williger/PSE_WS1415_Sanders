@@ -31,35 +31,31 @@ public class StreetNode extends Node {
 
     private void calculateLocation() {
 
-        if (street.getNodes().size() == 1) {
-            setLocation(street.getNodes().get(0).getLocation());
-        } else {
-            final float totalLength = street.getLength();
-            final Iterator<Node> iterator = street.getNodes().iterator();
-            Point lastNodeLocation = iterator.next().getLocation();
-            float currentOffsetLength = 0f;
+        final float totalLength = street.getLength();
+        final Iterator<Node> iterator = street.iterator();
+        Point lastNodeLocation = iterator.next().getLocation();
+        float currentOffsetLength = 0f;
 
-            while (iterator.hasNext()) {
-                final Point currentNodeLocation = iterator.next().getLocation();
-                final double distance = currentNodeLocation.distance(lastNodeLocation);
+        while (iterator.hasNext()) {
+            final Point currentNodeLocation = iterator.next().getLocation();
+            final double distance = currentNodeLocation.distance(lastNodeLocation);
 
-                if (currentOffsetLength + distance > totalLength * offset || !iterator.hasNext()) {
-                    final int xDistance = currentNodeLocation.x - lastNodeLocation.x;
-                    final int yDistance = currentNodeLocation.y - lastNodeLocation.y;
+            if (currentOffsetLength + distance > totalLength * offset || !iterator.hasNext()) {
+                final int xDistance = currentNodeLocation.x - lastNodeLocation.x;
+                final int yDistance = currentNodeLocation.y - lastNodeLocation.y;
 
-                    final float partOffsetLength = totalLength * offset - currentOffsetLength;
-                    final float partOffset = (float) (partOffsetLength / distance);
-                    setLocation((int) (lastNodeLocation.x + xDistance * partOffset + 0.49f), (int) (lastNodeLocation.y
-                            + yDistance * partOffset + 0.49f));
+                final float partOffsetLength = totalLength * offset - currentOffsetLength;
+                final float partOffset = (float) (partOffsetLength / distance);
+                setLocation((int) (lastNodeLocation.x + xDistance * partOffset + 0.49f), (int) (lastNodeLocation.y
+                        + yDistance * partOffset + 0.49f));
 
-                    validLoc = true;
+                validLoc = true;
 
-                    return;
-                }
-
-                currentOffsetLength += distance;
-                lastNodeLocation = currentNodeLocation;
+                return;
             }
+
+            currentOffsetLength += distance;
+            lastNodeLocation = currentNodeLocation;
         }
 
     }

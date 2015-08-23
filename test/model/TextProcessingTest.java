@@ -26,9 +26,8 @@ public class TextProcessingTest {
 
         // Erstellt fuer den richtigen Eintrag der Hashtabelle einen passenden
         // Node
-        final List<Node> list = new ArrayList<Node>();
-        list.add(new Node(0, 0));
-        final Street street = new Street(list, 0, "Teststrasse", 0);
+
+        final Street street = new Street(new Node[]{new Node(0, 0)}, 0, "Teststrasse", 0);
         sn = new StreetNode(0, street);
 
         final HashMap<String, StreetNode> hm = new HashMap<String, StreetNode>();

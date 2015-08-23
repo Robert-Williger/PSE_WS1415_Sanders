@@ -2,8 +2,8 @@ package model.map;
 
 import java.awt.Point;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
+import util.Arrays;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.POI;
@@ -53,26 +53,12 @@ public class EmptyTile extends AbstractTile {
         return pois;
     }
 
-    private static class EmptyIterator<T> implements Iterator<T> {
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public T next() {
-            throw new NoSuchElementException();
-        }
-
-    }
-
     static {
         location = new Point(0, 0);
-        ways = new EmptyIterator<Way>();
-        streets = new EmptyIterator<Street>();
-        buildings = new EmptyIterator<Building>();
-        pois = new EmptyIterator<POI>();
-        terrain = new EmptyIterator<Area>();
+        ways = Arrays.iterator();
+        streets = Arrays.iterator();
+        buildings = Arrays.iterator();
+        pois = Arrays.iterator();
+        terrain = Arrays.iterator();
     }
 }

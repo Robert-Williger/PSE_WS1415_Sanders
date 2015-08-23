@@ -2,14 +2,13 @@ package model.elements;
 
 import java.awt.Point;
 import java.util.Iterator;
-import java.util.List;
 
 public class Street extends Way {
 
     private final long id;
     private int length;
 
-    public Street(final List<Node> nodes, final int type, final String name, final long id) {
+    public Street(final Node[] nodes, final int type, final String name, final long id) {
         super(nodes, type, name);
         this.id = id;
     }
@@ -24,7 +23,7 @@ public class Street extends Way {
 
     private void calculateLength() {
         float totalLength = 0f;
-        final Iterator<Node> iterator = getNodes().iterator();
+        final Iterator<Node> iterator = iterator();
         Point lastNodeLocation = iterator.next().getLocation();
 
         while (iterator.hasNext()) {

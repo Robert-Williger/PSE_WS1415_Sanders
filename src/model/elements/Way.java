@@ -1,13 +1,11 @@
 package model.elements;
 
-import java.util.List;
-
 public class Way extends MultiElement implements Typeable {
 
     private final int type;
     private final String name;
 
-    public Way(final List<Node> nodes, final int type, final String name) {
+    public Way(final Node[] nodes, final int type, final String name) {
         super(nodes);
 
         this.type = type;

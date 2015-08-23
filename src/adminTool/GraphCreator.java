@@ -109,7 +109,9 @@ public class GraphCreator extends AbstractMapCreator {
                     streetNodes = nodeList.subList(lastCut, currentCut + 1);
                 }
 
-                final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
+                // TODO improve this!
+                final Street newStreet = new Street(streetNodes.toArray(new Node[streetNodes.size()]),
+                        street.getType(), street.getName(), id);
 
                 processedStreets.add(newStreet);
                 edgesList.add(edge);

@@ -8,8 +8,6 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -53,86 +51,29 @@ public class ImageLoaderTest {
 
         final Street[] streets = new Street[5];
 
-        final LinkedList<Node> sn0 = new LinkedList<Node>();
-        sn0.add(n0);
-        sn0.add(n1);
-        sn0.add(n2);
-        sn0.add(n3);
-        streets[0] = new Street(sn0, 3, "Haid und Neu Straße", 0);
-
-        final LinkedList<Node> sn1 = new LinkedList<Node>();
-        sn1.add(n1);
-        sn1.add(n4);
-        sn1.add(n5);
-        sn1.add(n6);
-        streets[1] = new Street(sn1, 4, "Tullastraße", 0);
-
-        final LinkedList<Node> sn2 = new LinkedList<Node>();
-        sn2.add(n2);
-        sn2.add(n7);
-        sn2.add(n8);
-        sn2.add(n9);
-        streets[2] = new Street(sn2, 5, "Helmertstraße", 0);
-
-        final LinkedList<Node> sn3 = new LinkedList<Node>();
-        sn3.add(n4);
-        sn3.add(n7);
-        streets[3] = new Street(sn3, 5, "Gaußstraße", 0);
-
-        final LinkedList<Node> sn4 = new LinkedList<Node>();
-        sn4.add(n5);
-        sn4.add(n8);
-        sn4.add(n8);
-        sn4.add(n10);
-        sn4.add(n11);
-        streets[4] = new Street(sn4, 5, "Jordanstraße", 0);
+        streets[0] = new Street(new Node[]{n0, n1, n2, n3}, 3, "Haid und Neu Straße", 0);
+        streets[1] = new Street(new Node[]{n1, n4, n5, n6}, 4, "Tullastraße", 0);
+        streets[2] = new Street(new Node[]{n2, n7, n8, n9}, 5, "Helmertstraße", 0);
+        streets[3] = new Street(new Node[]{n4, n7}, 5, "Gaußstraße", 0);
+        streets[4] = new Street(new Node[]{n5, n8, n9, n10, n11}, 5, "Jordanstraße", 0);
 
         final Way[] ways = new Way[0];
         final POI[] pois = new POI[0];
         final Area[] areas = new Area[0];
         final Building[] buildings = new Building[6];
 
-        final List<Node> bn1 = new LinkedList<Node>();
-        bn1.add(new Node(362, 946));
-        bn1.add(new Node(362, 1046));
-        bn1.add(new Node(462, 1046));
-        bn1.add(new Node(462, 946));
-        buildings[0] = new Building(bn1, "Tullastraße 10", new StreetNode(0.125f, streets[1]));
-
-        final List<Node> bn2 = new LinkedList<Node>();
-        bn2.add(new Node(358, 1626));
-        bn2.add(new Node(358, 1726));
-        bn2.add(new Node(458, 1726));
-        bn2.add(new Node(458, 1626));
-        buildings[1] = new Building(bn2, "Tullastraße 30", new StreetNode(0.475f, streets[1]));
-
-        final List<Node> bn4 = new LinkedList<Node>();
-        bn4.add(new Node(852, 1386));
-        bn4.add(new Node(852, 1286));
-        bn4.add(new Node(952, 1286));
-        bn4.add(new Node(952, 1386));
-        buildings[2] = new Building(bn4, "Gaußstraße 21", new StreetNode(0.5f, streets[3]));
-
-        final List<Node> bn5 = new LinkedList<Node>();
-        bn5.add(new Node(682, 1826));
-        bn5.add(new Node(682, 1926));
-        bn5.add(new Node(782, 1926));
-        bn5.add(new Node(782, 1826));
-        buildings[3] = new Building(bn5, "Jordanstraße 8", new StreetNode(0.1f, streets[4]));
-
-        final List<Node> bn7 = new LinkedList<Node>();
-        bn7.add(new Node(1274, 850));
-        bn7.add(new Node(1274, 950));
-        bn7.add(new Node(1374, 950));
-        bn7.add(new Node(1374, 850));
-        buildings[4] = new Building(bn7, "Helmertstraße 7", new StreetNode(0.1f, streets[2]));
-
-        final List<Node> bn8 = new LinkedList<Node>();
-        bn8.add(new Node(1118, 1474));
-        bn8.add(new Node(1118, 1574));
-        bn8.add(new Node(1218, 1574));
-        bn8.add(new Node(1218, 1474));
-        buildings[5] = new Building(bn8, "Helmertstraße 22", new StreetNode(0.4f, streets[2]));
+        buildings[0] = new Building(new Node[]{new Node(362, 946), new Node(362, 1046), new Node(462, 1046),
+                new Node(462, 946)}, "Tullastraße 10", new StreetNode(0.125f, streets[1]));
+        buildings[1] = new Building(new Node[]{new Node(358, 1626), new Node(358, 1726), new Node(458, 1726),
+                new Node(458, 1626)}, "Tullastraße 30", new StreetNode(0.475f, streets[1]));
+        buildings[2] = new Building(new Node[]{new Node(852, 1386), new Node(852, 1286), new Node(952, 1286),
+                new Node(952, 1386)}, "Gaußstraße 21", new StreetNode(0.5f, streets[3]));
+        buildings[3] = new Building(new Node[]{new Node(682, 1826), new Node(682, 1926), new Node(782, 1926),
+                new Node(782, 1826)}, "Jordanstraße 8", new StreetNode(0.1f, streets[4]));
+        buildings[4] = new Building(new Node[]{new Node(1274, 850), new Node(1274, 950), new Node(1374, 950),
+                new Node(1374, 850)}, "Helmertstraße 7", new StreetNode(0.1f, streets[2]));
+        buildings[5] = new Building(new Node[]{new Node(1118, 1474), new Node(1118, 1574), new Node(1218, 1574),
+                new Node(1218, 1474)}, "Helmertstraße 22", new StreetNode(0.4f, streets[2]));
 
         tiles = new Tile[3][][];
         for (int zoom = 0; zoom < 3; zoom++) {

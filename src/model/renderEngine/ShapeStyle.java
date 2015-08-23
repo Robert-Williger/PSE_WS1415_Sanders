@@ -6,43 +6,18 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.Stroke;
 
-import model.map.IPixelConverter;
-
 public class ShapeStyle {
-
-    public static final float SCALE_FACTOR = 120f / (float) Math.PI;
-
-    protected static IPixelConverter converter = null;
-
-    protected final float mainWidth;
-    protected final float outlineWidth;
+    protected final int minZoomStep;
     protected final Color mainColor;
     protected final Color outlineColor;
-    protected final int cap;
-    protected final int join;
 
-    protected final float maxMainWidth;
-    protected final float maxOutlineWidth;
-
-    protected final float minMainWidth;
-    protected final float minOutlineWidth;
+    protected final Stroke[] mainStrokes;
+    protected final Stroke[] outlineStrokes;
 
     // add minZoomstep & maxZoomstep -> zoom only in range (-> width)
     public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor,
             final int cap, final int join) {
-        this.mainWidth = SCALE_FACTOR * mainWidth;
-        this.outlineWidth = SCALE_FACTOR * outlineWidth;
-
-        this.mainColor = mainColor;
-        this.outlineColor = outlineColor;
-
-        this.cap = cap;
-        this.join = join;
-
-        maxMainWidth = Float.MAX_VALUE;
-        maxOutlineWidth = Float.MAX_VALUE;
-        minMainWidth = 0;
-        minOutlineWidth = 0;
+        this(0, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor, outlineColor, cap, join);
     }
 
     public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor) {
@@ -57,42 +32,78 @@ public class ShapeStyle {
         this(mainWidth, mainColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     }
 
-    public ShapeStyle(final float[] mainWidth, final float[] outlineWidth, final Color mainColor,
-            final Color outlineColor, final int cap, final int join) {
-        this.mainWidth = SCALE_FACTOR * mainWidth[1];
-        maxMainWidth = mainWidth[2];
-        minMainWidth = mainWidth[0];
-        this.outlineWidth = SCALE_FACTOR * outlineWidth[1];
-        maxOutlineWidth = outlineWidth[2];
-        minOutlineWidth = outlineWidth[0];
+    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth,
+            final Color mainColor, final Color outlineColor) {
+        this(minZoomStep, mainWidth, outlineWidth, mainColor, outlineColor, BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND);
+    }
+
+    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth,
+            final Color mainColor, final Color outlineColor, final int cap, final int join) {
+        this.minZoomStep = minZoomStep;
 
         this.mainColor = mainColor;
         this.outlineColor = outlineColor;
 
-        this.cap = cap;
-        this.join = join;
+        mainStrokes = createMainStrokes(mainWidth, cap, join);
+        if (mainColor != null) {
+            outlineStrokes = createOutlineStrokes(outlineWidth, mainWidth, cap, join);
+        } else {
+            outlineStrokes = createOutlineCompositeStrokes(outlineWidth, mainWidth, cap, join);
+        }
+
     }
 
-    public ShapeStyle(final float[] mainWidth, final float[] outlineWidth, final Color mainColor,
-            final Color outlineColor) {
-        this(mainWidth, outlineWidth, mainColor, outlineColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    private Stroke[] createMainStrokes(final float[] mainWidth, final int cap, final int join) {
+        final Stroke[] mainStroke;
+        if (mainColor != null) {
+            mainStroke = new Stroke[mainWidth.length];
+            for (int i = 0; i < mainWidth.length; i++) {
+                mainStroke[i] = new BasicStroke(mainWidth[i], cap, join);
+            }
+        } else {
+            mainStroke = new Stroke[1];
+        }
+        return mainStroke;
     }
 
-    public ShapeStyle(final float[] mainWidth, final Color mainColor, final int cap, final int join) {
-        this(mainWidth, new float[]{0f, 0f}, mainColor, null, cap, join);
+    private Stroke[] createOutlineStrokes(final float[] outlineWidths, final float[] mainWidths, final int cap,
+            final int join) {
+        final Stroke[] ret;
+        if (outlineColor != null) {
+            ret = new Stroke[outlineWidths.length];
+            for (int i = 0; i < outlineWidths.length; i++) {
+                if (outlineWidths[i] > mainWidths[Math.min(i, mainWidths.length - 1)]) {
+                    ret[i] = new BasicStroke(outlineWidths[i], cap, join);
+                }
+            }
+        } else {
+            ret = new Stroke[1];
+        }
+
+        return ret;
     }
 
-    public ShapeStyle(final float[] mainWidth, final Color mainColor) {
-        this(mainWidth, mainColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-    }
+    private Stroke[] createOutlineCompositeStrokes(final float[] outlineWidths, final float[] mainWidths,
+            final int cap, final int join) {
+        final Stroke[] ret;
+        if (outlineColor != null) {
+            ret = new Stroke[outlineWidths.length];
+            for (int i = 0; i < outlineWidths.length; i++) {
+                ret[i] = new CompositeStroke(new BasicStroke(mainWidths[i], cap, join), new BasicStroke(
+                        outlineWidths[i], cap, join));
+            }
+        } else {
+            ret = new Stroke[1];
+        }
 
-    public static void setConverter(final IPixelConverter converter) {
-        ShapeStyle.converter = converter;
+        return ret;
     }
 
     public boolean mainStroke(final Graphics2D g, final int zoomStep) {
-        if (mainColor != null) {
-            g.setStroke(new BasicStroke(getValue(minMainWidth, mainWidth, maxMainWidth, zoomStep), cap, join));
+        final Stroke stroke = getStroke(mainStrokes, zoomStep);
+        if (stroke != null) {
+            g.setStroke(stroke);
             g.setColor(mainColor);
             return true;
         }
@@ -101,8 +112,9 @@ public class ShapeStyle {
     }
 
     public boolean outlineStroke(final Graphics2D g, final int zoomStep) {
-        if (outlineColor != null) {
-            g.setStroke(new BasicStroke(getValue(minOutlineWidth, outlineWidth, maxOutlineWidth, zoomStep), cap, join));
+        final Stroke stroke = getStroke(outlineStrokes, zoomStep);
+        if (stroke != null) {
+            g.setStroke(stroke);
             g.setColor(outlineColor);
             return true;
         }
@@ -110,21 +122,11 @@ public class ShapeStyle {
         return false;
     }
 
-    public boolean outlineCompositeStroke(final Graphics2D g, final int zoomStep) {
-        if (mainColor == null) {
-            g.setStroke(new CompositeStroke(new BasicStroke(getValue(minMainWidth, mainWidth, maxMainWidth, zoomStep),
-                    cap, join), new BasicStroke(getValue(minOutlineWidth, outlineWidth, maxOutlineWidth, zoomStep),
-                    cap, join)));
-            g.setColor(outlineColor);
-            return true;
+    protected final Stroke getStroke(final Stroke[] strokes, final int zoom) {
+        if (zoom < minZoomStep) {
+            return null;
         }
-
-        return false;
-
-    }
-
-    protected final float getValue(final float min, final float normal, final float max, final int zoom) {
-        return Math.max(min, Math.min(converter.getPixelDistancef(normal, zoom), max));
+        return strokes[Math.min(strokes.length - 1, zoom - minZoomStep)];
     }
 
     private class CompositeStroke implements Stroke {

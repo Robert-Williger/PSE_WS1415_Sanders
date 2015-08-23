@@ -51,7 +51,7 @@ public abstract class AbstractTile implements ITile {
         for (final Iterator<Street> streetIt = getStreets(); streetIt.hasNext();) {
             final Street street = streetIt.next();
 
-            final Iterator<Node> nodeIt = street.getNodes().iterator();
+            final Iterator<Node> nodeIt = street.iterator();
             float totalLength = 0;
             final int maxLength = street.getLength();
 

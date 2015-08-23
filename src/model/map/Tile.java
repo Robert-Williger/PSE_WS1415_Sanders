@@ -3,6 +3,7 @@ package model.map;
 import java.awt.Point;
 import java.util.Iterator;
 
+import util.Arrays;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.POI;
@@ -46,47 +47,26 @@ public class Tile extends AbstractTile {
 
     @Override
     public Iterator<Street> getStreets() {
-        return new ArrayIterator<Street>(streets);// streets.iterator();
+        return Arrays.iterator(streets);
     }
 
     @Override
     public Iterator<Way> getWays() {
-        return new ArrayIterator<Way>(ways);
+        return Arrays.iterator(ways);
     }
 
     @Override
     public Iterator<Building> getBuildings() {
-        return new ArrayIterator<Building>(buildings);
+        return Arrays.iterator(buildings);
     }
 
     @Override
     public Iterator<Area> getTerrain() {
-        return new ArrayIterator<Area>(areas);
+        return Arrays.iterator(areas);
     }
 
     @Override
     public Iterator<POI> getPOIs() {
-        return new ArrayIterator<POI>(pois);
-    }
-
-    private class ArrayIterator<T> implements Iterator<T> {
-
-        private final T[] array;
-        private int count;
-
-        public ArrayIterator(final T[] array) {
-            this.array = array;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return count < array.length;
-        }
-
-        @Override
-        public T next() {
-            return array[count++];
-        }
-
+        return Arrays.iterator(pois);
     }
 }
