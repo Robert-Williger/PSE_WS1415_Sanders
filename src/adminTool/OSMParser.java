@@ -275,8 +275,7 @@ public class OSMParser implements IOSMParser {
                     int type;
 
                     if (!buildingTag.isEmpty()) {
-                        buildingList
-                                .add(new InvalidateableBuilding(nodes, (addrStreetTag + " " + addrNumberTag), null));
+                        buildingList.add(new InvalidateableBuilding(nodes, addrStreetTag, addrNumberTag));
                     } else {
                         type = getAreaType(terrainTag, area);
 
@@ -468,11 +467,11 @@ public class OSMParser implements IOSMParser {
 
                             for (final List<Node> list : maps.get(0).values()) {
                                 buildingList.add(new InvalidateableBuilding(list.toArray(new Node[list.size()]),
-                                        address + " " + housenumber, null));
+                                        address, housenumber));
                             }
                             for (final List<Node> list : maps.get(1).values()) {
-                                buildingList.add(new InvalidateableBuilding(list.toArray(new Node[list.size()]), " ",
-                                        null));
+                                buildingList
+                                        .add(new InvalidateableBuilding(list.toArray(new Node[list.size()]), "", ""));
                             }
                         }
                     }
@@ -857,8 +856,33 @@ public class OSMParser implements IOSMParser {
 
     private static class InvalidateableBuilding extends Building {
 
-        public InvalidateableBuilding(final Node[] nodes, final String address, final StreetNode node) {
-            super(nodes, address, node);
+        private final String street;
+        private final String number;
+
+        public InvalidateableBuilding(final Node[] nodes, final String street, final String number) {
+            super(nodes);
+            this.street = street;
+            this.number = number;
+        }
+
+        @Override
+        public String getAddress() {
+            return getStreet() + " " + getHouseNumber();
+        }
+
+        @Override
+        public String getStreet() {
+            return street;
+        }
+
+        @Override
+        public String getHouseNumber() {
+            return number;
+        }
+
+        @Override
+        public StreetNode getStreetNode() {
+            return null;
         }
 
         public void invalidate() {

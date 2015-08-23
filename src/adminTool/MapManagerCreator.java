@@ -408,14 +408,6 @@ public class MapManagerCreator extends AbstractMapCreator {
         return locatePoint(point.x, point.y, zoom);
     }
 
-    private String getStreetName(final String address) {
-        return address.substring(0, address.lastIndexOf(' ')).trim();
-    }
-
-    private String getHouseNumber(final String address) {
-        return address.substring(address.lastIndexOf(' '), address.length()).trim();
-    }
-
     private Point2D.Float calculateCenter(final Polygon poly) {
         float x = 0f;
         float y = 0f;
@@ -716,12 +708,14 @@ public class MapManagerCreator extends AbstractMapCreator {
                     final Building building = buildings.get(i);
 
                     final Polygon poly = building.getPolygon();
-                    final String address = getStreetName(building.getAddress());
-
-                    final Collection<Street> streetList = streetMap.get(address);
+                    final Collection<Street> streetList = streetMap.get(building.getStreet());
 
                     if (streetList != null) {
-                        building.setStreetNode(findStreetNode(streetList, calculateCenter(poly)));
+                        final StreetNode node = findStreetNode(streetList, calculateCenter(poly));
+
+                        if (node != null) {
+                            buildings.set(i, Building.create(building.getNodes(), node, building.getHouseNumber()));
+                        }
                     }
                 }
             }
@@ -843,9 +837,8 @@ public class MapManagerCreator extends AbstractMapCreator {
             nameMap.put("", ++id);
 
             for (final Building building : buildings) {
-                final String address = building.getAddress();
-                final String name = getStreetName(address);
-                final String number = getHouseNumber(address);
+                final String name = building.getStreet();
+                final String number = building.getHouseNumber();
 
                 if (!nameMap.containsKey(name)) {
                     nameMap.put(name, ++id);
@@ -962,9 +955,10 @@ public class MapManagerCreator extends AbstractMapCreator {
 
                 writeMultiElement(building);
                 assert streetMap.containsKey(node.getStreet()) : streetSorter.getSorting().contains(node.getStreet());
-                writeInt(streetMap.get(node.getStreet()));
-                writeInt(numberMap.get(getHouseNumber(building.getAddress()).trim()));
                 stream.writeFloat(node.getOffset());
+                writeInt(streetMap.get(node.getStreet()));
+                writeInt(numberMap.get(building.getHouseNumber()));
+
             }
 
             for (final Building building : finder.getFailure()) {

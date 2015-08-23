@@ -61,18 +61,18 @@ public class MapManagerTest {
         final Area[] areas = new Area[0];
         final Building[] buildings = new Building[6];
 
-        buildings[0] = building = new Building(new Node[]{new Node(362, 946), new Node(362, 1046), new Node(462, 1046),
-                new Node(462, 946)}, "Tullastraße 10", new StreetNode(0.125f, streets[1]));
-        buildings[1] = new Building(new Node[]{new Node(358, 1626), new Node(358, 1726), new Node(458, 1726),
-                new Node(458, 1626)}, "Tullastraße 30", new StreetNode(0.475f, streets[1]));
-        buildings[2] = new Building(new Node[]{new Node(852, 1386), new Node(852, 1286), new Node(952, 1286),
-                new Node(952, 1386)}, "Gaußstraße 21", new StreetNode(0.5f, streets[3]));
-        buildings[3] = new Building(new Node[]{new Node(682, 1826), new Node(682, 1926), new Node(782, 1926),
-                new Node(782, 1826)}, "Jordanstraße 8", new StreetNode(0.1f, streets[4]));
-        buildings[4] = new Building(new Node[]{new Node(1274, 850), new Node(1274, 950), new Node(1374, 950),
-                new Node(1374, 850)}, "Helmertstraße 7", new StreetNode(0.1f, streets[2]));
-        buildings[5] = new Building(new Node[]{new Node(1118, 1474), new Node(1118, 1574), new Node(1218, 1574),
-                new Node(1218, 1474)}, "Helmertstraße 22", new StreetNode(0.4f, streets[2]));
+        buildings[0] = building = Building.create(new Node[]{new Node(362, 946), new Node(362, 1046),
+                new Node(462, 1046), new Node(462, 946)}, new StreetNode(0.125f, streets[1]), "10");
+        buildings[1] = Building.create(new Node[]{new Node(358, 1626), new Node(358, 1726), new Node(458, 1726),
+                new Node(458, 1626)}, new StreetNode(0.475f, streets[1]), "30");
+        buildings[2] = Building.create(new Node[]{new Node(852, 1386), new Node(852, 1286), new Node(952, 1286),
+                new Node(952, 1386)}, new StreetNode(0.5f, streets[3]), "21");
+        buildings[3] = Building.create(new Node[]{new Node(682, 1826), new Node(682, 1926), new Node(782, 1926),
+                new Node(782, 1826)}, new StreetNode(0.1f, streets[4]), "8");
+        buildings[4] = Building.create(new Node[]{new Node(1274, 850), new Node(1274, 950), new Node(1374, 950),
+                new Node(1374, 850)}, new StreetNode(0.1f, streets[2]), "7");
+        buildings[5] = Building.create(new Node[]{new Node(1118, 1474), new Node(1118, 1574), new Node(1218, 1574),
+                new Node(1218, 1474)}, new StreetNode(0.4f, streets[2]), "21");
 
         tiles = new Tile[3][][];
         for (int zoom = 0; zoom < 3; zoom++) {

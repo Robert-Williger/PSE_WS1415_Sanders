@@ -54,8 +54,8 @@ public class BackgroundRendererTest {
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
-        buildings = new Building[]{new Building(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3),
-                new Node(3, 0)}, "Teststraße 15", streetNode)};
+        buildings = new Building[]{Building.create(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3),
+                new Node(3, 0)}, streetNode, "15")};
 
         renderImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         emptyImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);

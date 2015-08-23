@@ -232,7 +232,7 @@ public class Reader implements IReader {
         }
 
         private void readElements() throws IOException {
-            fireStepCommenced("Lade Knoten...");
+            fireStepCommenced("Lade Nodes...");
 
             int count = 0;
             nodes = new Node[readInt()];
@@ -326,17 +326,12 @@ public class Reader implements IReader {
             final int streetNodes = readInt();
 
             for (count = 0; count < streetNodes; count++) {
-                final Node[] nodes = readNodeArray();
-                final Street street = streets[readInt()];
-
-                // TODO improve Building constructor?
-                buildings[count] = new Building(nodes, street.getName() + " " + numbers[readInt()], new StreetNode(
-                        reader.readFloat(), street));
+                buildings[count] = Building.create(readNodeArray(), new StreetNode(reader.readFloat(),
+                        streets[readInt()]), numbers[readInt()]);
             }
 
             for (; count < buildings.length; count++) {
-                // TODO new Building class?
-                buildings[count] = new Building(readNodeArray(), "", null);
+                buildings[count] = Building.create(readNodeArray());
             }
         }
 

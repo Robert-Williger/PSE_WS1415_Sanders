@@ -30,7 +30,7 @@ public class BuildingTest {
 
     @Before
     public void setUp() {
-        building = new Building(nodes, address, sNode);
+        building = Building.create(nodes, sNode, "5");
     }
 
     @Test
@@ -54,29 +54,22 @@ public class BuildingTest {
     @Test
     public void testStreetNode() {
         assertEquals(sNode, building.getStreetNode());
-
-        final StreetNode s = new StreetNode(0.5f, new Street(new Node[]{new Node(0, 0), new Node(2, 2)}, 1, "Test", 1));
-
-        building.setStreetNode(s);
-        assertEquals(s, building.getStreetNode());
-        assertFalse(sNode.equals(building.getStreetNode()));
     }
 
     @Test
     public void testEquals() {
         assertEquals(building, building);
         assertFalse(building.equals(new Area(nodes, 0)));
-        assertFalse(building.equals(new Building(nodes, address + "x", sNode)));
-        assertFalse(building.equals(new Building(nodes, address, new StreetNode(0.5f, new Street(new Node[0], 1,
-                "Test", 1)))));
-        assertFalse(new Building(nodes, address, null).equals(building));
-        assertFalse(new Building(nodes, null, sNode).equals(building));
-        assertEquals(building, new Building(nodes, address, sNode));
+        assertFalse(building.equals(Building.create(nodes, sNode, "x")));
+        assertFalse(building.equals(Building.create(nodes, new StreetNode(0.5f, new Street(new Node[0], 1, "Test", 1)),
+                "5")));
+        assertFalse(Building.create(nodes, "Kaiserstraße", "5").equals(building));
+        assertEquals(building, Building.create(nodes, sNode, "5"));
     }
 
     @Test
     public void testHashCode() {
         assertEquals(building.hashCode(), building.hashCode());
-        assertEquals(building.hashCode(), new Building(nodes, address, sNode).hashCode());
+        assertEquals(building.hashCode(), Building.create(nodes, sNode, "5").hashCode());
     }
 }

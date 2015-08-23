@@ -1,25 +1,115 @@
 package model.elements;
 
-public class Building extends Area {
+public abstract class Building extends Area {
 
-    private final String address;
-    private StreetNode node;
+    public static Building create(final Node[] nodes) {
+        return new EmptyBuilding(nodes);
+    }
 
-    public Building(final Node[] nodes, final String address, final StreetNode node) {
+    public static Building create(final Node[] nodes, final String street, final String number) {
+        return new NamedBuilding(nodes, street, number);
+    }
+
+    public static Building create(final Node[] nodes, final StreetNode node, final String houseNumber) {
+        return new StreetNodeBuilding(nodes, node, houseNumber);
+    }
+
+    protected Building(final Node[] nodes) {
         super(nodes, 0);
-        this.address = address;
-        this.node = node;
     }
 
-    public String getAddress() {
-        return address;
+    public abstract String getAddress();
+
+    public abstract String getStreet();
+
+    public abstract String getHouseNumber();
+
+    public abstract StreetNode getStreetNode();
+
+    private static class EmptyBuilding extends Building {
+
+        public EmptyBuilding(final Node[] nodes) {
+            super(nodes);
+        }
+
+        public String getStreet() {
+            return "";
+        }
+
+        public String getHouseNumber() {
+            return "";
+        }
+
+        public StreetNode getStreetNode() {
+            return null;
+        }
+
+        @Override
+        public String getAddress() {
+            return "";
+        }
     }
 
-    public StreetNode getStreetNode() {
-        return node;
+    private static class NamedBuilding extends Building {
+        private final String street;
+        private final String number;
+
+        public NamedBuilding(final Node[] nodes, final String street, final String number) {
+            super(nodes);
+            this.street = street;
+            this.number = number;
+        }
+
+        @Override
+        public String getAddress() {
+            return getStreet() + " " + getHouseNumber();
+        }
+
+        @Override
+        public String getStreet() {
+            return street;
+        }
+
+        @Override
+        public String getHouseNumber() {
+            return number;
+        }
+
+        @Override
+        public StreetNode getStreetNode() {
+            return null;
+        }
     }
 
-    public void setStreetNode(final StreetNode node) {
-        this.node = node;
+    private static class StreetNodeBuilding extends Building {
+
+        private final StreetNode node;
+        private final String houseNumber;
+
+        public StreetNodeBuilding(final Node[] nodes, final StreetNode node, final String houseNumber) {
+            super(nodes);
+            this.node = node;
+            this.houseNumber = houseNumber;
+        }
+
+        @Override
+        public String getAddress() {
+            return getStreet() + " " + getHouseNumber();
+        }
+
+        @Override
+        public String getStreet() {
+            return node.getStreet().getName();
+        }
+
+        @Override
+        public String getHouseNumber() {
+            return houseNumber;
+        }
+
+        @Override
+        public StreetNode getStreetNode() {
+            return node;
+        }
     }
 }

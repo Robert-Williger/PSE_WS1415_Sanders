@@ -47,8 +47,8 @@ public class TileTest {
 
         buildings = new LinkedList<Building>();
 
-        buildings.add(new Building(new Node[]{new Node(244, 119), new Node(235, 130), new Node(215, 115),
-                new Node(224, 104)}, "Teststraße 15", streetNode));
+        buildings.add(Building.create(new Node[]{new Node(244, 119), new Node(235, 130), new Node(215, 115),
+                new Node(224, 104)}, streetNode, "15"));
 
         areas = new LinkedList<Area>();
 

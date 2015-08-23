@@ -16,8 +16,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import model.AbstractModel;
 import model.elements.Area;
@@ -533,6 +531,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
                 return false;
             }
             if (areaMinZoomstep[area.getType()] <= zoom) {
+                // TODO polygons sometimes do not have same start and endpoint!
                 appendPath(area.iterator(), tileLoc, zoom, path[area.getType()]);
             }
         }
@@ -646,10 +645,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         // final Polygon poly = convertPolygon(building.getPolygon(), tileLoc,
         // zoom);
         //
-        // final Matcher matcher =
-        // Pattern.compile("\\d+[a-z]*").matcher(building.getAddress());
-        // if (matcher.find()) {
-        // final String number = matcher.group();
+        // final String number = building.getHouseNumber();
         // if (!number.isEmpty()) {
         // final Rectangle2D fontRect =
         // g.getFontMetrics(buildingNumberFont).getStringBounds(number, g);
@@ -664,7 +660,6 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         // g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f),
         // (float) (center.y
         // - fontRect.getHeight() / 2f + g.getFontMetrics().getAscent()));
-        // }
         // }
         // }
         // }
