@@ -50,8 +50,10 @@ public class PolygonSimplificationTest extends JFrame {
 
         Area origArea = null;
         Node[] origNodes = null;
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
+
+        int row = 0;
+        int column = 0;
+        int zoom = 10;
 
         PixelConverter converter = new PixelConverter(1 << 21);
         try {
@@ -60,6 +62,8 @@ public class PolygonSimplificationTest extends JFrame {
 
             List<Node> nodes = new ArrayList<Node>();
 
+            int minX = Integer.MAX_VALUE;
+            int minY = Integer.MAX_VALUE;
             while (stream.available() > 0) {
                 int x = stream.readInt();
                 int y = stream.readInt();
@@ -73,12 +77,9 @@ public class PolygonSimplificationTest extends JFrame {
 
                 nodes.add(new Node(x, y));
             }
-            // nodes.add(new Node(540228, 2724552));
-            // nodes.add(new Node(509918, 2724552));
-            // nodes.add(new Node(509918, 2672809));
-            // nodes.add(new Node(540228, 2672809));
-            // minX = 500000;
-            // minY = 2600000;
+
+            row = minY / converter.getCoordDistance(256, zoom);
+            column = minX / converter.getCoordDistance(256, zoom);
 
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
@@ -90,8 +91,8 @@ public class PolygonSimplificationTest extends JFrame {
         }
 
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
-        int zoom = 10;
-        Tile origTile = new Tile(zoom, 0, 0, minX, minY, new Way[]{}, new Street[]{}, new Area[]{origArea},
+
+        Tile origTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{origArea},
                 new Building[]{}, new POI[]{});
         renderer.render(origTile, orig);
 
@@ -102,7 +103,7 @@ public class PolygonSimplificationTest extends JFrame {
         for (int i = 0; i < simplifiedNodes.length; i++) {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
-        Tile simplifiedTile = new Tile(zoom, 0, 0, minX, minY, new Way[]{}, new Street[]{}, new Area[]{new Area(
+        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
                 simplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{});
         renderer.render(simplifiedTile, simple);
 
@@ -112,7 +113,7 @@ public class PolygonSimplificationTest extends JFrame {
         for (int i = 0; i < doubleSimplifiedNodes.length; i++) {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
-        Tile doubleSimplifiedTile = new Tile(zoom, 0, 0, minX, minY, new Way[]{}, new Street[]{}, new Area[]{new Area(
+        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
                 doubleSimplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{});
         renderer.render(doubleSimplifiedTile, doubleSimple);
 

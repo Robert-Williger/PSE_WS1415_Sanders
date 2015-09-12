@@ -50,8 +50,10 @@ public class MultilineSimplificationTest extends JFrame {
 
         Way origWay = null;
         Node[] origNodes = null;
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
+
+        int row = 0;
+        int column = 0;
+        int zoom = 12;
 
         PixelConverter converter = new PixelConverter(1 << 21);
         try {
@@ -60,28 +62,28 @@ public class MultilineSimplificationTest extends JFrame {
 
             List<Node> nodes = new ArrayList<Node>();
 
-            // while (stream.available() > 0) {
-            // int x = stream.readInt();
-            // int y = stream.readInt();
-            //
-            // if (x < minX) {
-            // minX = x;
-            // }
-            // if (y < minY) {
-            // minY = y;
-            // }
-            // nodes.add(new Node(x, y));
-            // }
+            int minX = Integer.MAX_VALUE;
+            int minY = Integer.MAX_VALUE;
 
-            nodes.add(new Node(540228, 2724552));
-            nodes.add(new Node(509918, 2724552));
-            nodes.add(new Node(509918, 2672809));
-            nodes.add(new Node(540228, 2672809));
-            minX = 500000;
-            minY = 2600000;
+            while (stream.available() > 0) {
+                int x = stream.readInt();
+                int y = stream.readInt();
+
+                if (x < minX) {
+                    minX = x;
+                }
+                if (y < minY) {
+                    minY = y;
+                }
+                nodes.add(new Node(x, y));
+            }
+
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
             origWay = new Way(origNodes, 15, "");
+
+            row = minY / converter.getCoordDistance(256, zoom);
+            column = minX / converter.getCoordDistance(256, zoom);
 
             stream.close();
         } catch (IOException e) {
@@ -89,9 +91,9 @@ public class MultilineSimplificationTest extends JFrame {
         }
 
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
-        int zoom = 12;
-        Tile origTile = new Tile(zoom, 0, 0, minX, minY, new Way[]{origWay}, new Street[]{}, new Area[]{},
-                new Building[]{}, new POI[]{});
+
+        Tile origTile = new Tile(zoom, row, column, new Way[]{origWay}, new Street[]{}, new Area[]{}, new Building[]{},
+                new POI[]{});
         renderer.render(origTile, orig);
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
@@ -102,9 +104,8 @@ public class MultilineSimplificationTest extends JFrame {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
 
-        Tile simplifiedTile = new Tile(zoom, 0, 0, minX, minY,
-                new Way[]{new Way(simplifiedNodes, origWay.getType(), "")}, new Street[]{}, new Area[]{},
-                new Building[]{}, new POI[]{});
+        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(simplifiedNodes, origWay.getType(), "")},
+                new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{});
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
@@ -113,7 +114,7 @@ public class MultilineSimplificationTest extends JFrame {
         for (int i = 0; i < doubleSimplifiedNodes.length; i++) {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
-        Tile doubleSimplifiedTile = new Tile(zoom, 0, 0, minX, minY, new Way[]{new Way(doubleSimplifiedNodes,
+        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(doubleSimplifiedNodes,
                 origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{});
         renderer.render(doubleSimplifiedTile, doubleSimple);
 

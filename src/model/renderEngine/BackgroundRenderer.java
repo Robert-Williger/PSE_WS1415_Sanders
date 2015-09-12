@@ -13,11 +13,10 @@ import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import model.AbstractModel;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Node;
@@ -26,7 +25,7 @@ import model.elements.Way;
 import model.map.IPixelConverter;
 import model.map.ITile;
 
-public class BackgroundRenderer extends AbstractModel implements IRenderer {
+public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
 
     // streets
     private static final Font streetNameFont;
@@ -45,8 +44,6 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
     private static final int buildingNumberMinZoomstep;
     private static final Font buildingNumberFont;
     private static final Color buildingNumberColor;
-
-    private IPixelConverter converter;
 
     // defines the render styles for all types of streets, ways, areas and
     // buildings
@@ -342,8 +339,10 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             g.addRenderingHints(map);
         }
 
-        if (drawAreas(tile, g) && drawBuildings(tile, g) && drawWays(tile, g)) {
-            // && drawStreetNames(tile, g)) {
+        final Point tileLocation = getTileLocation(tile, image);
+
+        if (drawAreas(tile, tileLocation, g) && drawBuildings(tile, tileLocation, g) && drawWays(tile, tileLocation, g)) {
+            // && drawStreetNames(tile, tileLocation, g)) {
             g.dispose();
             fireChange();
             return true;
@@ -353,11 +352,10 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return false;
     }
 
-    private boolean drawStreetNames(final ITile tile, final Graphics2D g) {
+    private boolean drawStreetNames(final ITile tile, final Point tileLoc, final Graphics2D g) {
         final Font font = streetNameFont;
         final FontMetrics metrics = g.getFontMetrics(font);
         final int zoom = tile.getZoomStep();
-        final Point tileLoc = tile.getLocation();
         final int middleOffset = (metrics.getAscent() - metrics.getDescent()) / 2;
         g.setColor(Color.BLACK);
 
@@ -510,18 +508,17 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return true;
     }
 
-    private boolean drawAreas(final ITile tile, final Graphics2D g) {
+    private boolean drawAreas(final ITile tile, final Point tileLoc, final Graphics2D g) {
         final Iterator<Area> iterator = tile.getTerrain();
         if (iterator == null) {
             return false;
         }
 
-        final Point tileLoc = tile.getLocation();
         final int zoom = tile.getZoomStep();
-        final Path2D.Float[] path = new Path2D.Float[areaStyles.length];
+        final Path2D[] path = new Path2D[areaStyles.length];
 
         for (int i = 0; i < path.length; i++) {
-            path[i] = new Path2D.Float(i != 18 ? Path2D.WIND_EVEN_ODD : Path2D.WIND_NON_ZERO);
+            path[i] = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         }
 
         while (iterator.hasNext()) {
@@ -549,17 +546,16 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return true;
     }
 
-    private boolean drawWays(final ITile tile, final Graphics2D g) {
+    private boolean drawWays(final ITile tile, final Point tileLoc, final Graphics2D g) {
         if (tile.getStreets() == null || tile.getWays() == null) {
             return false;
         }
 
-        final Point tileLoc = tile.getLocation();
         final int zoom = tile.getZoomStep();
-        final Path2D.Float[] path = new Path2D.Float[wayStyles.length];
+        final Path2D[] path = new Path2D.Float[wayStyles.length];
 
         for (int i = 0; i < path.length; i++) {
-            path[i] = new Path2D.Float();
+            path[i] = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         }
 
         if (!appendWays(tile.getStreets(), zoom, path, tileLoc) || !appendWays(tile.getWays(), zoom, path, tileLoc)) {
@@ -596,7 +592,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return true;
     }
 
-    private boolean drawBuildings(final ITile tile, final Graphics2D g) {
+    private boolean drawBuildings(final ITile tile, final Point tileLoc, final Graphics2D g) {
         final int zoom = tile.getZoomStep();
 
         if (zoom < buildingMinZoomstep) {
@@ -608,9 +604,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             return false;
         }
 
-        final Point tileLoc = tile.getLocation();
-
-        final Path2D.Float path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
         while (iterator.hasNext()) {
             final Building building = iterator.next();
@@ -690,7 +684,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return Math.atan2(dy, dx);
     }
 
-    private boolean appendWays(final Iterator<? extends Way> iterator, final int zoom, final Path2D.Float[] path,
+    private boolean appendWays(final Iterator<? extends Way> iterator, final int zoom, final Path2D[] path,
             final Point tileLoc) {
         while (iterator.hasNext()) {
             final Way way = iterator.next();
@@ -704,7 +698,7 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
         return true;
     }
 
-    private void appendPath(final Iterator<Node> nodes, final Point tileLoc, final int zoomStep, final Path2D.Float path) {
+    private void appendPath(final Iterator<Node> nodes, final Point tileLoc, final int zoomStep, final Path2D path) {
         final Node startNode = nodes.next();
         path.moveTo(converter.getPixelDistancef(startNode.getX() - tileLoc.x, zoomStep),
                 converter.getPixelDistancef(startNode.getY() - tileLoc.y, zoomStep));
@@ -715,11 +709,6 @@ public class BackgroundRenderer extends AbstractModel implements IRenderer {
             path.lineTo(converter.getPixelDistancef(node.getX() - tileLoc.x, zoomStep),
                     converter.getPixelDistancef(node.getY() - tileLoc.y, zoomStep));
         }
-    }
-
-    @Override
-    public void setConverter(final IPixelConverter converter) {
-        this.converter = converter;
     }
 
     private Point2D.Float calculateCenter(final Polygon poly) {

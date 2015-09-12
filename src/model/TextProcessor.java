@@ -29,7 +29,7 @@ public class TextProcessor implements ITextProcessor {
         this.numberOfSuggestions = numberOfSuggestions;
     }
 
-    @SuppressWarnings("unchecked")
+    // @SuppressWarnings("unchecked")
     @Override
     public List<String> suggest(final String address) {
 
@@ -124,8 +124,7 @@ public class TextProcessor implements ITextProcessor {
     }
 
     // Intern class: (String, distance)
-    @SuppressWarnings("rawtypes")
-    private class Tuple implements Comparable {
+    private static class Tuple implements Comparable<Tuple> {
 
         private final String s;
         private final int d;
@@ -144,7 +143,7 @@ public class TextProcessor implements ITextProcessor {
         }
 
         @Override
-        public int compareTo(final Object o) {
+        public int compareTo(final Tuple o) {
             final Tuple t = (Tuple) o;
             return java.lang.Integer.compare(d, t.getDistance());
         }

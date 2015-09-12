@@ -20,8 +20,6 @@ public interface ITile {
 
     int getZoomStep();
 
-    Point getLocation();
-
     Iterator<Street> getStreets();
 
     Iterator<Way> getWays();

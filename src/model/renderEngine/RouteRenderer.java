@@ -15,16 +15,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import model.AbstractModel;
 import model.elements.Node;
 import model.elements.Street;
 import model.map.IPixelConverter;
 import model.map.ITile;
 import model.targets.IRoutePoint;
 
-public class RouteRenderer extends AbstractModel implements IRouteRenderer {
+public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
-    private IPixelConverter converter;
     private IRenderRoute route;
     // for error correction of floating point number comparison
     private static final float EPSILON = 1.0001f;
@@ -52,7 +50,8 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        if (drawRoute(tile, g)) {
+        final Point tileLocation = getTileLocation(tile, image);
+        if (drawRoute(tile, tileLocation, g)) {
             g.dispose();
             fireChange();
             return true;
@@ -62,13 +61,12 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
         return false;
     }
 
-    private boolean drawRoute(final ITile tile, final Graphics2D g) {
+    private boolean drawRoute(final ITile tile, final Point tileLoc, final Graphics2D g) {
         final Iterator<Street> iterator = tile.getStreets();
         if (tile.getStreets() == null) {
             return false;
         }
 
-        final Point tileLoc = tile.getLocation();
         final Path2D.Float path = new Path2D.Float();
 
         final Map<Long, Collection<Street>> map = new HashMap<Long, Collection<Street>>();
@@ -281,11 +279,5 @@ public class RouteRenderer extends AbstractModel implements IRouteRenderer {
     @Override
     public void setRenderRoute(final IRenderRoute route) {
         this.route = route;
-    }
-
-    @Override
-    public void setConverter(final IPixelConverter converter) {
-        this.converter = converter;
-
     }
 }

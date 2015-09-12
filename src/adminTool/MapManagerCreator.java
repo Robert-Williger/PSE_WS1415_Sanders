@@ -49,9 +49,10 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final int MAX_BUILDING_STREET_DISTANCE = 4000;
 
     private static final int BUILDING_MIN_ZOOMSTEP = 14;
+    private static final int POI_MIN_ZOOMSTEP = 16;
 
     private static final int AREA_THRESHHOLD = 2;
-    private static final int WAY_THRESHHOLD = 100;
+    private static final int WAY_THRESHHOLD = 50;
     private static final double AREA_SHRINK_FACTOR = 0.9;
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
@@ -319,37 +320,39 @@ public class MapManagerCreator extends AbstractMapCreator {
     }
 
     private void partitionPOIs(final int zoom, final ReferencedTile[][] tiles) {
-        final int poiWidth = converter.getCoordDistance(POI_WIDTH, zoom);
+        if (zoom >= POI_MIN_ZOOMSTEP) {
+            final int poiWidth = converter.getCoordDistance(POI_WIDTH, zoom);
 
-        for (final Iterator<ReferencedPOI> it = referencedPOIs.iterator(); it.hasNext();) {
-            final ReferencedPOI poi = it.next();
-            final Rectangle poiBounds = new Rectangle(poi.getX() - poiWidth / 2, poi.getY() - poiWidth / 2, poiWidth,
-                    poiWidth);
-            final Point poiLocation = poiBounds.getLocation();
-            final Rectangle poiTileBounds = locateRectangle(poiBounds, zoom);
+            for (final Iterator<ReferencedPOI> it = referencedPOIs.iterator(); it.hasNext();) {
+                final ReferencedPOI poi = it.next();
+                final Rectangle poiBounds = new Rectangle(poi.getX() - poiWidth / 2, poi.getY() - poiWidth / 2,
+                        poiWidth, poiWidth);
+                final Point poiLocation = poiBounds.getLocation();
+                final Rectangle poiTileBounds = locateRectangle(poiBounds, zoom);
 
-            boolean intersection = false;
-            for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
-                for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
-                    final ReferencedTile tile = getTile(row, column, tiles);
-                    for (final ReferencedPOI other : tile.getPOIs()) {
-                        final Point otherPoint = new Point(other.getX() - poiWidth / 2, other.getY() - poiWidth / 2);
-                        final int distance = (int) poiLocation.distance(otherPoint);
-                        if (converter.getPixelDistance(distance, zoom) < MIN_POI_DISTANCE) {
-                            intersection = true;
-                            break;
+                boolean intersection = false;
+                for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
+                    for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
+                        final ReferencedTile tile = getTile(row, column, tiles);
+                        for (final ReferencedPOI other : tile.getPOIs()) {
+                            final Point otherPoint = new Point(other.getX() - poiWidth / 2, other.getY() - poiWidth / 2);
+                            final int distance = (int) poiLocation.distance(otherPoint);
+                            if (converter.getPixelDistance(distance, zoom) < MIN_POI_DISTANCE) {
+                                intersection = true;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            if (!intersection) {
-                for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
-                    for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
-                        getTile(row, column, tiles).getPOIs().add(poi);
+                if (!intersection) {
+                    for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
+                        for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
+                            getTile(row, column, tiles).getPOIs().add(poi);
+                        }
                     }
+                } else {
+                    it.remove();
                 }
-            } else {
-                it.remove();
             }
         }
     }

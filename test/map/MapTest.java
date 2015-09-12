@@ -29,7 +29,7 @@ public class MapTest {
             tiles[i] = new ITile[1 << i][1 << i];
             for (int j = 0; j < tiles[i].length; j++) {
                 for (int k = 0; k < tiles[i][j].length; k++) {
-                    tiles[i][j][k] = new Tile(i, j, k, j, k);
+                    tiles[i][j][k] = new Tile(i, j, k);
                 }
             }
         }

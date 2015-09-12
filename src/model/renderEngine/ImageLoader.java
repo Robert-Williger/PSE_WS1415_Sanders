@@ -52,7 +52,7 @@ public class ImageLoader implements IImageLoader {
         lastZoomStep = mapManager.getMapState().getMinZoomStep() - 1;
         lastGridLocation = new Point(mapManager.getCurrentGridLocation());
 
-        backgroundRenderer = new BackgroundRenderer(mapManager.getConverter());
+        backgroundRenderer = new StorageBackgroundRenderer(mapManager.getConverter());
         POIRenderer = new POIRenderer(mapManager.getConverter());
         routeRenderer = new RouteRenderer(mapManager.getConverter());
 

@@ -81,8 +81,7 @@ public class ImageLoaderTest {
             tiles[zoom] = new Tile[4 * zoomFactor][4 * zoomFactor];
             for (int row = 0; row < 4 * zoomFactor; row++) {
                 for (int column = 0; column < 4 * zoomFactor; column++) {
-                    final Tile tile = new Tile(zoom, row, column, 512 * column / zoomFactor, 512 * row / zoomFactor,
-                            ways, streets, areas, buildings, pois);
+                    final Tile tile = new Tile(zoom, row, column, ways, streets, areas, buildings, pois);
                     tiles[zoom][row][column] = tile;
                 }
             }

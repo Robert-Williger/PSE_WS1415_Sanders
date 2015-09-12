@@ -1,6 +1,5 @@
 package model.map;
 
-import java.awt.Point;
 import java.util.Iterator;
 
 import util.Arrays;
@@ -12,7 +11,6 @@ import model.elements.Way;
 
 public class EmptyTile extends AbstractTile {
 
-    private static final Point location;
     private static final Iterator<Way> ways;
     private static final Iterator<Street> streets;
     private static final Iterator<Building> buildings;
@@ -21,11 +19,6 @@ public class EmptyTile extends AbstractTile {
 
     public EmptyTile(int zoomStep, int row, int column) {
         super(zoomStep, row, column);
-    }
-
-    @Override
-    public Point getLocation() {
-        return location;
     }
 
     @Override
@@ -54,7 +47,6 @@ public class EmptyTile extends AbstractTile {
     }
 
     static {
-        location = new Point(0, 0);
         ways = Arrays.iterator();
         streets = Arrays.iterator();
         buildings = Arrays.iterator();

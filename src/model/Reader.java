@@ -25,6 +25,7 @@ import model.map.ITile;
 import model.map.MapManager;
 import model.map.PixelConverter;
 import model.map.Tile;
+import model.map.TileFactory;
 import model.routing.Graph;
 import model.routing.IGraph;
 import model.routing.IRouteManager;
@@ -349,6 +350,9 @@ public class Reader implements IReader {
         private void readTiles() throws IOException {
             fireStepCommenced("Lade Kacheln...");
 
+            // TODO own class with interface ITile createTile()
+            final TileFactory factory = new TileFactory();
+
             int currentRows = rows;
             int currentCols = columns;
             final ITile emptyTile = new EmptyTile(-1, -1, -1);
@@ -356,12 +360,7 @@ public class Reader implements IReader {
 
                 tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
 
-                final int tileCoordWidth = converter.getCoordDistance(tileSize.width, zoom);
-                final int tileCoordHeight = converter.getCoordDistance(tileSize.height, zoom);
-
-                int y = 0;
                 for (int row = 0; row < currentRows; row++) {
-                    int x = 0;
                     for (int column = 0; column < currentCols; column++) {
                         byte flags = reader.readByte();
 
@@ -410,15 +409,15 @@ public class Reader implements IReader {
                                 fillElements(areas, tileAreas);
                             }
 
-                            tile = new Tile(zoom, row, column, x, y, tileWays, tileStreets, tileAreas, tileBuildings,
-                                    tilePOIs);
+                            tile = factory.create(flags, tilePOIs, tileStreets, tileWays, tileBuildings, tileAreas,
+                                    zoom, row, column);
+                            // tile = new Tile(zoom, row, column, tileWays,
+                            // tileStreets, tileAreas, tileBuildings,
+                            // tilePOIs);
                         }
 
                         tiles[zoom - minZoomStep][row][column] = tile;
-
-                        x += tileCoordWidth;
                     }
-                    y += tileCoordHeight;
                 }
 
                 currentRows = (currentRows + 1) / 2;
@@ -492,9 +491,11 @@ public class Reader implements IReader {
         int ret = 0;
 
         byte in;
+
         while (((in = reader.readByte()) & 0x80) == 0) {
             ret = (ret << 7) | in;
         }
+
         in = (byte) (in & 0x7F);
         ret = (ret << 7) | in;
 

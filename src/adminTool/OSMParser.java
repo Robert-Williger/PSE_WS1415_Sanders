@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -87,9 +88,9 @@ public class OSMParser implements IOSMParser {
     }
 
     private class Parser extends BinaryParser {
-        private HashMap<Integer, Node> nodeMap;
-        private HashMap<Integer, Byte> areaMap;
-        private HashMap<Integer, Node[]> wayMap;
+        private Map<Integer, Node> nodeMap;
+        private Map<Integer, Byte> areaMap;
+        private Map<Integer, Node[]> wayMap;
 
         private final int SHIFT = 1 << 29;
 

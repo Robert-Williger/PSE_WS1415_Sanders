@@ -78,14 +78,14 @@ public class POIRendererTest {
 
     @Test
     public void testPOIRendering() {
-        final Tile tile = new Tile(17, 0, 0, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois);
+        final Tile tile = new Tile(17, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullPOIRendering() {
-        final Tile tile = new Tile(6, 1, 1, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], null);
+        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], null);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }

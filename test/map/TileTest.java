@@ -57,7 +57,7 @@ public class TileTest {
         pois.add(new POI(120, 50, 2));
         pois.add(new POI(40, 170, 0));
 
-        tile = new Tile(1, 3, 2, 1, 1, ways.toArray(new Way[1]), streets.toArray(new Street[2]),
+        tile = new Tile(1, 3, 2, ways.toArray(new Way[1]), streets.toArray(new Street[2]),
                 areas.toArray(new Area[0]), buildings.toArray(new Building[1]), pois.toArray(new POI[1]));
     }
 
@@ -81,10 +81,10 @@ public class TileTest {
         assertEquals(1, tile.getZoomStep());
     }
 
-    @Test
-    public void testLocation() {
-        assertEquals(new Point(1, 1), tile.getLocation());
-    }
+    // @Test
+    // public void testLocation() {
+    // assertEquals(new Point(1, 1), tile.getLocation());
+    // }
 
     // @Test
     // public void testStreets() {

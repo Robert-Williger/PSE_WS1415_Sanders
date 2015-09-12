@@ -169,11 +169,6 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public Point getLocation() {
-            return null;
-        }
-
-        @Override
         public Iterator<Street> getStreets() {
             return null;
         }
@@ -218,7 +213,7 @@ public class ImageFetcherTest {
     @BeforeClass
     public static void setUpClass() {
         final Tile[][][] tileArray = new Tile[1][1][1];
-        tileArray[0][0][0] = new Tile(0, 0, 0, 0, 0);
+        tileArray[0][0][0] = new Tile(0, 0, 0);
         renderer = new DummyRenderer();
     }
 

@@ -5,7 +5,6 @@ import java.util.Iterator;
 
 public class StreetNode extends Node {
 
-    private boolean validLoc;
     private final float offset;
     private Street street;
 
@@ -26,7 +25,7 @@ public class StreetNode extends Node {
 
     public void setStreet(final Street street) {
         this.street = street;
-        validLoc = false;
+        calculateLocation();
     }
 
     private void calculateLocation() {
@@ -49,8 +48,6 @@ public class StreetNode extends Node {
                 setLocation((int) (lastNodeLocation.x + xDistance * partOffset + 0.49f), (int) (lastNodeLocation.y
                         + yDistance * partOffset + 0.49f));
 
-                validLoc = true;
-
                 return;
             }
 
@@ -58,15 +55,6 @@ public class StreetNode extends Node {
             lastNodeLocation = currentNodeLocation;
         }
 
-    }
-
-    @Override
-    public Point getLocation() {
-        if (!validLoc) {
-            calculateLocation();
-        }
-
-        return super.getLocation();
     }
 
     @Override

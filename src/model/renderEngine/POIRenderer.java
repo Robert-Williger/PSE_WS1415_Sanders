@@ -12,18 +12,15 @@ import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
-import model.AbstractModel;
 import model.elements.POI;
 import model.map.IPixelConverter;
 import model.map.ITile;
 
-public class POIRenderer extends AbstractModel implements IRenderer {
+public class POIRenderer extends AbstractRenderer implements IRenderer {
 
     private static final Image[] poiImage;
     private static final int[] poiMinZoomStep;
     private static final Dimension imageSize;
-
-    private IPixelConverter converter;
 
     static {
         imageSize = new Dimension(20, 20);
@@ -64,7 +61,9 @@ public class POIRenderer extends AbstractModel implements IRenderer {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        if (drawPOIs(tile, g)) {
+        final Point location = getTileLocation(tile, image);
+
+        if (drawPOIs(tile, location, g)) {
             g.dispose();
             fireChange();
             return true;
@@ -74,7 +73,7 @@ public class POIRenderer extends AbstractModel implements IRenderer {
         return false;
     }
 
-    private boolean drawPOIs(final ITile tile, final Graphics2D g) {
+    private boolean drawPOIs(final ITile tile, final Point location, final Graphics2D g) {
         final Iterator<POI> iterator = tile.getPOIs();
         if (tile.getPOIs() == null) {
             return false;
@@ -82,7 +81,6 @@ public class POIRenderer extends AbstractModel implements IRenderer {
 
         boolean ret = false;
 
-        final Point location = tile.getLocation();
         final int zoom = tile.getZoomStep();
 
         while (iterator.hasNext()) {
@@ -101,10 +99,5 @@ public class POIRenderer extends AbstractModel implements IRenderer {
         }
 
         return ret;
-    }
-
-    @Override
-    public void setConverter(final IPixelConverter converter) {
-        this.converter = converter;
     }
 }
