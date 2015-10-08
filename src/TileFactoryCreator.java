@@ -17,7 +17,7 @@ public class TileFactoryCreator {
 
     private TileFactoryCreator() {
         try {
-            writer = new BufferedWriter(new FileWriter(new File("TileFactory.txt")));
+            writer = new BufferedWriter(new FileWriter(new File("src/model/map/factories/StorageTileFactory.java")));
             createClass();
             writer.close();
         } catch (IOException e) {
@@ -27,17 +27,22 @@ public class TileFactoryCreator {
     }
 
     private void createClass() throws IOException {
-        writer.write("package model.map;");
+        writer.write("package model.map.factories;");
         writer.newLine();
         writer.newLine();
         writeImports();
-        writer.write("public class TileFactory {");
+        writer.newLine();
+        writer.write("public class StorageTileFactory extends AbstractTileFactory implements ITileFactory {");
         writer.newLine();
         writer.newLine();
         writer.write("private final ITileFactory[] factories;");
         writer.newLine();
         writer.newLine();
-        writer.write("public TileFactory() {");
+        writer.write("public StorageTileFactory(final CompressedInputStream reader, final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings, final Area[] areas) {");
+        writer.newLine();
+        writer.write("super(reader, pois, streets, ways, buildings, areas);");
+        writer.newLine();
+        writer.newLine();
         writer.newLine();
         writer.write("factories = new ITileFactory[32];");
         writer.newLine();
@@ -52,22 +57,13 @@ public class TileFactoryCreator {
         writer.write("}");
         writer.newLine();
         writer.newLine();
-        writer.write("public ITile create(final byte flags, ");
-        for (int i = 0; i < 5; i++) {
-            writer.write("final " + elements[i] + "[] " + fields[i] + ", ");
-        }
-        writer.write("final int zoom, final int row, final int column) {");
+        writer.write("@Override");
         writer.newLine();
-        writer.write("return factories[flags].create(");
-        for (int i = 0; i < 5; i++) {
-            writer.write(fields[i] + ", ");
-        }
-        writer.write("zoom, row, column);");
+        writer.write("public ITile createTile(int row, int column, int zoom) throws IOException {");
+        writer.newLine();
+        writer.write("return factories[reader.readByte()].createTile(zoom, row, column);");
         writer.newLine();
         writer.write("}");
-        writer.newLine();
-        writer.newLine();
-        createITileFactory();
         writer.newLine();
         writer.newLine();
 
@@ -77,6 +73,9 @@ public class TileFactoryCreator {
             createTileFactory(i);
             writer.newLine();
             writer.newLine();
+            createTileClass(i);
+            writer.newLine();
+            writer.newLine();
         }
         writer.write("}");
     }
@@ -84,8 +83,12 @@ public class TileFactoryCreator {
     private void writeImports() throws IOException {
         writer.write("import java.util.Iterator;");
         writer.newLine();
+        writer.write("import java.io.IOException;");
+        writer.newLine();
         writer.newLine();
         writer.write("import util.Arrays;");
+        writer.newLine();
+        writer.write("import model.CompressedInputStream;");
         writer.newLine();
         writer.write("import model.elements.Area;");
         writer.newLine();
@@ -97,23 +100,15 @@ public class TileFactoryCreator {
         writer.newLine();
         writer.write("import model.elements.Way;");
         writer.newLine();
-    }
-
-    private void createITileFactory() throws IOException {
-        writer.write("private static interface ITileFactory {");
         writer.newLine();
-        createFactoryHeader();
-        writer.write(";");
+        writer.write("import model.map.AbstractTile;");
         writer.newLine();
-        writer.write("}");
+        writer.write("import model.map.ITile;");
+        writer.newLine();
     }
 
     private void createFactoryHeader() throws IOException {
-        writer.write("ITile create(");
-        for (int i = 0; i < 5; i++) {
-            writer.write(elements[i] + "[] " + fields[i] + ", ");
-        }
-        writer.write("int zoom, int row, int column)");
+        writer.write("ITile createTile(int zoom, int row, int column) throws IOException");
     }
 
     private void createEmptyTileFactory() throws IOException {
@@ -125,7 +120,7 @@ public class TileFactoryCreator {
         createFactoryHeader();
         writer.write(" {");
         writer.newLine();
-        writer.write("return new EmptyTile(zoom, row, column);");
+        writer.write("return EMPTY_TILE;");
         writer.newLine();
         writer.write("}");
         writer.newLine();
@@ -139,7 +134,7 @@ public class TileFactoryCreator {
             existing[i] = ((flags >> i & 1) == 1);
         }
 
-        writer.write("private static class TileFactory" + flags + " implements ITileFactory {");
+        writer.write("private class TileFactory" + flags + " implements ITileFactory {");
         writer.newLine();
         writer.newLine();
         writer.write("@Override");
@@ -148,18 +143,24 @@ public class TileFactoryCreator {
         createFactoryHeader();
         writer.write(" {");
         writer.newLine();
-        writer.write("return new Tile(");
         for (int i = 0; i < 5; i++) {
             if (existing[i]) {
-                writer.write(fields[i] + ", ");
+                writer.write(elements[i] + "[] tile" + fields[i] + " = new " + elements[i]
+                        + "[reader.readCompressedInt()];");
+                writer.newLine();
+                writer.write("fillElements(" + fields[i] + ", tile" + fields[i] + ");");
+                writer.newLine();
+            }
+        }
+        writer.write("return new Tile" + flags + "(");
+        for (int i = 0; i < 5; i++) {
+            if (existing[i]) {
+                writer.write("tile" + fields[i] + ", ");
             }
         }
         writer.write("zoom, row, column);");
         writer.newLine();
         writer.write("}");
-        writer.newLine();
-        writer.newLine();
-        createTileClass(flags);
         writer.newLine();
         writer.write("}");
     }
@@ -170,7 +171,7 @@ public class TileFactoryCreator {
             existing[i] = ((flags >> i & 1) == 1);
         }
 
-        writer.write("private static class Tile extends AbstractTile {");
+        writer.write("private static class Tile" + flags + " extends AbstractTile {");
         writer.newLine();
         writer.newLine();
 
@@ -183,7 +184,7 @@ public class TileFactoryCreator {
         writer.newLine();
         writer.newLine();
 
-        writer.write("public Tile(");
+        writer.write("public Tile" + flags + "(");
         for (int i = 0; i < fields.length; i++) {
             if (existing[i]) {
                 writer.write("final " + elements[i] + "[] " + fields[i] + ", ");
@@ -216,6 +217,7 @@ public class TileFactoryCreator {
         }
 
         writer.write("}");
+        writer.newLine();
     }
 
     static {

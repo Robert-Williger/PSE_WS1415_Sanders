@@ -41,7 +41,7 @@ public class ImageLoader implements IImageLoader {
     private boolean lastRouteVisibility;
 
     public ImageLoader(final IMapManager manager) {
-        priority = Integer.MAX_VALUE;
+        priority = Integer.MAX_VALUE - 16;
         mapManager = manager;
 
         lastPOIVisibility = true;
@@ -237,7 +237,7 @@ public class ImageLoader implements IImageLoader {
                 lastTiles = getLastViewTiles();
 
                 for (final Long tileID : lastTiles) {
-                    POIFetcher.loadImage(tileID, priority + 1);
+                    POIFetcher.loadImage(tileID, priority);
                 }
             }
         }
@@ -247,7 +247,7 @@ public class ImageLoader implements IImageLoader {
                 lastTiles = getLastViewTiles();
 
                 for (final Long tileID : lastTiles) {
-                    routeFetcher.loadImage(tileID, priority + 1);
+                    routeFetcher.loadImage(tileID, priority);
                 }
             }
         }
@@ -270,11 +270,11 @@ public class ImageLoader implements IImageLoader {
         }
 
         for (final Long tileID : prefetchTiles()) {
-            backgroundFetcher.loadImage(tileID, priority + 2);
+            backgroundFetcher.loadImage(tileID, priority + 8);
         }
 
         for (final Long tileID : prefetchZoomTiles()) {
-            backgroundFetcher.loadImage(tileID, priority + 4);
+            backgroundFetcher.loadImage(tileID, priority + 16);
         }
 
         priority--;

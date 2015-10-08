@@ -1,23 +1,22 @@
 package adminTool;
 
 import java.awt.geom.Point2D;
-import java.util.List;
 
 import model.elements.Node;
 
 public class UnprocessedStreet {
 
-    private final List<Point2D.Double> degrees;
-    private final List<Node> nodes;
+    private final Point2D[] degrees;
+    private final Node[] nodes;
 
     private final int type;
     private final String name;
 
-    public List<Point2D.Double> getDegrees() {
+    public Point2D[] getDegrees() {
         return degrees;
     }
 
-    public List<Node> getNodes() {
+    public Node[] getNodes() {
         return nodes;
     }
 
@@ -29,8 +28,7 @@ public class UnprocessedStreet {
         return name;
     }
 
-    public UnprocessedStreet(final List<Point2D.Double> degrees, final List<Node> nodes, final int type,
-            final String name) {
+    public UnprocessedStreet(final Point2D[] degrees, final Node[] nodes, final int type, final String name) {
         this.degrees = degrees;
         this.nodes = nodes;
         this.type = type;

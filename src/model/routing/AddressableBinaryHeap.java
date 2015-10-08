@@ -188,8 +188,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
         }
     }
 
-    @SuppressWarnings("hiding")
-    private class Entry<T> {
+    private static class Entry<T> {
         private final T content;
         private int index;
         private int priority;

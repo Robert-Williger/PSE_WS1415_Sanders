@@ -8,13 +8,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -292,12 +290,13 @@ public class OSMParser implements IOSMParser {
                             // TODO ways with area tag also valid...
                             type = getStreetType(wayTag);
                             if (type >= 0) {
-                                final List<Point2D.Double> degrees = new LinkedList<Point2D.Double>();
-                                for (final Node node : nodes) {
-                                    final double lat = parseLat(node.getY());
-                                    final double lon = parseLon(node.getX());
+                                final Point2D[] degrees = new Point2D[nodes.length];
+                                for (int i = 0; i < nodes.length; i++) {
+                                    final Node node = nodes[i];
+                                    final float lat = (float) parseLat(node.getY());
+                                    final float lon = (float) parseLon(node.getX());
 
-                                    degrees.add(new Point2D.Double(lat, lon));
+                                    degrees[i] = new Point2D.Float(lon, lat);
                                 }
 
                                 if (wayTag.equals("path")) {
@@ -308,7 +307,7 @@ public class OSMParser implements IOSMParser {
                                     }
                                 }
 
-                                streetList.add(new UnprocessedStreet(degrees, Arrays.asList(nodes), type, nameTag));
+                                streetList.add(new UnprocessedStreet(degrees, nodes, type, nameTag));
                             } else {
                                 type = getWayType(wayTag);
 

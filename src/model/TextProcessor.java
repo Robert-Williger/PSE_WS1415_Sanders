@@ -29,7 +29,6 @@ public class TextProcessor implements ITextProcessor {
         this.numberOfSuggestions = numberOfSuggestions;
     }
 
-    // @SuppressWarnings("unchecked")
     @Override
     public List<String> suggest(final String address) {
 

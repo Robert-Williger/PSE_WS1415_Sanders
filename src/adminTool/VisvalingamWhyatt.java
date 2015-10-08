@@ -20,8 +20,6 @@ public class VisvalingamWhyatt {
     }
 
     public int[] simplifyPolygon(final Iterator<Node> nodes, final int zoom) {
-        // TODO improve: point order rotates atm --> bugs occur
-
         Item head = setupList(nodes);
         IAddressablePriorityQueue<Item> queue = setupQueue(head, head.previous.index + 1, zoom);
         head = performSimplification(queue, head, zoom);

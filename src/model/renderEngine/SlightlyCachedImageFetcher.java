@@ -12,5 +12,4 @@ public class SlightlyCachedImageFetcher extends AbstractImageFetcher {
     protected int getCacheSize() {
         return 128;
     }
-
 }

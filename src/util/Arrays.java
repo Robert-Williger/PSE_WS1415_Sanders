@@ -16,6 +16,10 @@ public class Arrays {
         return new ArrayIterator<T>(array);
     }
 
+    public static <T> Iterator<T> iterator(final T[] array, final int limit) {
+        return new LimitIterator<T>(array, limit);
+    }
+
     public static <T> Iterator<T> iterator(final T[] array, final int[] subarray) {
         return new SubarrayIterator<T>(array, subarray);
     }
@@ -73,6 +77,29 @@ public class Arrays {
         @Override
         public T next() {
             throw new NoSuchElementException();
+        }
+
+    }
+
+    private static class LimitIterator<T> implements Iterator<T> {
+
+        private final T[] array;
+        private int count;
+        private final int limit;
+
+        public LimitIterator(final T[] array, final int limit) {
+            this.array = array;
+            this.limit = limit;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return count < limit;
+        }
+
+        @Override
+        public T next() {
+            return array[count++];
         }
 
     }

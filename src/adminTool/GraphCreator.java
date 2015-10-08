@@ -76,22 +76,22 @@ public class GraphCreator extends AbstractMapCreator {
             final List<Integer> intersections = getStreetCuts(street);
             // Step three: processing the cutting of the streets.
 
-            final List<Point2D.Double> degrees = street.getDegrees();
-            final List<Node> nodeList = street.getNodes();
+            final Point2D[] degrees = street.getDegrees();
+            final Node[] nodes = street.getNodes();
 
             int lastCut = 0;
             for (int i = 0; i < intersections.size(); i++) {
                 final int currentCut = intersections.get(i);
 
-                final int id1 = generateID(nodeList.get(lastCut));
-                final int id2 = generateID(nodeList.get(currentCut));
+                final int id1 = generateID(nodes[lastCut]);
+                final int id2 = generateID(nodes[currentCut]);
 
-                final List<Node> streetNodes;
+                final Node[] streetNodes = new Node[currentCut - lastCut + 1];
 
                 double weight = 0;
                 for (int j = lastCut; j < currentCut; j++) {
-                    weight += getWeight(degrees.get(j).getY(), degrees.get(j).getX(), degrees.get(j + 1).getY(),
-                            degrees.get(j + 1).getX());
+                    weight += getWeight(degrees[j].getY(), degrees[j].getX(), degrees[j + 1].getY(),
+                            degrees[j + 1].getX());
                 }
 
                 final WeightedEdge edge;
@@ -99,19 +99,18 @@ public class GraphCreator extends AbstractMapCreator {
                 if (id1 > id2) {
                     edge = new WeightedEdge(id2, id1, (int) weight);
                     id = ((long) id2 << 32) | id1;
-                    streetNodes = new ArrayList<Node>();
                     for (int j = currentCut; j >= lastCut; j--) {
-                        streetNodes.add(nodeList.get(j));
+                        streetNodes[currentCut - j] = nodes[j];
                     }
                 } else {
                     edge = new WeightedEdge(id1, id2, (int) weight);
                     id = ((long) id1 << 32) | id2;
-                    streetNodes = nodeList.subList(lastCut, currentCut + 1);
+                    for (int j = lastCut; j <= currentCut; j++) {
+                        streetNodes[j - lastCut] = nodes[j];
+                    }
                 }
 
-                // TODO improve this!
-                final Street newStreet = new Street(streetNodes.toArray(new Node[streetNodes.size()]),
-                        street.getType(), street.getName(), id);
+                final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
 
                 processedStreets.add(newStreet);
                 edgesList.add(edge);
@@ -154,16 +153,16 @@ public class GraphCreator extends AbstractMapCreator {
         final List<Integer> intersections = new ArrayList<Integer>();
 
         // calculating the indexes of the intersections
-        final List<Node> nodes = s.getNodes();
+        final Node[] nodes = s.getNodes();
 
-        for (int i = 1; i < s.getNodes().size() - 1; i++) {
-            final Node node = nodes.get(i);
+        for (int i = 1; i < nodes.length - 1; i++) {
+            final Node node = nodes[i];
 
             if (nodeCount.get(node) > 1) {
                 intersections.add(i);
             }
         }
-        intersections.add(nodes.size() - 1);
+        intersections.add(nodes.length - 1);
 
         return intersections;
     }
@@ -222,17 +221,17 @@ public class GraphCreator extends AbstractMapCreator {
         }
     }
 
-    private static int getWeight(final double lat1, final double lng1, final double lat2, final double lng2) {
+    private static int getWeight(final double lat1, final double lon1, final double lat2, final double lon2) {
 
         final double earthRadius = 6371;
         final double dLat = Math.toRadians(lat2 - lat1);
-        final double dLng = Math.toRadians(lng2 - lng1);
+        final double dLng = Math.toRadians(lon2 - lon1);
         final double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))
                 * Math.cos(Math.toRadians(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         final double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         final double dist = (earthRadius * c);
+        return (int) Math.round(dist * 1000); // in meter
 
-        return (int) (dist * 1000); // in meter
     }
 
     private class WeightedEdge implements Comparable<WeightedEdge> {

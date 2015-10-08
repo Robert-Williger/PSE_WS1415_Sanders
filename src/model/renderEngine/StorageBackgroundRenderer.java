@@ -351,6 +351,7 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         if (rendered) {
             fireChange();
         }
+
         return rendered;
     }
 

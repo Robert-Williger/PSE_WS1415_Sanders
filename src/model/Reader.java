@@ -2,7 +2,6 @@ package model;
 
 import java.awt.Dimension;
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,14 +17,13 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.Way;
-import model.map.EmptyTile;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
 import model.map.ITile;
 import model.map.MapManager;
 import model.map.PixelConverter;
-import model.map.Tile;
-import model.map.TileFactory;
+import model.map.factories.ITileFactory;
+import model.map.factories.StorageTileFactory;
 import model.routing.Graph;
 import model.routing.IGraph;
 import model.routing.IRouteManager;
@@ -36,17 +34,11 @@ public class Reader implements IReader {
     private final List<IProgressListener> list;
 
     private IGraph graph;
-    private DataInputStream reader;
+    private CompressedInputStream reader;
     private IMapManager manager;
     private IRouteManager rm;
     private ITextProcessor tp;
     private boolean canceled;
-
-    private static final POI[] EMPTY_POIS;
-    private static final Street[] EMPTY_STREETS;
-    private static final Way[] EMPTY_WAYS;
-    private static final Building[] EMPTY_BUILDINGS;
-    private static final Area[] EMPTY_AREAS;
 
     public Reader() {
         list = new LinkedList<IProgressListener>();
@@ -58,7 +50,7 @@ public class Reader implements IReader {
         MapManagerReader managerReader = new MapManagerReader();
 
         try {
-            reader = new DataInputStream(new BufferedInputStream(new ProgressableInputStream(file)));
+            reader = new CompressedInputStream(new BufferedInputStream(new ProgressableInputStream(file)));
             graph = readGraph();
             manager = managerReader.readMapManager();
         } catch (final Exception e) {
@@ -119,17 +111,17 @@ public class Reader implements IReader {
      */
     private IGraph readGraph() throws IOException {
         fireStepCommenced("Lade Graph...");
-        final int nodeCount = readInt();
-        final int edgeCount = readInt();
+        final int nodeCount = reader.readCompressedInt();
+        final int edgeCount = reader.readCompressedInt();
 
         final List<Long> edges = new ArrayList<Long>(edgeCount);
         final List<Integer> weights = new ArrayList<Integer>(edgeCount);
 
         int lastWeight = 0;
         for (int i = 0; i < edgeCount; i++) {
-            long node1 = readInt();
-            edges.add((node1 << 32) | readInt() + node1);
-            int currentWeight = readInt() + lastWeight;
+            long node1 = reader.readCompressedInt();
+            edges.add((node1 << 32) | reader.readCompressedInt() + node1);
+            int currentWeight = reader.readCompressedInt() + lastWeight;
             weights.add(currentWeight);
             lastWeight = currentWeight;
         }
@@ -223,33 +215,33 @@ public class Reader implements IReader {
         }
 
         private void readHeader() throws IOException {
-            minZoomStep = readInt();
-            maxZoomStep = readInt();
-            rows = readInt();
-            columns = readInt();
+            minZoomStep = reader.readCompressedInt();
+            maxZoomStep = reader.readCompressedInt();
+            rows = reader.readCompressedInt();
+            columns = reader.readCompressedInt();
             tiles = new ITile[maxZoomStep - minZoomStep + 1][][];
             converter = new PixelConverter(reader.readDouble());
-            tileSize = new Dimension(readInt(), readInt());
+            tileSize = new Dimension(reader.readCompressedInt(), reader.readCompressedInt());
         }
 
         private void readElements() throws IOException {
             fireStepCommenced("Lade Nodes...");
 
             int count = 0;
-            nodes = new Node[readInt()];
+            nodes = new Node[reader.readCompressedInt()];
             for (count = 0; count < nodes.length; count++) {
-                nodes[count] = new Node(readInt(), readInt());
+                nodes[count] = new Node(reader.readCompressedInt(), reader.readCompressedInt());
             }
 
             fireStepCommenced("Lade Adressen...");
 
-            names = new String[readInt()];
+            names = new String[reader.readCompressedInt()];
             for (count = 0; count < names.length; count++) {
                 names[count] = reader.readUTF();
             }
             names[0] = "Unbekannte Straße";
 
-            numbers = new String[readInt()];
+            numbers = new String[reader.readCompressedInt()];
             for (count = 0; count < numbers.length; count++) {
                 numbers[count] = reader.readUTF();
             }
@@ -258,16 +250,16 @@ public class Reader implements IReader {
 
             count = 0;
             int type = 0;
-            int[] distribution = readIntArray(readInt());
+            int[] distribution = readIntArray(reader.readCompressedInt());
 
             streets = new Street[distribution[distribution.length - 1]];
 
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    long node1 = readInt();
-                    long id = (node1 << 32) | (node1 + readInt());
-                    streets[count] = new Street(readNodeArray(), type, names[readInt()], id);
+                    long node1 = reader.readCompressedInt();
+                    long id = (node1 << 32) | (node1 + reader.readCompressedInt());
+                    streets[count] = new Street(readNodeArray(), type, names[reader.readCompressedInt()], id);
                 }
                 ++type;
             }
@@ -276,14 +268,14 @@ public class Reader implements IReader {
 
             count = 0;
             type = 0;
-            distribution = readIntArray(readInt());
+            distribution = readIntArray(reader.readCompressedInt());
             ways = new Way[distribution[distribution.length - 1]];
             origWays = new Node[ways.length][];
 
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    ways[count] = new Way(readNodeArray(), type, names[readInt()]);
+                    ways[count] = new Way(readNodeArray(), type, names[reader.readCompressedInt()]);
                     origWays[count] = ways[count].getNodes();
                 }
                 ++type;
@@ -293,7 +285,7 @@ public class Reader implements IReader {
 
             count = 0;
             type = 0;
-            distribution = readIntArray(readInt());
+            distribution = readIntArray(reader.readCompressedInt());
             areas = new Area[distribution[distribution.length - 1]];
             origAreas = new Node[areas.length][];
 
@@ -311,24 +303,25 @@ public class Reader implements IReader {
 
             count = 0;
             type = 0;
-            distribution = readIntArray(readInt());
+            distribution = readIntArray(reader.readCompressedInt());
             pois = new POI[distribution[distribution.length - 1]];
 
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    pois[count] = new POI(readInt(), readInt(), type);
+                    pois[count] = new POI(reader.readCompressedInt(), reader.readCompressedInt(), type);
                 }
                 ++type;
             }
 
             fireStepCommenced("Lade Gebäude...");
-            buildings = new Building[readInt()];
-            final int streetNodes = readInt();
+            buildings = new Building[reader.readCompressedInt()];
+            final int streetNodes = reader.readCompressedInt();
 
             for (count = 0; count < streetNodes; count++) {
-                buildings[count] = Building.create(readNodeArray(), new StreetNode(reader.readFloat(),
-                        streets[readInt()]), numbers[readInt()]);
+                buildings[count] = Building.create(readNodeArray(),
+                        new StreetNode(reader.readFloat(), streets[reader.readCompressedInt()]),
+                        numbers[reader.readCompressedInt()]);
             }
 
             for (; count < buildings.length; count++) {
@@ -337,10 +330,10 @@ public class Reader implements IReader {
         }
 
         private Node[] readNodeArray() throws IOException {
-            final Node[] n = new Node[readInt()];
+            final Node[] n = new Node[reader.readCompressedInt()];
             int last = 0;
             for (int j = 0; j < n.length; j++) {
-                int current = readInt() + last;
+                int current = reader.readCompressedInt() + last;
                 n[j] = this.nodes[current];
                 last = current;
             }
@@ -351,72 +344,24 @@ public class Reader implements IReader {
             fireStepCommenced("Lade Kacheln...");
 
             // TODO own class with interface ITile createTile()
-            final TileFactory factory = new TileFactory();
+            // final TileFactory factory = new TileFactory();
 
             int currentRows = rows;
             int currentCols = columns;
-            final ITile emptyTile = new EmptyTile(-1, -1, -1);
+
+            final ITileFactory factory = new StorageTileFactory(reader, pois, streets, ways, buildings, areas);
             for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
 
                 tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
 
                 for (int row = 0; row < currentRows; row++) {
                     for (int column = 0; column < currentCols; column++) {
-                        byte flags = reader.readByte();
 
-                        final ITile tile;
-                        if (flags == 0) {
-                            tile = emptyTile;
-                        } else {
-                            final POI[] tilePOIs;
-                            final Street[] tileStreets;
-                            final Way[] tileWays;
-                            final Building[] tileBuildings;
-                            final Area[] tileAreas;
+                        // tile = new Tile(zoom, row, column, tileWays,
+                        // tileStreets, tileAreas, tileBuildings,
+                        // tilePOIs);
 
-                            if ((flags & 1) == 0) {
-                                tilePOIs = EMPTY_POIS;
-                            } else {
-                                tilePOIs = new POI[readInt()];
-                                fillElements(pois, tilePOIs);
-                            }
-
-                            if ((flags >> 1 & 1) == 0) {
-                                tileStreets = EMPTY_STREETS;
-                            } else {
-                                tileStreets = new Street[readInt()];
-                                fillElements(streets, tileStreets);
-                            }
-
-                            if ((flags >> 2 & 1) == 0) {
-                                tileWays = EMPTY_WAYS;
-                            } else {
-                                tileWays = new Way[readInt()];
-                                fillElements(ways, tileWays);
-                            }
-
-                            if ((flags >> 3 & 1) == 0) {
-                                tileBuildings = EMPTY_BUILDINGS;
-                            } else {
-                                tileBuildings = new Building[readInt()];
-                                fillElements(buildings, tileBuildings);
-                            }
-
-                            if ((flags >> 4 & 1) == 0) {
-                                tileAreas = EMPTY_AREAS;
-                            } else {
-                                tileAreas = new Area[readInt()];
-                                fillElements(areas, tileAreas);
-                            }
-
-                            tile = factory.create(flags, tilePOIs, tileStreets, tileWays, tileBuildings, tileAreas,
-                                    zoom, row, column);
-                            // tile = new Tile(zoom, row, column, tileWays,
-                            // tileStreets, tileAreas, tileBuildings,
-                            // tilePOIs);
-                        }
-
-                        tiles[zoom - minZoomStep][row][column] = tile;
+                        tiles[zoom - minZoomStep][row][column] = factory.createTile(row, column, zoom);
                     }
                 }
 
@@ -429,37 +374,28 @@ public class Reader implements IReader {
             }
         }
 
-        private <T> void fillElements(final T[] source, final T[] destination) throws IOException {
-            int last = 0;
-            for (int i = 0; i < destination.length; i++) {
-                int current = readInt() + last;
-                destination[i] = source[current];
-                last = current;
-            }
-        }
-
         private void readSimplifications() throws IOException {
-            int size = readInt();
+            int size = reader.readCompressedInt();
 
             for (int i = 0; i < size; i++) {
-                final int area = readInt();
+                final int area = reader.readCompressedInt();
                 areas[area] = new Area(readSimplifications(origAreas, area), areas[area].getType());
             }
 
-            size = readInt();
+            size = reader.readCompressedInt();
             for (int i = 0; i < size; i++) {
-                final int way = readInt();
+                final int way = reader.readCompressedInt();
                 ways[way] = new Way(readSimplifications(origWays, way), ways[way].getType(), ways[way].getName());
             }
         }
 
         private Node[] readSimplifications(final Node[][] origElements, final int element) throws IOException {
-            final Node[] newNodes = new Node[readInt()];
+            final Node[] newNodes = new Node[reader.readCompressedInt()];
             final Node[] oldNodes = origElements[element];
 
             int last = 0;
             for (int j = 0; j < newNodes.length; j++) {
-                final int index = readInt() + last;
+                final int index = reader.readCompressedInt() + last;
                 newNodes[j] = oldNodes[index];
                 last = index;
             }
@@ -470,7 +406,7 @@ public class Reader implements IReader {
         private int[] readIntArray(final int length) throws IOException {
             final int[] ret = new int[length];
             for (int i = 0; i < ret.length; i++) {
-                ret[i] = readInt();
+                ret[i] = reader.readCompressedInt();
             }
 
             return ret;
@@ -485,21 +421,6 @@ public class Reader implements IReader {
             names = null;
             numbers = null;
         }
-    }
-
-    private int readInt() throws IOException {
-        int ret = 0;
-
-        byte in;
-
-        while (((in = reader.readByte()) & 0x80) == 0) {
-            ret = (ret << 7) | in;
-        }
-
-        in = (byte) (in & 0x7F);
-        ret = (ret << 7) | in;
-
-        return ret;
     }
 
     @Override
@@ -537,13 +458,5 @@ public class Reader implements IReader {
         for (final IProgressListener listener : list) {
             listener.stepCommenced(step);
         }
-    }
-
-    static {
-        EMPTY_POIS = new POI[0];
-        EMPTY_STREETS = new Street[0];
-        EMPTY_WAYS = new Way[0];
-        EMPTY_BUILDINGS = new Building[0];
-        EMPTY_AREAS = new Area[0];
     }
 }
