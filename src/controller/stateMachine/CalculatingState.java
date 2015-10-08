@@ -34,8 +34,6 @@ public class CalculatingState extends AbstractState {
     @Override
     public void entry() {
         final ISidebarView sidebar = getSidebarView();
-        getApplicationView().setCalculating(true);
-        sidebar.setTSPChangeable(false);
         sidebar.setCancelable(false);
         sidebar.setStartable(false);
         sidebar.setResettable(false);
@@ -53,8 +51,6 @@ public class CalculatingState extends AbstractState {
             route = null;
         }
 
-        getApplicationView().setCalculating(false);
-        sidebar.setTSPChangeable(getList().getSize() > 2);
         sidebar.setPOIChangeable(true);
         sidebar.setStartable(true);
         sidebar.setResettable(true);

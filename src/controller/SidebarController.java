@@ -118,18 +118,20 @@ public class SidebarController extends AbstractController<ISidebarView> {
                     case "cancel calculation":
                         machine.cancelCalculation();
                         break;
-                    case "tsp enabled":
-                        machine.setTSPEnabled(true);
-                        break;
-                    case "tsp disabled":
-                        machine.setTSPEnabled(false);
-                        break;
                     case "poi enabled":
                         application.getImageLoader().getPOIAccessor().setVisible(true);
                         break;
                     case "poi disabled":
                         application.getImageLoader().getPOIAccessor().setVisible(false);
                         break;
+                    default:
+                        final String[] names = application.getRouteManager().getRouteSolvers();
+                        for (int i = 0; i < names.length; i++) {
+                            if (names[i].equals(e.getActionCommand())) {
+                                machine.setRouteSolver(i);
+                                break;
+                            }
+                        }
                 }
             }
         });

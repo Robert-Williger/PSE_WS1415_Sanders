@@ -76,6 +76,15 @@ public class ApplicationView extends JFrame implements IApplicationView {
         help.setVisible(false);
 
         this.application = application;
+
+        manager.addChangeListener(new ChangeListener() {
+
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                menuBar.setCalculating(manager.isCalculating());
+            }
+        });
+
         application.addChangeListener(new ChangeListener() {
 
             @Override
@@ -84,6 +93,13 @@ public class ApplicationView extends JFrame implements IApplicationView {
                 final IRouteManager manager = application.getRouteManager();
                 sidebar.setModel(manager);
                 map.setModels(application.getImageLoader(), manager.getPointList(), application.getMap());
+                manager.addChangeListener(new ChangeListener() {
+
+                    @Override
+                    public void stateChanged(final ChangeEvent e) {
+                        menuBar.setCalculating(manager.isCalculating());
+                    }
+                });
                 repaint();
             }
 
@@ -112,12 +128,6 @@ public class ApplicationView extends JFrame implements IApplicationView {
     @Override
     public IMapView getMap() {
         return map;
-    }
-
-    @Override
-    public void setCalculating(final boolean calculating) {
-        sidebar.setCalculating(calculating);
-        menuBar.setCalculating(calculating);
     }
 
     @Override

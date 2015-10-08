@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.AbstractModel;
 import model.IProgressListener;
 import model.elements.StreetNode;
 import model.map.IMapManager;
@@ -14,27 +15,32 @@ import model.targets.IRoutePoint;
 import model.targets.PointList;
 import model.targets.RoutePoint;
 
-public class RouteManager implements IRouteManager {
+public class RouteManager extends AbstractModel implements IRouteManager {
+
     private IGraph graph;
     private final IMapManager manager;
     private final IPointList pointList;
 
-    private final IComplexRouteSolver tspSolver;
-    private final IComplexRouteSolver viaRouteSolver;
-    private IComplexRouteSolver currentRouteSolver;
+    private final IComplexRouteSolver[] routeSolvers;
+    private final String[] routeSolverNames;
+
+    private int routeSolver;
+    private boolean calculating;
 
     public RouteManager(final IGraph graph, final IMapManager manager) {
         this.graph = graph;
         this.manager = manager;
-        viaRouteSolver = createViaRouteSolver();
-        tspSolver = createTSPSolver();
-        currentRouteSolver = viaRouteSolver;
+
+        this.routeSolverNames = createNames();
+        this.routeSolvers = createRouteSolvers(graph);
+
+        setRouteSolver(0);
 
         pointList = new PointList();
     }
 
     private IComplexRouteSolver getCurrentRouteSolver() {
-        return currentRouteSolver;
+        return routeSolvers[routeSolver];
     }
 
     private List<InterNode> createInterNodeList() {
@@ -143,44 +149,44 @@ public class RouteManager implements IRouteManager {
         return renderRoute;
     }
 
-    protected IComplexRouteSolver createTSPSolver() {
-        return new ChristofidesTSPSolver(graph);
+    protected IComplexRouteSolver[] createRouteSolvers(final IGraph graph) {
+        return new IComplexRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph)};
     }
 
-    protected IComplexRouteSolver createViaRouteSolver() {
-        return new ViaRouteSolver(graph);
+    protected String[] createNames() {
+        return new String[]{"Via-Route", "TSP-Route"};
     }
 
     @Override
     public void addProgressListener(final IProgressListener listener) {
-        tspSolver.addProgressListener(listener);
-        viaRouteSolver.addProgressListener(listener);
+        for (final IComplexRouteSolver solver : routeSolvers) {
+            solver.addProgressListener(listener);
+        }
     }
 
     @Override
     public void removeProgressListener(final IProgressListener listener) {
-        tspSolver.removeProgressListener(listener);
-        viaRouteSolver.removeProgressListener(listener);
+        for (final IComplexRouteSolver solver : routeSolvers) {
+            solver.removeProgressListener(listener);
+        }
     }
 
     @Override
     public void cancelCalculation() {
-        currentRouteSolver.cancelCalculation();
+        getCurrentRouteSolver().cancelCalculation();
     }
 
     @Override
     public IRenderRoute calculateRoute() {
-        return createRenderRoute(getCurrentRouteSolver().calculateRoute(createInterNodeList()));
-    }
+        calculating = true;
+        fireChange();
 
-    @Override
-    public void setTSPEnabled(final boolean enabled) {
-        if (enabled) {
-            currentRouteSolver = tspSolver;
-        } else {
-            currentRouteSolver = viaRouteSolver;
-        }
+        final IRenderRoute route = createRenderRoute(getCurrentRouteSolver().calculateRoute(createInterNodeList()));
+        calculating = false;
 
+        fireChange();
+
+        return route;
     }
 
     @Override
@@ -191,6 +197,26 @@ public class RouteManager implements IRouteManager {
     @Override
     public IPointList getPointList() {
         return pointList;
+    }
+
+    @Override
+    public String[] getRouteSolvers() {
+        return routeSolverNames;
+    }
+
+    @Override
+    public void setRouteSolver(final int solver) {
+        routeSolver = solver;
+    }
+
+    @Override
+    public int getRouteSolver() {
+        return routeSolver;
+    }
+
+    @Override
+    public boolean isCalculating() {
+        return calculating;
     }
 
 }

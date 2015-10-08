@@ -13,8 +13,6 @@ public interface IApplicationView extends IView {
 
     IMapView getMap();
 
-    void setCalculating(boolean calculating);
-
     void setHelpVisible(boolean visible);
 
 }

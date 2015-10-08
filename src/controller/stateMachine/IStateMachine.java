@@ -34,6 +34,6 @@ public interface IStateMachine {
 
     void setAddressText(String address);
 
-    void setTSPEnabled(boolean enabled);
+    void setRouteSolver(int solver);
 
 }

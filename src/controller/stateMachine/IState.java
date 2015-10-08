@@ -34,7 +34,7 @@ public interface IState {
 
     IState setAddressText(String address);
 
-    IState setTSPEnabled(boolean enabled);
+    IState setRouteSolver(int solver);
 
     void entry();
 

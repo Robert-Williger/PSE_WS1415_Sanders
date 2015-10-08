@@ -155,6 +155,7 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
 
         final EulerianCircuitAlgorithm algorithm = new EulerianCircuitAlgorithm();
 
+        // TODO only do once?
         for (int startNode = 0; startNode < eulerianGraph.getNodes(); startNode++) {
             final List<Integer> eulerianPath = algorithm.getEulerianCurcuit(eulerianGraph, startNode);
 
@@ -183,7 +184,6 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
             if (currentRouteLength < minRouteLength) {
                 minRouteLength = currentRouteLength;
                 tspRoute = currentRoute;
-                System.out.println("improved");
             }
         }
 

@@ -17,6 +17,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -27,6 +28,8 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentListener;
 
 import model.IProgressListener;
@@ -50,7 +53,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private final JButton resetButton;
     private final JButton cancelCalcButton;
     private final JCheckBox poiBox;
-    private final JCheckBox tspBox;
+    private final JComboBox<String> routeSolverBox;
     private final SuggestionView suggestionView;
     private final PointListView listView;
     private final JProgressBar progressBar;
@@ -73,7 +76,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         resetButton = new JButton("Reset");
         cancelCalcButton = new JButton("Routenberechnung abbrechen");
         poiBox = new CustomizedCheckBox("Sonderziele einblenden", "poi");
-        tspBox = new CustomizedCheckBox("TSP aktivieren", "tsp");
+        routeSolverBox = new CustomizedComboBox(manager.getRouteSolvers());
         suggestionView = new SuggestionView();
         listView = new PointListView(manager.getPointList());
         routeLabel = new RouteLabel();
@@ -106,6 +109,13 @@ public class SidebarView extends JPanel implements ISidebarView {
         manager.addProgressListener(progressListener);
         listView.setPointList(list);
 
+        manager.addChangeListener(new ChangeListener() {
+
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                setCalculating(manager.isCalculating());
+            }
+        });
         resetView();
     }
 
@@ -128,8 +138,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         setResettable(false);
         setStartable(false);
         setCancelable(false);
-        setTSPChangeable(false);
-        tspBox.setSelected(false);
+        routeSolverBox.getModel().setSelectedItem(routeSolverBox.getItemAt(0));
         cancelCalcButton.setEnabled(false);
         revalidate();
     }
@@ -236,11 +245,13 @@ public class SidebarView extends JPanel implements ISidebarView {
     private JPanel createBot() {
         final JPanel ret = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        tspBox.setMargin(new Insets(0, 0, 0, 0));
-        tspBox.setEnabled(false);
-        tspBox.setFocusable(false);
-        tspBox.setOpaque(false);
-        ret.add(tspBox);
+        routeSolverBox.setBorder(null);
+        routeSolverBox.setFocusable(false);
+        routeSolverBox.setOpaque(false);
+        ret.add(routeSolverBox);
+
+        // final JLabel solverLabel = new JLabel("Berechnung:");
+        // ret.add(solverLabel);
 
         poiBox.setMargin(new Insets(0, 0, 0, 0));
         poiBox.setFocusable(false);
@@ -297,7 +308,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         resetButton.addActionListener(listener);
         cancelCalcButton.addActionListener(listener);
         poiBox.addActionListener(listener);
-        tspBox.addActionListener(listener);
+        routeSolverBox.addActionListener(listener);
     }
 
     @Override
@@ -332,11 +343,6 @@ public class SidebarView extends JPanel implements ISidebarView {
     }
 
     @Override
-    public void setTSPChangeable(final boolean changeable) {
-        tspBox.setEnabled(changeable);
-    }
-
-    @Override
     public void setPOIChangeable(final boolean changeable) {
         poiBox.setEnabled(changeable);
     }
@@ -364,6 +370,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     }
 
     public void setCalculating(final boolean calculating) {
+        routeSolverBox.setEnabled(!calculating);
         cancelCalcButton.setEnabled(calculating);
         progressBar.setVisible(calculating);
         listView.setEnabled(!calculating);
@@ -587,6 +594,19 @@ public class SidebarView extends JPanel implements ISidebarView {
         @Override
         public String getActionCommand() {
             return command + " " + (isSelected() ? "enabled" : "disabled");
+        }
+    }
+
+    private class CustomizedComboBox extends JComboBox<String> {
+        private static final long serialVersionUID = 1L;
+
+        public CustomizedComboBox(final String[] names) {
+            super(names);
+        }
+
+        @Override
+        public String getActionCommand() {
+            return getModel().getSelectedItem().toString();
         }
     }
 

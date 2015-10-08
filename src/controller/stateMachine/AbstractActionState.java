@@ -8,12 +8,18 @@ import model.targets.PointState;
 
 abstract class AbstractActionState extends AbstractState {
 
-    private static PointStateMachine pointStateMachine = new PointStateMachine();
-
     @Override
     public IState removePoint(final IRoutePoint point) {
-        pointStateMachine.removePoint(point);
+        getList().remove(point.getIndex());
         endCurrentAction();
+
+        if (getList().remove(point)) {
+            getImageLoader().setRenderRoute(null);
+            getSidebarView().setRouteLength(0);
+            if (getList().getSize() < 2) {
+                getSidebarView().setStartable(false);
+            }
+        }
 
         return DefaultState.getInstance();
     }
@@ -21,15 +27,14 @@ abstract class AbstractActionState extends AbstractState {
     @Override
     public IState resetPoints() {
         endCurrentAction();
-        pointStateMachine.resetPoints();
+
+        getImageLoader().setRenderRoute(null);
+        getSidebarView().setRouteLength(0);
+        getSidebarView().setStartable(false);
+        getSidebarView().setResettable(false);
+        getList().reset();
+
         return DefaultState.getInstance();
-    }
-
-    @Override
-    public IState setTSPEnabled(final boolean enabled) {
-        pointStateMachine.setTSPEnabled(enabled);
-
-        return this;
     }
 
     @Override
@@ -82,13 +87,15 @@ abstract class AbstractActionState extends AbstractState {
     @Override
     public IState startCalculation() {
         endCurrentAction();
-        pointStateMachine.startCalculation();
 
         return CalculatingState.getInstance();
     }
 
-    protected IStateMachine getPointStateMachine() {
-        return pointStateMachine;
+    @Override
+    public IState setRouteSolver(final int solver) {
+        getRouteManager().setRouteSolver(solver);
+
+        return this;
     }
 
     protected abstract void cancelPointRelocation();

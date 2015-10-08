@@ -47,6 +47,7 @@ public class ViaRouteSolver extends AbstractComplexRouteSolver {
             ret.add(solver.calculateShortestPath(edges.get(i - 1), edges.get(i)));
         }
         fireProgressDone(100);
+
         return ret;
     }
 

@@ -98,8 +98,8 @@ abstract class AbstractStateMachine implements IStateMachine {
     }
 
     @Override
-    public void setTSPEnabled(final boolean enabled) {
-        changeState(state.setTSPEnabled(enabled));
+    public void setRouteSolver(int solver) {
+        changeState(state.setRouteSolver(solver));
     }
 
     private void changeState(final IState newState) {

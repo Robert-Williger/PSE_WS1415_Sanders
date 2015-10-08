@@ -1,6 +1,7 @@
 package controller.stateMachine;
 
 import model.targets.IRoutePoint;
+import model.targets.PointState;
 
 class UnaddedState extends AbstractActionState {
 
@@ -16,10 +17,17 @@ class UnaddedState extends AbstractActionState {
 
     @Override
     public IState addPoint() {
-        getPointStateMachine().addPoint();
         getImageLoader().setRenderRoute(null);
         getSidebarView().setRouteLength(0);
         getSidebarView().setAddable(false);
+
+        final IRoutePoint point = getStore().getPoint();
+        point.setLocation(null);
+        point.setState(PointState.added);
+        getSidebarView().setResettable(true);
+        if (getList().getSize() >= 2) {
+            getSidebarView().setStartable(true);
+        }
 
         return DefaultState.getInstance();
     }

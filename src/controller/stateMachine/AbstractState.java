@@ -135,7 +135,7 @@ class AbstractState implements IState {
     }
 
     @Override
-    public IState setTSPEnabled(final boolean enabled) {
+    public IState setRouteSolver(int solver) {
         return this;
     }
 
@@ -148,5 +148,4 @@ class AbstractState implements IState {
     public void exit() {
 
     }
-
 }
