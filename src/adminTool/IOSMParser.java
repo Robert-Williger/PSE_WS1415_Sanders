@@ -3,6 +3,7 @@ package adminTool;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
@@ -24,5 +25,7 @@ public interface IOSMParser {
     Collection<Building> getBuildings();
 
     Collection<UnprocessedStreet> getStreets();
+
+    List<List<Boundary>> getBoundaries();
 
 }

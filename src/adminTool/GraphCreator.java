@@ -1,10 +1,7 @@
 package adminTool;
 
 import java.awt.geom.Point2D;
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,9 +13,6 @@ import model.elements.Node;
 import model.elements.Street;
 
 public class GraphCreator extends AbstractMapCreator {
-
-    private final File file;
-    private DataOutputStream stream;
 
     // Maps Node to the amount of streets its part of
     private HashMap<Node, Integer> nodeCount;
@@ -32,8 +26,7 @@ public class GraphCreator extends AbstractMapCreator {
     private Collection<UnprocessedStreet> unprocessedStreets;
 
     public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final File file) {
-
-        this.file = file;
+        super(file);
         this.unprocessedStreets = unprocessedStreets;
 
         processedStreets = new ArrayList<Street>();
@@ -126,16 +119,16 @@ public class GraphCreator extends AbstractMapCreator {
         Collections.sort(edgesList);
 
         try {
-            stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, false)));
+            createOutputStream(false);
 
-            writeInt(idCount);
-            writeInt(edgesList.size());
+            writeCompressedInt(idCount);
+            writeCompressedInt(edgesList.size());
 
             int lastWeight = 0;
             for (final WeightedEdge edge : edgesList) {
-                writeInt(edge.node1);
-                writeInt(edge.node2 - edge.node1);
-                writeInt(edge.weight - lastWeight);
+                writeCompressedInt(edge.node1);
+                writeCompressedInt(edge.node2 - edge.node1);
+                writeCompressedInt(edge.weight - lastWeight);
                 lastWeight = edge.weight;
             }
 
@@ -165,36 +158,6 @@ public class GraphCreator extends AbstractMapCreator {
         intersections.add(nodes.length - 1);
 
         return intersections;
-    }
-
-    private void writeInt(final int value) throws IOException {
-        int temp = value >>> 28;
-
-        if (temp == 0) {
-            temp = (value >> 21) & 0x7F;
-            if (temp == 0) {
-                temp = (value >> 14) & 0x7F;
-                if (temp == 0) {
-                    temp = (value >> 7) & 0x7F;
-                    if (temp != 0) {
-                        stream.write(temp);
-                    }
-                } else {
-                    stream.write(temp);
-                    stream.write((value >> 7 & 0x7F));
-                }
-            } else {
-                stream.write(temp);
-                stream.write((value >> 14) & 0x7F);
-                stream.write((value >> 7) & 0x7F);
-            }
-        } else {
-            stream.write(temp);
-            stream.write((value >> 21) & 0x7F);
-            stream.write((value >> 14) & 0x7F);
-            stream.write((value >> 7) & 0x7F);
-        }
-        stream.write((value & 0x7F) | 0x80);
     }
 
     private void incrementCount(final HashMap<Node, Integer> hm, final Node n) {

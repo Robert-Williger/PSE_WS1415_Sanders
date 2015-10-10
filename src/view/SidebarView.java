@@ -9,6 +9,8 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -62,7 +64,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private final JPanel gap;
 
     private final IPointListListener pointListener;
-    private final ProgressListener progressListener;
+    private final IProgressListener progressListener;
 
     public SidebarView(final IRouteManager manager) {
         super(new BorderLayout());
@@ -193,6 +195,23 @@ public class SidebarView extends JPanel implements ISidebarView {
                     suggestionView.setVisible(false);
                     cancelButton.doClick();
                 }
+
+                suggestionView.setSelected(null);
+                suggestionView.getSelectionModel().setSelectedIndex(0);
+            }
+        });
+
+        // TODO improve this?
+        textField.addFocusListener(new FocusAdapter() {
+
+            public void focusGained(FocusEvent e) {
+
+            }
+
+            public void focusLost(FocusEvent e) {
+                if (getRootPane() != null && e.getOppositeComponent() == getRootPane()) {
+                    textField.requestFocus();
+                }
             }
         });
 
@@ -249,9 +268,6 @@ public class SidebarView extends JPanel implements ISidebarView {
         routeSolverBox.setFocusable(false);
         routeSolverBox.setOpaque(false);
         ret.add(routeSolverBox);
-
-        // final JLabel solverLabel = new JLabel("Berechnung:");
-        // ret.add(solverLabel);
 
         poiBox.setMargin(new Insets(0, 0, 0, 0));
         poiBox.setFocusable(false);
@@ -441,58 +457,52 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         private final JMenuItem[] menuItems;
         private final JMenuItem defaultItem;
-        private JMenuItem selectedItem;
 
         public SuggestionView() {
-            setFocusable(false);
             setBackground(Color.white);
             setOpaque(true);
             menuItems = new JMenuItem[MAX_SUGGESTIONS];
-            final ActionListener listener = new ActionListener() {
 
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    textField.setText(e.getActionCommand());
-                    setVisible(false);
-                    multiFuncButton.doClick();
-                }
-
-            };
             for (int i = 0; i < MAX_SUGGESTIONS; i++) {
-                final JMenuItem item = createItem();
-                item.addActionListener(listener);
-                add(item);
-                menuItems[i] = item;
+                menuItems[i] = installNewItem();
             }
-            defaultItem = createItem();
+            defaultItem = installNewItem();
             defaultItem.setText("Kein Ziel gefunden");
             defaultItem.setFont(defaultItem.getFont().deriveFont(Font.ITALIC));
             add(defaultItem);
         }
 
-        private JMenuItem createItem() {
-            final JMenuItem ret = new JMenuItem() {
-                private static final long serialVersionUID = 1L;
+        private JMenuItem installNewItem() {
+            final JMenuItem ret = new JMenuItem();
+
+            ret.addChangeListener(new ChangeListener() {
 
                 @Override
-                public void menuSelectionChanged(final boolean isIncluded) {
-                    super.menuSelectionChanged(isIncluded);
-                    if (isIncluded) {
-                        selectedItem = this;
-                    } else if (selectedItem == this) {
-                        selectedItem = null;
+                public void stateChanged(final ChangeEvent e) {
+                    if (ret.isArmed()) {
+                        textField.setText(ret.getText());
                     }
                 }
-            };
+            });
+
+            ret.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    textField.setText(ret.getText());
+                    multiFuncButton.doClick();
+                }
+            });
 
             ret.setIconTextGap(0);
+            // TODO improve this
             ret.setMargin(new Insets(0, -25, 0, 0));
             ret.setBackground(Color.white);
             ret.setOpaque(true);
-            ret.setHorizontalTextPosition(SwingConstants.LEFT);
+            ret.setHorizontalTextPosition(JMenuItem.LEFT);
             ret.setHorizontalAlignment(SwingConstants.LEFT);
             ret.setFont(new Font("Tahoma", Font.PLAIN, 11));
-            ret.setFocusable(true);
+            add(ret);
 
             return ret;
         }
@@ -525,6 +535,7 @@ public class SidebarView extends JPanel implements ISidebarView {
             }
 
             setPreferredSize(new Dimension(textField.getWidth(), suggestions * 22));
+
             if (!isVisible()) {
                 show(textField, 0, textField.getHeight() - 1);
             }

@@ -31,7 +31,7 @@ public class Application extends AbstractModel implements IApplication {
         final IMapManager manager = new MapManager();
         loader = new ImageLoader(manager);
         routing = new RouteManager(new Graph(0, new LinkedList<Long>(), new LinkedList<Integer>()), manager);
-        processor = new TextProcessor(new HashMap<String, StreetNode>(), 0);
+        processor = new TextProcessor(new HashMap<String, StreetNode>(), new HashMap<String, String[]>(), 0);
         map = new Map(manager);
     }
 

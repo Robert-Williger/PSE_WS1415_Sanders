@@ -53,6 +53,8 @@ public class Reader implements IReader {
             reader = new CompressedInputStream(new BufferedInputStream(new ProgressableInputStream(file)));
             graph = readGraph();
             manager = managerReader.readMapManager();
+            readIndex(managerReader.getStreets());
+            managerReader.cleanUp();
         } catch (final Exception e) {
             managerReader = null;
 
@@ -68,17 +70,7 @@ public class Reader implements IReader {
             return false;
         }
 
-        final HashMap<String, StreetNode> hm = new HashMap<String, StreetNode>();
-
-        for (final Street street : managerReader.getStreets()) {
-            if (!street.getName().equals("Unbekannte Straße")) {
-                hm.put(street.getName(), new StreetNode(0.5f, street));
-            }
-        }
-
         managerReader = null;
-
-        tp = new TextProcessor(hm, 5);
 
         rm = new RouteManager(graph, manager);
 
@@ -103,7 +95,43 @@ public class Reader implements IReader {
     @Override
     public ITextProcessor getTextProcessor() {
         return tp;
+    }
 
+    @Override
+    public void cancelCalculation() {
+        canceled = true;
+        try {
+            reader.close();
+        } catch (final IOException e) {
+        }
+    }
+
+    @Override
+    public void addProgressListener(final IProgressListener listener) {
+        list.add(listener);
+    }
+
+    @Override
+    public void removeProgressListener(final IProgressListener listener) {
+        list.remove(listener);
+    }
+
+    protected void fireProgressDone(final int progress) {
+        for (final IProgressListener listener : list) {
+            listener.progressDone(progress);
+        }
+    }
+
+    protected void fireErrorOccured(final String message) {
+        for (final IProgressListener listener : list) {
+            listener.errorOccured(message);
+        }
+    }
+
+    protected void fireStepCommenced(final String step) {
+        for (final IProgressListener listener : list) {
+            listener.stepCommenced(step);
+        }
     }
 
     /*
@@ -117,66 +145,53 @@ public class Reader implements IReader {
         final List<Long> edges = new ArrayList<Long>(edgeCount);
         final List<Integer> weights = new ArrayList<Integer>(edgeCount);
 
-        int lastWeight = 0;
+        int weight = 0;
         for (int i = 0; i < edgeCount; i++) {
             long node1 = reader.readCompressedInt();
             edges.add((node1 << 32) | reader.readCompressedInt() + node1);
-            int currentWeight = reader.readCompressedInt() + lastWeight;
-            weights.add(currentWeight);
-            lastWeight = currentWeight;
+            weight += reader.readCompressedInt();
+            weights.add(weight);
         }
 
         return new Graph(nodeCount, edges, weights);
     }
 
-    private class ProgressableInputStream extends FileInputStream {
-        private final int size;
-        private int current;
-        private int progress;
+    private void readIndex(final Street[] streets) throws IOException {
+        String[] cities = new String[reader.readCompressedInt()];
 
-        public ProgressableInputStream(final File in) throws IOException {
-            super(in);
-
-            progress = -1;
-            size = (int) Math.ceil(super.available() / 100.0);
+        for (int i = 0; i < cities.length; i++) {
+            cities[i] = reader.readUTF();
         }
 
-        @Override
-        public int read() throws IOException {
-            final int tmp = ++current / size;
-            if (tmp != progress) {
-                progress = tmp;
-                fireProgressDone(progress);
+        final HashMap<String, StreetNode> nodeMap = new HashMap<String, StreetNode>();
+        final HashMap<String, String[]> cityMap = new HashMap<String, String[]>();
+
+        int maxCollisions = reader.readCompressedInt();
+
+        for (int i = 0; i < maxCollisions; i++) {
+            int occurances = reader.readCompressedInt();
+            int firstLevelLast = 0;
+            for (int j = 0; j < occurances; j++) {
+                final String[] cityNames = new String[i + 1];
+
+                int secondLevelLast = reader.readCompressedInt() + firstLevelLast;
+                firstLevelLast = secondLevelLast;
+
+                nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f, streets[secondLevelLast]));
+
+                cityNames[0] = cities[reader.readCompressedInt()];
+
+                for (int k = 1; k < cityNames.length; k++) {
+                    secondLevelLast += reader.readCompressedInt();
+
+                    nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f, streets[secondLevelLast]));
+                    cityNames[k] = cities[reader.readCompressedInt()];
+                }
+                cityMap.put(streets[secondLevelLast].getName(), cityNames);
             }
-
-            return super.read();
         }
 
-        @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
-            final int nr = super.read(b, off, len);
-
-            final int tmp = (current += nr) / size;
-            if (tmp != progress) {
-                progress = tmp;
-                fireProgressDone(progress);
-            }
-
-            return nr;
-        }
-
-        @Override
-        public int read(final byte[] b) throws IOException {
-            final int nr = super.read(b);
-
-            final int tmp = (current += nr) / size;
-            if (tmp != progress) {
-                progress = tmp;
-                fireProgressDone(progress);
-            }
-
-            return nr;
-        }
+        tp = new TextProcessor(nodeMap, cityMap, 5);
     }
 
     private class MapManagerReader {
@@ -205,7 +220,6 @@ public class Reader implements IReader {
             readHeader();
             readElements();
             readTiles();
-            cleanUp();
 
             return new MapManager(tiles, tileSize, converter, minZoomStep);
         }
@@ -331,11 +345,10 @@ public class Reader implements IReader {
 
         private Node[] readNodeArray() throws IOException {
             final Node[] n = new Node[reader.readCompressedInt()];
-            int last = 0;
+            int id = 0;
             for (int j = 0; j < n.length; j++) {
-                int current = reader.readCompressedInt() + last;
-                n[j] = this.nodes[current];
-                last = current;
+                id += reader.readCompressedInt();
+                n[j] = this.nodes[id];
             }
             return n;
         }
@@ -393,11 +406,10 @@ public class Reader implements IReader {
             final Node[] newNodes = new Node[reader.readCompressedInt()];
             final Node[] oldNodes = origElements[element];
 
-            int last = 0;
+            int index = 0;
             for (int j = 0; j < newNodes.length; j++) {
-                final int index = reader.readCompressedInt() + last;
+                index += reader.readCompressedInt();
                 newNodes[j] = oldNodes[index];
-                last = index;
             }
 
             return newNodes;
@@ -412,7 +424,7 @@ public class Reader implements IReader {
             return ret;
         }
 
-        private void cleanUp() {
+        public void cleanUp() {
             nodes = null;
             pois = null;
             ways = null;
@@ -423,40 +435,53 @@ public class Reader implements IReader {
         }
     }
 
-    @Override
-    public void cancelCalculation() {
-        canceled = true;
-        try {
-            reader.close();
-        } catch (final IOException e) {
+    private class ProgressableInputStream extends FileInputStream {
+        private final int size;
+        private int current;
+        private int progress;
+
+        public ProgressableInputStream(final File in) throws IOException {
+            super(in);
+
+            progress = -1;
+            size = (int) Math.ceil(super.available() / 100.0);
         }
-    }
 
-    @Override
-    public void addProgressListener(final IProgressListener listener) {
-        list.add(listener);
-    }
+        @Override
+        public int read() throws IOException {
+            final int tmp = ++current / size;
+            if (tmp != progress) {
+                progress = tmp;
+                fireProgressDone(progress);
+            }
 
-    @Override
-    public void removeProgressListener(final IProgressListener listener) {
-        list.remove(listener);
-    }
-
-    protected void fireProgressDone(final int progress) {
-        for (final IProgressListener listener : list) {
-            listener.progressDone(progress);
+            return super.read();
         }
-    }
 
-    protected void fireErrorOccured(final String message) {
-        for (final IProgressListener listener : list) {
-            listener.errorOccured(message);
+        @Override
+        public int read(final byte[] b, final int off, final int len) throws IOException {
+            final int nr = super.read(b, off, len);
+
+            final int tmp = (current += nr) / size;
+            if (tmp != progress) {
+                progress = tmp;
+                fireProgressDone(progress);
+            }
+
+            return nr;
         }
-    }
 
-    protected void fireStepCommenced(final String step) {
-        for (final IProgressListener listener : list) {
-            listener.stepCommenced(step);
+        @Override
+        public int read(final byte[] b) throws IOException {
+            final int nr = super.read(b);
+
+            final int tmp = (current += nr) / size;
+            if (tmp != progress) {
+                progress = tmp;
+                fireProgressDone(progress);
+            }
+
+            return nr;
         }
     }
 }

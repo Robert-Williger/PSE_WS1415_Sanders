@@ -16,9 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.MultiElement;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.StreetNode;
@@ -37,6 +39,7 @@ public class OSMParser implements IOSMParser {
     private final Collection<Area> areaList;
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
+    private final List<List<Boundary>> boundaries;
     private final Rectangle bBox;
 
     public OSMParser() {
@@ -45,7 +48,12 @@ public class OSMParser implements IOSMParser {
         areaList = new HashSet<Area>();
         poiList = new HashSet<POI>();
         buildingList = new HashSet<Building>();
-        bBox = new Rectangle();
+        bBox = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+
+        boundaries = new ArrayList<List<Boundary>>(12);
+        for (int i = 0; i < 12; i++) {
+            boundaries.add(new ArrayList<Boundary>());
+        }
     }
 
     @Override
@@ -85,6 +93,11 @@ public class OSMParser implements IOSMParser {
         return streetList;
     }
 
+    @Override
+    public List<List<Boundary>> getBoundaries() {
+        return boundaries;
+    }
+
     private class Parser extends BinaryParser {
         private Map<Integer, Node> nodeMap;
         private Map<Integer, Byte> areaMap;
@@ -112,9 +125,7 @@ public class OSMParser implements IOSMParser {
                     if (key.equals("amenity") || key.equals("tourism")) {
                         final int type = getAmenityType(value);
                         if (type >= 0) {
-                            final int poiX = translateX(x);
-                            final int poiY = translateY(y);
-                            poiList.add(new POI(poiX, poiY, type));
+                            poiList.add(new POI(x, y, type));
                         }
                     }
                 }
@@ -148,9 +159,13 @@ public class OSMParser implements IOSMParser {
                     if (key.equals("amenity") || key.equals("tourism")) {
                         final int type = getAmenityType(value);
                         if (type >= 0) {
-                            final int poiX = translateX(x);
-                            final int poiY = translateY(y);
-                            poiList.add(new POI(poiX, poiY, type));
+                            poiList.add(new POI(x, y, type));
+                        }
+                    }
+                    if (key.equals("place")) {
+                        final int type = getPlaceType(value);
+                        if (type >= 0) {
+                            
                         }
                     }
                 }
@@ -166,28 +181,29 @@ public class OSMParser implements IOSMParser {
             String addrNumberTag;
 
             String wayTag;
-            String buildingTag;
-            String terrainTag;
-            String amenityTag;
 
+            int terrainType;
+            int amenityType;
+
+            boolean buildingTag;
+            boolean areaTag;
             boolean bicycle;
             boolean foot;
             boolean tunnel;
-            boolean area;
 
             for (final Way w : ways) {
                 // Tags
                 nameTag = "";
-                buildingTag = "";
+                buildingTag = false;
                 wayTag = "";
-                terrainTag = "";
+                terrainType = -1;
                 addrStreetTag = "";
                 addrNumberTag = "";
-                amenityTag = "";
+                amenityType = -1;
                 foot = false;
                 bicycle = false;
                 tunnel = false;
-                area = false;
+                areaTag = false;
 
                 for (int i = 0; i < w.getKeysCount(); i++) {
 
@@ -198,44 +214,43 @@ public class OSMParser implements IOSMParser {
                         case "leisure":
                             if (value.equals("track")) {
                                 wayTag = "career";
+                                break;
                             }
                         case "amenity":
                         case "tourism":
-                            if (getAmenityType(value) >= 0) {
-                                amenityTag = value;
-                            }
+                            amenityType = getAmenityType(value);
                         case "landuse":
                         case "natural":
                         case "man_made":
-                            if (terrainTag.isEmpty() && getAreaType(value, true) >= 0) {
-                                terrainTag = value;
+                            if (terrainType == -1) {
+                                terrainType = getAreaType(value, true);
                             }
                             break;
                         case "name":
-                            nameTag = value;
+                            nameTag = value.trim();
                             break;
                         case "highway":
                             if (value.equals("pedestrian")) {
-                                terrainTag = value;
+                                terrainType = getAreaType("pedestrian", true);
                             }
                         case "railway":
                             wayTag = value;
                             break;
                         case "building":
-                            buildingTag = value;
+                            buildingTag = true;
                             break;
                         case "waterway":
                             if (value.equals("riverbank")) {
-                                terrainTag = "water";
+                                terrainType = getAreaType("water", true);
                             } else {
                                 wayTag = value;
                             }
                             break;
                         case "addr:street":
-                            addrStreetTag = value;
+                            addrStreetTag = value.trim();
                             break;
                         case "addr:housenumber":
-                            addrNumberTag = value;
+                            addrNumberTag = value.trim();
                             break;
                         case "bicycle":
                             if (value.equals("yes") || value.equals("designated")) {
@@ -252,7 +267,7 @@ public class OSMParser implements IOSMParser {
                             break;
                         case "area":
                             if (value.equals("yes")) {
-                                area = true;
+                                areaTag = true;
                             }
                             break;
                         case "barrier":
@@ -273,20 +288,18 @@ public class OSMParser implements IOSMParser {
                     wayMap.put((int) w.getId(), nodes);
                     int type;
 
-                    if (!buildingTag.isEmpty()) {
-                        buildingList.add(new InvalidateableBuilding(nodes, addrStreetTag, addrNumberTag));
+                    if (buildingTag) {
+                        buildingList.add(new RevalidateableBuilding(nodes, addrStreetTag, addrNumberTag));
                     } else {
-                        type = getAreaType(terrainTag, area);
-
-                        if (type >= 0) {
-                            areaMap.put((int) w.getId(), (byte) type);
+                        if (terrainType >= 0) {
+                            areaMap.put((int) w.getId(), (byte) terrainType);
                             // TODO equals instead of == ?
                             if (nodes[0] == nodes[nodes.length - 1]) {
-                                areaList.add(new InvalidateableArea(nodes, type));
+                                areaList.add(new RevalidateableArea(nodes, terrainType));
                             }
                         }
 
-                        if (!area) {
+                        if (!areaTag) {
                             // TODO ways with area tag also valid...
                             type = getStreetType(wayTag);
                             if (type >= 0) {
@@ -320,12 +333,9 @@ public class OSMParser implements IOSMParser {
                         }
                     }
 
-                    type = getAmenityType(amenityTag);
-                    if (type >= 0) {
+                    if (amenityType >= 0) {
                         final Point center = calculateCenter(new Area(nodes, 0).getPolygon());
-                        final int poiX = translateX(center.x);
-                        final int poiY = translateY(center.y);
-                        poiList.add(new POI(poiX, poiY, type));
+                        poiList.add(new POI(center.x, center.y, amenityType));
                     }
 
                 }
@@ -347,228 +357,225 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                if (relationType.equals("multipolygon")) {
-                    int areaType = -1;
+                switch (relationType) {
+                    case "multipolygon":
+                        parseMultipolygon(relation);
+                        break;
+                    case "boundary":
+                        parseBoundary(relation);
+                        break;
+                }
+            }
+        }
 
-                    for (int i = 0; i < relation.getKeysCount(); i++) {
-                        final String key = getStringById(relation.getKeys(i));
-                        final String value = getStringById(relation.getVals(i));
+        private void parseMultipolygon(final Relation relation) {
+            int areaType = getRelationAreaType(relation);
 
-                        if (key.equals("waterway") && value.equals("riverbank")) {
-                            areaType = getAreaType("water", true);
-                            break;
-                        } else if (key.equals("leisure") || key.equals("natural") || key.equals("landuse")
-                                || key.equals("highway") || key.equals("amenity") || key.equals("tourism")) {
-                            areaType = getAreaType(value, true);
-                            if (areaType != -1) {
+            if (areaType != -1) {
+                final List<HashMap<Node, List<Node>>> maps = createMultipolygonMaps(relation);
+
+                if (areaType == Integer.MAX_VALUE) {
+                    String housenumber = "";
+                    String address = "";
+
+                    for (int k = 0; k < relation.getKeysCount(); k++) {
+                        switch (getStringById(relation.getKeys(k))) {
+                            case "addr:street":
+                                address = getStringById(relation.getVals(k));
                                 break;
-                            }
-                        } else if (key.equals("building")) {
-                            areaType = Integer.MAX_VALUE;
-                            break;
+                            case "addr:housenumber":
+                                housenumber = getStringById(relation.getVals(k));
+                                break;
                         }
                     }
 
-                    if (areaType == -1) {
-                        long id = 0;
-                        for (int j = 0; j < relation.getRolesSidCount(); j++) {
-                            final String role = getStringById(relation.getRolesSid(j));
-                            id += relation.getMemids(j);
-                            if (role.equals("outer")) {
-                                if (areaMap.containsKey((int) id)) {
-                                    areaType = areaMap.get((int) id);
-                                }
-                            }
-                        }
+                    for (final List<Node> list : maps.get(0).values()) {
+                        buildingList.add(new RevalidateableBuilding(list.toArray(new Node[list.size()]), address,
+                                housenumber));
                     }
-
-                    if (areaType != -1) {
-                        long id = 0;
-                        final List<HashMap<Node, List<Node>>> maps = new ArrayList<HashMap<Node, List<Node>>>();
-                        maps.add(new HashMap<Node, List<Node>>());
-                        maps.add(new HashMap<Node, List<Node>>());
-
-                        for (int j = 0; j < relation.getRolesSidCount(); j++) {
-                            final String role = getStringById(relation.getRolesSid(j));
-                            id += relation.getMemids(j);
-
-                            if ((role.equals("inner") || role.equals("outer"))) {
-                                if (wayMap.containsKey((int) id)) {
-                                    // TODO save as small parts of ways may
-                                    // reduce disc space
-                                    List<Node> my = new ArrayList<Node>(wayMap.get((int) id).length);
-                                    for (final Node node : wayMap.get((int) id)) {
-                                        my.add(node);
-                                    }
-
-                                    final HashMap<Node, List<Node>> map = maps.get(role.equals("inner") ? 1 : 0);
-                                    final Node myFirst = my.get(0);
-                                    final Node myLast = my.get(my.size() - 1);
-
-                                    if (map.containsKey(myLast)) {
-                                        final List<Node> other = map.get(myLast);
-                                        map.remove(other.get(0));
-                                        map.remove(other.get(other.size() - 1));
-
-                                        if (other.get(0).equals(myLast)) {
-                                            for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
-                                                my.add(it.next());
-                                            }
-                                        } else {
-                                            for (final ListIterator<Node> it = other.listIterator(other.size()); it
-                                                    .hasPrevious();) {
-                                                my.add(it.previous());
-                                            }
-                                        }
-                                    }
-
-                                    if (map.containsKey(myFirst)) {
-                                        final List<Node> other = map.get(myFirst);
-                                        map.remove(other.get(0));
-                                        map.remove(other.get(other.size() - 1));
-
-                                        if (other.get(0).equals(myFirst)) {
-                                            Collections.reverse(my);
-                                            for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
-                                                my.add(it.next());
-                                            }
-                                        } else {
-                                            for (final ListIterator<Node> it = my.listIterator(1); it.hasNext();) {
-                                                other.add(it.next());
-                                            }
-                                            my = other;
-                                        }
-                                    }
-
-                                    if (my.get(0).equals(my.get(my.size() - 1)) && areaType != Integer.MAX_VALUE) {
-                                        areaList.add(new InvalidateableArea(my.toArray(new Node[my.size()]), areaType));
-                                    } else {
-                                        map.put(my.get(my.size() - 1), my);
-                                        map.put(my.get(0), my);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (areaType == Integer.MAX_VALUE) {
-                            String housenumber = "";
-                            String address = "";
-
-                            for (int k = 0; k < relation.getKeysCount(); k++) {
-                                switch (getStringById(relation.getKeys(k))) {
-                                    case "addr:street":
-                                        address = getStringById(relation.getVals(k));
-                                        break;
-                                    case "addr:housenumber":
-                                        housenumber = getStringById(relation.getVals(k));
-                                        break;
-                                }
-                            }
-
-                            for (final List<Node> list : maps.get(0).values()) {
-                                buildingList.add(new InvalidateableBuilding(list.toArray(new Node[list.size()]),
-                                        address, housenumber));
-                            }
-                            for (final List<Node> list : maps.get(1).values()) {
-                                buildingList
-                                        .add(new InvalidateableBuilding(list.toArray(new Node[list.size()]), "", ""));
-                            }
-                        }
+                    for (final List<Node> list : maps.get(1).values()) {
+                        buildingList.add(new RevalidateableBuilding(list.toArray(new Node[list.size()]), "", ""));
+                    }
+                } else {
+                    for (final List<Node> list : maps.get(0).values()) {
+                        // if (list.get(0) == list.get(list.size() - 1)) {
+                        areaList.add(new RevalidateableArea(list.toArray(new Node[list.size()]), areaType));
+                        // }
+                    }
+                    for (final List<Node> list : maps.get(1).values()) {
+                        // if (list.get(0) == list.get(list.size() - 1)) {
+                        areaList.add(new RevalidateableArea(list.toArray(new Node[list.size()]), areaType));
+                        // }
                     }
                 }
             }
         }
 
+        private void parseBoundary(final Relation relation) {
+            boolean administrative = false;
+            String name = "";
+            int level = -1;
+
+            for (int i = 0; i < relation.getKeysCount(); i++) {
+                switch (getStringById(relation.getKeys(i))) {
+                    case "boundary":
+                        if (getStringById(relation.getVals(i)).equals("administrative")) {
+                            administrative = true;
+                        }
+                        break;
+                    case "name":
+                        name = getStringById(relation.getVals(i));
+                        break;
+                    case "admin_level":
+                        level = Integer.parseInt(getStringById(relation.getVals(i)));
+                        break;
+                }
+            }
+
+            if (administrative && level != -1) {
+                final List<HashMap<Node, List<Node>>> maps = createMultipolygonMaps(relation);
+
+                if (!maps.get(0).isEmpty()) {
+                    final Node[][] outer = new Node[maps.get(0).size()][];
+                    final Node[][] inner = new Node[maps.get(1).size()][];
+
+                    int count = -1;
+                    for (final Entry<Node, List<Node>> entry : maps.get(0).entrySet()) {
+                        outer[++count] = entry.getValue().toArray(new Node[entry.getValue().size()]);
+                    }
+
+                    count = -1;
+                    for (final Entry<Node, List<Node>> entry : maps.get(1).entrySet()) {
+                        inner[++count] = entry.getValue().toArray(new Node[entry.getValue().size()]);
+                    }
+
+                    boundaries.get(level).add(new Boundary(name, outer, inner));
+                }
+            }
+        }
+
+        private List<HashMap<Node, List<Node>>> createMultipolygonMaps(final Relation relation) {
+            long id = 0;
+
+            final List<HashMap<Node, List<Node>>> maps = new ArrayList<HashMap<Node, List<Node>>>(2);
+            maps.add(new HashMap<Node, List<Node>>());
+            maps.add(new HashMap<Node, List<Node>>());
+
+            for (int j = 0; j < relation.getRolesSidCount(); j++) {
+                final String role = getStringById(relation.getRolesSid(j));
+                id += relation.getMemids(j);
+
+                if ((role.equals("inner") || role.equals("outer"))) {
+                    if (wayMap.containsKey((int) id)) {
+                        // TODO save as small parts of ways may
+                        // reduce disc space
+                        List<Node> my = new ArrayList<Node>(wayMap.get((int) id).length);
+                        for (final Node node : wayMap.get((int) id)) {
+                            my.add(node);
+                        }
+
+                        int index = role.equals("inner") ? 1 : 0;
+                        final HashMap<Node, List<Node>> map = maps.get(index);
+                        final Node myFirst = my.get(0);
+                        final Node myLast = my.get(my.size() - 1);
+
+                        if (map.containsKey(myLast)) {
+                            final List<Node> other = map.get(myLast);
+                            map.remove(other.get(0));
+                            map.remove(other.get(other.size() - 1));
+
+                            if (other.get(0).equals(myLast)) {
+                                for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
+                                    my.add(it.next());
+                                }
+                            } else {
+                                for (final ListIterator<Node> it = other.listIterator(other.size()); it.hasPrevious();) {
+                                    my.add(it.previous());
+                                }
+                            }
+                        }
+
+                        if (map.containsKey(myFirst)) {
+                            final List<Node> other = map.get(myFirst);
+                            map.remove(other.get(0));
+                            map.remove(other.get(other.size() - 1));
+
+                            if (other.get(0).equals(myFirst)) {
+                                Collections.reverse(my);
+                                for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
+                                    my.add(it.next());
+                                }
+                            } else {
+                                for (final ListIterator<Node> it = my.listIterator(1); it.hasNext();) {
+                                    other.add(it.next());
+                                }
+                                my = other;
+                            }
+                        }
+
+                        map.put(my.get(my.size() - 1), my);
+                        map.put(my.get(0), my);
+                    }
+                }
+            }
+
+            return maps;
+        }
+
+        private int getRelationAreaType(final Relation relation) {
+
+            for (int i = 0; i < relation.getKeysCount(); i++) {
+                final String key = getStringById(relation.getKeys(i));
+                final String value = getStringById(relation.getVals(i));
+
+                if (key.equals("waterway") && value.equals("riverbank")) {
+                    return getAreaType("water", true);
+                } else if (key.equals("leisure") || key.equals("natural") || key.equals("landuse")
+                        || key.equals("highway") || key.equals("amenity") || key.equals("tourism")) {
+                    int type = getAreaType(value, true);
+                    if (type != -1) {
+                        return type;
+                    }
+                } else if (key.equals("building")) {
+                    return Integer.MAX_VALUE;
+                }
+            }
+
+            long id = 0;
+            for (int j = 0; j < relation.getRolesSidCount(); j++) {
+                final String role = getStringById(relation.getRolesSid(j));
+                id += relation.getMemids(j);
+                if (role.equals("outer")) {
+                    Byte type = areaMap.get((int) id);
+                    if (type != null) {
+                        return type;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
         @Override
         public void complete() {
-            int x = Integer.MAX_VALUE;
-            int y = Integer.MAX_VALUE;
-            int width = Integer.MIN_VALUE;
-            int height = Integer.MIN_VALUE;
+            calculateBounds(wayList);
+            calculateBounds(streetList);
+            calculateBounds(areaList);
+            calculateBounds(buildingList);
 
-            // TODO improve this
-            for (final model.elements.Way way : wayList) {
-                for (final Node node : way) {
-                    final int nodeX = translateX(node.getX());
-                    final int nodeY = translateY(node.getY());
-
-                    if (nodeX < x) {
-                        x = nodeX;
-                    } else if (nodeX > width) {
-                        width = nodeX;
-                    }
-                    if (nodeY < y) {
-                        y = nodeY;
-                    } else if (nodeY > height) {
-                        height = nodeY;
-                    }
-                }
-            }
-            for (final UnprocessedStreet street : streetList) {
-                for (final Node node : street.getNodes()) {
-                    final int nodeX = translateX(node.getX());
-                    final int nodeY = translateY(node.getY());
-
-                    if (nodeX < x) {
-                        x = nodeX;
-                    } else if (nodeX > width) {
-                        width = nodeX;
-                    }
-                    if (nodeY < y) {
-                        y = nodeY;
-                    } else if (nodeY > height) {
-                        height = nodeY;
-                    }
-                }
-            }
-            for (final Area area : areaList) {
-                for (final Node node : area) {
-                    final int nodeX = translateX(node.getX());
-                    final int nodeY = translateY(node.getY());
-
-                    if (nodeX < x) {
-                        x = nodeX;
-                    } else if (nodeX > width) {
-                        width = nodeX;
-                    }
-                    if (nodeY < y) {
-                        y = nodeY;
-                    } else if (nodeY > height) {
-                        height = nodeY;
-                    }
-                }
-            }
-            for (final Building building : buildingList) {
-                for (final Node node : building) {
-                    final int nodeX = translateX(node.getX());
-                    final int nodeY = translateY(node.getY());
-
-                    if (nodeX < x) {
-                        x = nodeX;
-                    } else if (nodeX > width) {
-                        width = nodeX;
-                    }
-                    if (nodeY < y) {
-                        y = nodeY;
-                    } else if (nodeY > height) {
-                        height = nodeY;
-                    }
-                }
-            }
-
-            bBox.setBounds(x, y, width - x, height - y);
+            bBox.setBounds(bBox.x, bBox.y, bBox.width - bBox.x, bBox.height - bBox.y);
 
             for (final Node node : nodeMap.values()) {
-                node.setLocation(translateX(node.getX()) - x, translateY(node.getY()) - y);
+                node.setLocation(translateX(node.getX()) - bBox.x, translateY(node.getY()) - bBox.y);
             }
             for (final POI poi : poiList) {
-                poi.setLocation(poi.getX() - x, poi.getY() - y);
+                poi.setLocation(translateX(poi.getX()) - bBox.x, translateY(poi.getY()) - bBox.y);
             }
             for (final Area area : areaList) {
-                ((InvalidateableArea) area).invalidate();
+                ((RevalidateableArea) area).revalidate();
             }
             for (final Building building : buildingList) {
-                ((InvalidateableBuilding) building).invalidate();
+                ((RevalidateableBuilding) building).revalidate();
             }
 
             nodeMap = null;
@@ -576,9 +583,31 @@ public class OSMParser implements IOSMParser {
             wayMap = null;
         }
 
+        private void calculateBounds(final Collection<? extends MultiElement> collection) {
+            for (final MultiElement element : collection) {
+                for (final Node node : element) {
+
+                    final int nodeX = translateX(node.getX());
+                    final int nodeY = translateY(node.getY());
+
+                    if (nodeX < bBox.x) {
+                        bBox.x = nodeX;
+                    } else if (nodeX > bBox.width) {
+                        bBox.width = nodeX;
+                    }
+                    if (nodeY < bBox.y) {
+                        bBox.y = nodeY;
+                    } else if (nodeY > bBox.height) {
+                        bBox.height = nodeY;
+                    }
+                }
+            }
+        }
+
         @Override
         protected void parse(final HeaderBlock header) {
-            // Bounding box not usefull, cause it is not exact
+            // Bounding box not usefull, cause it is not exact [for mercator
+            // projection]
         }
 
         private final int translateX(final int x) {
@@ -811,6 +840,53 @@ public class OSMParser implements IOSMParser {
         return -1;
     }
 
+    private int getPlaceType(final String place) {
+        switch (place) {
+            case "continent":
+                return 0;
+            case "country":
+                return 1;
+            case "state":
+                return 2;
+            case "county":
+                return 3;
+            case "city":
+                return 4;
+            case "suburb":
+                return 5;
+            case "neighbourhood":
+                return 6;
+            case "town":
+                return 7;
+            case "village":
+                return 8;
+            case "hamlet":
+                return 9;
+
+            case "region":
+                return 10;
+            case "province":
+                return 11;
+            case "district":
+                return 12;
+            case "municipality":
+                return 13;
+            case "borough":
+                return 14;
+            case "quarter":
+                return 15;
+            case "city_block":
+                return 16;
+            case "plot":
+                return 17;
+            case "isolated_dwelling":
+                return 18;
+
+        }
+
+        return -1;
+    }
+
     /*
      * Umwandlung lat/lon zu mercator-Koordianten
      */
@@ -843,23 +919,23 @@ public class OSMParser implements IOSMParser {
         return new Point((int) x, (int) y);
     }
 
-    private static class InvalidateableArea extends Area {
+    private static class RevalidateableArea extends Area {
 
-        public InvalidateableArea(final Node[] nodes, final int type) {
+        public RevalidateableArea(final Node[] nodes, final int type) {
             super(nodes, type);
         }
 
-        public void invalidate() {
+        public void revalidate() {
             polygon = null;
         }
     }
 
-    private static class InvalidateableBuilding extends Building {
+    private static class RevalidateableBuilding extends Building {
 
         private final String street;
         private final String number;
 
-        public InvalidateableBuilding(final Node[] nodes, final String street, final String number) {
+        public RevalidateableBuilding(final Node[] nodes, final String street, final String number) {
             super(nodes);
             this.street = street;
             this.number = number;
@@ -885,7 +961,7 @@ public class OSMParser implements IOSMParser {
             return null;
         }
 
-        public void invalidate() {
+        public void revalidate() {
             polygon = null;
         }
 

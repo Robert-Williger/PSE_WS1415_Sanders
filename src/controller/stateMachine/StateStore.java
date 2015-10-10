@@ -1,5 +1,8 @@
 package controller.stateMachine;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import model.IApplication;
 import model.elements.StreetNode;
 import model.targets.IRoutePoint;
@@ -13,6 +16,11 @@ class StateStore {
     private int storedIndex;
     private String storedAddress;
     private String currentAddress;
+    private Set<String> suggestions;
+
+    StateStore() {
+        suggestions = new HashSet<String>();
+    }
 
     void setApplication(final IApplication application) {
         this.application = application;
@@ -44,6 +52,10 @@ class StateStore {
         storedPoint.setAddress(storedAddress);
         storedPoint.setStreetNode(storedNode);
         application.getRouteManager().getPointList().changeOrder(storedPoint.getIndex(), storedIndex);
+    }
+
+    Set<String> getSuggestions() {
+        return suggestions;
     }
 
 }

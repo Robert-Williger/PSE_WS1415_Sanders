@@ -37,7 +37,7 @@ public class TextProcessingTest {
         hm.put("EIDAKDSLENCP", null);
         hm.put("Teststrasse", sn);
 
-        tp = new TextProcessor(hm, length);
+        tp = new TextProcessor(hm, null, length);
     }
 
     @Test

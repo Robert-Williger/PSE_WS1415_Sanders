@@ -1,6 +1,7 @@
 package adminTool;
 
 import java.io.File;
+import java.util.List;
 
 public class AdminApplication {
 
@@ -33,14 +34,14 @@ public class AdminApplication {
             outputPath = new File(outputPath.toString() + "/" + outFileName);
         }
 
-        System.out.println("Starte Konvertierung der Kartendaten");
+        System.out.println("Starte Konvertierung der Kartendaten.");
 
         // Reading the osm.pbf data
         OSMParser parser = new OSMParser();
         try {
             parser.read(osm);
         } catch (final Exception e) {
-            System.out.println("Fehler beim Lesen der Datei.");
+            System.err.println("Fehler beim Lesen der Datei.");
             System.exit(1);
         }
 
@@ -49,15 +50,24 @@ public class AdminApplication {
         GraphCreator graphCreator = new GraphCreator(parser.getStreets(), outputPath);
         graphCreator.create();
 
-        MapManagerCreator mmc = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
+        MapManagerCreator mapManagerCreator = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
                 parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getBoundingBox(), outputPath);
 
+        // TODO take street list of mapManagerCreator instead of graph creator
+        // [already sorted]
+
+        List<List<Boundary>> boundaries = parser.getBoundaries();
         parser = null;
         graphCreator = null;
 
-        mmc.create();
+        mapManagerCreator.create();
 
-        mmc = null;
+        IndexCreator indexCreator = new IndexCreator(boundaries, mapManagerCreator.getOrderedStreets(), outputPath);
+        mapManagerCreator = null;
+        boundaries = null;
+
+        indexCreator.create();
+
         admininterface.complete();
 
     }

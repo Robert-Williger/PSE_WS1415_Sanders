@@ -1,6 +1,8 @@
 package controller.stateMachine;
 
 import java.awt.Point;
+import java.util.List;
+import java.util.Set;
 
 import model.map.AddressNode;
 import model.targets.IRoutePoint;
@@ -58,8 +60,14 @@ abstract class AbstractActionState extends AbstractState {
         getStore().setCurrentAddress(address);
 
         final IRoutePoint point = getStore().getPoint();
-        if ((point == null || !address.equals(point.getAddress())) && !address.isEmpty()) {
-            getSidebarView().setAddressSuggestions(getTextProcessor().suggest(address));
+        final Set<String> set = getStore().getSuggestions();
+
+        if ((point == null || !address.equals(point.getAddress())) && !set.contains(address)) {
+            final List<String> suggestions = getTextProcessor().suggest(address);
+            set.clear();
+            set.addAll(suggestions);
+            set.add("");
+            getSidebarView().setAddressSuggestions(suggestions);
             return getTextedState();
         }
 

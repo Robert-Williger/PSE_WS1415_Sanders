@@ -1,7 +1,7 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,28 +13,32 @@ import model.elements.StreetNode;
  */
 public class TextProcessor implements ITextProcessor {
 
-    private final HashMap<String, StreetNode> hm;
-    private final int numberOfSuggestions;
+    private final HashMap<String, StreetNode> nodeMap;
+    private final HashMap<String, String[]> cityMap;
+    private final int suggestions;
+    private final Tuple[] distanceArray;
 
     /**
      * TextProcessing-Constructor.
      * 
-     * @param hashmap
+     * @param nodeMap
      *            HashMap, which maps every address on a StreetNode.
-     * @param numberOfSuggestions
-     *            Number of suggestions, which will be return as list.
+     * @param suggestions
+     *            Number of suggestions, which will be returned as list.
      */
-    public TextProcessor(final HashMap<String, StreetNode> hashmap, final int numberOfSuggestions) {
-        hm = hashmap;
-        this.numberOfSuggestions = numberOfSuggestions;
+    public TextProcessor(final HashMap<String, StreetNode> nodeMap, final HashMap<String, String[]> cityMap,
+            final int suggestions) {
+        this.nodeMap = nodeMap;
+        this.suggestions = suggestions;
+        this.cityMap = cityMap;
+        this.distanceArray = new Tuple[nodeMap.size()];
     }
 
     @Override
     public List<String> suggest(final String address) {
 
-        List<Tuple> distanceList = new ArrayList<Tuple>();
-
-        for (final String b : hm.keySet()) {
+        int index = -1;
+        for (final String b : nodeMap.keySet()) {
 
             int length = address.length();
             if (length > b.length()) {
@@ -45,25 +49,17 @@ public class TextProcessor implements ITextProcessor {
 
             final Tuple t = new Tuple(b, distance);
 
-            distanceList.add(t);
-
+            distanceArray[++index] = t;
         }
         // Sorts ascending by editDistance
-        Collections.sort(distanceList);
-
-        int length = numberOfSuggestions;
+        Arrays.sort(distanceArray);
 
         // Prevents OutOfBoundsException, if there are only few addresses.
-        if (distanceList.size() < numberOfSuggestions) {
-            length = distanceList.size();
-        }
-
-        distanceList = distanceList.subList(0, length);
+        int length = Math.min(suggestions, distanceArray.length);
 
         final List<String> stringList = new ArrayList<String>();
-
-        for (final Tuple t : distanceList) {
-            stringList.add(t.getName());
+        for (int i = 0; i < length; i++) {
+            stringList.add(distanceArray[i].getName());
         }
 
         return stringList;
@@ -72,7 +68,8 @@ public class TextProcessor implements ITextProcessor {
 
     @Override
     public StreetNode parse(final String address) {
-        return hm.get(address);
+        System.out.println(Arrays.toString(cityMap.get(address)));
+        return nodeMap.get(address);
     }
 
     /*
@@ -122,7 +119,7 @@ public class TextProcessor implements ITextProcessor {
         return Math.min(Math.min(a, b), c);
     }
 
-    // Intern class: (String, distance)
+    // Inner class: (String, distance)
     private static class Tuple implements Comparable<Tuple> {
 
         private final String s;

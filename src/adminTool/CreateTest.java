@@ -1,6 +1,7 @@
 package adminTool;
 
 import java.io.File;
+import java.util.List;
 
 public class CreateTest {
     public static void main(final String[] args) {
@@ -27,13 +28,26 @@ public class CreateTest {
         System.out.println(System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
 
-        final MapManagerCreator creator = new MapManagerCreator(parser.getBuildings(), graph.getStreets(),
-                parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getBoundingBox(), output);
+        MapManagerCreator creator = new MapManagerCreator(parser.getBuildings(), graph.getStreets(), parser.getPOIs(),
+                parser.getWays(), parser.getTerrain(), parser.getBoundingBox(), output);
 
+        // TODO take street list of mapManagerCreator instead of graph creator
+        // [already sorted]
+
+        List<List<Boundary>> boundaries = parser.getBoundaries();
         parser = null;
         graph = null;
 
         creator.create();
+
+        System.out.println(System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
+
+        IndexCreator indexCreator = new IndexCreator(boundaries, creator.getOrderedStreets(), output);
+        creator = null;
+        boundaries = null;
+
+        indexCreator.create();
 
         System.out.println(System.currentTimeMillis() - start);
     }
