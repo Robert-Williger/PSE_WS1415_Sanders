@@ -109,8 +109,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         try {
             createOutputStream(true);
-        } catch (final FileNotFoundException e1) {
-            e1.printStackTrace();
+        } catch (final FileNotFoundException e) {
+            e.printStackTrace();
         }
 
         tiles = new ReferencedTile[yTiles][xTiles];
@@ -616,7 +616,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     private class StreetNodeFinder extends Thread {
         private HashMap<String, Collection<Street>> streetMap;
-        private List<Building> buildings;
+        private Building[] buildings;
 
         private List<Building> success;
         private List<Building> failure;
@@ -638,10 +638,10 @@ public class MapManagerCreator extends AbstractMapCreator {
         @Override
         public void run() {
             // TODO List in parser --> no copy!
-            createBuildingList();
+            createBuildingArray();
             createStreetMap();
 
-            final int buildingTotal = buildings.size();
+            final int buildingTotal = buildings.length;
             final int buildingsPerThread = buildingTotal / threads;
             final Worker[] workers = new Worker[threads];
             for (int i = 0; i < threads - 1; i++) {
@@ -668,8 +668,12 @@ public class MapManagerCreator extends AbstractMapCreator {
             streetMap = null;
         }
 
-        private void createBuildingList() {
-            buildings = new ArrayList<Building>(MapManagerCreator.this.buildings);
+        private void createBuildingArray() {
+            buildings = new Building[MapManagerCreator.this.buildings.size()];
+            int count = -1;
+            for (final Building building : MapManagerCreator.this.buildings) {
+                buildings[++count] = building;
+            }
         }
 
         private void createStreetMap() {
@@ -707,7 +711,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             private void findStreetNodes(final int from, final int to) {
                 for (int i = from; i < to; i++) {
-                    final Building building = buildings.get(i);
+                    final Building building = buildings[i];
 
                     final Polygon poly = building.getPolygon();
                     final Collection<Street> streetList = streetMap.get(building.getStreet());
@@ -716,7 +720,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                         final StreetNode node = findStreetNode(streetList, calculateCenter(poly));
 
                         if (node != null) {
-                            buildings.set(i, Building.create(building.getNodes(), node, building.getHouseNumber()));
+                            buildings[i] = Building.create(building.getNodes(), node, building.getHouseNumber());
                         }
                     }
                 }
@@ -725,45 +729,81 @@ public class MapManagerCreator extends AbstractMapCreator {
             private StreetNode findStreetNode(final Collection<Street> streetList, final Point2D.Float center) {
                 StreetNode ret = null;
 
-                long minDist = Long.MAX_VALUE;
+                long minDist = MAX_BUILDING_STREET_DISTANCE;
 
                 for (final Street street : streetList) {
-                    final Iterator<Node> iterator = street.iterator();
-                    float totalLength = 0;
-                    final int maxLength = street.getLength();
+                    // skip if street is too far away
 
-                    Point lastPoint = iterator.next().getLocation();
+                    Iterator<Node> iterator = street.iterator();
+
+                    Node node = iterator.next();
+
+                    int left = node.getX();
+                    int right = node.getX();
+                    int top = node.getY();
+                    int down = node.getY();
+
                     while (iterator.hasNext()) {
-                        final Point currentPoint = iterator.next().getLocation();
+                        node = iterator.next();
 
-                        final long dx = currentPoint.x - lastPoint.x;
-                        final long dy = currentPoint.y - lastPoint.y;
-                        final long square = (dx * dx + dy * dy);
-                        final float length = (float) Math.sqrt(square);
-                        double s = ((center.x - lastPoint.x) * dx + (center.y - lastPoint.y) * dy) / (double) square;
-
-                        if (s < 0) {
-                            s = 0;
-                        } else if (s > 1) {
-                            s = 1;
+                        if (node.getX() > right) {
+                            right = node.getX();
+                        } else if (node.getX() < left) {
+                            left = node.getX();
                         }
 
-                        final double distX = lastPoint.x + s * dx - center.x;
-                        final double distY = lastPoint.y + s * dy - center.y;
-
-                        final long distance = (long) Math.sqrt(distX * distX + distY * distY);
-
-                        if (distance < minDist) {
-                            ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
-                            minDist = distance;
+                        if (node.getY() > down) {
+                            down = node.getY();
+                        } else if (node.getY() < top) {
+                            top = node.getY();
                         }
+                    }
+                    left -= minDist;
+                    right += minDist;
+                    top -= minDist;
+                    down += minDist;
 
-                        totalLength += length;
-                        lastPoint = currentPoint;
+                    if (center.x < right && center.x > left && center.y < down && center.y > top) {
+                        iterator = street.iterator();
+
+                        Point lastPoint = iterator.next().getLocation();
+
+                        float totalLength = 0;
+                        final int maxLength = street.getLength();
+
+                        while (iterator.hasNext()) {
+                            final Point currentPoint = iterator.next().getLocation();
+
+                            final long dx = currentPoint.x - lastPoint.x;
+                            final long dy = currentPoint.y - lastPoint.y;
+                            final long square = (dx * dx + dy * dy);
+                            final float length = (float) Math.sqrt(square);
+                            double s = ((center.x - lastPoint.x) * dx + (center.y - lastPoint.y) * dy)
+                                    / (double) square;
+
+                            if (s < 0) {
+                                s = 0;
+                            } else if (s > 1) {
+                                s = 1;
+                            }
+
+                            final double distX = lastPoint.x + s * dx - center.x;
+                            final double distY = lastPoint.y + s * dy - center.y;
+
+                            final long distance = (long) Math.sqrt(distX * distX + distY * distY);
+
+                            if (distance < minDist) {
+                                ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
+                                minDist = distance;
+                            }
+
+                            totalLength += length;
+                            lastPoint = currentPoint;
+                        }
                     }
                 }
 
-                return minDist <= MAX_BUILDING_STREET_DISTANCE ? ret : null;
+                return ret;
             }
         }
     }
