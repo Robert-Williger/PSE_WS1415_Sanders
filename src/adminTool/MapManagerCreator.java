@@ -49,7 +49,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final int POI_MIN_ZOOMSTEP = 16;
 
     private static final int AREA_THRESHHOLD = 2;
-    private static final int WAY_THRESHHOLD = 50;
+    private static final int WAY_THRESHHOLD = 25;
     private static final double AREA_SHRINK_FACTOR = 0.9;
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
@@ -191,6 +191,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             final Set<Integer> removedAreas = new HashSet<Integer>();
             final List<Integer> simplifiedAreas = simplifyAreas(nextAreaSimplifications, new HashSet<Integer>(), zoom);
+
             final List<Integer> simplifiedWays = simplifyWays(nextWaySimplifications, zoom);
 
             final ReferencedTile[][] next = mergeUp(removedAreas, zoom);
@@ -235,19 +236,33 @@ public class MapManagerCreator extends AbstractMapCreator {
             final Node[] nodes = areaNodes[i];
             final int[] areaSimplification = areaSimplifications[i];
 
-            final int oldSize = areaSimplification != null ? areaSimplification.length : nodes.length;
-            if (oldSize != 0) {
-                final int[] simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes), zoom);
+            final int[] simplified;
+            final int oldLength;
 
-                if (simplified.length == 0) {
-                    removedAreas.add(i);
-                    simplifications[i] = simplified;
-                } else if ((double) simplified.length / oldSize <= AREA_SHRINK_FACTOR) {
-                    simplifiedAreas.add(i);
-                    simplifications[i] = simplified;
+            if (areaSimplification != null) {
+                oldLength = areaSimplification.length;
+                if (oldLength != 0) {
+                    simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes, areaSimplification), zoom);
+                    for (int j = 0; j < simplified.length; j++) {
+                        simplified[j] = areaSimplification[simplified[j]];
+                    }
                 } else {
-                    simplifications[i] = areaSimplification;
+                    simplified = areaSimplification;
                 }
+
+            } else {
+                oldLength = nodes.length;
+                simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes), zoom);
+            }
+
+            if (simplified.length == 0) {
+                removedAreas.add(i);
+                simplifications[i] = simplified;
+            } else if ((double) simplified.length / oldLength <= AREA_SHRINK_FACTOR) {
+                simplifiedAreas.add(i);
+                simplifications[i] = simplified;
+            } else {
+                simplifications[i] = areaSimplification;
             }
         }
 
@@ -262,17 +277,27 @@ public class MapManagerCreator extends AbstractMapCreator {
             final Node[] nodes = wayNodes[i];
             final int[] waySimplification = waySimplifications[i];
 
-            final int oldSize = waySimplification != null ? waySimplification.length : nodes.length;
-            if (oldSize != 0) {
-                final int[] simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
+            final int oldSize;
+            final int[] simplified;
 
-                if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
-                    ret.add(i);
-                    simplifications[i] = simplified;
-                } else {
-                    simplifications[i] = waySimplification;
+            if (waySimplification != null) {
+                oldSize = waySimplification.length;
+                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes, waySimplification), zoom);
+                for (int j = 0; j < simplified.length; j++) {
+                    simplified[j] = waySimplification[simplified[j]];
                 }
+            } else {
+                oldSize = nodes.length;
+                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
             }
+
+            if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
+                ret.add(i);
+                simplifications[i] = simplified;
+            } else {
+                simplifications[i] = waySimplification;
+            }
+
         }
 
         return ret;
@@ -616,15 +641,12 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     private class StreetNodeFinder extends Thread {
         private HashMap<String, Collection<Street>> streetMap;
-        private Building[] buildings;
 
         private List<Building> success;
         private List<Building> failure;
 
-        private final int threads = 4;
-
         public StreetNodeFinder() {
-            super("Streetnode finder - Master");
+            super("Streetnode finder");
         }
 
         public Collection<Building> getSuccess() {
@@ -637,43 +659,29 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
-            // TODO List in parser --> no copy!
-            createBuildingArray();
             createStreetMap();
-
-            final int buildingTotal = buildings.length;
-            final int buildingsPerThread = buildingTotal / threads;
-            final Worker[] workers = new Worker[threads];
-            for (int i = 0; i < threads - 1; i++) {
-                workers[i] = new Worker(buildingsPerThread * i, buildingsPerThread * (i + 1));
-            }
-            workers[threads - 1] = new Worker(buildingsPerThread * (threads - 1), buildingTotal);
-
-            for (final Worker worker : workers) {
-                try {
-                    worker.join();
-                } catch (final InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
 
             success = new ArrayList<Building>();
             failure = new ArrayList<Building>();
 
             for (final Building building : buildings) {
-                (building.getStreetNode() != null ? success : failure).add(building);
+
+                final Polygon poly = building.getPolygon();
+                final Collection<Street> streetList = streetMap.get(building.getStreet());
+
+                StreetNode node = null;
+                if (streetList != null) {
+                    node = findStreetNode(streetList, calculateCenter(poly));
+                }
+
+                if (node != null) {
+                    success.add(Building.create(building.getNodes(), node, building.getHouseNumber()));
+                } else {
+                    failure.add(building);
+                }
             }
 
-            buildings = null;
             streetMap = null;
-        }
-
-        private void createBuildingArray() {
-            buildings = new Building[MapManagerCreator.this.buildings.size()];
-            int count = -1;
-            for (final Building building : MapManagerCreator.this.buildings) {
-                buildings[++count] = building;
-            }
         }
 
         private void createStreetMap() {
@@ -692,119 +700,83 @@ public class MapManagerCreator extends AbstractMapCreator {
             }
         }
 
-        private class Worker extends Thread {
+        private StreetNode findStreetNode(final Collection<Street> streetList, final Point2D.Float center) {
+            StreetNode ret = null;
 
-            private final int from;
-            private final int to;
+            long minDist = MAX_BUILDING_STREET_DISTANCE;
 
-            public Worker(final int from, final int to) {
-                super("Streetnode finder - Worker");
-                this.from = from;
-                this.to = to;
-                start();
-            }
+            for (final Street street : streetList) {
+                // skip if street is too far away
 
-            @Override
-            public void run() {
-                findStreetNodes(from, to);
-            }
+                Iterator<Node> iterator = street.iterator();
 
-            private void findStreetNodes(final int from, final int to) {
-                for (int i = from; i < to; i++) {
-                    final Building building = buildings[i];
+                Node node = iterator.next();
 
-                    final Polygon poly = building.getPolygon();
-                    final Collection<Street> streetList = streetMap.get(building.getStreet());
+                int left = node.getX();
+                int right = node.getX();
+                int top = node.getY();
+                int down = node.getY();
 
-                    if (streetList != null) {
-                        final StreetNode node = findStreetNode(streetList, calculateCenter(poly));
+                while (iterator.hasNext()) {
+                    node = iterator.next();
 
-                        if (node != null) {
-                            buildings[i] = Building.create(building.getNodes(), node, building.getHouseNumber());
-                        }
+                    if (node.getX() > right) {
+                        right = node.getX();
+                    } else if (node.getX() < left) {
+                        left = node.getX();
+                    }
+
+                    if (node.getY() > down) {
+                        down = node.getY();
+                    } else if (node.getY() < top) {
+                        top = node.getY();
                     }
                 }
-            }
+                left -= minDist;
+                right += minDist;
+                top -= minDist;
+                down += minDist;
 
-            private StreetNode findStreetNode(final Collection<Street> streetList, final Point2D.Float center) {
-                StreetNode ret = null;
+                if (center.x < right && center.x > left && center.y < down && center.y > top) {
+                    iterator = street.iterator();
 
-                long minDist = MAX_BUILDING_STREET_DISTANCE;
+                    Point lastPoint = iterator.next().getLocation();
 
-                for (final Street street : streetList) {
-                    // skip if street is too far away
-
-                    Iterator<Node> iterator = street.iterator();
-
-                    Node node = iterator.next();
-
-                    int left = node.getX();
-                    int right = node.getX();
-                    int top = node.getY();
-                    int down = node.getY();
+                    float totalLength = 0;
+                    final int maxLength = street.getLength();
 
                     while (iterator.hasNext()) {
-                        node = iterator.next();
+                        final Point currentPoint = iterator.next().getLocation();
 
-                        if (node.getX() > right) {
-                            right = node.getX();
-                        } else if (node.getX() < left) {
-                            left = node.getX();
+                        final long dx = currentPoint.x - lastPoint.x;
+                        final long dy = currentPoint.y - lastPoint.y;
+                        final long square = (dx * dx + dy * dy);
+                        final float length = (float) Math.sqrt(square);
+                        double s = ((center.x - lastPoint.x) * dx + (center.y - lastPoint.y) * dy) / (double) square;
+
+                        if (s < 0) {
+                            s = 0;
+                        } else if (s > 1) {
+                            s = 1;
                         }
 
-                        if (node.getY() > down) {
-                            down = node.getY();
-                        } else if (node.getY() < top) {
-                            top = node.getY();
+                        final double distX = lastPoint.x + s * dx - center.x;
+                        final double distY = lastPoint.y + s * dy - center.y;
+
+                        final long distance = (long) Math.sqrt(distX * distX + distY * distY);
+
+                        if (distance < minDist) {
+                            ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
+                            minDist = distance;
                         }
-                    }
-                    left -= minDist;
-                    right += minDist;
-                    top -= minDist;
-                    down += minDist;
 
-                    if (center.x < right && center.x > left && center.y < down && center.y > top) {
-                        iterator = street.iterator();
-
-                        Point lastPoint = iterator.next().getLocation();
-
-                        float totalLength = 0;
-                        final int maxLength = street.getLength();
-
-                        while (iterator.hasNext()) {
-                            final Point currentPoint = iterator.next().getLocation();
-
-                            final long dx = currentPoint.x - lastPoint.x;
-                            final long dy = currentPoint.y - lastPoint.y;
-                            final long square = (dx * dx + dy * dy);
-                            final float length = (float) Math.sqrt(square);
-                            double s = ((center.x - lastPoint.x) * dx + (center.y - lastPoint.y) * dy)
-                                    / (double) square;
-
-                            if (s < 0) {
-                                s = 0;
-                            } else if (s > 1) {
-                                s = 1;
-                            }
-
-                            final double distX = lastPoint.x + s * dx - center.x;
-                            final double distY = lastPoint.y + s * dy - center.y;
-
-                            final long distance = (long) Math.sqrt(distX * distX + distY * distY);
-
-                            if (distance < minDist) {
-                                ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
-                                minDist = distance;
-                            }
-
-                            totalLength += length;
-                            lastPoint = currentPoint;
-                        }
+                        totalLength += length;
+                        lastPoint = currentPoint;
                     }
                 }
-
-                return ret;
             }
+
+            return ret;
         }
     }
 
