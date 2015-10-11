@@ -15,8 +15,13 @@ abstract class AbstractActionState extends AbstractState {
         getList().remove(point.getIndex());
         getImageLoader().setRenderRoute(null);
         getSidebarView().setRouteLength(0);
-        if (getList().getSize() < 2) {
+
+        int size = getList().getSize();
+        if (size < 2) {
             getSidebarView().setStartable(false);
+            if (size == 0) {
+                getSidebarView().setResettable(false);
+            }
         }
 
         endCurrentAction();

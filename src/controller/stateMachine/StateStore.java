@@ -20,6 +20,7 @@ class StateStore {
 
     StateStore() {
         suggestions = new HashSet<String>();
+        suggestions.add("");
     }
 
     void setApplication(final IApplication application) {
