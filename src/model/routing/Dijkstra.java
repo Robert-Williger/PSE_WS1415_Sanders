@@ -70,7 +70,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     }
 
     private void executeDijkstra() {
-        while (state == 0 && queue.size() != 0) {
+        while (state == 0 && !queue.isEmpty()) {
             final int u = queue.deleteMin();
 
             if (u == endNodes[0] || u == endNodes[1]) {

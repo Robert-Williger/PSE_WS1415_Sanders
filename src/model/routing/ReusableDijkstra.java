@@ -9,8 +9,10 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     private final IGraph graph;
     private final int[] distance;
     private final int[] parent;
+    private int[] endNodes;
     private IAddressablePriorityQueue<Integer> queue;
     private boolean canceled;
+
     private InterNode start;
 
     public ReusableDijkstra(final IGraph graph) {
@@ -33,7 +35,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     @Override
     public Path calculateShortestPath(final InterNode start, final InterNode end) {
         initializeDijkstra(start, end);
-        execute();
+        if (parent[endNodes[0]] == -1 || parent[endNodes[1]] == -1) {
+            execute();
+        }
 
         return !canceled ? createPath(start, end) : null;
     }
@@ -43,8 +47,6 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             this.start = start;
 
             queue = createQueue();
-
-            canceled = false;
 
             for (int i = 0; i < graph.getNodes(); i++) {
                 distance[i] = Integer.MAX_VALUE;
@@ -65,6 +67,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             queue.insert(startNodes[0], (int) (weight * offset));
             queue.insert(startNodes[1], (int) (weight * (1 - offset)));
         }
+
+        canceled = false;
+        endNodes = new int[]{graph.getFirstNode(end.getEdge()), graph.getSecondNode(end.getEdge())};
     }
 
     private void execute() {
@@ -73,6 +78,17 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             final int u = queue.deleteMin();
 
             scan(u);
+
+            if (u == endNodes[0]) {
+                if (parent[endNodes[1]] != -1) {
+                    break;
+                }
+            } else if (u == endNodes[1]) {
+                if (parent[endNodes[0]] != -1) {
+                    break;
+                }
+            }
+
         }
 
     }

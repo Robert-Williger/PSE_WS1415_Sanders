@@ -8,7 +8,6 @@ import java.util.List;
 import model.IProgressListener;
 
 public class MSTTSPSolver extends AbstractComplexRouteSolver {
-    private final IGraph graph;
     private IGraph mst;
     private HashMap<Long, Path> mapping;
     private List<Integer> tspNodes;
@@ -16,7 +15,8 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
     private final ISPSPSolver solver;
 
     public MSTTSPSolver(final IGraph graph) {
-        this.graph = graph;
+        super(graph);
+
         solver = createSPSPSolver();
         solver.addProgressListener(new IProgressListener() {
 

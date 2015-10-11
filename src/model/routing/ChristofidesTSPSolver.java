@@ -13,13 +13,13 @@ import model.IProgressListener;
 public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements IComplexRouteSolver {
 
     private boolean canceled;
-    private IGraph graph;
     private ISPSPSolver solver;
     private HashMap<Long, Path> completeMapping;
     private List<Integer> matchingMapping;
 
     public ChristofidesTSPSolver(final IGraph graph) {
-        this.graph = graph;
+        super(graph);
+
         this.solver = createSPSPSolver();
         solver.addProgressListener(new IProgressListener() {
 

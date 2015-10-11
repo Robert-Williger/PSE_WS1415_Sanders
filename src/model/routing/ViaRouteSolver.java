@@ -6,13 +6,13 @@ import java.util.List;
 import model.IProgressListener;
 
 public class ViaRouteSolver extends AbstractComplexRouteSolver {
-    private final IGraph graph;
     private int state;
     private final ISPSPSolver solver;
     private int paths;
 
     public ViaRouteSolver(final IGraph graph) {
-        this.graph = graph;
+        super(graph);
+
         solver = createSPSPSolver();
         solver.addProgressListener(new IProgressListener() {
 
