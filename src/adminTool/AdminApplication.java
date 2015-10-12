@@ -51,7 +51,8 @@ public class AdminApplication {
         graphCreator.create();
 
         MapManagerCreator mapManagerCreator = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
-                parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getBoundingBox(), outputPath);
+                parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(),
+                outputPath);
 
         // TODO take street list of mapManagerCreator instead of graph creator
         // [already sorted]

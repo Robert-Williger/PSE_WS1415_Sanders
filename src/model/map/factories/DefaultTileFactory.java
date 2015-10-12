@@ -5,6 +5,7 @@ import java.io.IOException;
 import model.CompressedInputStream;
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.Way;
@@ -18,10 +19,11 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
     private static final Way[] EMPTY_WAYS;
     private static final Building[] EMPTY_BUILDINGS;
     private static final Area[] EMPTY_AREAS;
+    private static final Label[] EMPTY_LABELS;
 
     public DefaultTileFactory(final CompressedInputStream reader, final POI[] pois, final Street[] streets,
-            final Way[] ways, final Building[] buildings, final Area[] areas) {
-        super(reader, pois, streets, ways, buildings, areas);
+            final Way[] ways, final Building[] buildings, final Area[] areas, final Label[] labels) {
+        super(reader, pois, streets, ways, buildings, areas, labels);
     }
 
     @Override
@@ -37,6 +39,7 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
             final Way[] tileWays;
             final Building[] tileBuildings;
             final Area[] tileAreas;
+            final Label[] tileLabels;
 
             if ((flags & 1) == 0) {
                 tilePOIs = EMPTY_POIS;
@@ -73,7 +76,14 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
                 fillElements(areas, tileAreas);
             }
 
-            tile = new Tile(zoom, row, column, tileWays, tileStreets, tileAreas, tileBuildings, tilePOIs);
+            if ((flags >> 5 & 1) == 0) {
+                tileLabels = EMPTY_LABELS;
+            } else {
+                tileLabels = new Label[reader.readCompressedInt()];
+                fillElements(labels, tileLabels);
+            }
+
+            tile = new Tile(zoom, row, column, tileWays, tileStreets, tileAreas, tileBuildings, tilePOIs, tileLabels);
         }
 
         return tile;
@@ -85,5 +95,6 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
         EMPTY_WAYS = new Way[0];
         EMPTY_BUILDINGS = new Building[0];
         EMPTY_AREAS = new Area[0];
+        EMPTY_LABELS = new Label[0];
     }
 }

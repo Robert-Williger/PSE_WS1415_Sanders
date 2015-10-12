@@ -10,18 +10,21 @@ public class ReferencedTile {
 
     public static final ReferencedTile EMPTY_TILE = new ReferencedTile();
 
-    private final TreeSet<Integer> streets;
-    private final TreeSet<Integer> ways;
+    private final Set<Integer> streets;
+    private final Set<Integer> ways;
     private final Set<Integer> buildings;
-    private final TreeSet<Integer> terrain;
-    private final Collection<ReferencedPOI> pois;
+    private final Set<Integer> terrain;
+
+    private final Collection<ReferencedPoint> pois;
+    private final Collection<ReferencedRectangle> labels;
 
     public ReferencedTile() {
         streets = new TreeSet<Integer>();
         ways = new TreeSet<Integer>();
         buildings = new HashSet<Integer>();
         terrain = new TreeSet<Integer>();
-        pois = new LinkedList<ReferencedPOI>();
+        pois = new LinkedList<ReferencedPoint>();
+        labels = new LinkedList<ReferencedRectangle>();
     }
 
     public Set<Integer> getStreets() {
@@ -40,12 +43,16 @@ public class ReferencedTile {
         return terrain;
     }
 
-    public Collection<ReferencedPOI> getPOIs() {
+    public Collection<ReferencedPoint> getPOIs() {
         return pois;
     }
 
+    public Collection<ReferencedRectangle> getLabels() {
+        return labels;
+    }
+
     public byte getFlags() {
-        return (byte) (streetFlag() | wayFlag() | buildingFlag() | poiFlag() | terrainFlag());
+        return (byte) (streetFlag() | wayFlag() | buildingFlag() | poiFlag() | terrainFlag() | labelFlag());
     }
 
     private int poiFlag() {
@@ -66,5 +73,9 @@ public class ReferencedTile {
 
     private int terrainFlag() {
         return terrain.isEmpty() ? 0b00000000 : 0b00010000;
+    }
+
+    private int labelFlag() {
+        return labels.isEmpty() ? 0b00000000 : 0b00100000;
     }
 }

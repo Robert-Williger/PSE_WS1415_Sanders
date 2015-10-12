@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -57,8 +58,8 @@ public class TileTest {
         pois.add(new POI(120, 50, 2));
         pois.add(new POI(40, 170, 0));
 
-        tile = new Tile(1, 3, 2, ways.toArray(new Way[1]), streets.toArray(new Street[2]),
-                areas.toArray(new Area[0]), buildings.toArray(new Building[1]), pois.toArray(new POI[1]));
+        tile = new Tile(1, 3, 2, ways.toArray(new Way[1]), streets.toArray(new Street[2]), areas.toArray(new Area[0]),
+                buildings.toArray(new Building[1]), pois.toArray(new POI[1]), new Label[0]);
     }
 
     @Test

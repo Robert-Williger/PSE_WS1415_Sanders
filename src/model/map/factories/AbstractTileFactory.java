@@ -5,6 +5,7 @@ import java.io.IOException;
 import model.CompressedInputStream;
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.Way;
@@ -20,9 +21,10 @@ public abstract class AbstractTileFactory implements ITileFactory {
     protected final Way[] ways;
     protected final Building[] buildings;
     protected final Area[] areas;
+    protected final Label[] labels;
 
     public AbstractTileFactory(final CompressedInputStream reader, final POI[] pois, final Street[] streets,
-            final Way[] ways, final Building[] buildings, final Area[] areas) {
+            final Way[] ways, final Building[] buildings, final Area[] areas, final Label[] labels) {
         this.reader = reader;
 
         this.pois = pois;
@@ -30,6 +32,7 @@ public abstract class AbstractTileFactory implements ITileFactory {
         this.ways = ways;
         this.buildings = buildings;
         this.areas = areas;
+        this.labels = labels;
     }
 
     protected <T> void fillElements(final T[] source, final T[] destination) throws IOException {

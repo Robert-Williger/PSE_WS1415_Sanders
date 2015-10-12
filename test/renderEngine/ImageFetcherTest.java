@@ -16,6 +16,7 @@ import javax.swing.event.ChangeListener;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
@@ -205,6 +206,11 @@ public class ImageFetcherTest {
 
         @Override
         public Building getBuilding(final Point coordinate) {
+            return null;
+        }
+
+        @Override
+        public Iterator<Label> getLabels() {
             return null;
         }
 

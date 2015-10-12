@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
@@ -29,6 +30,8 @@ public interface ITile {
     Iterator<Area> getTerrain();
 
     Iterator<POI> getPOIs();
+
+    Iterator<Label> getLabels();
 
     String getAddress(Point coordinate);
 

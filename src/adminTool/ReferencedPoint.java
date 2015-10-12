@@ -1,6 +1,6 @@
 package adminTool;
 
-public class ReferencedPOI {
+public class ReferencedPoint {
 
     private static int idCount = -1;
 
@@ -8,10 +8,14 @@ public class ReferencedPOI {
     private final int x;
     private final int y;
 
-    public ReferencedPOI(final int x, final int y) {
+    public ReferencedPoint(final int x, final int y) {
+        this(x, y, ++idCount);
+    }
+
+    protected ReferencedPoint(final int x, final int y, final int id) {
         this.x = x;
         this.y = y;
-        id = ++idCount;
+        this.id = id;
     }
 
     public int getX() {

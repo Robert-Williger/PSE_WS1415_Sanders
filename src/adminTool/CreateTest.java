@@ -29,7 +29,7 @@ public class CreateTest {
         start = System.currentTimeMillis();
 
         MapManagerCreator creator = new MapManagerCreator(parser.getBuildings(), graph.getStreets(), parser.getPOIs(),
-                parser.getWays(), parser.getTerrain(), parser.getBoundingBox(), output);
+                parser.getWays(), parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(), output);
 
         // TODO take street list of mapManagerCreator instead of graph creator
         // [already sorted]

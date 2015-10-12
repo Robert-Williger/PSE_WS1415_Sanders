@@ -1,13 +1,17 @@
 package adminTool;
 
 import java.awt.BasicStroke;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,6 +29,7 @@ import java.util.Set;
 import util.Arrays;
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.MultiElement;
 import model.elements.Node;
 import model.elements.POI;
@@ -54,7 +59,8 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
     private Collection<Building> buildings;
-    private Collection<ReferencedPOI> referencedPOIs;
+    private Collection<ReferencedRectangle> referencedLabels;
+    private Collection<ReferencedPoint> referencedPOIs;
 
     private Rectangle boundingBox;
 
@@ -67,6 +73,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private TypeSorter<Way> waySorter;
     private TypeSorter<Street> streetSorter;
     private TypeSorter<Area> terrainSorter;
+    private TypeSorter<Label> labelSorter;
 
     private Node[][] areaNodes;
     private int[][] areaSimplifications;
@@ -78,7 +85,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     public MapManagerCreator(final Collection<Building> buildings, final Collection<Street> streets,
             final Collection<POI> pois, final Collection<Way> ways, final Collection<Area> terrain,
-            final Rectangle boundingBox, final File file) {
+            final Collection<Label> labels, final Rectangle boundingBox, final File file) {
         super(file);
 
         this.buildings = buildings;
@@ -88,6 +95,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         waySorter = new TypeSorter<Way>(ways);
         streetSorter = new TypeSorter<Street>(streets);
         terrainSorter = new TypeSorter<Area>(terrain);
+        labelSorter = new TypeSorter<Label>(labels);
     }
 
     @Override
@@ -128,6 +136,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         waySorter.start();
         streetSorter.start();
         terrainSorter.start();
+        labelSorter.start();
 
         ElementWriter elementWriter = new ElementWriter();
         elementWriter.start();
@@ -147,12 +156,16 @@ public class MapManagerCreator extends AbstractMapCreator {
         POIPartitioner poiPartitioner = new POIPartitioner();
         poiPartitioner.start();
 
+        LabelPartitioner labelPartitioner = new LabelPartitioner();
+        labelPartitioner.start();
+
         try {
             buildingPartitioner.join();
             wayPartitioner.join();
             streetPartitioner.join();
             terrainPartitioner.join();
             poiPartitioner.join();
+            labelPartitioner.join();
 
             elementWriter.join();
         } catch (final InterruptedException e) {
@@ -214,6 +227,9 @@ public class MapManagerCreator extends AbstractMapCreator {
             tiles = next;
             writer = new TileWriter(simplifiedAreas, simplifiedWays);
         }
+
+        referencedLabels = null;
+        referencedPOIs = null;
 
         writer.run();
 
@@ -320,6 +336,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         partitionPOIs(zoom, array);
+        partitionLabels(zoom, array);
 
         return array;
     }
@@ -336,6 +353,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         destination.getStreets().addAll(source.getStreets());
         destination.getWays().addAll(source.getWays());
+        // destination.getLabels().addAll(source.getLabels());
 
         if (zoom >= BUILDING_MIN_ZOOMSTEP) {
             destination.getBuildings().addAll(source.getBuildings());
@@ -346,29 +364,15 @@ public class MapManagerCreator extends AbstractMapCreator {
     private void partitionPOIs(final int zoom, final ReferencedTile[][] tiles) {
         if (zoom >= POI_MIN_ZOOMSTEP) {
             final int poiWidth = converter.getCoordDistance(POI_WIDTH, zoom);
+            final Rectangle poiBounds = new Rectangle(poiWidth, poiWidth);
 
-            for (final Iterator<ReferencedPOI> it = referencedPOIs.iterator(); it.hasNext();) {
-                final ReferencedPOI poi = it.next();
-                final Rectangle poiBounds = new Rectangle(poi.getX() - poiWidth / 2, poi.getY() - poiWidth / 2,
-                        poiWidth, poiWidth);
-                final Point poiLocation = poiBounds.getLocation();
+            for (final Iterator<ReferencedPoint> it = referencedPOIs.iterator(); it.hasNext();) {
+                final ReferencedPoint poi = it.next();
+
+                poiBounds.setLocation(poi.getX() - poiWidth / 2, poi.getY() - poiWidth / 2);
                 final Rectangle poiTileBounds = locateRectangle(poiBounds, zoom);
 
-                boolean intersection = false;
-                for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
-                    for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
-                        final ReferencedTile tile = getTile(row, column, tiles);
-                        for (final ReferencedPOI other : tile.getPOIs()) {
-                            final Point otherPoint = new Point(other.getX() - poiWidth / 2, other.getY() - poiWidth / 2);
-                            final int distance = (int) poiLocation.distance(otherPoint);
-                            if (converter.getPixelDistance(distance, zoom) < MIN_POI_DISTANCE) {
-                                intersection = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!intersection) {
+                if (!hasPOIIntersection(poiTileBounds, poi, zoom, tiles)) {
                     for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
                         for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
                             getTile(row, column, tiles).getPOIs().add(poi);
@@ -379,6 +383,41 @@ public class MapManagerCreator extends AbstractMapCreator {
                 }
             }
         }
+    }
+
+    private boolean hasPOIIntersection(final Rectangle poiTileBounds, final ReferencedPoint poi, final int zoom,
+            final ReferencedTile[][] tiles) {
+        for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
+            for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
+                final ReferencedTile tile = getTile(row, column, tiles);
+                for (final ReferencedPoint other : tile.getPOIs()) {
+                    final int distance = (int) Point.distance(other.getX(), other.getY(), poi.getX(), poi.getY());
+                    if (converter.getPixelDistance(distance, zoom) < MIN_POI_DISTANCE) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void partitionLabels(final int zoom, final ReferencedTile[][] tiles) {
+        final Rectangle rectangle = new Rectangle();
+        for (final Iterator<ReferencedRectangle> it = referencedLabels.iterator(); it.hasNext();) {
+            final ReferencedRectangle label = it.next();
+            final int coordWidth = converter.getCoordDistance(label.getWidth(), zoom);
+            final int coordHeight = converter.getCoordDistance(label.getHeight(), zoom);
+            rectangle.setBounds(label.getX() - coordWidth / 2, label.getY() - coordHeight / 2, coordWidth, coordHeight);
+
+            final Rectangle poiTileBounds = locateRectangle(rectangle, zoom);
+            for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
+                for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
+                    getTile(row, column, tiles).getLabels().add(label);
+                }
+            }
+        }
+
     }
 
     private ReferencedTile getTile(final int row, final int column) {
@@ -470,9 +509,9 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            referencedPOIs = new LinkedList<ReferencedPOI>();
+            referencedPOIs = new LinkedList<ReferencedPoint>();
             for (final POI poi : poiSorter.getSorting()) {
-                referencedPOIs.add(new ReferencedPOI(poi.getX(), poi.getY()));
+                referencedPOIs.add(new ReferencedPoint(poi.getX(), poi.getY()));
             }
             partitionPOIs(maxZoomStep, tiles);
         }
@@ -637,6 +676,43 @@ public class MapManagerCreator extends AbstractMapCreator {
             }
         }
 
+    }
+
+    private class LabelPartitioner extends Thread {
+        private FontRenderContext context;
+        private Font font;
+
+        public LabelPartitioner() {
+            super("Label partitioner");
+            context = new FontRenderContext(new AffineTransform(), true, true);
+            font = new Font("Times New Roman", Font.PLAIN, 20);
+        }
+
+        @Override
+        public void run() {
+            try {
+                labelSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            referencedLabels = new ArrayList<ReferencedRectangle>(labelSorter.getSorting().size());
+            for (final Label label : labelSorter.getSorting()) {
+                referencedLabels.add(getReferencedLabel(label));
+            }
+            partitionLabels(maxZoomStep, tiles);
+
+        }
+
+        private ReferencedRectangle getReferencedLabel(final Label label) {
+            context.getTransform().rotate(label.getRotation());
+            final Rectangle2D rect = font.getStringBounds(label.getName(), context);
+            final ReferencedRectangle ret = new ReferencedRectangle(label.getX(), label.getY(), (int) rect.getWidth(),
+                    (int) rect.getHeight());
+            context.getTransform().rotate(-label.getRotation());
+
+            return ret;
+        }
     }
 
     private class StreetNodeFinder extends Thread {
@@ -815,6 +891,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
                 writeBuildings();
 
+                writeLabels();
+
                 streetMap = null;
                 numberMap = null;
                 nameMap = null;
@@ -890,7 +968,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             // TODO compress
             for (final Entry<Node, Integer> entry : nodeMap.entrySet()) {
-                writePoint(entry.getKey().getLocation());
+                writePoint(entry.getKey());
             }
         }
 
@@ -904,7 +982,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             // TODO compress
             for (final POI poi : poiSorter.getSorting()) {
-                writePoint(poi.getLocation());
+                writePoint(poi);
             }
         }
 
@@ -982,6 +1060,20 @@ public class MapManagerCreator extends AbstractMapCreator {
             }
         }
 
+        private void writeLabels() throws IOException {
+            try {
+                labelSorter.join();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            writeDistribution(labelSorter.getTypeDistribution());
+            for (final Label label : labelSorter.getSorting()) {
+                writePoint(label);
+                stream.writeUTF(label.getName());
+            }
+        }
+
         private void writeTerrain() throws IOException {
             try {
                 terrainSorter.join();
@@ -1007,9 +1099,9 @@ public class MapManagerCreator extends AbstractMapCreator {
             return nodeCount;
         }
 
-        private void writePoint(final Point location) throws IOException {
-            writeCompressedInt(location.x);
-            writeCompressedInt(location.y);
+        private void writePoint(final Node location) throws IOException {
+            writeCompressedInt(location.getX());
+            writeCompressedInt(location.getY());
         }
 
         private void writeMultiElement(final MultiElement element) throws IOException {
@@ -1106,7 +1198,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                         if (!tile.getPOIs().isEmpty()) {
                             writeCompressedInt(tile.getPOIs().size());
                             int last = 0;
-                            for (final ReferencedPOI poi : tile.getPOIs()) {
+                            for (final ReferencedPoint poi : tile.getPOIs()) {
                                 writeCompressedInt(poi.getID() - last);
                                 last = poi.getID();
                             }
@@ -1122,6 +1214,15 @@ public class MapManagerCreator extends AbstractMapCreator {
                         }
                         if (!tile.getTerrain().isEmpty()) {
                             writeInts(tile.getTerrain());
+                        }
+
+                        if (!tile.getLabels().isEmpty()) {
+                            writeCompressedInt(tile.getLabels().size());
+                            int last = 0;
+                            for (final ReferencedRectangle label : tile.getLabels()) {
+                                writeCompressedInt(label.getID() - last);
+                                last = label.getID();
+                            }
                         }
                     }
                 }

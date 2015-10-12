@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import adminTool.VisvalingamWhyatt;
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -93,7 +94,7 @@ public class PolygonSimplificationTest extends JFrame {
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
 
         Tile origTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{origArea},
-                new Building[]{}, new POI[]{});
+                new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(origTile, orig);
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
@@ -104,7 +105,7 @@ public class PolygonSimplificationTest extends JFrame {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
         Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                simplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{});
+                simplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
@@ -114,7 +115,7 @@ public class PolygonSimplificationTest extends JFrame {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
         Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                doubleSimplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{});
+                doubleSimplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
         simpleNumber = simplifiedNodes.length;

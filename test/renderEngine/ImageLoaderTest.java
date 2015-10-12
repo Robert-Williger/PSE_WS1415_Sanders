@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -81,7 +82,7 @@ public class ImageLoaderTest {
             tiles[zoom] = new Tile[4 * zoomFactor][4 * zoomFactor];
             for (int row = 0; row < 4 * zoomFactor; row++) {
                 for (int column = 0; column < 4 * zoomFactor; column++) {
-                    final Tile tile = new Tile(zoom, row, column, ways, streets, areas, buildings, pois);
+                    final Tile tile = new Tile(zoom, row, column, ways, streets, areas, buildings, pois, new Label[0]);
                     tiles[zoom][row][column] = tile;
                 }
             }

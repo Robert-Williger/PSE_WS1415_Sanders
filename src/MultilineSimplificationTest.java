@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import adminTool.VisvalingamWhyatt;
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -93,7 +94,7 @@ public class MultilineSimplificationTest extends JFrame {
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
 
         Tile origTile = new Tile(zoom, row, column, new Way[]{origWay}, new Street[]{}, new Area[]{}, new Building[]{},
-                new POI[]{});
+                new POI[]{}, new Label[0]);
         renderer.render(origTile, orig);
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
@@ -105,7 +106,7 @@ public class MultilineSimplificationTest extends JFrame {
         }
 
         Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(simplifiedNodes, origWay.getType(), "")},
-                new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{});
+                new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
@@ -115,7 +116,7 @@ public class MultilineSimplificationTest extends JFrame {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
         Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(doubleSimplifiedNodes,
-                origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{});
+                origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
         simpleNumber = simplifiedNodes.length;

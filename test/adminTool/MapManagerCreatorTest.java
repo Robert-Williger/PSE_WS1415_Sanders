@@ -40,7 +40,7 @@ public class MapManagerCreatorTest {
             e.printStackTrace();
         }
         mmc = new MapManagerCreator(parser.getBuildings(), gc.getStreets(), parser.getPOIs(), parser.getWays(),
-                parser.getTerrain(), parser.getBoundingBox(), mmcFile);
+                parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(), mmcFile);
 
     }
 

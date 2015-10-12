@@ -12,6 +12,7 @@ import java.util.List;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -201,6 +202,7 @@ public class Reader implements IReader {
         private Way[] ways;
         private Building[] buildings;
         private Area[] areas;
+        private Label[] labels;
         private ITile[][][] tiles;
         private String[] names;
         private String[] numbers;
@@ -328,6 +330,8 @@ public class Reader implements IReader {
                 ++type;
             }
 
+            // TODO implement me
+
             fireStepCommenced("Lade Gebäude...");
             buildings = new Building[reader.readCompressedInt()];
             final int streetNodes = reader.readCompressedInt();
@@ -340,6 +344,23 @@ public class Reader implements IReader {
 
             for (; count < buildings.length; count++) {
                 buildings[count] = Building.create(readNodeArray());
+            }
+
+            fireStepCommenced("Lade Labels...");
+
+            count = 0;
+            type = 0;
+            distribution = readIntArray(reader.readCompressedInt());
+            labels = new Label[distribution[distribution.length - 1]];
+
+            for (int i = 0; i < distribution.length; i++) {
+                final int number = distribution[i];
+                for (; count < number; count++) {
+                    int x = reader.readCompressedInt();
+                    int y = reader.readCompressedInt();
+
+                    labels[count] = Label.create(reader.readUTF(), type, x, y);
+                }
             }
         }
 
@@ -362,7 +383,7 @@ public class Reader implements IReader {
             int currentRows = rows;
             int currentCols = columns;
 
-            final ITileFactory factory = new StorageTileFactory(reader, pois, streets, ways, buildings, areas);
+            final ITileFactory factory = new StorageTileFactory(reader, pois, streets, ways, buildings, areas, labels);
             for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
 
                 tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];

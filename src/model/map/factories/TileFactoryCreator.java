@@ -1,4 +1,5 @@
 package model.map.factories;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -28,6 +29,8 @@ public class TileFactoryCreator {
     }
 
     private void createClass() throws IOException {
+        int classes = 1 << elements.length;
+
         writer.write("package model.map.factories;");
         writer.newLine();
         writer.newLine();
@@ -39,17 +42,25 @@ public class TileFactoryCreator {
         writer.write("private final ITileFactory[] factories;");
         writer.newLine();
         writer.newLine();
-        writer.write("public StorageTileFactory(final CompressedInputStream reader, final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings, final Area[] areas) {");
+        writer.write("public StorageTileFactory(final CompressedInputStream reader");
+        for (int i = 0; i < elements.length; i++) {
+            writer.write(", " + elements[i] + "[] " + fields[i]);
+        }
+        writer.write(") {");
         writer.newLine();
-        writer.write("super(reader, pois, streets, ways, buildings, areas);");
+        writer.write("super(reader");
+        for (final String field : fields) {
+            writer.write(", " + field);
+        }
+        writer.write(");");
         writer.newLine();
         writer.newLine();
         writer.newLine();
-        writer.write("factories = new ITileFactory[32];");
+        writer.write("factories = new ITileFactory[" + classes + "];");
         writer.newLine();
-        writer.write("for (int i = 0; i < 32; i++) {");
+        writer.write("for (int i = 0; i < " + classes + "; i++) {");
         writer.newLine();
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < classes; i++) {
             writer.write("factories[" + i + "] = new TileFactory" + i + "();");
             writer.newLine();
         }
@@ -70,7 +81,8 @@ public class TileFactoryCreator {
 
         createEmptyTileFactory();
         writer.newLine();
-        for (int i = 1; i < 32; i++) {
+
+        for (int i = 1; i < classes; i++) {
             createTileFactory(i);
             writer.newLine();
             writer.newLine();
@@ -90,6 +102,8 @@ public class TileFactoryCreator {
         writer.write("import util.Arrays;");
         writer.newLine();
         writer.write("import model.CompressedInputStream;");
+        writer.newLine();
+        writer.write("import model.elements.Label;");
         writer.newLine();
         writer.write("import model.elements.Area;");
         writer.newLine();
@@ -129,7 +143,7 @@ public class TileFactoryCreator {
     }
 
     private void createTileFactory(final int flags) throws IOException {
-        boolean[] existing = new boolean[5];
+        boolean[] existing = new boolean[elements.length];
 
         for (int i = 0; i < fields.length; i++) {
             existing[i] = ((flags >> i & 1) == 1);
@@ -144,7 +158,7 @@ public class TileFactoryCreator {
         createFactoryHeader();
         writer.write(" {");
         writer.newLine();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < elements.length; i++) {
             if (existing[i]) {
                 writer.write(elements[i] + "[] tile" + fields[i] + " = new " + elements[i]
                         + "[reader.readCompressedInt()];");
@@ -154,7 +168,7 @@ public class TileFactoryCreator {
             }
         }
         writer.write("return new Tile" + flags + "(");
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < elements.length; i++) {
             if (existing[i]) {
                 writer.write("tile" + fields[i] + ", ");
             }
@@ -167,7 +181,7 @@ public class TileFactoryCreator {
     }
 
     private void createTileClass(final int flags) throws IOException {
-        boolean[] existing = new boolean[5];
+        boolean[] existing = new boolean[elements.length];
         for (int i = 0; i < fields.length; i++) {
             existing[i] = ((flags >> i & 1) == 1);
         }
@@ -222,8 +236,9 @@ public class TileFactoryCreator {
     }
 
     static {
-        elements = new String[]{"POI", "Street", "Way", "Building", "Area"};
-        fields = new String[]{"pois", "streets", "ways", "buildings", "areas"};
-        methods = new String[]{"getPOIs()", "getStreets()", "getWays()", "getBuildings()", "getTerrain()"};
+        elements = new String[]{"POI", "Street", "Way", "Building", "Area", "Label"};
+        fields = new String[]{"pois", "streets", "ways", "buildings", "areas", "labels"};
+        methods = new String[]{"getPOIs()", "getStreets()", "getWays()", "getBuildings()", "getTerrain()",
+                "getLabels()"};
     }
 }

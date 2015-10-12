@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.Way;
@@ -78,14 +79,15 @@ public class POIRendererTest {
 
     @Test
     public void testPOIRendering() {
-        final Tile tile = new Tile(17, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois);
+        final Tile tile = new Tile(17, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois,
+                new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullPOIRendering() {
-        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], null);
+        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], new Building[0], null, new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }

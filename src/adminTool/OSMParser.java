@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.MultiElement;
 import model.elements.Node;
 import model.elements.POI;
@@ -39,10 +40,13 @@ public class OSMParser implements IOSMParser {
     private final Collection<Area> areaList;
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
+    private final Collection<Label> labelList;
     private final List<List<Boundary>> boundaries;
     private final Rectangle bBox;
 
     public OSMParser() {
+        // TODO lists instead of sets!
+        labelList = new HashSet<Label>();
         wayList = new HashSet<model.elements.Way>();
         streetList = new HashSet<UnprocessedStreet>();
         areaList = new HashSet<Area>();
@@ -94,6 +98,11 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
+    public Collection<Label> getLabels() {
+        return labelList;
+    }
+
+    @Override
     public List<List<Boundary>> getBoundaries() {
         return boundaries;
     }
@@ -141,9 +150,13 @@ public class OSMParser implements IOSMParser {
             long lastLat = 0;
             long lastLon = 0;
 
+            String tag;
+
             final Iterator<Integer> iterator = nodes.getKeysValsList().iterator();
 
             for (int i = 0; i < nodes.getIdCount(); i++) {
+                tag = "";
+
                 lastId += nodes.getId(i);
                 lastLat += nodes.getLat(i);
                 lastLon += nodes.getLon(i);
@@ -156,17 +169,34 @@ public class OSMParser implements IOSMParser {
                     final String key = getStringById(keyValId);
                     final String value = getStringById(iterator.next());
 
-                    if (key.equals("amenity") || key.equals("tourism")) {
-                        final int type = getAmenityType(value);
-                        if (type >= 0) {
-                            poiList.add(new POI(x, y, type));
-                        }
-                    }
-                    if (key.equals("place")) {
-                        final int type = getPlaceType(value);
-                        if (type >= 0) {
-                            
-                        }
+                    switch (key) {
+                        case "amenity":
+                        case "tourism:":
+                            int type = getAmenityType(value);
+                            if (type >= 0) {
+                                poiList.add(new POI(x, y, type));
+                            }
+                            break;
+                        case "place":
+                            if (tag.isEmpty()) {
+                                tag = value;
+                            } else {
+                                type = getPlaceType(value);
+                                if (type != -1) {
+                                    labelList.add(Label.create(tag, type, x, y));
+                                }
+                            }
+                            break;
+                        case "name":
+                            if (tag.isEmpty()) {
+                                tag = value;
+                            } else {
+                                type = getPlaceType(tag);
+                                if (type != -1) {
+                                    labelList.add(Label.create(value, type, x, y));
+                                }
+                            }
+                            break;
                     }
                 }
 
@@ -565,12 +595,10 @@ public class OSMParser implements IOSMParser {
 
             bBox.setBounds(bBox.x, bBox.y, bBox.width - bBox.x, bBox.height - bBox.y);
 
-            for (final Node node : nodeMap.values()) {
-                node.setLocation(translateX(node.getX()) - bBox.x, translateY(node.getY()) - bBox.y);
-            }
-            for (final POI poi : poiList) {
-                poi.setLocation(translateX(poi.getX()) - bBox.x, translateY(poi.getY()) - bBox.y);
-            }
+            updateNodes(nodeMap.values());
+            updateNodes(poiList);
+            updateNodes(labelList);
+
             for (final Area area : areaList) {
                 ((RevalidateableArea) area).revalidate();
             }
@@ -581,6 +609,12 @@ public class OSMParser implements IOSMParser {
             nodeMap = null;
             areaMap = null;
             wayMap = null;
+        }
+
+        private void updateNodes(final Collection<? extends Node> nodes) {
+            for (final Node node : nodes) {
+                node.setLocation(translateX(node.getX()) - bBox.x, translateY(node.getY()) - bBox.y);
+            }
         }
 
         private void calculateBounds(final Collection<? extends MultiElement> collection) {
@@ -707,82 +741,85 @@ public class OSMParser implements IOSMParser {
     }
 
     private int getAreaType(final String value, final boolean area) {
-        if (value.equals("forest") || value.equals("woodland") || value.equals("scrub")) {
+        if (value.equals("forest") || value.equals("woodland")) {
             return 0;
         }
         if (value.equals("wood")) {
             return 1;
         }
+        if (value.equals("scrub")) {
+            return 2;
+        }
         if (value.equals("grass") || value.equals("meadow") || value.equals("orchard") || value.equals("grassland")
                 || value.equals("village_green") || value.equals("vineyard") || value.equals("allotments")
                 || value.equals("recreation_ground") || value.equals("garden")) {
-            return 2;
+            return 3;
         }
         if (value.equals("greenfield") || value.equals("landfill") || value.equals("brownfield")
                 || value.equals("construction") || value.equals("paddock")) {
-            return 3;
+            return 4;
         }
         if (value.equals("residential") || value.equals("railway") || value.equals("garages") || value.equals("garage")
                 || value.equals("traffic_island") || value.equals("road") || value.equals("plaza")) {
-            return 4;
-        }
-        if (value.equals("water") || value.equals("reservoir") || value.equals("basin")) {
             return 5;
         }
-        if (value.equals("industrial")) {
+        if (value.equals("water") || value.equals("reservoir") || value.equals("basin")) {
             return 6;
         }
-        if (value.equals("park")) {
+        if (value.equals("industrial")) {
             return 7;
         }
-        if (value.equals("retail") || value.equals("commercial")) {
+        if (value.equals("park")) {
             return 8;
         }
-        if (value.equals("heath") || value.equals("fell")) {
+        if (value.equals("retail") || value.equals("commercial")) {
             return 9;
         }
-        if (value.equals("sand") || value.equals("beach")) {
+        if (value.equals("heath") || value.equals("fell")) {
             return 10;
         }
-        if (value.equals("mud") || value.equals("scree") || value.equals("bare_rock") || value.equals("pier")) {
+        if (value.equals("sand") || value.equals("beach")) {
             return 11;
         }
-        if (value.equals("quarry")) {
+        if (value.equals("mud") || value.equals("scree") || value.equals("bare_rock") || value.equals("pier")) {
             return 12;
         }
-        if (value.equals("cemetery")) {
+        if (value.equals("quarry")) {
             return 13;
         }
-        if (value.equals("parking")) {
+        if (value.equals("cemetery")) {
             return 14;
         }
+        if (value.equals("parking")) {
+            return 15;
+        }
         if (value.equals("pedestrian")) {
-            return area ? 15 : -1;
+            return area ? 16 : -1;
         }
         if (value.equals("farmland") || value.equals("farmyard") || value.equals("farm")) {
-            return 16;
-        }
-        if (value.equals("playground")) {
             return 17;
         }
-        if (value.equals("pitch")) {
+        if (value.equals("playground")) {
             return 18;
         }
-        if (value.equals("sports_centre") || value.equals("stadium")) {
+        if (value.equals("pitch")) {
             return 19;
         }
+        if (value.equals("sports_centre") || value.equals("stadium")) {
+            return 20;
+        }
         if (value.equals("track")) {
-            return area ? 20 : -1;
+            return area ? 21 : -1;
         }
         if (value.equals("golf_course") || value.equals("miniature_golf")) {
-            return 21;
+            return 22;
         }
         if (value.equals("school") || value.equals("university") || value.equals("college")
                 || value.equals("kindergarten")) {
-            return 22;
+            return 23;
         }
         if (value.equals("zoo")) {
-            return 23;
+            return 24;
         }
 
         return -1;

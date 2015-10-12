@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import model.elements.Area;
 import model.elements.Building;
+import model.elements.Label;
 import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
@@ -97,63 +98,63 @@ public class BackgroundRendererTest {
 
     @Test
     public void testAreaRendering() {
-        final Tile tile = new Tile(1, 1, 1, new Way[0], new Street[0], areas, new Building[0], new POI[0]);
+        final Tile tile = new Tile(1, 1, 1, new Way[0], new Street[0], areas, new Building[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullAreaRendering() {
-        final Tile tile = new Tile(1, 1, 1, new Way[0], new Street[0], null, new Building[0], new POI[0]);
+        final Tile tile = new Tile(1, 1, 1, new Way[0], new Street[0], null, new Building[0], new POI[0], new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testWayRendering() {
-        final Tile tile = new Tile(1, 1, 1, ways, new Street[0], new Area[0], new Building[0], new POI[0]);
+        final Tile tile = new Tile(1, 1, 1, ways, new Street[0], new Area[0], new Building[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullWayRendering() {
-        final Tile tile = new Tile(1, 1, 1, null, new Street[0], new Area[0], new Building[0], new POI[0]);
+        final Tile tile = new Tile(1, 1, 1, null, new Street[0], new Area[0], new Building[0], new POI[0], new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testStreetRendering() {
-        final Tile tile = new Tile(4, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0]);
+        final Tile tile = new Tile(4, 1, 1, new Way[0], streets, new Area[0], new Building[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullStreetRendering() {
-        final Tile tile = new Tile(4, 1, 1, new Way[0], null, new Area[0], new Building[0], new POI[0]);
+        final Tile tile = new Tile(4, 1, 1, new Way[0], null, new Area[0], new Building[0], new POI[0], new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testBuildingRendering() {
-        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], buildings, new POI[0]);
+        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], buildings, new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
     public void testNullBuildingRendering() {
-        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], null, new POI[0]);
+        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], null, new POI[0], new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
 
     @Test
     public void testFullTileRendering() {
-        final Tile tile = new Tile(1, 1, 1, ways, streets, areas, buildings, new POI[0]);
+        final Tile tile = new Tile(1, 1, 1, ways, streets, areas, buildings, new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
