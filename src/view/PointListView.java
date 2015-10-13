@@ -107,17 +107,10 @@ public class PointListView extends JPanel {
             }
 
             @Override
-            public void mouseEntered(final MouseEvent e) {
-                if (isEnabled()) {
-                    hoveredIndex = e.getY() / 20;
-                    repaint();
-                }
-            }
-
-            @Override
             public void mouseMoved(final MouseEvent e) {
                 if (isEnabled()) {
-                    hoveredIndex = e.getY() / 20;
+                    final int index = e.getY() / 20;
+                    hoveredIndex = index < model.size() ? index : -1;
                     repaint();
                 }
             }
@@ -138,7 +131,16 @@ public class PointListView extends JPanel {
         list.addMouseMotionListener(listener);
         list.addMouseListener(listener);
         listButtons.addMouseMotionListener(listener);
-        addMouseListener(listener);
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(final MouseEvent e) {
+                if (isEnabled()) {
+                    hoveredIndex = -1;
+                    repaint();
+                }
+            }
+        });
 
         model.addListDataListener(new ListDataListener() {
             private int fromIndex;
