@@ -115,9 +115,6 @@ public class MapView extends JPanel implements IMapView {
         private static final long serialVersionUID = 1L;
 
         private IImageLoader loader;
-        private final PaintingLayer background;
-        private final PaintingLayer route;
-        private final PaintingLayer pois;
 
         private int tileWidth;
         private int tileHeight;
@@ -125,6 +122,16 @@ public class MapView extends JPanel implements IMapView {
         public MapLayer() {
             super(new FullLayout());
             setOpaque(false);
+        }
+
+        public void setLoader(final IImageLoader loader) {
+            this.loader = loader;
+
+            final Image image = loader.getImageAccessors().get(0).getImage(0, 0);
+            tileWidth = image.getWidth(null);
+            tileHeight = image.getHeight(null);
+
+            removeAll();
 
             final ChangeListener listener = new ChangeListener() {
 
@@ -134,64 +141,43 @@ public class MapView extends JPanel implements IMapView {
                 }
 
             };
-            background = new PaintingLayer(listener);
-            route = new PaintingLayer(listener);
-            pois = new PaintingLayer(listener);
-
-            add(pois);
-            add(route);
-            add(background);
-        }
-
-        public void setLoader(final IImageLoader loader) {
-            this.loader = loader;
-
-            final Image image = loader.getBackgroundAccessor().getImage(0, 0);
-            tileWidth = image.getWidth(null);
-            tileHeight = image.getHeight(null);
-
-            background.setImageAccessor(loader.getBackgroundAccessor());
-            route.setImageAccessor(loader.getRouteAccessor());
-            pois.setImageAccessor(loader.getPOIAccessor());
+            for (final IImageAccessor accessor : loader.getImageAccessors()) {
+                final PaintingLayer layer = new PaintingLayer(accessor);
+                accessor.addChangeListener(listener);
+                add(layer);
+            }
         }
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(loader.getBackgroundAccessor().getColumns() * tileWidth, loader
-                    .getBackgroundAccessor().getRows() * tileHeight);
+            return new Dimension(loader.getImageAccessors().get(0).getColumns() * tileWidth, loader.getImageAccessors()
+                    .get(0).getRows()
+                    * tileHeight);
         }
     }
 
     private class PaintingLayer extends JComponent {
         private static final long serialVersionUID = 1L;
 
-        private final ChangeListener listener;
-
-        private IImageAccessor imageAccessor;
+        private IImageAccessor accessor;
         private int tileWidth;
         private int tileHeight;
 
-        public PaintingLayer(final ChangeListener listener) {
-            this.listener = listener;
-            setOpaque(false);
-        }
-
-        public void setImageAccessor(final IImageAccessor imageAccessor) {
-            this.imageAccessor = imageAccessor;
-
-            final Image image = imageAccessor.getImage(0, 0);
+        public PaintingLayer(final IImageAccessor accessor) {
+            this.accessor = accessor;
+            final Image image = accessor.getImage(0, 0);
             tileWidth = image.getWidth(null);
             tileHeight = image.getHeight(null);
 
-            imageAccessor.addChangeListener(listener);
+            setOpaque(false);
         }
 
         @Override
         public void paint(final Graphics g) {
-            if (imageAccessor.isVisible()) {
-                for (int row = 0; row < imageAccessor.getRows(); row++) {
-                    for (int column = 0; column < imageAccessor.getColumns(); column++) {
-                        final Image image = imageAccessor.getImage(row, column);
+            if (accessor.isVisible()) {
+                for (int row = 0; row < accessor.getRows(); row++) {
+                    for (int column = 0; column < accessor.getColumns(); column++) {
+                        final Image image = accessor.getImage(row, column);
                         g.drawImage(image, column * tileWidth, row * tileHeight, this);
                     }
                 }

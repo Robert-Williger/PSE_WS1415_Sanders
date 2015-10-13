@@ -86,7 +86,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         routeLabel = new RouteLabel();
         progressBar = new JProgressBar(0, 100);
         content = createContent();
-        gap = createGap();
+        gap = createGap(6, 0);
 
         pointListener = new IPointListListener() {
 
@@ -147,17 +147,17 @@ public class SidebarView extends JPanel implements ISidebarView {
         revalidate();
     }
 
-    private JPanel createGap() {
+    private JPanel createGap(final int width, final int height) {
         final JPanel ret = new JPanel();
 
-        ret.setPreferredSize(new Dimension(6, 0));
+        ret.setPreferredSize(new Dimension(width, height));
         ret.setOpaque(false);
 
         return ret;
     }
 
     private JPanel createHider() {
-        final JPanel ret = createGap();
+        final JPanel ret = createGap(6, 0);
 
         ret.add(new HideButton());
 
@@ -168,13 +168,14 @@ public class SidebarView extends JPanel implements ISidebarView {
         final JPanel ret = new JPanel();
 
         ret.setLayout(new BoxLayout(ret, BoxLayout.Y_AXIS));
-        ret.add(Box.createVerticalGlue());
 
+        ret.add(createGap(0, 10));
         ret.add(createTop());
+        ret.add(createGap(0, 0));
         ret.add(createMid());
+        ret.add(createGap(0, 0));
         ret.add(createBot());
-
-        ret.add(Box.createVerticalGlue());
+        ret.add(createGap(0, 10));
 
         ret.setOpaque(false);
         ret.setPreferredSize(new Dimension(210, 0));
@@ -240,8 +241,8 @@ public class SidebarView extends JPanel implements ISidebarView {
         cancelButton.setActionCommand("cancel");
 
         ret.setOpaque(false);
-        ret.setPreferredSize(new Dimension(180, 70));
-        ret.setMaximumSize(new Dimension(180, 70));
+        ret.setPreferredSize(new Dimension(180, 62));
+        ret.setMaximumSize(new Dimension(180, 62));
 
         return ret;
     }
@@ -305,8 +306,8 @@ public class SidebarView extends JPanel implements ISidebarView {
         ret.add(cancelCalcButton);
 
         ret.setOpaque(false);
-        ret.setPreferredSize(new Dimension(180, 120));
-        ret.setMaximumSize(new Dimension(180, 120));
+        ret.setPreferredSize(new Dimension(180, 130));
+        ret.setMaximumSize(new Dimension(180, 130));
         ret.setAlignmentY(CENTER_ALIGNMENT);
 
         return ret;
@@ -417,12 +418,12 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 280));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
         }
 
         @Override
         public Dimension getMaximumSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 280));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
         }
     }
 
