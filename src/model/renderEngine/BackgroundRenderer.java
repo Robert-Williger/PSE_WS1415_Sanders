@@ -197,7 +197,7 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         areaStyles = new ShapeStyle[24];
 
         // forest (dark green)
-        areaStyles[0] = new ShapeStyle(1, new Color(160, 206, 133));
+        areaStyles[0] = new ShapeStyle(1, new Color(172, 208, 157));
         areaMinZoomstep[0] = 8;
 
         // wood (dark green [brighter])

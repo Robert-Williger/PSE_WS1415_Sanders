@@ -8,12 +8,10 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
-import java.awt.Toolkit;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import model.elements.Area;
@@ -190,115 +188,119 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 {15}, {5}, {6}, {7}, {8}, {9}, {20}, {21}};
 
         // // AREAS ////
-        areaMinZoomstep = new int[24];
-        areaStyles = new ShapeStyle[24];
+        areaMinZoomstep = new int[25];
+        areaStyles = new ShapeStyle[25];
 
         // forest (dark green)
-        areaStyles[0] = new ShapeStyle(1, new Color(160, 206, 133));
+        areaStyles[0] = new ShapeStyle(1, new Color(172, 208, 157));
         areaMinZoomstep[0] = 8;
 
-        // wood (dark green [brighter])
+        // wood (dark green)
         areaStyles[1] = new ShapeStyle(1, new Color(174, 209, 160));
         areaMinZoomstep[1] = 10;
 
-        // grass / meadow / grassland ... (light yellow-green)
-        areaStyles[2] = new ShapeStyle(1, new Color(205, 236, 165));
+        // scrub (dark green [brighter])
+        areaStyles[2] = new ShapeStyle(1, new Color(181, 226, 180));
         areaMinZoomstep[2] = 10;
 
-        // grassfield (ligth grey-brown)
-        areaStyles[3] = new ShapeStyle(1, new Color(181, 181, 141));
+        // grass / meadow / grassland ... (light yellow-green)
+        areaStyles[3] = new ShapeStyle(1, new Color(205, 236, 165));
         areaMinZoomstep[3] = 10;
 
-        // residential / railway (gray)
+        // grassfield (ligth grey-brown)
+        areaStyles[4] = new ShapeStyle(1, new Color(181, 181, 141));
         areaMinZoomstep[4] = 10;
-        areaStyles[4] = new ShapeStyle(areaMinZoomstep[4], new float[]{0}, new float[]{0, 0, 0, 0, 0, 0, 1}, new Color(
+
+        // residential / railway (gray)
+        areaMinZoomstep[5] = 10;
+        areaStyles[5] = new ShapeStyle(areaMinZoomstep[5], new float[]{0}, new float[]{0, 0, 0, 0, 0, 0, 1}, new Color(
                 218, 218, 218), new Color(200, 200, 200));
 
         // water / reservoir (light blue)
-        areaStyles[5] = new ShapeStyle(1, new Color(181, 208, 208));
-        areaMinZoomstep[5] = 8;
+        areaStyles[6] = new ShapeStyle(1, new Color(181, 208, 208));
+        areaMinZoomstep[6] = 8;
 
         // industrial (light purple)
-        areaStyles[6] = new ShapeStyle(1, new Color(223, 209, 214));
-        areaMinZoomstep[6] = 12;
+        areaStyles[7] = new ShapeStyle(1, new Color(223, 209, 214));
+        areaMinZoomstep[7] = 12;
 
         // park (very light green)
-        areaStyles[7] = new ShapeStyle(1, new Color(205, 247, 201));
-        areaMinZoomstep[7] = 14;
+        areaStyles[8] = new ShapeStyle(1, new Color(205, 247, 201));
+        areaMinZoomstep[8] = 14;
 
         // retail (light pink)
-        areaMinZoomstep[8] = 12;
-        areaStyles[8] = new ShapeStyle(areaMinZoomstep[8], new float[]{0}, new float[]{0, 0, 0, 0, 1}, new Color(240,
+        areaMinZoomstep[9] = 12;
+        areaStyles[9] = new ShapeStyle(areaMinZoomstep[9], new float[]{0}, new float[]{0, 0, 0, 0, 1}, new Color(240,
                 216, 216), new Color(226, 200, 198));
 
         // heath / fell (light brown)
-        areaStyles[9] = new ShapeStyle(1, new Color(214, 217, 159));
-        areaMinZoomstep[9] = 12;
+        areaStyles[10] = new ShapeStyle(1, new Color(214, 217, 159));
+        areaMinZoomstep[10] = 12;
 
         // sand (light yellow)
-        areaStyles[10] = new ShapeStyle(1, new Color(240, 228, 184));
-        areaMinZoomstep[10] = 13;
+        areaStyles[11] = new ShapeStyle(1, new Color(240, 228, 184));
+        areaMinZoomstep[11] = 13;
 
         // mud /scree (very light pink-grey)
-        areaStyles[11] = new ShapeStyle(1, new Color(228, 219, 208));
-        areaMinZoomstep[11] = 12;
-
-        // quarry (gray)
-        areaStyles[12] = new ShapeStyle(1, new Color(195, 195, 195));
+        areaStyles[12] = new ShapeStyle(1, new Color(228, 219, 208));
         areaMinZoomstep[12] = 12;
 
+        // quarry (gray)
+        areaStyles[13] = new ShapeStyle(1, new Color(195, 195, 195));
+        areaMinZoomstep[13] = 12;
+
         // cemetery (darker green)
-        areaMinZoomstep[13] = 13;
-        areaStyles[13] = new ShapeStyle(areaMinZoomstep[13], new float[]{0}, new float[]{0, 0, 0, 1}, new Color(170,
+        areaMinZoomstep[14] = 13;
+        areaStyles[14] = new ShapeStyle(areaMinZoomstep[14], new float[]{0}, new float[]{0, 0, 0, 1}, new Color(170,
                 202, 174), new Color(134, 149, 135));
 
         // parking (light yellow)
-        areaMinZoomstep[14] = 15;
-        areaStyles[14] = new ShapeStyle(areaMinZoomstep[14], new float[]{0}, new float[]{0, 1},
+        areaMinZoomstep[15] = 15;
+        areaStyles[15] = new ShapeStyle(areaMinZoomstep[15], new float[]{0}, new float[]{0, 1},
                 new Color(246, 238, 182), new Color(239, 221, 236));
 
         // pedestrian (light gray)
-        areaMinZoomstep[15] = 11;
-        areaStyles[15] = new ShapeStyle(areaMinZoomstep[15], new float[]{0}, new float[]{0, 0, 0, 0, 0, 1}, new Color(
+        areaMinZoomstep[16] = 11;
+        areaStyles[16] = new ShapeStyle(areaMinZoomstep[16], new float[]{0}, new float[]{0, 0, 0, 0, 0, 1}, new Color(
                 237, 237, 237), new Color(200, 200, 200));
 
         // farmland (light orange-brown)
-        areaStyles[16] = new ShapeStyle(1, new Color(235, 221, 199));
-        areaMinZoomstep[16] = 10;
+        areaStyles[17] = new ShapeStyle(1, new Color(235, 221, 199));
+        areaMinZoomstep[17] = 10;
 
         // playground (very light turquoise + light blue outline)
-        areaStyles[17] = new ShapeStyle(0, 1, new Color(204, 255, 241), new Color(148, 217, 197));
-        areaMinZoomstep[17] = 15;
+        areaStyles[18] = new ShapeStyle(0, 1, new Color(204, 255, 241), new Color(148, 217, 197));
+        areaMinZoomstep[18] = 15;
 
         // pitch (light turquoise + dark green outline)
-        areaMinZoomstep[18] = 14;
-        areaStyles[18] = new ShapeStyle(areaMinZoomstep[18], new float[]{0}, new float[]{0, 1},
+        areaMinZoomstep[19] = 14;
+        areaStyles[19] = new ShapeStyle(areaMinZoomstep[19], new float[]{0}, new float[]{0, 1},
                 new Color(138, 211, 175), new Color(111, 170, 141));
 
         // sports_centre stadium (turquoise)
-        areaStyles[19] = new ShapeStyle(1, new Color(51, 204, 153));
-        areaMinZoomstep[19] = 14;
+        areaStyles[20] = new ShapeStyle(1, new Color(51, 204, 153));
+        areaMinZoomstep[20] = 14;
 
         // track (light turquoise + dark green outline)
-        areaMinZoomstep[20] = 14;
-        areaStyles[20] = new ShapeStyle(areaMinZoomstep[20], new float[]{0}, new float[]{0, 1},
+        areaMinZoomstep[21] = 14;
+        areaStyles[21] = new ShapeStyle(areaMinZoomstep[21], new float[]{0}, new float[]{0, 1},
                 new Color(116, 220, 186), new Color(111, 170, 141));
 
         // golf_course (light green)
-        areaStyles[21] = new ShapeStyle(1, new Color(181, 226, 181));
-        areaMinZoomstep[21] = 15;
+        areaStyles[22] = new ShapeStyle(1, new Color(181, 226, 181));
+        areaMinZoomstep[22] = 15;
 
         // school university college kindergarten (very light yellow)
-        areaMinZoomstep[22] = 13;
-        areaStyles[22] = new ShapeStyle(areaMinZoomstep[22], new float[]{0}, new float[]{0, 0, 1}, new Color(240, 240,
+        areaMinZoomstep[23] = 13;
+        areaStyles[23] = new ShapeStyle(areaMinZoomstep[23], new float[]{0}, new float[]{0, 0, 1}, new Color(240, 240,
                 216), new Color(217, 180, 169));
 
         // zoo (very light green)
-        areaMinZoomstep[23] = 14;
-        areaStyles[23] = new ShapeStyle(areaMinZoomstep[23], new float[]{0}, new float[]{0, 1},
+        areaMinZoomstep[24] = 14;
+        areaStyles[24] = new ShapeStyle(areaMinZoomstep[24], new float[]{0}, new float[]{0, 1},
                 new Color(164, 242, 161), new Color(111, 170, 141));
 
-        areaOrder = new int[]{7, 1, 22, 3, 9, 12, 16, 10, 6, 8, 13, 19, 21, 17, 15, 0, 4, 2, 23, 18, 20, 11, 5, 14};
+        areaOrder = new int[]{8, 1, 5, 23, 4, 10, 13, 17, 11, 7, 9, 14, 20, 22, 16, 0, 2, 18, 3, 24, 19, 21, 12, 6, 15};
 
         // // BUILDINGS ////
         buildingStyles = new ShapeStyle[1];
@@ -330,15 +332,11 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        // TODO better with this hints?
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
-        final Toolkit tk = Toolkit.getDefaultToolkit();
-        final Map<?, ?> map = (Map<?, ?>) (tk.getDesktopProperty("awt.font.desktophints"));
-        if (map != null) {
-            g.addRenderingHints(map);
-        }
-
+        // RenderingHints.KEY
         final Point tileLocation = getTileLocation(tile, image);
 
         final Path2D[] paths = setupPaths();

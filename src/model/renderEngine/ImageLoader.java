@@ -3,6 +3,7 @@ package model.renderEngine;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,14 +19,19 @@ public class ImageLoader implements IImageLoader {
     private final IImageFetcher backgroundFetcher;
     private final IImageFetcher POIFetcher;
     private final IImageFetcher routeFetcher;
+    private final IImageFetcher labelFetcher;
 
     private final IRenderer backgroundRenderer;
     private final IRenderer POIRenderer;
     private final IRouteRenderer routeRenderer;
+    private final IRenderer labelRenderer;
 
     private final IImageAccessor backgroundAccessor;
     private final IImageAccessor POIAccessor;
     private final IImageAccessor routeAccessor;
+    private final IImageAccessor labelAccessor;
+
+    private final List<IImageAccessor> imageAccessors;
 
     private boolean routeSet;
 
@@ -39,6 +45,7 @@ public class ImageLoader implements IImageLoader {
 
     private boolean lastPOIVisibility;
     private boolean lastRouteVisibility;
+    private boolean lastLabelVisibility;
 
     public ImageLoader(final IMapManager manager) {
         priority = Integer.MAX_VALUE - 16;
@@ -46,6 +53,7 @@ public class ImageLoader implements IImageLoader {
 
         lastPOIVisibility = true;
         lastRouteVisibility = true;
+        lastLabelVisibility = true;
 
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
@@ -55,14 +63,24 @@ public class ImageLoader implements IImageLoader {
         backgroundRenderer = new StorageBackgroundRenderer(mapManager.getConverter());
         POIRenderer = new POIRenderer(mapManager.getConverter());
         routeRenderer = new RouteRenderer(mapManager.getConverter());
+        labelRenderer = new LabelRenderer(mapManager.getConverter());
 
         backgroundFetcher = new HighlyCachedImageFetcher(backgroundRenderer, mapManager);
         POIFetcher = new SlightlyCachedImageFetcher(POIRenderer, mapManager);
         routeFetcher = new SlightlyCachedImageFetcher(routeRenderer, mapManager);
+        labelFetcher = new SlightlyCachedImageFetcher(labelRenderer, mapManager);
 
         backgroundAccessor = new ImageAccessor(mapManager, backgroundFetcher);
         POIAccessor = new ImageAccessor(mapManager, POIFetcher);
         routeAccessor = new ImageAccessor(mapManager, routeFetcher);
+        labelAccessor = new ImageAccessor(mapManager, labelFetcher);
+
+        imageAccessors = new ArrayList<IImageAccessor>(4);
+
+        imageAccessors.add(labelAccessor);
+        imageAccessors.add(routeAccessor);
+        imageAccessors.add(POIAccessor);
+        imageAccessors.add(backgroundAccessor);
     }
 
     @Override
@@ -77,11 +95,14 @@ public class ImageLoader implements IImageLoader {
         backgroundRenderer.setConverter(manager.getConverter());
         POIRenderer.setConverter(manager.getConverter());
         routeRenderer.setConverter(manager.getConverter());
+        labelRenderer.setConverter(manager.getConverter());
 
+        labelFetcher.setMapManager(manager);
         backgroundFetcher.setMapManager(manager);
         POIFetcher.setMapManager(manager);
         routeFetcher.setMapManager(manager);
 
+        labelAccessor.setMapManager(manager);
         backgroundAccessor.setMapManager(manager);
         POIAccessor.setMapManager(manager);
         routeAccessor.setMapManager(manager);
@@ -231,6 +252,16 @@ public class ImageLoader implements IImageLoader {
 
         Collection<Long> lastTiles = null;
 
+        if (lastLabelVisibility != labelAccessor.isVisible()) {
+            lastLabelVisibility = labelAccessor.isVisible();
+            if (lastLabelVisibility) {
+                lastTiles = getLastViewTiles();
+
+                for (final Long tileID : lastTiles) {
+                    labelFetcher.loadImage(tileID, priority);
+                }
+            }
+        }
         if (lastPOIVisibility != POIAccessor.isVisible()) {
             lastPOIVisibility = POIAccessor.isVisible();
             if (lastPOIVisibility) {
@@ -261,6 +292,9 @@ public class ImageLoader implements IImageLoader {
 
         for (final Long tileID : newTiles) {
             backgroundFetcher.loadImage(tileID, priority);
+            if (labelAccessor.isVisible()) {
+                labelFetcher.loadImage(tileID, priority);
+            }
             if (POIAccessor.isVisible()) {
                 POIFetcher.loadImage(tileID, priority);
             }
@@ -281,18 +315,8 @@ public class ImageLoader implements IImageLoader {
     }
 
     @Override
-    public IImageAccessor getBackgroundAccessor() {
-        return backgroundAccessor;
-    }
-
-    @Override
-    public IImageAccessor getPOIAccessor() {
-        return POIAccessor;
-    }
-
-    @Override
-    public IImageAccessor getRouteAccessor() {
-        return routeAccessor;
+    public List<IImageAccessor> getImageAccessors() {
+        return imageAccessors;
     }
 
     @Override

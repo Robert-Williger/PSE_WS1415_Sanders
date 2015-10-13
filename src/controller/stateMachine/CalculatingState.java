@@ -51,7 +51,6 @@ public class CalculatingState extends AbstractState {
             route = null;
         }
 
-        sidebar.setPOIChangeable(true);
         sidebar.setStartable(true);
         sidebar.setResettable(true);
     }

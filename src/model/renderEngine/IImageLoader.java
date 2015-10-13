@@ -1,16 +1,15 @@
 package model.renderEngine;
 
+import java.util.List;
+
 import model.map.IMapManager;
 
 public interface IImageLoader {
 
     void update();
 
-    IImageAccessor getBackgroundAccessor();
-
-    IImageAccessor getPOIAccessor();
-
-    IImageAccessor getRouteAccessor();
+    // Layers ordered from front to back
+    List<IImageAccessor> getImageAccessors();
 
     void setRenderRoute(IRenderRoute route);
 
