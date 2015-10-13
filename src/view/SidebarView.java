@@ -55,6 +55,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private final JButton resetButton;
     private final JButton cancelCalcButton;
     private final JCheckBox poiBox;
+    private final JCheckBox labelBox;
     private final JComboBox<String> routeSolverBox;
     private final SuggestionView suggestionView;
     private final PointListView listView;
@@ -78,6 +79,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         resetButton = new JButton("Reset");
         cancelCalcButton = new JButton("Routenberechnung abbrechen");
         poiBox = new CustomizedCheckBox("Sonderziele einblenden", "poi");
+        labelBox = new CustomizedCheckBox("Karte beschriften", "label");
         routeSolverBox = new CustomizedComboBox(manager.getRouteSolvers());
         suggestionView = new SuggestionView();
         listView = new PointListView(manager.getPointList());
@@ -275,6 +277,12 @@ public class SidebarView extends JPanel implements ISidebarView {
         poiBox.setOpaque(false);
         ret.add(poiBox);
 
+        labelBox.setMargin(new Insets(0, 0, 0, 0));
+        labelBox.setFocusable(false);
+        labelBox.setSelected(true);
+        labelBox.setOpaque(false);
+        ret.add(labelBox);
+
         startButton.setPreferredSize(new Dimension(85, 23));
         startButton.setActionCommand("start calculation");
         startButton.setEnabled(false);
@@ -324,6 +332,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         resetButton.addActionListener(listener);
         cancelCalcButton.addActionListener(listener);
         poiBox.addActionListener(listener);
+        labelBox.addActionListener(listener);
         routeSolverBox.addActionListener(listener);
     }
 
@@ -356,11 +365,6 @@ public class SidebarView extends JPanel implements ISidebarView {
     public void setPointOrderChangable(final boolean changeable) {
         upButton.setEnabled(changeable);
         downButton.setEnabled(changeable);
-    }
-
-    @Override
-    public void setPOIChangeable(final boolean changeable) {
-        poiBox.setEnabled(changeable);
     }
 
     @Override
