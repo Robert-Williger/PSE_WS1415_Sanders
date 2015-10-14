@@ -194,25 +194,25 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         float currentLength = 0f;
         final Iterator<Node> iterator = street.iterator();
 
-        Point firstCoordPoint = iterator.next().getLocation();
-        final Point firstPixelPoint = new Point(converter.getPixelDistance(firstCoordPoint.x - tileLoc.x, zoomStep),
-                converter.getPixelDistance(firstCoordPoint.y - tileLoc.y, zoomStep));
+        Node lastNode = iterator.next();
+        int lastX = converter.getPixelDistance(lastNode.getX() - tileLoc.x, zoomStep);
+        int lastY = converter.getPixelDistance(lastNode.getY() - tileLoc.y, zoomStep);
 
-        final Point secondPixelPoint = new Point(firstPixelPoint);
-        Point secondCoordPoint = null;
+        Node secondNode = null;
 
         final Point2D startRenderPoint = new Point2D.Float();
         final Point2D endRenderPoint = new Point2D.Float();
 
         while (iterator.hasNext() && currentLength <= street.getLength() * streetPart.getEnd()) {
-            secondCoordPoint = iterator.next().getLocation();
-            final double distance = secondCoordPoint.distance(firstCoordPoint);
+            secondNode = iterator.next();
+            final double distance = Point.distance(lastNode.getX(), lastNode.getY(), secondNode.getX(),
+                    secondNode.getY());
 
-            final int xDist = converter.getPixelDistance(secondCoordPoint.x - firstCoordPoint.x, zoomStep);
-            final int yDist = converter.getPixelDistance(secondCoordPoint.y - firstCoordPoint.y, zoomStep);
+            final int xDist = converter.getPixelDistance(secondNode.getX() - lastNode.getX(), zoomStep);
+            final int yDist = converter.getPixelDistance(secondNode.getY() - lastNode.getY(), zoomStep);
 
-            secondPixelPoint.setLocation(converter.getPixelDistance(secondCoordPoint.x - tileLoc.x, zoomStep),
-                    converter.getPixelDistance(secondCoordPoint.y - tileLoc.y, zoomStep));
+            int currentX = converter.getPixelDistance(secondNode.getX() - tileLoc.x, zoomStep);
+            int currentY = converter.getPixelDistance(secondNode.getY() - tileLoc.y, zoomStep);
 
             if (currentLength >= street.getLength() * streetPart.getEnd()) {
                 // rendering already finished
@@ -223,11 +223,10 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
                     final float startOffsetLength = street.getLength() * streetPart.getStart() - currentLength;
                     final float startOffset = (float) (startOffsetLength / distance);
 
-                    startRenderPoint.setLocation(firstPixelPoint.x + xDist * startOffset, firstPixelPoint.y + yDist
-                            * startOffset);
+                    startRenderPoint.setLocation(lastX + xDist * startOffset, lastY + yDist * startOffset);
                     path.moveTo(startRenderPoint.getX(), startRenderPoint.getY());
                 } else {
-                    startRenderPoint.setLocation(firstPixelPoint);
+                    startRenderPoint.setLocation(lastX, lastY);
                     path.lineTo(startRenderPoint.getX(), startRenderPoint.getY());
                 }
 
@@ -235,16 +234,17 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
                     final float endOffsetLength = street.getLength() * streetPart.getEnd() - currentLength;
                     final float endOffset = (float) (endOffsetLength / distance);
 
-                    endRenderPoint.setLocation(firstPixelPoint.x + xDist * endOffset, firstPixelPoint.y + yDist
-                            * endOffset);
+                    endRenderPoint.setLocation(lastX + xDist * endOffset, lastY + yDist * endOffset);
                     path.lineTo(endRenderPoint.getX(), endRenderPoint.getY());
                     return path;
                 }
 
             }
 
-            firstCoordPoint = secondCoordPoint;
-            firstPixelPoint.setLocation(secondPixelPoint);
+            lastNode = secondNode;
+            lastX = currentX;
+            lastY = currentY;
+
             currentLength += distance;
         }
 
@@ -254,23 +254,19 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
     private Path2D.Float drawLines(final Iterator<Node> nodes, final Point tileLoc, final int zoomStep) {
         final Path2D.Float path = new Path2D.Float();
 
-        final Point firstCoordPoint = nodes.next().getLocation();
-        final Point firstPixelPoint = new Point(firstCoordPoint);
-        firstPixelPoint.x = converter.getPixelDistance(firstPixelPoint.x - tileLoc.x, zoomStep);
-        firstPixelPoint.y = converter.getPixelDistance(firstPixelPoint.y - tileLoc.y, zoomStep);
+        Node currentNode = nodes.next();
+        int x = converter.getPixelDistance(currentNode.getX() - tileLoc.x, zoomStep);
+        int y = converter.getPixelDistance(currentNode.getY() - tileLoc.y, zoomStep);
 
-        path.moveTo(firstPixelPoint.x, firstPixelPoint.y);
-
-        final Point secondPixelPoint = new Point(firstPixelPoint);
-        Point secondCoordPoint = null;
+        path.moveTo(x, y);
 
         while (nodes.hasNext()) {
-            secondCoordPoint = nodes.next().getLocation();
+            currentNode = nodes.next();
 
-            secondPixelPoint.x = converter.getPixelDistance(secondCoordPoint.x - tileLoc.x, zoomStep);
-            secondPixelPoint.y = converter.getPixelDistance(secondCoordPoint.y - tileLoc.y, zoomStep);
+            x = converter.getPixelDistance(currentNode.getX() - tileLoc.x, zoomStep);
+            y = converter.getPixelDistance(currentNode.getY() - tileLoc.y, zoomStep);
 
-            path.lineTo(secondPixelPoint.x, secondPixelPoint.y);
+            path.lineTo(x, y);
         }
 
         return path;

@@ -441,12 +441,12 @@ public class MapManagerCreator extends AbstractMapCreator {
     private Path2D.Float createPath(final Iterator<Node> nodes) {
         final Path2D.Float path = new Path2D.Float();
 
-        Point location = nodes.next().getLocation();
-        path.moveTo(location.x, location.y);
+        Node location = nodes.next();
+        path.moveTo(location.getX(), location.getY());
 
         while (nodes.hasNext()) {
-            location = nodes.next().getLocation();
-            path.lineTo(location.x, location.y);
+            location = nodes.next();
+            path.lineTo(location.getX(), location.getY());
         }
 
         return path;
@@ -816,19 +816,20 @@ public class MapManagerCreator extends AbstractMapCreator {
                 if (center.x < right && center.x > left && center.y < down && center.y > top) {
                     iterator = street.iterator();
 
-                    Point lastPoint = iterator.next().getLocation();
+                    Node lastNode = iterator.next();
 
                     float totalLength = 0;
                     final int maxLength = street.getLength();
 
                     while (iterator.hasNext()) {
-                        final Point currentPoint = iterator.next().getLocation();
+                        final Node currentNode = iterator.next();
 
-                        final long dx = currentPoint.x - lastPoint.x;
-                        final long dy = currentPoint.y - lastPoint.y;
+                        final long dx = currentNode.getX() - lastNode.getX();
+                        final long dy = currentNode.getY() - lastNode.getY();
                         final long square = (dx * dx + dy * dy);
                         final float length = (float) Math.sqrt(square);
-                        double s = ((center.x - lastPoint.x) * dx + (center.y - lastPoint.y) * dy) / (double) square;
+                        double s = ((center.x - lastNode.getX()) * dx + (center.y - lastNode.getY()) * dy)
+                                / (double) square;
 
                         if (s < 0) {
                             s = 0;
@@ -836,8 +837,8 @@ public class MapManagerCreator extends AbstractMapCreator {
                             s = 1;
                         }
 
-                        final double distX = lastPoint.x + s * dx - center.x;
-                        final double distY = lastPoint.y + s * dy - center.y;
+                        final double distX = lastNode.getX() + s * dx - center.x;
+                        final double distY = lastNode.getY() + s * dy - center.y;
 
                         final long distance = (long) Math.sqrt(distX * distX + distY * distY);
 
@@ -847,7 +848,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                         }
 
                         totalLength += length;
-                        lastPoint = currentPoint;
+                        lastNode = currentNode;
                     }
                 }
             }

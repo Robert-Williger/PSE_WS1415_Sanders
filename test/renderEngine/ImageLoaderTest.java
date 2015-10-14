@@ -21,6 +21,7 @@ import model.map.IMapManager;
 import model.map.MapManager;
 import model.map.PixelConverter;
 import model.map.Tile;
+import model.renderEngine.IImageAccessor;
 import model.renderEngine.IImageLoader;
 import model.renderEngine.ImageLoader;
 
@@ -97,7 +98,7 @@ public class ImageLoaderTest {
     public void setUp() {
         mapManager.getMapState().setLocation(0, 0);
         loader.setMapManager(mapManager);
-        defaultImage = (BufferedImage) loader.getBackgroundAccessor().getImage(-1, -1);
+        defaultImage = (BufferedImage) loader.getImageAccessors().get(0).getImage(-1, -1);
     }
 
     public boolean imagesEqual(final BufferedImage image1, final BufferedImage image2) {
@@ -117,14 +118,15 @@ public class ImageLoaderTest {
 
     @Test
     public void testAccessorsNotNull() {
-        assertNotNull(loader.getBackgroundAccessor());
-        assertNotNull(loader.getPOIAccessor());
-        assertNotNull(loader.getRouteAccessor());
+        assertNotNull(loader.getImageAccessors());
+        for (final IImageAccessor accessor : loader.getImageAccessors()) {
+            assertNotNull(accessor);
+        }
     }
 
     @Test
     public void testImageLoading() {
-        assertTrue(imagesEqual((BufferedImage) loader.getBackgroundAccessor().getImage(1, 1), defaultImage));
+        assertTrue(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(1, 1), defaultImage));
 
         loader.update();
         synchronized (this) {
@@ -135,12 +137,14 @@ public class ImageLoaderTest {
             }
         }
 
-        assertFalse(imagesEqual((BufferedImage) loader.getBackgroundAccessor().getImage(1, 1), defaultImage));
+        assertFalse(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(1, 1), defaultImage));
 
         assertTrue(imagesEqual(
-                (BufferedImage) loader.getBackgroundAccessor().getImage(
-                        mapManager.getCurrentGridLocation().y + mapManager.getRows() + 1,
-                        mapManager.getCurrentGridLocation().x + mapManager.getColumns() + 1), defaultImage));
+                (BufferedImage) loader
+                        .getImageAccessors()
+                        .get(0)
+                        .getImage(mapManager.getCurrentGridLocation().y + mapManager.getRows() + 1,
+                                mapManager.getCurrentGridLocation().x + mapManager.getColumns() + 1), defaultImage));
     }
 
     @Test
@@ -157,7 +161,7 @@ public class ImageLoaderTest {
         final int row = mapManager.getCurrentGridLocation().y + mapManager.getRows() + 1;
         final int column = mapManager.getCurrentGridLocation().x + mapManager.getColumns() + 1;
 
-        assertTrue(imagesEqual((BufferedImage) loader.getBackgroundAccessor().getImage(row, column), defaultImage));
+        assertTrue(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(row, column), defaultImage));
 
         // move by 1 tile size in x and y direction
         mapManager.getMapState().move(256, 256);
@@ -172,7 +176,7 @@ public class ImageLoaderTest {
         }
 
         // substract 1 because we moved by 1 tilesize
-        assertFalse(imagesEqual((BufferedImage) loader.getBackgroundAccessor().getImage(row - 1, column - 1),
+        assertFalse(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(row - 1, column - 1),
                 defaultImage));
     }
 }

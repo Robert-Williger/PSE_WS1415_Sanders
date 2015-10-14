@@ -352,161 +352,173 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         return false;
     }
 
-    private boolean drawStreetNames(final ITile tile, final Point tileLoc, final Graphics2D g) {
-        final Font font = streetNameFont;
-        final FontMetrics metrics = g.getFontMetrics(font);
-        final int zoom = tile.getZoomStep();
-        final int middleOffset = (metrics.getAscent() - metrics.getDescent()) / 2;
-        g.setColor(Color.BLACK);
+    // private boolean drawStreetNames(final ITile tile, final Point tileLoc,
+    // final Graphics2D g) {
+    // final Font font = streetNameFont;
+    // final FontMetrics metrics = g.getFontMetrics(font);
+    // final int zoom = tile.getZoomStep();
+    // final int middleOffset = (metrics.getAscent() - metrics.getDescent()) /
+    // 2;
+    // g.setColor(Color.BLACK);
+    //
+    // for (final Iterator<Street> streetIt = tile.getStreets();
+    // streetIt.hasNext();) {
+    // final Street street = streetIt.next();
+    // final String text = street.getName();
+    // if (streetNameMinZoomstep <= tile.getZoomStep() &&
+    // !text.equals("Unbekannte Straße")) {
+    //
+    // final int textSize = metrics.stringWidth(text);
+    // int distanceCount = 0;
+    // final int length = converter.getPixelDistance(street.getLength(),
+    // tile.getZoomStep());
+    //
+    // if (length > textSize) {
+    //
+    // final Iterator<Node> nodeIt = street.iterator();
+    // Point fromCoord = nodeIt.next().getLocation();
+    //
+    // while (nodeIt.hasNext()) {
+    // final Point toCoord = nodeIt.next().getLocation();
+    //
+    // final int distance = converter.getPixelDistance((int)
+    // toCoord.distance(fromCoord), zoom);
+    // final int start = (distance - textSize) / 2;
+    //
+    // if (start >= 5 && distanceCount + start >= 0) {
+    // distanceCount = -300;
+    // final Point2D.Double from;
+    // final Point2D.Double to;
+    //
+    // double direction = getAngle(fromCoord, toCoord);
+    //
+    // if (direction > -Math.PI / 2 && direction < Math.PI / 2) {
+    // from = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
+    // to = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
+    // } else {
+    // to = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
+    // from = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
+    // direction += Math.PI;
+    // }
+    //
+    // final double xDist = to.getX() - from.getX();
+    // final double yDist = to.getY() - from.getY();
+    // final double scale = (double) start / distance;
+    //
+    // final int offset = street.getType() < 9 ? middleOffset : middleOffset +
+    // 8;
+    // final AffineTransform at = AffineTransform.getTranslateInstance(
+    // from.x - Math.sin(direction) * offset + xDist * scale, from.y +
+    // Math.cos(direction)
+    // * offset + yDist * scale);
+    // at.rotate(direction);
+    //
+    // g.setFont(font.deriveFont(at));
+    // g.drawString(text, 0, 0);
+    // }
+    //
+    // distanceCount = Math.min(0, distance + distanceCount);
+    // fromCoord = toCoord;
+    // }
+    // }
+    // }
+    // }
 
-        for (final Iterator<Street> streetIt = tile.getStreets(); streetIt.hasNext();) {
-            final Street street = streetIt.next();
-            final String text = street.getName();
-            if (streetNameMinZoomstep <= tile.getZoomStep() && !text.equals("Unbekannte Straße")) {
-
-                final int textSize = metrics.stringWidth(text);
-                int distanceCount = 0;
-                final int length = converter.getPixelDistance(street.getLength(), tile.getZoomStep());
-
-                if (length > textSize) {
-
-                    final Iterator<Node> nodeIt = street.iterator();
-                    Point fromCoord = nodeIt.next().getLocation();
-
-                    while (nodeIt.hasNext()) {
-                        final Point toCoord = nodeIt.next().getLocation();
-
-                        final int distance = converter.getPixelDistance((int) toCoord.distance(fromCoord), zoom);
-                        final int start = (distance - textSize) / 2;
-
-                        if (start >= 5 && distanceCount + start >= 0) {
-                            distanceCount = -300;
-                            final Point2D.Double from;
-                            final Point2D.Double to;
-
-                            double direction = getAngle(fromCoord, toCoord);
-
-                            if (direction > -Math.PI / 2 && direction < Math.PI / 2) {
-                                from = new Point2D.Double(converter.getPixelDistancef(fromCoord.x - tileLoc.x, zoom),
-                                        converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
-                                to = new Point2D.Double(converter.getPixelDistancef(toCoord.x - tileLoc.x, zoom),
-                                        converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
-                            } else {
-                                to = new Point2D.Double(converter.getPixelDistancef(fromCoord.x - tileLoc.x, zoom),
-                                        converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
-                                from = new Point2D.Double(converter.getPixelDistancef(toCoord.x - tileLoc.x, zoom),
-                                        converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
-                                direction += Math.PI;
-                            }
-
-                            final double xDist = to.getX() - from.getX();
-                            final double yDist = to.getY() - from.getY();
-                            final double scale = (double) start / distance;
-
-                            final int offset = street.getType() < 9 ? middleOffset : middleOffset + 8;
-                            final AffineTransform at = AffineTransform.getTranslateInstance(
-                                    from.x - Math.sin(direction) * offset + xDist * scale, from.y + Math.cos(direction)
-                                            * offset + yDist * scale);
-                            at.rotate(direction);
-
-                            g.setFont(font.deriveFont(at));
-                            g.drawString(text, 0, 0);
-                        }
-
-                        distanceCount = Math.min(0, distance + distanceCount);
-                        fromCoord = toCoord;
-                    }
-                }
-            }
-        }
-
-        // final Rectangle tileRect = new Rectangle(tileLoc, new
-        // Dimension(converter.getCoordDistance(256, zoom),
-        // converter.getCoordDistance(256, zoom)));
-        // for (final Way way : tile.getWays()) {
-        // final String text = way.getName();
-        // final int textSize = metrics.stringWidth(text);
-        // int distanceCount = 0;
-        //
-        // if ((way.getType() != 3 && way.getType() != 4)
-        // && wayMinZoomstep[wayType[way.getType()]] + minZoomstepOffset <=
-        // tile.getZoomStep()
-        // && !text.equals("Unbekannte Straße")) {
-        //
-        // final List<Node> nodes = way.getNodes();
-        //
-        // final Iterator<Node> iterator = nodes.iterator();
-        // Point fromCoord = iterator.next().getLocation();
-        //
-        // while (iterator.hasNext()) {
-        // final Point toCoord = iterator.next().getLocation();
-        // final int distance = converter.getPixelDistance((int)
-        // toCoord.distance(fromCoord), zoom);
-        //
-        // final int start = (distance - textSize) / 2;
-        //
-        // if (start >= 5 && distanceCount + start >= 0) {
-        // distanceCount = -300;
-        //
-        // if (tileRect.intersectsLine(new Line2D.Float(fromCoord, toCoord))) {
-        // final Point2D.Double from;
-        // final Point2D.Double to;
-        //
-        // double direction = getAngle(fromCoord, toCoord);
-        //
-        // if (direction > -Math.PI / 2 && direction < Math.PI / 2) {
-        // from = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
-        // tileLoc.x, zoom),
-        // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
-        // to = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
-        // tileLoc.x, zoom),
-        // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
-        // } else {
-        // to = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
-        // tileLoc.x, zoom),
-        // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
-        // from = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
-        // tileLoc.x, zoom),
-        // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
-        // direction += Math.PI;
-        // }
-        //
-        // final double xDist = to.getX() - from.getX();
-        // final double yDist = to.getY() - from.getY();
-        // final double scale = (double) start / distance;
-        //
-        // final AffineTransform at = AffineTransform.getTranslateInstance(
-        // from.x - Math.sin(direction) * middleOffset + xDist * scale,
-        // from.y + Math.cos(direction) * middleOffset + yDist * scale);
-        // at.rotate(direction);
-        //
-        // if (way.getType() == 1 || way.getType() == 2) {
-        // final TextLayout layout = new TextLayout(text, font.deriveFont(14f),
-        // g.getFontRenderContext());
-        // g.setColor(Color.white);
-        // g.setStroke(new BasicStroke(0.25f));
-        // g.draw(layout.getOutline(at));
-        //
-        // g.setColor(new Color(102, 153, 204));
-        // at.translate(-Math.sin(direction), -Math.cos(direction));
-        // g.setFont(font.deriveFont(at).deriveFont(14f));
-        // } else {
-        // g.setColor(Color.black);
-        // g.setFont(font.deriveFont(at));
-        // }
-        //
-        // g.drawString(text, 0, 0);
-        // }
-        // }
-        //
-        // distanceCount = Math.min(0, distance + distanceCount);
-        // fromCoord = toCoord;
-        // }
-        // }
-        // }
-
-        return true;
-    }
+    // final Rectangle tileRect = new Rectangle(tileLoc, new
+    // Dimension(converter.getCoordDistance(256, zoom),
+    // converter.getCoordDistance(256, zoom)));
+    // for (final Way way : tile.getWays()) {
+    // final String text = way.getName();
+    // final int textSize = metrics.stringWidth(text);
+    // int distanceCount = 0;
+    //
+    // if ((way.getType() != 3 && way.getType() != 4)
+    // && wayMinZoomstep[wayType[way.getType()]] + minZoomstepOffset <=
+    // tile.getZoomStep()
+    // && !text.equals("Unbekannte Straße")) {
+    //
+    // final List<Node> nodes = way.getNodes();
+    //
+    // final Iterator<Node> iterator = nodes.iterator();
+    // Point fromCoord = iterator.next().getLocation();
+    //
+    // while (iterator.hasNext()) {
+    // final Point toCoord = iterator.next().getLocation();
+    // final int distance = converter.getPixelDistance((int)
+    // toCoord.distance(fromCoord), zoom);
+    //
+    // final int start = (distance - textSize) / 2;
+    //
+    // if (start >= 5 && distanceCount + start >= 0) {
+    // distanceCount = -300;
+    //
+    // if (tileRect.intersectsLine(new Line2D.Float(fromCoord, toCoord))) {
+    // final Point2D.Double from;
+    // final Point2D.Double to;
+    //
+    // double direction = getAngle(fromCoord, toCoord);
+    //
+    // if (direction > -Math.PI / 2 && direction < Math.PI / 2) {
+    // from = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
+    // to = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
+    // } else {
+    // to = new Point2D.Double(converter.getPixelDistancef(fromCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(fromCoord.y - tileLoc.y, zoom));
+    // from = new Point2D.Double(converter.getPixelDistancef(toCoord.x -
+    // tileLoc.x, zoom),
+    // converter.getPixelDistancef(toCoord.y - tileLoc.y, zoom));
+    // direction += Math.PI;
+    // }
+    //
+    // final double xDist = to.getX() - from.getX();
+    // final double yDist = to.getY() - from.getY();
+    // final double scale = (double) start / distance;
+    //
+    // final AffineTransform at = AffineTransform.getTranslateInstance(
+    // from.x - Math.sin(direction) * middleOffset + xDist * scale,
+    // from.y + Math.cos(direction) * middleOffset + yDist * scale);
+    // at.rotate(direction);
+    //
+    // if (way.getType() == 1 || way.getType() == 2) {
+    // final TextLayout layout = new TextLayout(text, font.deriveFont(14f),
+    // g.getFontRenderContext());
+    // g.setColor(Color.white);
+    // g.setStroke(new BasicStroke(0.25f));
+    // g.draw(layout.getOutline(at));
+    //
+    // g.setColor(new Color(102, 153, 204));
+    // at.translate(-Math.sin(direction), -Math.cos(direction));
+    // g.setFont(font.deriveFont(at).deriveFont(14f));
+    // } else {
+    // g.setColor(Color.black);
+    // g.setFont(font.deriveFont(at));
+    // }
+    //
+    // g.drawString(text, 0, 0);
+    // }
+    // }
+    //
+    // distanceCount = Math.min(0, distance + distanceCount);
+    // fromCoord = toCoord;
+    // }
+    // }
+    // }
+    //
+    // return true;
+    // }
 
     private boolean drawAreas(final ITile tile, final Point tileLoc, final Graphics2D g) {
         final Iterator<Area> iterator = tile.getTerrain();

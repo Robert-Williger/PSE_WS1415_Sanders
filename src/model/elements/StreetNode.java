@@ -32,27 +32,28 @@ public class StreetNode extends Node {
 
         final float totalLength = street.getLength();
         final Iterator<Node> iterator = street.iterator();
-        Point lastNodeLocation = iterator.next().getLocation();
+        Node lastNode = iterator.next();
         float currentOffsetLength = 0f;
 
         while (iterator.hasNext()) {
-            final Point currentNodeLocation = iterator.next().getLocation();
-            final double distance = currentNodeLocation.distance(lastNodeLocation);
+            final Node currentNode = iterator.next();
+            final double distance = Point.distance(currentNode.getX(), currentNode.getY(), lastNode.getX(),
+                    lastNode.getY());
 
             if (currentOffsetLength + distance > totalLength * offset || !iterator.hasNext()) {
-                final int xDistance = currentNodeLocation.x - lastNodeLocation.x;
-                final int yDistance = currentNodeLocation.y - lastNodeLocation.y;
+                final int xDistance = currentNode.getX() - lastNode.getX();
+                final int yDistance = currentNode.getY() - lastNode.getY();
 
                 final float partOffsetLength = totalLength * offset - currentOffsetLength;
                 final float partOffset = (float) (partOffsetLength / distance);
-                setLocation((int) (lastNodeLocation.x + xDistance * partOffset + 0.49f), (int) (lastNodeLocation.y
+                setLocation((int) (lastNode.getX() + xDistance * partOffset + 0.49f), (int) (lastNode.getY()
                         + yDistance * partOffset + 0.49f));
 
                 return;
             }
 
             currentOffsetLength += distance;
-            lastNodeLocation = currentNodeLocation;
+            lastNode = currentNode;
         }
 
     }

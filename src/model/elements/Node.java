@@ -6,14 +6,13 @@ public class Node {
     // TODO exentends Point?
     private int x;
     private int y;
-
+    
     public Node() {
         this(0, 0);
     }
 
     public Node(final int x, final int y) {
-        this.x = x;
-        this.y = y;
+        setLocation(x, y);
     }
 
     public int getX() {
@@ -25,7 +24,7 @@ public class Node {
     }
 
     public Point getLocation() {
-        return new Point(x, y);
+        return new Point(getX(), getY());
     }
 
     public void setLocation(final int x, final int y) {
@@ -34,8 +33,7 @@ public class Node {
     }
 
     public void setLocation(final Point location) {
-        x = location.x;
-        y = location.y;
+        setLocation(location.x, location.y);
     }
 
     @Override

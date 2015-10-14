@@ -87,8 +87,6 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     public void setLocation(final Point location) {
         this.location = location;
         fireLocationEvent();
-        ;
-
     }
 
     @Override

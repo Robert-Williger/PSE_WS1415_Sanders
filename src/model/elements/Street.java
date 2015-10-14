@@ -24,12 +24,12 @@ public class Street extends Way {
     private void calculateLength() {
         float totalLength = 0f;
         final Iterator<Node> iterator = iterator();
-        Point lastNodeLocation = iterator.next().getLocation();
+        Node lastNode = iterator.next();
 
         while (iterator.hasNext()) {
-            final Point currentNodeLocation = iterator.next().getLocation();
-            totalLength += currentNodeLocation.distance(lastNodeLocation);
-            lastNodeLocation = currentNodeLocation;
+            final Node currentNode = iterator.next();
+            totalLength += Point.distance(currentNode.getX(), currentNode.getY(), lastNode.getX(), lastNode.getY());
+            lastNode = currentNode;
         }
 
         length = (int) totalLength;

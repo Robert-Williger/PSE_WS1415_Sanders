@@ -23,6 +23,7 @@ import model.map.IPixelConverter;
 import model.map.ITile;
 import model.map.MapManager;
 import model.map.PixelConverter;
+import model.map.factories.DefaultTileFactory;
 import model.map.factories.ITileFactory;
 import model.map.factories.StorageTileFactory;
 import model.routing.Graph;
@@ -361,6 +362,7 @@ public class Reader implements IReader {
 
                     labels[count] = Label.create(reader.readUTF(), type, x, y);
                 }
+                ++type;
             }
         }
 
@@ -383,18 +385,13 @@ public class Reader implements IReader {
             int currentRows = rows;
             int currentCols = columns;
 
-            final ITileFactory factory = new StorageTileFactory(reader, pois, streets, ways, buildings, areas, labels);
+            final ITileFactory factory = new DefaultTileFactory(reader, pois, streets, ways, buildings, areas, labels);
             for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
 
                 tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
 
                 for (int row = 0; row < currentRows; row++) {
                     for (int column = 0; column < currentCols; column++) {
-
-                        // tile = new Tile(zoom, row, column, tileWays,
-                        // tileStreets, tileAreas, tileBuildings,
-                        // tilePOIs);
-
                         tiles[zoom - minZoomStep][row][column] = factory.createTile(row, column, zoom);
                     }
                 }

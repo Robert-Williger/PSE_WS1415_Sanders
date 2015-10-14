@@ -77,8 +77,8 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int maxY = Integer.MIN_VALUE;
 
         for (final IRoutePoint routePoint : pointList) {
-            final int x = routePoint.getStreetNode().getLocation().x;
-            final int y = routePoint.getStreetNode().getLocation().y;
+            final int x = routePoint.getStreetNode().getX();
+            final int y = routePoint.getStreetNode().getY();
             minX = Math.min(minX, x);
             maxX = Math.max(maxX, x);
 

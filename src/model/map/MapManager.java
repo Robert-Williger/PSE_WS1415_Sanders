@@ -122,7 +122,8 @@ public class MapManager implements IMapManager {
             if (tileDistance < nodeDistance) {
                 final StreetNode node = tiles[i].getStreetNode(coordinate);
                 if (node != null) {
-                    final int distance = (int) node.getLocation().distance(coordinate);
+                    final int distance = (int) Point.distance(node.getX(), node.getY(), coordinate.getX(),
+                            coordinate.getY());
                     if (distance < nodeDistance) {
                         nodeDistance = distance;
                         streetNode = node;
@@ -163,14 +164,14 @@ public class MapManager implements IMapManager {
         DistancedBuilding ret = null;
 
         final String streetName = streetNode.getStreet().getName();
-        final Point nodeLocation = streetNode.getLocation();
 
         for (final Iterator<Building> buildingIt = tile.getBuildings(); buildingIt.hasNext();) {
             final Building building = buildingIt.next();
             final StreetNode buildingNode = building.getStreetNode();
             if (buildingNode != null && buildingNode.getStreet().getName().equals(streetName)) {
                 for (final Node node : building) {
-                    final int distance = (int) nodeLocation.distance(node.getLocation());
+                    final int distance = (int) Point.distance(streetNode.getX(), streetNode.getY(), node.getX(),
+                            node.getY());
                     if (distance < minDistance) {
                         ret = new DistancedBuilding(building, distance);
                         minDistance = distance;

@@ -101,11 +101,11 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
             final Label label = iterator.next();
 
             if (styles[label.getType()] != null && styles[label.getType()].draw(g, zoom)) {
+                // TODO avoid object generation
                 final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
                 final int width = fontMetrics.stringWidth(label.getName());
                 final int height = fontMetrics.getHeight();
 
-                // TODO handling y coord wrong at the moment
                 g.drawString(
                         label.getName(),
                         converter.getPixelDistance(label.getX() - tileLocation.x, tile.getZoomStep()) - width / 2,

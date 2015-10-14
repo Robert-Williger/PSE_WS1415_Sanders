@@ -46,7 +46,7 @@ public abstract class AbstractTile implements ITile {
     public final StreetNode getStreetNode(final Point coordinate) {
         StreetNode ret = null;
 
-        int minDist = Integer.MAX_VALUE;
+        long minDistSq = Long.MAX_VALUE;
 
         for (final Iterator<Street> streetIt = getStreets(); streetIt.hasNext();) {
             final Street street = streetIt.next();
@@ -55,16 +55,16 @@ public abstract class AbstractTile implements ITile {
             float totalLength = 0;
             final int maxLength = street.getLength();
 
-            Point lastPoint = nodeIt.next().getLocation();
+            Node lastNode = nodeIt.next();
             while (nodeIt.hasNext()) {
-                final Point currentPoint = nodeIt.next().getLocation();
+                final Node currentNode = nodeIt.next();
 
-                if (!currentPoint.equals(lastPoint)) {
-                    final long dx = currentPoint.x - lastPoint.x;
-                    final long dy = currentPoint.y - lastPoint.y;
+                if (!currentNode.equals(lastNode)) {
+                    final long dx = currentNode.getX() - lastNode.getX();
+                    final long dy = currentNode.getY() - lastNode.getY();
                     final long square = (dx * dx + dy * dy);
                     final float length = (float) Math.sqrt(square);
-                    double s = ((coordinate.x - lastPoint.x) * dx + (coordinate.y - lastPoint.y) * dy)
+                    double s = ((coordinate.x - lastNode.getY()) * dx + (coordinate.y - lastNode.getY()) * dy)
                             / (double) square;
 
                     if (s < 0) {
@@ -73,18 +73,18 @@ public abstract class AbstractTile implements ITile {
                         s = 1;
                     }
 
-                    final double distX = lastPoint.x + s * dx - coordinate.x;
-                    final double distY = lastPoint.y + s * dy - coordinate.y;
-                    final int distance = (int) Math.sqrt(distX * distX + distY * distY);
+                    final double distX = lastNode.getX() + s * dx - coordinate.x;
+                    final double distY = lastNode.getY() + s * dy - coordinate.y;
+                    final long distanceSq = (long) (distX * distX + distY * distY);
 
-                    if (distance < minDist) {
+                    if (distanceSq < minDistSq) {
                         ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
-                        minDist = distance;
+                        minDistSq = distanceSq;
                     }
 
                     totalLength += length;
                 }
-                lastPoint = currentPoint;
+                lastNode = currentNode;
             }
         }
 
