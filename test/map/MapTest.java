@@ -6,11 +6,13 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+import model.map.DefaultTileSource;
 import model.map.IMap;
 import model.map.IMapManager;
 import model.map.ITile;
 import model.map.Map;
 import model.map.MapManager;
+import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Tile;
 
@@ -34,7 +36,8 @@ public class MapTest {
             }
         }
 
-        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(8), 0);
+        manager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(8),
+                new MapState(2048, 2048, 0, 2), new Dimension(256, 256));
         map = new Map(manager);
     }
 

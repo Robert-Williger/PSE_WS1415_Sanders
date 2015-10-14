@@ -13,11 +13,11 @@ public class MapState implements IMapState {
     private final int height;
     private final int width;
 
-    public MapState(final Dimension coordSize, final int maxZoomStep, final int minZoomStep) {
+    public MapState(final int width, final int height, final int minZoomStep, final int maxZoomStep) {
         this.minZoomStep = minZoomStep;
         this.maxZoomStep = maxZoomStep;
-        height = coordSize.height;
-        width = coordSize.width;
+        this.height = height;
+        this.width = width;
 
         bounds = new Rectangle();
         zoomStep = minZoomStep;

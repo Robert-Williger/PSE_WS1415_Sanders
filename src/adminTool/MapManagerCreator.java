@@ -62,7 +62,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private Collection<ReferencedRectangle> referencedLabels;
     private Collection<ReferencedPoint> referencedPOIs;
 
-    private Rectangle boundingBox;
+    private Rectangle bounds;
 
     private int minZoomStep;
     private int maxZoomStep;
@@ -89,7 +89,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         super(file);
 
         this.buildings = buildings;
-        this.boundingBox = boundingBox;
+        this.bounds = boundingBox;
 
         poiSorter = new TypeSorter<POI>(pois);
         waySorter = new TypeSorter<Way>(ways);
@@ -100,8 +100,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     @Override
     public void create() {
-        final int zoomOffset = (int) Math.ceil(log2(Math.min(boundingBox.getWidth(), boundingBox.getHeight())
-                / MIN_TILES));
+        final int zoomOffset = (int) Math.ceil(log2(Math.min(bounds.getWidth(), bounds.getHeight()) / MIN_TILES));
         final int topTileLength = (1 << zoomOffset);
         minZoomStep = 29 - zoomOffset;
         final int conversionFactor = 1 << 21;
@@ -109,10 +108,9 @@ public class MapManagerCreator extends AbstractMapCreator {
         maxZoomStep = Math.min(19, minZoomStep + MAX_ZOOM_STEPS - 1);
         coordTileLength = topTileLength >> (maxZoomStep - minZoomStep);
 
-        final int xTiles = (int) Math.ceil(boundingBox.getWidth() / coordTileLength);
-        final int yTiles = (int) Math.ceil(boundingBox.getHeight() / coordTileLength);
+        final int xTiles = (int) Math.ceil(bounds.getWidth() / coordTileLength);
+        final int yTiles = (int) Math.ceil(bounds.getHeight() / coordTileLength);
 
-        boundingBox = null;
         converter = new PixelConverter(conversionFactor);
 
         try {
@@ -955,10 +953,11 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeHeader() throws IOException {
+            writeCompressedInt(bounds.width);
+            writeCompressedInt(bounds.height);
             writeCompressedInt(minZoomStep);
             writeCompressedInt(maxZoomStep);
             writeCompressedInt(tiles.length);
-            writeCompressedInt(tiles[0].length);
             stream.writeDouble(converter.getCoordDistance(1, 0));
             writeCompressedInt(TILE_LENGTH);
             writeCompressedInt(TILE_LENGTH);
@@ -1189,9 +1188,22 @@ public class MapManagerCreator extends AbstractMapCreator {
         }
 
         private void writeTiles() throws IOException {
-            for (final ReferencedTile[] tile2 : tiles) {
-                for (int column = 0; column < tiles[0].length; column++) {
-                    final ReferencedTile tile = tile2[column];
+            for (final ReferencedTile[] tileArray : tiles) {
+                int leftOffset = 0;
+                while (tileArray[leftOffset].getFlags() == 0 && leftOffset < tileArray.length) {
+                    ++leftOffset;
+                }
+                int rightOffset = tileArray.length - 1;
+                if (leftOffset != tileArray.length) {
+                    while (tileArray[rightOffset].getFlags() == 0) {
+                        --rightOffset;
+                    }
+                }
+                writeCompressedInt(leftOffset);
+                writeCompressedInt(rightOffset - leftOffset + 1);
+
+                for (int column = leftOffset; column <= rightOffset; column++) {
+                    final ReferencedTile tile = tileArray[column];
 
                     final byte flags = tile.getFlags();
                     stream.write(tile.getFlags());

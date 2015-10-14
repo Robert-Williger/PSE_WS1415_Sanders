@@ -16,10 +16,12 @@ import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.Way;
 import model.map.AddressNode;
+import model.map.DefaultTileSource;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
 import model.map.ITile;
 import model.map.MapManager;
+import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Tile;
 
@@ -86,8 +88,10 @@ public class MapManagerTest {
                 }
             }
         }
+
         converter = new PixelConverter(2);
-        manager = new MapManager(tiles, new Dimension(256, 256), converter, 0);// mmReader.readMapManager(reader);
+        manager = new MapManager(new DefaultTileSource(tiles, 0), converter, new MapState(2048, 2048, 0, 2),
+                new Dimension(256, 256));
     }
 
     @Test

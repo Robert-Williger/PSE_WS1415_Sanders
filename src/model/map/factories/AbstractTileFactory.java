@@ -36,11 +36,22 @@ public abstract class AbstractTileFactory implements ITileFactory {
     }
 
     protected <T> void fillElements(final T[] source, final T[] destination) throws IOException {
-        int last = 0;
+        int id = 0;
         for (int i = 0; i < destination.length; i++) {
-            int current = reader.readCompressedInt() + last;
-            destination[i] = source[current];
-            last = current;
+            id += reader.readCompressedInt();
+            destination[i] = source[id];
         }
+    }
+
+    protected int[] readIntArray() throws IOException {
+        final int[] ret = new int[reader.readCompressedInt()];
+
+        int id = 0;
+        for (int i = 0; i < ret.length; i++) {
+            id += reader.readCompressedInt();
+            ret[i] = id;
+        }
+
+        return ret;
     }
 }

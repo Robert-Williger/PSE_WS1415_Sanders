@@ -13,27 +13,20 @@ public class MapManager implements IMapManager {
 
     private final IPixelConverter converter;
     private final IMapState state;
-    private final ITile[][][] tiles;
     private final Dimension tileSize;
-    private final ITile emptyTile;
+    private final ITileSource source;
 
     public MapManager() {
-        this(new ITile[1][1][0], new Dimension(256, 256), new PixelConverter(1), 0);
+        this(new OffsetTileSource(new Tile[1][1][], new int[1][1], 1), new PixelConverter(1), new MapState(0, 0, 0, 0),
+                new Dimension(256, 256));
     }
 
-    public MapManager(final ITile[][][] tiles, final Dimension tileSize, final IPixelConverter converter,
-            final int minZoomStep) {
+    public MapManager(final ITileSource source, final IPixelConverter converter, final IMapState state,
+            final Dimension tileSize) {
         this.converter = converter;
         this.tileSize = tileSize;
-        this.tiles = tiles;
-        emptyTile = new Tile();
-
-        final int maxZoomStep = tiles.length - 1 + minZoomStep;
-        final ITile[][] lowestZoomedLevel = tiles[tiles.length - 1];
-        final int width = converter.getCoordDistance(tileSize.width, maxZoomStep) * lowestZoomedLevel[0].length;
-        final int height = converter.getCoordDistance(tileSize.height, maxZoomStep) * lowestZoomedLevel.length;
-
-        state = new MapState(new Dimension(width, height), maxZoomStep, minZoomStep);
+        this.source = source;
+        this.state = state;
     }
 
     @Override
@@ -55,16 +48,7 @@ public class MapManager implements IMapManager {
 
     @Override
     public ITile getTile(final int row, final int column, final int zoomStep) {
-        if (zoomStep >= state.getMinZoomStep() && zoomStep <= state.getMaxZoomStep()) {
-            int zoom = zoomStep - state.getMinZoomStep();
-            if (row >= 0 && row < tiles[zoom].length) {
-                if (column >= 0 && column < tiles[zoom][row].length) {
-                    return tiles[zoom][row][column];
-                }
-            }
-        }
-
-        return emptyTile;
+        return source.getTile(row, column, zoomStep);
     }
 
     @Override

@@ -18,12 +18,16 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.Way;
+import model.map.AddressNode;
 import model.map.IMapManager;
+import model.map.IMapState;
 import model.map.IPixelConverter;
 import model.map.ITile;
+import model.map.ITileSource;
 import model.map.MapManager;
+import model.map.MapState;
+import model.map.OffsetTileSource;
 import model.map.PixelConverter;
-import model.map.factories.DefaultTileFactory;
 import model.map.factories.ITileFactory;
 import model.map.factories.StorageTileFactory;
 import model.routing.Graph;
@@ -55,7 +59,7 @@ public class Reader implements IReader {
             reader = new CompressedInputStream(new BufferedInputStream(new ProgressableInputStream(file)));
             graph = readGraph();
             manager = managerReader.readMapManager();
-            readIndex(managerReader.getStreets());
+            readIndex(managerReader.streets, managerReader.labels);
             managerReader.cleanUp();
         } catch (final Exception e) {
             managerReader = null;
@@ -68,6 +72,8 @@ public class Reader implements IReader {
                 reader.close();
             } catch (final IOException e1) {
             }
+
+            e.printStackTrace();
 
             return false;
         }
@@ -141,6 +147,7 @@ public class Reader implements IReader {
      */
     private IGraph readGraph() throws IOException {
         fireStepCommenced("Lade Graph...");
+
         final int nodeCount = reader.readCompressedInt();
         final int edgeCount = reader.readCompressedInt();
 
@@ -158,7 +165,9 @@ public class Reader implements IReader {
         return new Graph(nodeCount, edges, weights);
     }
 
-    private void readIndex(final Street[] streets) throws IOException {
+    private void readIndex(final Street[] streets, final Label[] labels) throws IOException {
+        fireStepCommenced("Lade Index...");
+
         String[] cities = new String[reader.readCompressedInt()];
 
         for (int i = 0; i < cities.length; i++) {
@@ -193,6 +202,15 @@ public class Reader implements IReader {
             }
         }
 
+        // TODO reactivate or save in file
+        // for (final Label label : labels) {
+        // final AddressNode addressNode =
+        // manager.getAddressNode(label.getLocation());
+        // if (addressNode != null) {
+        // nodeMap.put(label.getName(), addressNode.getStreetNode());
+        // }
+        // }
+
         tp = new TextProcessor(nodeMap, cityMap, 5);
     }
 
@@ -205,18 +223,18 @@ public class Reader implements IReader {
         private Area[] areas;
         private Label[] labels;
         private ITile[][][] tiles;
+        private int[][] offsets;
         private String[] names;
         private String[] numbers;
+        private ITileSource source;
 
         private Node[][] origWays;
         private Node[][] origAreas;
 
-        private int minZoomStep;
-        private int maxZoomStep;
         private int rows;
-        private int columns;
 
         private IPixelConverter converter;
+        private IMapState state;
         private Dimension tileSize;
 
         public IMapManager readMapManager() throws IOException {
@@ -224,19 +242,23 @@ public class Reader implements IReader {
             readElements();
             readTiles();
 
-            return new MapManager(tiles, tileSize, converter, minZoomStep);
-        }
-
-        public Street[] getStreets() {
-            return streets;
+            return new MapManager(source, converter, state, tileSize);
         }
 
         private void readHeader() throws IOException {
-            minZoomStep = reader.readCompressedInt();
-            maxZoomStep = reader.readCompressedInt();
+            final int width = reader.readCompressedInt();
+            final int height = reader.readCompressedInt();
+            final int minZoomStep = reader.readCompressedInt();
+            final int maxZoomStep = reader.readCompressedInt();
+
+            final int zoomSteps = maxZoomStep - minZoomStep + 1;
+            state = new MapState(width, height, minZoomStep, maxZoomStep);
+
             rows = reader.readCompressedInt();
-            columns = reader.readCompressedInt();
-            tiles = new ITile[maxZoomStep - minZoomStep + 1][][];
+
+            tiles = new ITile[zoomSteps][][];
+            offsets = new int[zoomSteps][];
+
             converter = new PixelConverter(reader.readDouble());
             tileSize = new Dimension(reader.readCompressedInt(), reader.readCompressedInt());
         }
@@ -383,26 +405,37 @@ public class Reader implements IReader {
             // final TileFactory factory = new TileFactory();
 
             int currentRows = rows;
-            int currentCols = columns;
 
-            final ITileFactory factory = new DefaultTileFactory(reader, pois, streets, ways, buildings, areas, labels);
-            for (int zoom = maxZoomStep; zoom >= minZoomStep; zoom--) {
+            final ITileFactory factory = new StorageTileFactory(reader, pois, streets, ways, buildings, areas, labels);
 
-                tiles[zoom - minZoomStep] = new ITile[currentRows][currentCols];
+            for (int zoom = state.getMaxZoomStep(); zoom >= state.getMinZoomStep(); zoom--) {
+                final int relativeZoom = zoom - state.getMinZoomStep();
+
+                tiles[relativeZoom] = new ITile[currentRows][];
+                final int[] currentOffsets = new int[currentRows];
+                offsets[relativeZoom] = currentOffsets;
 
                 for (int row = 0; row < currentRows; row++) {
-                    for (int column = 0; column < currentCols; column++) {
-                        tiles[zoom - minZoomStep][row][column] = factory.createTile(row, column, zoom);
+                    final int offset = reader.readCompressedInt();
+                    currentOffsets[row] = offset;
+
+                    final int columns = reader.readCompressedInt();
+
+                    tiles[relativeZoom][row] = new ITile[columns];
+
+                    for (int column = 0; column < columns; column++) {
+                        tiles[relativeZoom][row][column] = factory.createTile(row, column + offset, zoom);
                     }
                 }
 
                 currentRows = (currentRows + 1) / 2;
-                currentCols = (currentCols + 1) / 2;
 
-                if (zoom != minZoomStep) {
+                if (zoom != state.getMinZoomStep()) {
                     readSimplifications();
                 }
             }
+
+            source = new OffsetTileSource(tiles, offsets, state.getMinZoomStep());
         }
 
         private void readSimplifications() throws IOException {

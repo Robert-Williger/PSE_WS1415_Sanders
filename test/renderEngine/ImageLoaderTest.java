@@ -17,8 +17,10 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.Way;
+import model.map.DefaultTileSource;
 import model.map.IMapManager;
 import model.map.MapManager;
+import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.IImageAccessor;
@@ -89,7 +91,8 @@ public class ImageLoaderTest {
             }
         }
 
-        mapManager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1), 0);
+        mapManager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(1), new MapState(2048, 2048, 0,
+                2), new Dimension(256, 256));
         mapManager.getMapState().setSize(10, 10);
         loader = new ImageLoader(mapManager);
     }

@@ -10,10 +10,12 @@ import java.awt.Image;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import model.map.DefaultTileSource;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
 import model.map.ITile;
 import model.map.MapManager;
+import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.IImageFetcher;
@@ -89,7 +91,8 @@ public class ImageAccessorTest {
             }
         }
 
-        manager = new MapManager(tiles, new Dimension(256, 256), new PixelConverter(1), 0);
+        manager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(1),
+                new MapState(2048, 2048, 0, 2), new Dimension(256, 256));
     }
 
     private boolean changed;
