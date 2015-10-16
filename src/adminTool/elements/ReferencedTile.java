@@ -1,4 +1,4 @@
-package adminTool;
+package adminTool.elements;
 
 import java.util.Collection;
 import java.util.HashSet;

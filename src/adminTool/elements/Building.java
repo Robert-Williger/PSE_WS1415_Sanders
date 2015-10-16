@@ -1,22 +1,21 @@
-package model.elements;
+package adminTool.elements;
 
 public abstract class Building extends Area {
 
-    public static Building create(final int[] xPoints, final int[] yPoints) {
-        return new EmptyBuilding(xPoints, yPoints);
+    public static Building create(final Node[] nodes) {
+        return new EmptyBuilding(nodes);
     }
 
-    public static Building create(final int[] xPoints, final int[] yPoints, final String street, final String number) {
-        return new NamedBuilding(xPoints, yPoints, street, number);
+    public static Building create(final Node[] nodes, final String street, final String number) {
+        return new NamedBuilding(nodes, street, number);
     }
 
-    public static Building create(final int[] xPoints, final int[] yPoints, final StreetNode node,
-            final String houseNumber) {
-        return new StreetNodeBuilding(xPoints, yPoints, node, houseNumber);
+    public static Building create(final Node[] nodes, final StreetNode node, final String houseNumber) {
+        return new StreetNodeBuilding(nodes, node, houseNumber);
     }
 
-    protected Building(final int[] xPoints, final int[] yPoints) {
-        super(xPoints, yPoints, 0);
+    protected Building(final Node[] nodes) {
+        super(nodes, 0);
     }
 
     public abstract String getAddress();
@@ -29,8 +28,8 @@ public abstract class Building extends Area {
 
     private static class EmptyBuilding extends Building {
 
-        public EmptyBuilding(final int[] xPoints, final int[] yPoints) {
-            super(xPoints, yPoints);
+        public EmptyBuilding(final Node[] nodes) {
+            super(nodes);
         }
 
         public String getStreet() {
@@ -55,8 +54,8 @@ public abstract class Building extends Area {
         private final String street;
         private final String number;
 
-        public NamedBuilding(final int[] xPoints, final int[] yPoints, final String street, final String number) {
-            super(xPoints, yPoints);
+        public NamedBuilding(final Node[] nodes, final String street, final String number) {
+            super(nodes);
             this.street = street;
             this.number = number;
         }
@@ -87,9 +86,8 @@ public abstract class Building extends Area {
         private final StreetNode node;
         private final String houseNumber;
 
-        public StreetNodeBuilding(final int[] xPoints, final int[] yPoints, final StreetNode node,
-                final String houseNumber) {
-            super(xPoints, yPoints);
+        public StreetNodeBuilding(final Node[] nodes, final StreetNode node, final String houseNumber) {
+            super(nodes);
             this.node = node;
             this.houseNumber = houseNumber;
         }

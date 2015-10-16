@@ -1,6 +1,6 @@
-package model.elements;
+package adminTool.elements;
 
-public abstract class Label extends Node {
+public abstract class Label extends Node implements Typeable {
 
     private String name;
     private int type;
@@ -12,6 +12,7 @@ public abstract class Label extends Node {
         this.type = type;
     }
 
+    @Override
     public int getType() {
         return type;
     }

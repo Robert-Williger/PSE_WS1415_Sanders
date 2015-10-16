@@ -4,7 +4,6 @@ import java.awt.Point;
 import java.util.Iterator;
 
 import model.elements.Building;
-import model.elements.Node;
 import model.elements.Street;
 import model.elements.StreetNode;
 
@@ -51,21 +50,25 @@ public abstract class AbstractTile implements ITile {
         for (final Iterator<Street> streetIt = getStreets(); streetIt.hasNext();) {
             final Street street = streetIt.next();
 
-            final Iterator<Node> nodeIt = street.iterator();
             float totalLength = 0;
             final int maxLength = street.getLength();
 
-            Node lastNode = nodeIt.next();
-            while (nodeIt.hasNext()) {
-                final Node currentNode = nodeIt.next();
+            final int[] xPoints = street.getXPoints();
+            final int[] yPoints = street.getYPoints();
 
-                if (!currentNode.equals(lastNode)) {
-                    final long dx = currentNode.getX() - lastNode.getX();
-                    final long dy = currentNode.getY() - lastNode.getY();
+            int lastX = xPoints[0];
+            int lastY = yPoints[0];
+
+            for (int i = 1; i < street.size(); i++) {
+                int currentX = xPoints[i];
+                int currentY = yPoints[i];
+
+                if (currentX != lastX || currentY != lastY) {
+                    final long dx = currentX - lastX;
+                    final long dy = currentY - lastY;
                     final long square = (dx * dx + dy * dy);
                     final float length = (float) Math.sqrt(square);
-                    double s = ((coordinate.x - lastNode.getY()) * dx + (coordinate.y - lastNode.getY()) * dy)
-                            / (double) square;
+                    double s = ((coordinate.x - lastX) * dx + (coordinate.y - lastY) * dy) / (double) square;
 
                     if (s < 0) {
                         s = 0;
@@ -73,8 +76,8 @@ public abstract class AbstractTile implements ITile {
                         s = 1;
                     }
 
-                    final double distX = lastNode.getX() + s * dx - coordinate.x;
-                    final double distY = lastNode.getY() + s * dy - coordinate.y;
+                    final double distX = lastX + s * dx - coordinate.x;
+                    final double distY = lastY + s * dy - coordinate.y;
                     final long distanceSq = (long) (distX * distX + distY * distY);
 
                     if (distanceSq < minDistSq) {
@@ -84,7 +87,8 @@ public abstract class AbstractTile implements ITile {
 
                     totalLength += length;
                 }
-                lastNode = currentNode;
+                lastX = currentX;
+                lastY = currentY;
             }
         }
 

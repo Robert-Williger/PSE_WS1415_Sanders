@@ -13,8 +13,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import model.elements.Node;
-import model.elements.Street;
+import adminTool.elements.Boundary;
+import adminTool.elements.Node;
+import adminTool.elements.Street;
 
 public class IndexCreator extends AbstractMapCreator {
 

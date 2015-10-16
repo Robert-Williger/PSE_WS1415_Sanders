@@ -1,9 +1,9 @@
-package adminTool;
+package adminTool.elements;
 
 import java.awt.Point;
 import java.awt.Polygon;
 
-import model.elements.Node;
+import adminTool.elements.Node;
 
 public class Boundary {
 

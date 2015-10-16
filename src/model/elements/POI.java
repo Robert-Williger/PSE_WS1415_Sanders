@@ -2,7 +2,7 @@ package model.elements;
 
 import java.awt.Point;
 
-public class POI extends Node implements Typeable {
+public class POI extends Node {
 
     private final int type;
 

@@ -1,20 +1,18 @@
-package model.elements;
+package adminTool.elements;
 
-import java.awt.Polygon;
+import java.awt.Point;
 
-public class Area extends MultiElement {
+public class POI extends Node implements Typeable {
 
     private final int type;
 
-    public Area(final int[] xPoints, final int[] yPoints, final int type) {
-        super(xPoints, yPoints);
-
-        this.type = type;
+    public POI(final Point location, final int type) {
+        this(location.x, location.y, type);
     }
 
-    //TODO store me?
-    public Polygon getPolygon() {
-        return new Polygon(xPoints, yPoints, size());
+    public POI(final int x, final int y, final int type) {
+        super(x, y);
+        this.type = type;
     }
 
     public int getType() {
@@ -30,7 +28,7 @@ public class Area extends MultiElement {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
@@ -40,7 +38,7 @@ public class Area extends MultiElement {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Area other = (Area) obj;
+        final POI other = (POI) obj;
         if (type != other.type) {
             return false;
         }

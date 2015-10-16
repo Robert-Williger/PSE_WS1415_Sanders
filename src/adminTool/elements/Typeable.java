@@ -1,4 +1,4 @@
-package model.elements;
+package adminTool.elements;
 
 public interface Typeable {
 

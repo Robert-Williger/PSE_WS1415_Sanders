@@ -1,6 +1,7 @@
-package model.elements;
+package adminTool.elements;
 
 import java.awt.Point;
+import java.util.Iterator;
 
 public class StreetNode extends Node {
 
@@ -29,37 +30,32 @@ public class StreetNode extends Node {
 
     private void calculateLocation() {
 
-        final int[] xPoints = street.getXPoints();
-        final int[] yPoints = street.getYPoints();
-
         final float totalLength = street.getLength();
-        final float maxLength = totalLength * offset;
-
-        int lastX = xPoints[0];
-        int lastY = yPoints[0];
+        final Iterator<Node> iterator = street.iterator();
+        Node lastNode = iterator.next();
         float currentOffsetLength = 0f;
 
-        for (int i = 1; i < xPoints.length; i++) {
-            final int currentX = xPoints[i];
-            final int currentY = yPoints[i];
-            final double distance = Point.distance(lastX, lastY, currentX, currentY);
+        while (iterator.hasNext()) {
+            final Node currentNode = iterator.next();
+            final double distance = Point.distance(currentNode.getX(), currentNode.getY(), lastNode.getX(),
+                    lastNode.getY());
 
-            if (currentOffsetLength + distance > maxLength || i == xPoints.length - 1) {
-                final int xDistance = currentX - lastX;
-                final int yDistance = currentY - lastY;
+            if (currentOffsetLength + distance > totalLength * offset || !iterator.hasNext()) {
+                final int xDistance = currentNode.getX() - lastNode.getX();
+                final int yDistance = currentNode.getY() - lastNode.getY();
 
-                final float partOffsetLength = maxLength - currentOffsetLength;
+                final float partOffsetLength = totalLength * offset - currentOffsetLength;
                 final float partOffset = (float) (partOffsetLength / distance);
-                setLocation((int) (lastX + xDistance * partOffset + 0.49f),
-                        (int) (lastY + yDistance * partOffset + 0.49f));
+                setLocation((int) (lastNode.getX() + xDistance * partOffset + 0.49f), (int) (lastNode.getY()
+                        + yDistance * partOffset + 0.49f));
 
                 return;
             }
 
             currentOffsetLength += distance;
-            lastX = currentX;
-            lastY = currentY;
+            lastNode = currentNode;
         }
+
     }
 
     @Override

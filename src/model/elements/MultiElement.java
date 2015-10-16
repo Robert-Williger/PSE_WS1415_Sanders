@@ -1,41 +1,39 @@
 package model.elements;
 
-import java.util.Iterator;
+public class MultiElement {
 
-import util.Arrays;
+    // TODO store in one array
+    protected final int[] xPoints;
+    protected final int[] yPoints;
 
-public class MultiElement implements Iterable<Node> {
-
-    protected final Node[] nodes;
-
-    public MultiElement(final Node[] nodes) {
-        this.nodes = nodes;
-    }
-
-    @Override
-    public Iterator<Node> iterator() {
-        return Arrays.iterator(nodes);
+    public MultiElement(final int[] xPoints, final int[] yPoints) {
+        this.xPoints = xPoints;
+        this.yPoints = yPoints;
     }
 
     public int size() {
-        return nodes.length;
+        return xPoints.length;
     }
 
-    // TODO remove this ?
-    public Node[] getNodes() {
-        return nodes;
+    public int[] getXPoints() {
+        return xPoints;
+    }
+
+    public int[] getYPoints() {
+        return yPoints;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((nodes == null) ? 0 : java.util.Arrays.hashCode(nodes));
+        result = prime * result + java.util.Arrays.hashCode(xPoints);
+        result = prime * result + java.util.Arrays.hashCode(yPoints);
         return result;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
@@ -45,15 +43,13 @@ public class MultiElement implements Iterable<Node> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final MultiElement other = (MultiElement) obj;
-        if (nodes == null) {
-            if (other.nodes != null) {
-                return false;
-            }
-        } else if (!java.util.Arrays.equals(nodes, other.nodes)) {
+        MultiElement other = (MultiElement) obj;
+        if (!java.util.Arrays.equals(xPoints, other.xPoints)) {
+            return false;
+        }
+        if (!java.util.Arrays.equals(yPoints, other.yPoints)) {
             return false;
         }
         return true;
     }
-
 }

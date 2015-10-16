@@ -73,14 +73,12 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     public void setIndex(final int index) {
         this.index = index;
         fireIndexEvent();
-        ;
     }
 
     @Override
     public void setState(final PointState state) {
         this.state = state;
         fireStateEvent();
-        ;
     }
 
     @Override

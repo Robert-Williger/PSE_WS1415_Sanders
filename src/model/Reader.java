@@ -13,7 +13,7 @@ import java.util.List;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Label;
-import model.elements.Node;
+import model.elements.MultiElement;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
@@ -202,20 +202,19 @@ public class Reader implements IReader {
             }
         }
 
-        // TODO reactivate or save in file
-        // for (final Label label : labels) {
-        // final AddressNode addressNode =
-        // manager.getAddressNode(label.getLocation());
-        // if (addressNode != null) {
-        // nodeMap.put(label.getName(), addressNode.getStreetNode());
-        // }
-        // }
+        for (final Label label : labels) {
+            final AddressNode addressNode = manager.getAddressNode(label.getLocation());
+            if (addressNode != null) {
+                nodeMap.put(label.getName(), addressNode.getStreetNode());
+            }
+        }
 
         tp = new TextProcessor(nodeMap, cityMap, 5);
     }
 
     private class MapManagerReader {
-        private Node[] nodes;
+        private int[] xPoints;
+        private int[] yPoints;
         private POI[] pois;
         private Street[] streets;
         private Way[] ways;
@@ -227,9 +226,6 @@ public class Reader implements IReader {
         private String[] names;
         private String[] numbers;
         private ITileSource source;
-
-        private Node[][] origWays;
-        private Node[][] origAreas;
 
         private int rows;
 
@@ -267,9 +263,12 @@ public class Reader implements IReader {
             fireStepCommenced("Lade Nodes...");
 
             int count = 0;
-            nodes = new Node[reader.readCompressedInt()];
-            for (count = 0; count < nodes.length; count++) {
-                nodes[count] = new Node(reader.readCompressedInt(), reader.readCompressedInt());
+            // nodes = new Node[reader.readCompressedInt()];
+            xPoints = new int[reader.readCompressedInt()];
+            yPoints = new int[xPoints.length];
+            for (count = 0; count < xPoints.length; count++) {
+                xPoints[count] = reader.readCompressedInt();
+                yPoints[count] = reader.readCompressedInt();
             }
 
             fireStepCommenced("Lade Adressen...");
@@ -296,9 +295,11 @@ public class Reader implements IReader {
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    long node1 = reader.readCompressedInt();
-                    long id = (node1 << 32) | (node1 + reader.readCompressedInt());
-                    streets[count] = new Street(readNodeArray(), type, names[reader.readCompressedInt()], id);
+                    final long node1 = reader.readCompressedInt();
+                    final long id = (node1 << 32) | (node1 + reader.readCompressedInt());
+
+                    final int[][] points = readPoints();
+                    streets[count] = new Street(points[0], points[1], type, names[reader.readCompressedInt()], id);
                 }
                 ++type;
             }
@@ -309,13 +310,13 @@ public class Reader implements IReader {
             type = 0;
             distribution = readIntArray(reader.readCompressedInt());
             ways = new Way[distribution[distribution.length - 1]];
-            origWays = new Node[ways.length][];
 
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    ways[count] = new Way(readNodeArray(), type, names[reader.readCompressedInt()]);
-                    origWays[count] = ways[count].getNodes();
+                    final int[][] points = readPoints();
+
+                    ways[count] = new Way(points[0], points[1], type, names[reader.readCompressedInt()]);
                 }
                 ++type;
             }
@@ -326,13 +327,13 @@ public class Reader implements IReader {
             type = 0;
             distribution = readIntArray(reader.readCompressedInt());
             areas = new Area[distribution[distribution.length - 1]];
-            origAreas = new Node[areas.length][];
 
             for (int i = 0; i < distribution.length; i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
-                    areas[count] = new Area(readNodeArray(), type);
-                    origAreas[count] = areas[count].getNodes();
+                    final int[][] points = readPoints();
+
+                    areas[count] = new Area(points[0], points[1], type);
                 }
 
                 ++type;
@@ -353,20 +354,22 @@ public class Reader implements IReader {
                 ++type;
             }
 
-            // TODO implement me
-
             fireStepCommenced("Lade Gebäude...");
+
             buildings = new Building[reader.readCompressedInt()];
             final int streetNodes = reader.readCompressedInt();
 
             for (count = 0; count < streetNodes; count++) {
-                buildings[count] = Building.create(readNodeArray(),
-                        new StreetNode(reader.readFloat(), streets[reader.readCompressedInt()]),
-                        numbers[reader.readCompressedInt()]);
+                final int[][] points = readPoints();
+
+                buildings[count] = Building.create(points[0], points[1], new StreetNode(reader.readFloat(),
+                        streets[reader.readCompressedInt()]), numbers[reader.readCompressedInt()]);
             }
 
             for (; count < buildings.length; count++) {
-                buildings[count] = Building.create(readNodeArray());
+                final int[][] points = readPoints();
+
+                buildings[count] = Building.create(points[0], points[1]);
             }
 
             fireStepCommenced("Lade Labels...");
@@ -388,21 +391,21 @@ public class Reader implements IReader {
             }
         }
 
-        private Node[] readNodeArray() throws IOException {
-            final Node[] n = new Node[reader.readCompressedInt()];
+        private int[][] readPoints() throws IOException {
+            final int length = reader.readCompressedInt();
+            final int[][] ret = new int[2][length];
+
             int id = 0;
-            for (int j = 0; j < n.length; j++) {
+            for (int j = 0; j < length; j++) {
                 id += reader.readCompressedInt();
-                n[j] = this.nodes[id];
+                ret[0][j] = xPoints[id];
+                ret[1][j] = yPoints[id];
             }
-            return n;
+            return ret;
         }
 
         private void readTiles() throws IOException {
             fireStepCommenced("Lade Kacheln...");
-
-            // TODO own class with interface ITile createTile()
-            // final TileFactory factory = new TileFactory();
 
             int currentRows = rows;
 
@@ -441,26 +444,33 @@ public class Reader implements IReader {
         private void readSimplifications() throws IOException {
             int size = reader.readCompressedInt();
 
+            // TODO do not create new arrays --> use subarray by inner class or
+            // new class
             for (int i = 0; i < size; i++) {
                 final int area = reader.readCompressedInt();
-                areas[area] = new Area(readSimplifications(origAreas, area), areas[area].getType());
+                final int[][] simplifications = readSimplifications(areas[area]);
+                areas[area] = new Area(simplifications[0], simplifications[1], areas[area].getType());
             }
 
             size = reader.readCompressedInt();
             for (int i = 0; i < size; i++) {
                 final int way = reader.readCompressedInt();
-                ways[way] = new Way(readSimplifications(origWays, way), ways[way].getType(), ways[way].getName());
+                final int[][] simplifications = readSimplifications(ways[way]);
+                ways[way] = new Way(simplifications[0], simplifications[1], ways[way].getType(), ways[way].getName());
             }
         }
 
-        private Node[] readSimplifications(final Node[][] origElements, final int element) throws IOException {
-            final Node[] newNodes = new Node[reader.readCompressedInt()];
-            final Node[] oldNodes = origElements[element];
+        private int[][] readSimplifications(final MultiElement element) throws IOException {
+            final int length = reader.readCompressedInt();
+            final int[][] newNodes = new int[2][length];
+            final int[] oldXNodes = element.getXPoints();
+            final int[] oldYNodes = element.getYPoints();
 
             int index = 0;
-            for (int j = 0; j < newNodes.length; j++) {
+            for (int j = 0; j < length; j++) {
                 index += reader.readCompressedInt();
-                newNodes[j] = oldNodes[index];
+                newNodes[0][j] = oldXNodes[index];
+                newNodes[1][j] = oldYNodes[index];
             }
 
             return newNodes;
@@ -476,13 +486,23 @@ public class Reader implements IReader {
         }
 
         public void cleanUp() {
-            nodes = null;
+            xPoints = null;
+            yPoints = null;
             pois = null;
+            streets = null;
             ways = null;
             buildings = null;
             areas = null;
             names = null;
             numbers = null;
+            labels = null;
+            tiles = null;
+            offsets = null;
+            source = null;
+
+            converter = null;
+            state = null;
+            tileSize = null;
         }
     }
 

@@ -18,7 +18,7 @@ public class OffsetTileSource implements ITileSource {
     @Override
     public ITile getTile(final int row, final int column, final int zoom) {
         final int relativeZoom = zoom - minZoomStep;
-        if (relativeZoom >= 0 && relativeZoom <= tiles.length) {
+        if (relativeZoom >= 0 && relativeZoom < tiles.length) {
             if (row >= 0 && row < tiles[relativeZoom].length) {
                 final int relativeColumn = column - offsets[relativeZoom][row];
                 if (relativeColumn >= 0 && relativeColumn < tiles[relativeZoom][row].length) {

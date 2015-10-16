@@ -1,9 +1,6 @@
-package adminTool;
+package adminTool.elements;
 
 import java.awt.geom.Point2D;
-
-import model.elements.MultiElement;
-import model.elements.Node;
 
 public class UnprocessedStreet extends MultiElement {
 

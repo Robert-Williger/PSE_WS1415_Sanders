@@ -3,6 +3,8 @@ package adminTool;
 import java.io.File;
 import java.util.List;
 
+import adminTool.elements.Boundary;
+
 public class CreateTest {
     public static void main(final String[] args) {
         new CreateTest();

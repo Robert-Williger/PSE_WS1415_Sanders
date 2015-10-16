@@ -27,16 +27,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import util.Arrays;
-import model.elements.Area;
-import model.elements.Building;
-import model.elements.Label;
-import model.elements.MultiElement;
-import model.elements.Node;
-import model.elements.POI;
-import model.elements.Street;
-import model.elements.StreetNode;
-import model.elements.Typeable;
-import model.elements.Way;
+import adminTool.elements.Area;
+import adminTool.elements.Building;
+import adminTool.elements.Label;
+import adminTool.elements.MultiElement;
+import adminTool.elements.Node;
+import adminTool.elements.POI;
+import adminTool.elements.ReferencedPoint;
+import adminTool.elements.ReferencedRectangle;
+import adminTool.elements.ReferencedTile;
+import adminTool.elements.Street;
+import adminTool.elements.StreetNode;
+import adminTool.elements.Typeable;
+import adminTool.elements.Way;
 import model.map.PixelConverter;
 
 public class MapManagerCreator extends AbstractMapCreator {
@@ -75,6 +78,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private TypeSorter<Area> terrainSorter;
     private TypeSorter<Label> labelSorter;
 
+    // TODO make simplifications relative to last simplifications
     private Node[][] areaNodes;
     private int[][] areaSimplifications;
     private Node[][] wayNodes;
@@ -256,10 +260,10 @@ public class MapManagerCreator extends AbstractMapCreator {
             if (areaSimplification != null) {
                 oldLength = areaSimplification.length;
                 if (oldLength != 0) {
-                    simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes, areaSimplification), zoom);
-                    for (int j = 0; j < simplified.length; j++) {
-                        simplified[j] = areaSimplification[simplified[j]];
-                    }
+                    simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes), zoom);
+                    // for (int j = 0; j < simplified.length; j++) {
+                    // simplified[j] = areaSimplification[simplified[j]];
+                    // }
                 } else {
                     simplified = areaSimplification;
                 }
@@ -275,6 +279,11 @@ public class MapManagerCreator extends AbstractMapCreator {
             } else if ((double) simplified.length / oldLength <= AREA_SHRINK_FACTOR) {
                 simplifiedAreas.add(i);
                 simplifications[i] = simplified;
+                final Node[] newNodes = new Node[simplified.length];
+                for (int j = 0; j < simplified.length; j++) {
+                    newNodes[j] = nodes[simplified[j]];
+                }
+                areaNodes[i] = newNodes;
             } else {
                 simplifications[i] = areaSimplification;
             }
@@ -296,10 +305,10 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             if (waySimplification != null) {
                 oldSize = waySimplification.length;
-                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes, waySimplification), zoom);
-                for (int j = 0; j < simplified.length; j++) {
-                    simplified[j] = waySimplification[simplified[j]];
-                }
+                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
+                // for (int j = 0; j < simplified.length; j++) {
+                // simplified[j] = waySimplification[simplified[j]];
+                // }
             } else {
                 oldSize = nodes.length;
                 simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
@@ -308,6 +317,11 @@ public class MapManagerCreator extends AbstractMapCreator {
             if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
                 ret.add(i);
                 simplifications[i] = simplified;
+                final Node[] newNodes = new Node[simplified.length];
+                for (int j = 0; j < simplified.length; j++) {
+                    newNodes[j] = nodes[simplified[j]];
+                }
+                wayNodes[i] = newNodes;
             } else {
                 simplifications[i] = waySimplification;
             }

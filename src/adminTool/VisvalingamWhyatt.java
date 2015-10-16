@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import model.elements.Node;
+import adminTool.elements.Node;
 import model.map.IPixelConverter;
 import model.routing.AddressableBinaryHeap;
 import model.routing.IAddressablePriorityQueue;

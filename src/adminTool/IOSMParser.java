@@ -5,11 +5,13 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-import model.elements.Area;
-import model.elements.Building;
-import model.elements.Label;
-import model.elements.POI;
-import model.elements.Way;
+import adminTool.elements.Boundary;
+import adminTool.elements.UnprocessedStreet;
+import adminTool.elements.Area;
+import adminTool.elements.Building;
+import adminTool.elements.Label;
+import adminTool.elements.POI;
+import adminTool.elements.Way;
 
 public interface IOSMParser {
 

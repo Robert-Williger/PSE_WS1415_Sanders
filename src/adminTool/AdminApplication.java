@@ -3,6 +3,8 @@ package adminTool;
 import java.io.File;
 import java.util.List;
 
+import adminTool.elements.Boundary;
+
 public class AdminApplication {
 
     private File osm;

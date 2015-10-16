@@ -18,13 +18,15 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import model.elements.Area;
-import model.elements.Building;
-import model.elements.Label;
-import model.elements.MultiElement;
-import model.elements.Node;
-import model.elements.POI;
-import model.elements.StreetNode;
+import adminTool.elements.Boundary;
+import adminTool.elements.UnprocessedStreet;
+import adminTool.elements.Area;
+import adminTool.elements.Building;
+import adminTool.elements.Label;
+import adminTool.elements.MultiElement;
+import adminTool.elements.Node;
+import adminTool.elements.POI;
+import adminTool.elements.StreetNode;
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat.DenseNodes;
 import crosby.binary.Osmformat.HeaderBlock;
@@ -35,7 +37,7 @@ import crosby.binary.file.BlockReaderAdapter;
 
 public class OSMParser implements IOSMParser {
 
-    private final Collection<model.elements.Way> wayList;
+    private final Collection<adminTool.elements.Way> wayList;
     private final Collection<UnprocessedStreet> streetList;
     private final Collection<Area> areaList;
     private final Collection<POI> poiList;
@@ -47,7 +49,7 @@ public class OSMParser implements IOSMParser {
     public OSMParser() {
         // TODO lists instead of sets!
         labelList = new HashSet<Label>();
-        wayList = new HashSet<model.elements.Way>();
+        wayList = new HashSet<adminTool.elements.Way>();
         streetList = new HashSet<UnprocessedStreet>();
         areaList = new HashSet<Area>();
         poiList = new HashSet<POI>();
@@ -68,7 +70,7 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public Collection<model.elements.Way> getWays() {
+    public Collection<adminTool.elements.Way> getWays() {
         return wayList;
     }
 
@@ -356,7 +358,7 @@ public class OSMParser implements IOSMParser {
 
                                 if (type >= 0) {
                                     if (!tunnel || type != 2) {
-                                        wayList.add(new model.elements.Way(nodes, type, nameTag));
+                                        wayList.add(new adminTool.elements.Way(nodes, type, nameTag));
                                     }
                                 }
                             }

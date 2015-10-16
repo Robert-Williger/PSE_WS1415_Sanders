@@ -15,7 +15,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -194,13 +193,14 @@ public class SidebarView extends JPanel implements ISidebarView {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     suggestionView.setVisible(false);
                     multiFuncButton.doClick();
+                    textField.clear();
+                    requestFocus();
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     suggestionView.setVisible(false);
                     cancelButton.doClick();
+                    textField.clear();
+                    requestFocus();
                 }
-
-                suggestionView.setSelected(null);
-                suggestionView.getSelectionModel().setSelectedIndex(0);
             }
         });
 

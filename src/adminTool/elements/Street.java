@@ -1,15 +1,15 @@
-package model.elements;
+package adminTool.elements;
 
 import java.awt.Point;
+import java.util.Iterator;
 
 public class Street extends Way {
 
     private final long id;
     private int length;
 
-    // TODO avoid storage of empty street name
-    public Street(final int[] xPoints, final int[] yPoints, final int type, final String name, final long id) {
-        super(xPoints, yPoints, type, name);
+    public Street(final Node[] nodes, final int type, final String name, final long id) {
+        super(nodes, type, name);
         this.id = id;
     }
 
@@ -23,16 +23,13 @@ public class Street extends Way {
 
     private void calculateLength() {
         float totalLength = 0f;
+        final Iterator<Node> iterator = iterator();
+        Node lastNode = iterator.next();
 
-        int lastX = xPoints[0];
-        int lastY = yPoints[0];
-
-        for (int i = 1; i < size(); i++) {
-            int currentX = xPoints[i];
-            int currentY = yPoints[i];
-            totalLength += Point.distance(currentX, currentY, lastX, lastY);
-            lastX = currentX;
-            lastY = currentY;
+        while (iterator.hasNext()) {
+            final Node currentNode = iterator.next();
+            totalLength += Point.distance(currentNode.getX(), currentNode.getY(), lastNode.getX(), lastNode.getY());
+            lastNode = currentNode;
         }
 
         length = (int) totalLength;

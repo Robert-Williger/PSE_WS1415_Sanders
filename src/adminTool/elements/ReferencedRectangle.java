@@ -1,4 +1,4 @@
-package adminTool;
+package adminTool.elements;
 
 public class ReferencedRectangle implements Comparable<ReferencedRectangle> {
     private static int idCount = -1;

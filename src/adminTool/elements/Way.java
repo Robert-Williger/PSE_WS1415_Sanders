@@ -1,17 +1,18 @@
-package model.elements;
+package adminTool.elements;
 
-public class Way extends MultiElement {
+public class Way extends MultiElement implements Typeable {
 
     private final int type;
     private final String name;
 
-    public Way(final int[] xPoints, final int[] yPoints, final int type, final String name) {
-        super(xPoints, yPoints);
+    public Way(final Node[] nodes, final int type, final String name) {
+        super(nodes);
 
         this.type = type;
         this.name = name;
     }
 
+    @Override
     public int getType() {
         return type;
     }

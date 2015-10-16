@@ -9,8 +9,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import model.elements.Node;
-import model.elements.Street;
+import adminTool.elements.Node;
+import adminTool.elements.Street;
+import adminTool.elements.UnprocessedStreet;
 
 public class GraphCreator extends AbstractMapCreator {
 

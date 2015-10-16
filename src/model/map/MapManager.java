@@ -6,7 +6,6 @@ import java.awt.Rectangle;
 import java.util.Iterator;
 
 import model.elements.Building;
-import model.elements.Node;
 import model.elements.StreetNode;
 
 public class MapManager implements IMapManager {
@@ -58,19 +57,25 @@ public class MapManager implements IMapManager {
 
     @Override
     public AddressNode getAddressNode(final Point coordinate) {
-        final AddressNode ret;
 
         final ITile zoomedTile = getTile(coordinate, state.getMaxZoomStep());
         final Building building = zoomedTile.getBuilding(coordinate);
 
         if (building != null && building.getStreetNode() != null) {
-            ret = new AddressNode(building.getAddress(), building.getStreetNode());
+            return new AddressNode(building.getAddress(), building.getStreetNode());
         } else {
-            final ITile tile = getTile(coordinate, state.getZoomStep());
-            ret = locateAddressNode(coordinate, tile);
+            int zoomStep = state.getMaxZoomStep();
+            //TODO find better abort criterion .. + define consistent max distance for search
+            while (zoomStep > state.getZoomStep()) {
+                final ITile tile = getTile(coordinate, zoomStep);
+                AddressNode node = locateAddressNode(coordinate, tile);
+                if (node != null) {
+                    return node;
+                }
+                --zoomStep;
+            }
+            return null;
         }
-
-        return ret;
     }
 
     private AddressNode locateAddressNode(final Point coordinate, final ITile midTile) {
@@ -153,9 +158,12 @@ public class MapManager implements IMapManager {
             final Building building = buildingIt.next();
             final StreetNode buildingNode = building.getStreetNode();
             if (buildingNode != null && buildingNode.getStreet().getName().equals(streetName)) {
-                for (final Node node : building) {
-                    final int distance = (int) Point.distance(streetNode.getX(), streetNode.getY(), node.getX(),
-                            node.getY());
+                final int[] xPoints = building.getXPoints();
+                final int[] yPoints = building.getYPoints();
+
+                for (int i = 0; i < building.size(); i++) {
+                    final int distance = (int) Point.distance(streetNode.getX(), streetNode.getY(), xPoints[i],
+                            yPoints[i]);
                     if (distance < minDistance) {
                         ret = new DistancedBuilding(building, distance);
                         minDistance = distance;
