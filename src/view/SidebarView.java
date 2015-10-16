@@ -193,8 +193,6 @@ public class SidebarView extends JPanel implements ISidebarView {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     suggestionView.setVisible(false);
                     multiFuncButton.doClick();
-                    textField.clear();
-                    requestFocus();
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     suggestionView.setVisible(false);
                     cancelButton.doClick();
