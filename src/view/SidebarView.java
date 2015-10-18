@@ -225,6 +225,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         upButton.setActionCommand("move up");
         upButton.setOpaque(false);
         upButton.setFocusable(false);
+        upButton.setMnemonic(KeyEvent.VK_UP);
         ret.add(upButton);
 
         downButton.setPreferredSize(new Dimension(23, 23));
@@ -232,6 +233,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         downButton.setActionCommand("move down");
         downButton.setOpaque(false);
         downButton.setFocusable(false);
+        downButton.setMnemonic(KeyEvent.VK_DOWN);
         ret.add(downButton);
 
         ret.add(cancelButton);
@@ -274,12 +276,14 @@ public class SidebarView extends JPanel implements ISidebarView {
         poiBox.setFocusable(false);
         poiBox.setSelected(true);
         poiBox.setOpaque(false);
+        poiBox.setMnemonic('z');
         ret.add(poiBox);
 
         labelBox.setMargin(new Insets(0, 0, 0, 0));
         labelBox.setFocusable(false);
         labelBox.setSelected(true);
         labelBox.setOpaque(false);
+        labelBox.setMnemonic('K');
         ret.add(labelBox);
 
         startButton.setPreferredSize(new Dimension(85, 23));
@@ -287,6 +291,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         startButton.setEnabled(false);
         startButton.setOpaque(false);
         startButton.setFocusable(false);
+        startButton.setMnemonic('S');
         ret.add(startButton);
 
         resetButton.setPreferredSize(new Dimension(85, 23));
@@ -294,6 +299,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         resetButton.setEnabled(false);
         resetButton.setOpaque(false);
         resetButton.setFocusable(false);
+        resetButton.setMnemonic('R');
         ret.add(resetButton);
 
         cancelCalcButton.setMargin(new Insets(2, 0, 2, 0));
@@ -301,6 +307,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         cancelCalcButton.setActionCommand("cancel calculation");
         cancelCalcButton.setEnabled(false);
         cancelCalcButton.setOpaque(false);
+        cancelCalcButton.setMnemonic('a');
         ret.add(cancelCalcButton);
 
         ret.setOpaque(false);

@@ -168,6 +168,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
             super();
 
             final JMenu file = new JMenu("Datei");
+            file.setMnemonic('D');
             importItem = new JMenuItem("Kartenpfad ändern", new ImageIcon(
                     ApplicationView.class.getResource("import.png")));
             importItem.setActionCommand("import");
@@ -185,6 +186,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
             file.add(exitItem);
 
             final JMenu help = new JMenu("Hilfe");
+            help.setMnemonic('H');
             helpItem = new JMenuItem("Hilfe", new ImageIcon(ApplicationView.class.getResource("help.png")));
             helpItem.setActionCommand("help");
 
