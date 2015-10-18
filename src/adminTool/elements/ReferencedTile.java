@@ -1,7 +1,6 @@
 package adminTool.elements;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
@@ -21,7 +20,7 @@ public class ReferencedTile {
     public ReferencedTile() {
         streets = new TreeSet<Integer>();
         ways = new TreeSet<Integer>();
-        buildings = new HashSet<Integer>();
+        buildings = new TreeSet<Integer>();
         terrain = new TreeSet<Integer>();
         pois = new LinkedList<ReferencedPoint>();
         labels = new LinkedList<ReferencedRectangle>();

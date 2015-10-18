@@ -160,7 +160,7 @@ public class IndexCreator extends AbstractMapCreator {
         for (int i = 0; i < 5; i++) {
             for (final Boundary boundary : boundaries.get(9 - i)) {
                 for (final Node node : nodes) {
-                    if (boundary.contains(node.getLocation())) {
+                    if (boundary.contains(node.getX(), node.getY())) {
                         return boundary.getName();
                     }
                 }

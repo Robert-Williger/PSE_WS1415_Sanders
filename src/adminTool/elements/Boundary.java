@@ -20,24 +20,28 @@ public class Boundary {
         this.outer = outer;
     }
 
-    public boolean contains(final Point point) {
+    public boolean contains(final int x, final int y) {
         if (innerPolygons == null) {
             revalidate();
         }
 
         for (final Polygon innerP : innerPolygons) {
-            if (innerP.contains(point)) {
+            if (innerP.contains(x, y)) {
                 return false;
             }
         }
 
         for (final Polygon outerP : outerPolygons) {
-            if (outerP.contains(point)) {
+            if (outerP.contains(x, y)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public boolean contains(final Point point) {
+        return contains(point.x, point.y);
     }
 
     private Polygon convert(final Node[] nodes) {

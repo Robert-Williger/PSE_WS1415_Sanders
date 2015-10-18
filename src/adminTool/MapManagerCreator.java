@@ -57,7 +57,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final int POI_MIN_ZOOMSTEP = 16;
 
     private static final int AREA_THRESHHOLD = 2;
-    private static final int WAY_THRESHHOLD = 25;
+    private static final int WAY_THRESHHOLD = 2;
     private static final double AREA_SHRINK_FACTOR = 0.9;
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
@@ -697,7 +697,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         public LabelPartitioner() {
             super("Label partitioner");
             context = new FontRenderContext(new AffineTransform(), true, true);
-            font = new Font("Times New Roman", Font.PLAIN, 20);
+            font = new Font("Arial", Font.PLAIN, 20);
         }
 
         @Override
