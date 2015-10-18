@@ -66,7 +66,7 @@ public class MapManager implements IMapManager {
         } else {
             int zoomStep = state.getMaxZoomStep();
             //TODO find better abort criterion .. + define consistent max distance for search
-            while (zoomStep > state.getZoomStep()) {
+            while (zoomStep >= state.getZoomStep()) {
                 final ITile tile = getTile(coordinate, zoomStep);
                 AddressNode node = locateAddressNode(coordinate, tile);
                 if (node != null) {
