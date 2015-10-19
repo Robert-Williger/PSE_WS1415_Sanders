@@ -99,22 +99,25 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
     }
 
     private IGraph createCompleteGraph(final List<InterNode> points) {
-        final List<Long> edges = new ArrayList<Long>();
-        final List<Integer> weights = new ArrayList<Integer>();
+        final int size = points.size() - 1;
+        final long[] edges = new long[size * (size - 1) / 2];
+        final int[] weights = new int[edges.length];
 
         final double progressStep = 100.0 / (points.size() - 1);
 
+        int i = 0;
         for (int u = 0; u < points.size() && !canceled; u++) {
             for (int v = (u + 1); v < points.size() && !canceled; v++) {
                 final long edge = graph.getEdge(u, v);
-                edges.add(edge);
+                edges[i] = edge;
                 final Path path = solver.calculateShortestPath(points.get(u), points.get(v));
                 if (path == null) {
                     canceled = true;
                 } else {
-                    weights.add(path.getLength());
+                    weights[i] = path.getLength();
                     mapping.put(edge, path);
                 }
+                ++i;
             }
             fireProgressDone(progressStep);
         }

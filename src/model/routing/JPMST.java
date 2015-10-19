@@ -70,13 +70,12 @@ public class JPMST {
         initializeJP();
         executeJP();
 
-        final List<Long> edges = new ArrayList<Long>();
-        final List<Integer> weights = new ArrayList<Integer>();
+        final long[] edges = new long[parent.length - 1];
+        final int[] weights = new int[edges.length];
         for (int i = 1; i < parent.length; i++) {
-            edges.add(graph.getEdge(i, parent[i]));
-            weights.add(Integer.MAX_VALUE);
+            edges[i - 1] = graph.getEdge(i, parent[i]);
+            weights[i - 1] = Integer.MAX_VALUE;
         }
-        weights.add(Integer.MAX_VALUE);
 
         return new Graph(graph.getNodes(), edges, weights);
     }

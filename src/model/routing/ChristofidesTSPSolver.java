@@ -76,26 +76,29 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
     }
 
     private IGraph createCompleteGraph(final List<InterNode> points) {
-        final List<Long> edges = new ArrayList<Long>();
-        final List<Integer> weights = new ArrayList<Integer>();
+        final int size = points.size();
+        final long[] edges = new long[size * (size - 1) / 2];
+        final int[] weights = new int[edges.length];
 
         final double progressStep = 100.0 / (points.size() - 1);
 
+        int i = 0;
         for (int u = 0; u < points.size() && !canceled; u++) {
-            for (int v = (u + 1); v < points.size() && !canceled; v++) {
+            for (int v = u + 1; v < points.size() && !canceled; v++) {
                 final long edge = graph.getEdge(u, v);
-                edges.add(edge);
+                edges[i] = edge;
                 final Path path = solver.calculateShortestPath(points.get(u), points.get(v));
                 if (path == null) {
                     canceled = true;
-                } else {
-                    weights.add(path.getLength());
-                    completeMapping.put(edge, path);
+                    return null;
                 }
+                weights[i] = path.getLength();
+                completeMapping.put(edge, path);
+                ++i;
             }
             fireProgressDone(progressStep);
         }
-        return !canceled ? new Graph(points.size(), edges, weights) : null;
+        return new Graph(size, edges, weights);
     }
 
     private IGraph createMatchingGraph(final IGraph mstGraph, final IGraph completeGraph) {
@@ -111,14 +114,17 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
             }
         }
 
-        final List<Long> edges = new ArrayList<Long>();
-        final List<Integer> weights = new ArrayList<Integer>();
+        final int size = matchingMapping.size();
+        final long[] edges = new long[size * (size - 1) / 2];// <Long>();
+        final int[] weights = new int[edges.length];
 
-        for (int i = 0; i < matchingMapping.size(); i++) {
-            for (int j = i + 1; j < matchingMapping.size(); j++) {
-                edges.add(completeGraph.getEdge(i, j));
-                weights.add(completeGraph.getWeight(completeGraph.getEdge(matchingMapping.get(i),
-                        matchingMapping.get(j))));
+        int count = 0;
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                edges[count] = completeGraph.getEdge(i, j);
+                weights[count] = completeGraph.getWeight(completeGraph.getEdge(matchingMapping.get(i),
+                        matchingMapping.get(j)));
+                ++count;
             }
         }
 
@@ -127,21 +133,24 @@ public class ChristofidesTSPSolver extends AbstractComplexRouteSolver implements
 
     private IGraph createEulerianGraph(final IGraph matchingGraph, final IGraph mstGraph,
             final Collection<Long> matchingEdges) {
-        final List<Long> eulerianEdges = new ArrayList<Long>(mstGraph.getEdges() + matchingEdges.size());
+        final long[] eulerianEdges = new long[mstGraph.getEdges() + matchingEdges.size()];
+        final int[] eulerianWeights = new int[mstGraph.getEdges() + matchingEdges.size()];
 
-        final List<Integer> eulerianWeights = new ArrayList<Integer>(mstGraph.getEdges() + matchingEdges.size());
+        int i = 0;
         for (final long edge : matchingEdges) {
-            eulerianEdges.add(graph.getEdge(matchingMapping.get(matchingGraph.getFirstNode(edge)),
-                    matchingMapping.get(matchingGraph.getSecondNode(edge))));
-            eulerianWeights.add(0);
+            eulerianEdges[i] = graph.getEdge(matchingMapping.get(matchingGraph.getFirstNode(edge)),
+                    matchingMapping.get(matchingGraph.getSecondNode(edge)));
+            eulerianWeights[i] = 0;
+            ++i;
         }
 
         for (int node = 0; node < mstGraph.getNodes(); node++) {
             for (final Iterator<Integer> it = mstGraph.getAdjacentNodes(node); it.hasNext();) {
                 final int otherNode = it.next();
                 if (otherNode < node) {
-                    eulerianEdges.add(mstGraph.getEdge(node, otherNode));
-                    eulerianWeights.add(0);
+                    eulerianEdges[i] = mstGraph.getEdge(node, otherNode);
+                    eulerianWeights[i] = 0;
+                    ++i;
                 }
             }
         }

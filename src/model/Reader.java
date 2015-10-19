@@ -5,7 +5,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,8 +71,6 @@ public class Reader implements IReader {
                 reader.close();
             } catch (final IOException e1) {
             }
-
-            e.printStackTrace();
 
             return false;
         }
@@ -151,15 +148,15 @@ public class Reader implements IReader {
         final int nodeCount = reader.readCompressedInt();
         final int edgeCount = reader.readCompressedInt();
 
-        final List<Long> edges = new ArrayList<Long>(edgeCount);
-        final List<Integer> weights = new ArrayList<Integer>(edgeCount);
+        final long[] edges = new long[edgeCount];
+        final int[] weights = new int[edgeCount];
 
         int weight = 0;
         for (int i = 0; i < edgeCount; i++) {
             long node1 = reader.readCompressedInt();
-            edges.add((node1 << 32) | reader.readCompressedInt() + node1);
+            edges[i] = (node1 << 32) | reader.readCompressedInt() + node1;
             weight += reader.readCompressedInt();
-            weights.add(weight);
+            weights[i] = weight;
         }
 
         return new Graph(nodeCount, edges, weights);

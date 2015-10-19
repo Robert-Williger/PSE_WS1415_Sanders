@@ -2,62 +2,47 @@ package model.routing;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
 
 public class Graph implements IGraph {
     private final int[] nodes;
     private final int[] edges;
     private final HashMap<Long, Integer> weights;
 
-    private class It implements Iterator<Integer> {
+    private class NodeIterator implements Iterator<Integer> {
         private int currentElement;
         private final int lastElement;
 
-        public It(final int node) {
+        public NodeIterator(final int node) {
             currentElement = nodes[node];
             lastElement = nodes[node + 1];
         }
 
         @Override
         public boolean hasNext() {
-            return currentElement < lastElement ? true : false;
+            return currentElement < lastElement;
 
         }
 
         @Override
         public Integer next() {
-            int ret = -1;
-
-            if (hasNext()) {
-                ret = edges[currentElement];
-                currentElement++;
-            } else {
-                new NoSuchElementException();
-            }
-
-            return ret;
+            return edges[currentElement++];
         }
 
         @Override
         public void remove() {
             throw new UnsupportedOperationException();
-
         }
 
     }
 
-    public Graph(final int nodes, final List<Long> edges, final List<Integer> weights) {
+    public Graph(final int nodes, final long[] edges, final int[] weights) {
         this.nodes = new int[nodes + 1];
-        this.edges = new int[(edges.size() * 2)];
+        this.edges = new int[edges.length * 2];
         this.weights = new HashMap<Long, Integer>();
 
-        final Iterator<Long> it = edges.iterator();
-        final Iterator<Integer> itt = weights.iterator();
-
-        while (it.hasNext()) {
-            final long edge = it.next();
-            final int weight = itt.next();
+        for (int i = 0; i < edges.length; i++) {
+            final long edge = edges[i];
+            final int weight = weights[i];
 
             this.nodes[getFirstNode(edge)]++;
             this.nodes[getSecondNode(edge)]++;
@@ -78,7 +63,7 @@ public class Graph implements IGraph {
 
         final int[] clone = this.nodes.clone();
 
-        for (final Long e : edges) {
+        for (final long e : edges) {
             final int node1 = getFirstNode(e);
             final int node2 = getSecondNode(e);
 
@@ -97,12 +82,12 @@ public class Graph implements IGraph {
 
     @Override
     public int getEdges() {
-        return (edges.length / 2);
+        return edges.length / 2;
     }
 
     @Override
     public Iterator<Integer> getAdjacentNodes(final int node) {
-        return new It(node);
+        return new NodeIterator(node);
     }
 
     @Override
@@ -112,8 +97,7 @@ public class Graph implements IGraph {
 
     @Override
     public int getSecondNode(final long edge) {
-        final long bitmask = 0x00000000FFFFFFFF;
-        return (int) (edge & bitmask);
+        return (int) (edge & 0xFFFFFFFF);
     }
 
     @Override

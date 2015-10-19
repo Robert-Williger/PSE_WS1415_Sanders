@@ -5,9 +5,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import model.routing.BlossomAlgorithm;
@@ -24,9 +22,9 @@ public class TestCaseWriter {
 
         while (true) {
             final int nodeNumber = 128;
-            final List<Integer> weights = new ArrayList<Integer>(nodeNumber * (nodeNumber - 1) / 2);
+            final int[] weights = new int[nodeNumber * (nodeNumber - 1) / 2];
             for (int i = 0; i < nodeNumber * (nodeNumber - 1) / 2; i++) {
-                weights.add((int) (Math.random() * 1000));
+                weights[i] = (int) (Math.random() * 1000);
             }
             final Graph graph = new Graph(nodeNumber, createEdges(nodeNumber), weights);
             new BlossomAlgorithm().calculatePerfectMatching(graph);
@@ -46,9 +44,9 @@ public class TestCaseWriter {
             e.printStackTrace();
         }
 
-        final List<Integer> weights = new ArrayList<Integer>(nodeNumber * (nodeNumber - 1) / 2);
+        final int[] weights = new int[nodeNumber * (nodeNumber - 1) / 2];
         for (int i = 0; i < nodeNumber * (nodeNumber - 1) / 2; i++) {
-            weights.add((int) (Math.random() * 1000));
+            weights[i] = (int) (Math.random() * 1000);
         }
 
         final Graph graph = new Graph(nodeNumber, createEdges(nodeNumber), weights);
@@ -86,10 +84,10 @@ public class TestCaseWriter {
             writer.println("public void computerGeneratedTest" + testNumber++ + "() {");
             writer.println("final int nodes = " + nodeNumber + ";");
             writer.print("final List<Integer> weights = Arrays.asList(");
-            for (Iterator<Integer> iterator = weights.iterator(); iterator.hasNext();) {
-                int weight = iterator.next();
+            for (int i = 0; i < weights.length; i++) {
+                int weight = weights[i];
                 writer.print(weight);
-                if (iterator.hasNext()) {
+                if (i != weights.length - 1) {
                     writer.print(", ");
                 }
             }
@@ -117,12 +115,13 @@ public class TestCaseWriter {
         this.testNumber = testNumber;
     }
 
-    private static List<Long> createEdges(final int nodes) {
-        final List<Long> edges = new ArrayList<Long>(nodes * (nodes - 1) / 2);
+    private static long[] createEdges(final int nodes) {
+        final long[] edges = new long[nodes * (nodes - 1) / 2];
 
+        count = 0;
         for (int i = 0; i < nodes; i++) {
             for (int j = i + 1; j < nodes; j++) {
-                edges.add(getEdge(i, j));
+                edges[count] = getEdge(i, j);
             }
         }
 
