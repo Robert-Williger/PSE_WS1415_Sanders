@@ -6,7 +6,10 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Toolkit;
+import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -21,14 +24,14 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     static {
         styles = new LabelStyle[19];
 
-        styles[2] = new LabelStyle(8, 14, new int[]{12, 12, 12, 14, 14, 16, 16}, Color.DARK_GRAY);
-        styles[4] = new LabelStyle(8, 14, new int[]{11, 12, 12, 14, 16, 16, 16}, Color.DARK_GRAY);
-        styles[5] = new LabelStyle(13, 16, new int[]{12, 12, 14, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY});
-        styles[7] = new LabelStyle(10, 15, new int[]{12, 12, 14, 14, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY});
-        styles[8] = new LabelStyle(12, 16, new int[]{12, 12, 14, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY});
+        styles[2] = new LabelStyle(8, 14, new int[]{12, 12, 12, 14, 14, 16, 16}, Color.DARK_GRAY, true);
+        styles[4] = new LabelStyle(8, 14, new int[]{11, 12, 14, 16, 16, 16, 16}, Color.DARK_GRAY, true);
+        styles[5] = new LabelStyle(13, 16, new int[]{11, 12, 13, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
+                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
+        styles[7] = new LabelStyle(10, 15, new int[]{10, 11, 12, 13, 14, 16}, new Color[]{Color.GRAY, Color.GRAY,
+                Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
+        styles[8] = new LabelStyle(12, 16, new int[]{10, 11, 12, 13, 14}, new Color[]{Color.GRAY, Color.GRAY,
+                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
         // case "continent":
         // return 0;
         // case "country":
@@ -100,17 +103,34 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
             rendered = true;
             final Label label = iterator.next();
 
-            if (styles[label.getType()] != null && styles[label.getType()].draw(g, zoom)) {
+            if (styles[label.getType()] != null && styles[label.getType()].mainStroke(g, zoom)) {
                 // TODO avoid object generation
-                final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
-                final int width = fontMetrics.stringWidth(label.getName());
-                final int height = fontMetrics.getHeight();
+                if (styles[label.getType()].outlineStroke(g, zoom)) {
+                    TextLayout text = new TextLayout(label.getName(), g.getFont(), g.getFontRenderContext());
+                    final Shape shape = text.getOutline(g.getTransform());
+                    final Rectangle2D rect = text.getBounds();
 
-                g.drawString(
-                        label.getName(),
-                        converter.getPixelDistance(label.getX() - tileLocation.x, tile.getZoomStep()) - width / 2,
-                        converter.getPixelDistance(label.getY() - tileLocation.y, tile.getZoomStep())
-                                - fontMetrics.getDescent() + height / 2);
+                    double x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep())
+                            - rect.getWidth() / 2.0;
+                    double y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep())
+                            - text.getDescent() + rect.getHeight() / 2.0;
+
+                    g.translate(x, y);
+                    g.draw(shape);
+                    styles[label.getType()].mainStroke(g, zoom);
+                    g.drawString(label.getName(), 0, 0);
+                    g.translate(-x, -y);
+                } else if (styles[label.getType()].mainStroke(g, zoom)) {
+                    final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
+                    final int width = fontMetrics.stringWidth(label.getName());
+                    final int height = fontMetrics.getHeight();
+                    float x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep()) - width
+                            / 2.0f;
+                    float y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep())
+                            - fontMetrics.getDescent() + height / 2.0f;
+                    g.drawString(label.getName(), x, y);
+                }
+
             }
         }
 
@@ -121,5 +141,4 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
         return rendered;
     }
-
 }
