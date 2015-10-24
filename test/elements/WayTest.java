@@ -3,7 +3,6 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import model.elements.Node;
 import model.elements.Way;
 
 import org.junit.Before;
@@ -14,18 +13,20 @@ public class WayTest {
     private Way way;
     private int type;
     private String name;
-    private static Node[] nodes;
+    private static int[] x;
+    private static int[] y;
 
     @BeforeClass
     public static void setUpClass() {
-        nodes = new Node[]{new Node(0, 0), new Node(0, 1), new Node(1, 1), new Node(1, 0)};
+        x = new int[]{0, 0, 1, 1};
+        y = new int[]{0, 1, 1, 0};
     }
 
     @Before
     public void setUp() {
         type = 2;
         name = "Rhein";
-        way = new Way(nodes, type, name);
+        way = new Way(x, y, type, name);
     }
 
     @Test
@@ -41,17 +42,17 @@ public class WayTest {
     @Test
     public void testEquals() {
         assertEquals(way, way);
-        assertFalse(new Way(nodes, type, null).equals(way));
+        assertFalse(new Way(x, y, type, null).equals(way));
         assertFalse(way.equals(null));
-        assertFalse(way.equals(nodes));
-        assertFalse(way.equals(new Way(nodes, type, name + "x")));
-        assertFalse(way.equals(new Way(nodes, 0, name)));
-        assertEquals(way, new Way(nodes, type, name));
+        assertFalse(way.equals(x));
+        assertFalse(way.equals(new Way(x, y, type, name + "x")));
+        assertFalse(way.equals(new Way(x, y, 0, name)));
+        assertEquals(way, new Way(x, y, type, name));
     }
 
     @Test
     public void testHashCode() {
         assertEquals(way.hashCode(), way.hashCode());
-        assertEquals(way.hashCode(), new Way(nodes, type, name).hashCode());
+        assertEquals(way.hashCode(), new Way(x, y, type, name).hashCode());
     }
 }

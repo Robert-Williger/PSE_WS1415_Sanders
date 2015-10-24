@@ -14,7 +14,7 @@ import adminTool.VisvalingamWhyatt;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Label;
-import model.elements.Node;
+import adminTool.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.Way;
@@ -51,6 +51,7 @@ public class PolygonSimplificationTest extends JFrame {
 
         Area origArea = null;
         Node[] origNodes = null;
+        List<Node> nodes = new ArrayList<Node>();
 
         int row = 0;
         int column = 0;
@@ -60,8 +61,6 @@ public class PolygonSimplificationTest extends JFrame {
         try {
             DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(
                     "MaxArea.txt"))));
-
-            List<Node> nodes = new ArrayList<Node>();
 
             int minX = Integer.MAX_VALUE;
             int minY = Integer.MAX_VALUE;
@@ -84,7 +83,8 @@ public class PolygonSimplificationTest extends JFrame {
 
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
-            origArea = new Area(origNodes, 3);
+            int[][] conversion = convert(origNodes);
+            origArea = new Area(conversion[0], conversion[1], 3);
 
             stream.close();
         } catch (IOException e) {
@@ -99,23 +99,25 @@ public class PolygonSimplificationTest extends JFrame {
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
 
-        final int[] simplifiedIndices = simplificator.simplifyMultiline(origArea.iterator(), zoom);
+        final int[] simplifiedIndices = simplificator.simplifyMultiline(nodes.iterator(), zoom);
         final Node[] simplifiedNodes = new Node[simplifiedIndices.length];
         for (int i = 0; i < simplifiedNodes.length; i++) {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
+        int[][] conversion = convert(simplifiedNodes);
         Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                simplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
+                conversion[0], conversion[1], origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
-        final int[] doubleSimplifiedIndices = simplificator.simplifyMultiline(origArea.iterator(), zoom);
+        final int[] doubleSimplifiedIndices = simplificator.simplifyMultiline(nodes.iterator(), zoom);
         final Node[] doubleSimplifiedNodes = new Node[doubleSimplifiedIndices.length];
         for (int i = 0; i < doubleSimplifiedNodes.length; i++) {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
+        conversion = convert(doubleSimplifiedNodes);
         Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                doubleSimplifiedNodes, origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
+                conversion[0], conversion[1], origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
         simpleNumber = simplifiedNodes.length;
@@ -123,6 +125,15 @@ public class PolygonSimplificationTest extends JFrame {
 
         setVisible(true);
 
+    }
+
+    private int[][] convert(final Node[] node) {
+        int[][] ret = new int[2][node.length];
+        for (int i = 0; i < node.length; i++) {
+            ret[0][i] = node[i].getX();
+            ret[1][i] = node[i].getY();
+        }
+        return ret;
     }
 
     public void paint(final Graphics g) {

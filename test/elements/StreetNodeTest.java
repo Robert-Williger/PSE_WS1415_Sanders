@@ -21,8 +21,7 @@ public class StreetNodeTest {
 
     @Before
     public void setUp() {
-        final Node[] nodes = new Node[]{new Node(0, 0), new Node(5, 5), new Node(10, 10), new Node(20, 20)};
-        street = new Street(nodes, 0, "Kaiserstraße 5", 1);
+        street = new Street(new int[]{0, 5, 10, 20}, new int[]{0, 5, 10, 20}, 0, "Kaiserstraße 5", 1);
         offset = 0.5f;
         sNode = new StreetNode(offset, street);
     }

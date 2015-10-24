@@ -2,7 +2,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import model.elements.Node;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.map.AddressNode;
@@ -17,7 +16,7 @@ public class AddressNodeTest {
 
     @Before
     public void setUp() {
-        streetNode = new StreetNode(0.5f, new Street(new Node[]{new Node(0, 0)}, 0, "Teststraße", 0));
+        streetNode = new StreetNode(0.5f, new Street(new int[]{0}, new int[]{0}, 0, "Teststraße", 0));
         addressNode = new AddressNode("Teststraße 42", streetNode);
     }
 
@@ -42,8 +41,8 @@ public class AddressNodeTest {
         assertFalse(node2.equals(addressNode));
         assertFalse(new AddressNode("Teststraße 42", null).equals(addressNode));
 
-        assertFalse(addressNode.equals(new AddressNode("Teststraße 42", new StreetNode(0.6f, new Street(
-                new Node[]{new Node(0, 0)}, 0, "", 0)))));
+        assertFalse(addressNode.equals(new AddressNode("Teststraße 42", new StreetNode(0.6f, new Street(new int[]{0},
+                new int[]{0}, 0, "", 0)))));
     }
 
     @Test

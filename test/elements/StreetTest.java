@@ -3,7 +3,6 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import model.elements.Node;
 import model.elements.Street;
 
 import org.junit.Before;
@@ -15,11 +14,13 @@ public class StreetTest {
     private int type;
     private String name;
     private int id;
-    private static Node[] nodes;
+    private static int[] x;
+    private static int[] y;
 
     @BeforeClass
     public static void setUpClass() {
-        nodes = new Node[]{new Node(0, 0), new Node(0, 1), new Node(1, 1), new Node(1, 0)};
+        x = new int[]{0, 0, 1, 1};
+        y = new int[]{0, 1, 1, 0};
     }
 
     @Before
@@ -27,7 +28,7 @@ public class StreetTest {
         type = 2;
         name = "Rhein";
         id = 1;
-        street = new Street(nodes, type, name, id);
+        street = new Street(x, y, type, name, id);
     }
 
     @Test
@@ -44,14 +45,14 @@ public class StreetTest {
     public void testEquals() {
         assertEquals(street, street);
         assertFalse(street.equals(null));
-        assertFalse(street.equals(new Street(nodes, type, name + "x", id)));
-        assertFalse(street.equals(new Street(nodes, type, name, 0)));
-        assertEquals(street, new Street(nodes, type, name, id));
+        assertFalse(street.equals(new Street(x, y, type, name + "x", id)));
+        assertFalse(street.equals(new Street(x, y, type, name, 0)));
+        assertEquals(street, new Street(x, y, type, name, id));
     }
 
     @Test
     public void testHashCode() {
         assertEquals(street.hashCode(), street.hashCode());
-        assertEquals(street.hashCode(), new Street(nodes, type, name, id).hashCode());
+        assertEquals(street.hashCode(), new Street(x, y, type, name, id).hashCode());
     }
 }

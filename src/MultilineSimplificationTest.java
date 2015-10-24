@@ -14,7 +14,7 @@ import adminTool.VisvalingamWhyatt;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Label;
-import model.elements.Node;
+import adminTool.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.Way;
@@ -34,7 +34,7 @@ public class MultilineSimplificationTest extends JFrame {
     private BufferedImage doubleSimple;
 
     private int simpleThreshHold = 1;
-    private int doubleSimpleThreshHold = 10;
+    private int doubleSimpleThreshHold = 2;
 
     private int origNumber;
     private int simpleNumber;
@@ -51,6 +51,7 @@ public class MultilineSimplificationTest extends JFrame {
 
         Way origWay = null;
         Node[] origNodes = null;
+        List<Node> nodes = new ArrayList<Node>();
 
         int row = 0;
         int column = 0;
@@ -60,8 +61,6 @@ public class MultilineSimplificationTest extends JFrame {
         try {
             DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(
                     "MaxWay.txt"))));
-
-            List<Node> nodes = new ArrayList<Node>();
 
             int minX = Integer.MAX_VALUE;
             int minY = Integer.MAX_VALUE;
@@ -81,7 +80,8 @@ public class MultilineSimplificationTest extends JFrame {
 
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
-            origWay = new Way(origNodes, 15, "");
+            int[][] conversion = convert(origNodes);
+            origWay = new Way(conversion[0], conversion[1], 15, "");
 
             row = minY / converter.getCoordDistance(256, zoom);
             column = minX / converter.getCoordDistance(256, zoom);
@@ -99,23 +99,25 @@ public class MultilineSimplificationTest extends JFrame {
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
 
-        final int[] simplifiedIndices = simplificator.simplifyMultiline(origWay.iterator(), zoom);
+        final int[] simplifiedIndices = simplificator.simplifyMultiline(nodes.iterator(), zoom);
         final Node[] simplifiedNodes = new Node[simplifiedIndices.length];
         for (int i = 0; i < simplifiedNodes.length; i++) {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
 
-        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(simplifiedNodes, origWay.getType(), "")},
-                new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
+        int[][] conversion = convert(simplifiedNodes);
+        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(conversion[0], conversion[1],
+                origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
-        final int[] doubleSimplifiedIndices = simplificator.simplifyMultiline(origWay.iterator(), zoom);
+        final int[] doubleSimplifiedIndices = simplificator.simplifyMultiline(nodes.iterator(), zoom);
         final Node[] doubleSimplifiedNodes = new Node[doubleSimplifiedIndices.length];
         for (int i = 0; i < doubleSimplifiedNodes.length; i++) {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
-        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(doubleSimplifiedNodes,
+        conversion = convert(doubleSimplifiedNodes);
+        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(conversion[0], conversion[1],
                 origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
@@ -124,6 +126,15 @@ public class MultilineSimplificationTest extends JFrame {
 
         setVisible(true);
 
+    }
+
+    private int[][] convert(final Node[] node) {
+        int[][] ret = new int[2][node.length];
+        for (int i = 0; i < node.length; i++) {
+            ret[0][i] = node[i].getX();
+            ret[1][i] = node[i].getY();
+        }
+        return ret;
     }
 
     public void paint(final Graphics g) {

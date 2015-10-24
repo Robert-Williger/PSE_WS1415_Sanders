@@ -131,7 +131,7 @@ public class PointListView extends JPanel {
         list.addMouseMotionListener(listener);
         list.addMouseListener(listener);
         listButtons.addMouseMotionListener(listener);
-
+        // TODO bug occurs, if point list exited by listButtons.
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseExited(final MouseEvent e) {

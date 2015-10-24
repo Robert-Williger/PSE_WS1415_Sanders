@@ -35,6 +35,8 @@ public class Graph implements IGraph {
 
     }
 
+    // TODO final int nodes, final int[] from, final int[] to, final int[]
+    // weights
     public Graph(final int nodes, final long[] edges, final int[] weights) {
         this.nodes = new int[nodes + 1];
         this.edges = new int[edges.length * 2];
