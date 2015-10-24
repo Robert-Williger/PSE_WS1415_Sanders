@@ -474,35 +474,37 @@ public class SidebarView extends JPanel implements ISidebarView {
             menuItems = new JMenuItem[MAX_SUGGESTIONS];
 
             for (int i = 0; i < MAX_SUGGESTIONS; i++) {
-                menuItems[i] = installNewItem();
+                menuItems[i] = installNewItem(true);
             }
-            defaultItem = installNewItem();
+            defaultItem = installNewItem(false);
             defaultItem.setText("Kein Ziel gefunden");
             defaultItem.setFont(defaultItem.getFont().deriveFont(Font.ITALIC));
             add(defaultItem);
         }
 
-        private JMenuItem installNewItem() {
+        private JMenuItem installNewItem(final boolean listen) {
             final JMenuItem ret = new JMenuItem();
 
-            ret.addChangeListener(new ChangeListener() {
+            if (listen) {
+                ret.addChangeListener(new ChangeListener() {
 
-                @Override
-                public void stateChanged(final ChangeEvent e) {
-                    if (ret.isArmed()) {
-                        textField.setText(ret.getText());
+                    @Override
+                    public void stateChanged(final ChangeEvent e) {
+                        if (ret.isArmed()) {
+                            textField.setText(ret.getText());
+                        }
                     }
-                }
-            });
+                });
 
-            ret.addActionListener(new ActionListener() {
+                ret.addActionListener(new ActionListener() {
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    textField.setText(ret.getText());
-                    multiFuncButton.doClick();
-                }
-            });
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        textField.setText(ret.getText());
+                        multiFuncButton.doClick();
+                    }
+                });
+            }
 
             ret.setIconTextGap(0);
             // TODO improve this
@@ -544,7 +546,10 @@ public class SidebarView extends JPanel implements ISidebarView {
                 }
             }
 
+            setVisible(false);
             setPreferredSize(new Dimension(textField.getWidth(), suggestions * 22));
+            setMaximumSize(new Dimension(textField.getWidth(), suggestions * 22));
+            setSize(textField.getWidth(), suggestions * 22);
 
             if (!isVisible()) {
                 show(textField, 0, textField.getHeight() - 1);
