@@ -1,11 +1,10 @@
 package model;
 
 import java.io.File;
-import java.util.HashMap;
 
 import javax.swing.SwingUtilities;
 
-import model.elements.StreetNode;
+import model.elements.Label;
 import model.map.IMap;
 import model.map.IMapManager;
 import model.map.Map;
@@ -30,7 +29,7 @@ public class Application extends AbstractModel implements IApplication {
         final IMapManager manager = new MapManager();
         loader = new ImageLoader(manager);
         routing = new RouteManager(new Graph(0, new long[0], new int[0]), manager);
-        processor = new TextProcessor(new HashMap<String, StreetNode>(), new HashMap<String, String[]>(), 0);
+        processor = new TextProcessor(new TextProcessor.Entry[0][], new Label[0], manager, 0);
         map = new Map(manager);
     }
 

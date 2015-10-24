@@ -173,14 +173,17 @@ public class Reader implements IReader {
 
         final HashMap<String, StreetNode> nodeMap = new HashMap<String, StreetNode>();
         final HashMap<String, String[]> cityMap = new HashMap<String, String[]>();
+        final TextProcessor.Entry[][] entries = new TextProcessor.Entry[reader.readCompressedInt()][];
 
         int maxCollisions = reader.readCompressedInt();
+        int entryCount = -1;
 
         for (int i = 0; i < maxCollisions; i++) {
             int occurances = reader.readCompressedInt();
             int firstLevelLast = 0;
             for (int j = 0; j < occurances; j++) {
                 final String[] cityNames = new String[i + 1];
+                final TextProcessor.Entry[] entry = new TextProcessor.Entry[i + 1];
 
                 int secondLevelLast = reader.readCompressedInt() + firstLevelLast;
                 firstLevelLast = secondLevelLast;
@@ -188,14 +191,17 @@ public class Reader implements IReader {
                 nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f, streets[secondLevelLast]));
 
                 cityNames[0] = cities[reader.readCompressedInt()];
+                entry[0] = new TextProcessor.Entry(streets[secondLevelLast], cityNames[0]);
 
                 for (int k = 1; k < cityNames.length; k++) {
                     secondLevelLast += reader.readCompressedInt();
 
                     nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f, streets[secondLevelLast]));
                     cityNames[k] = cities[reader.readCompressedInt()];
+                    entry[k] = new TextProcessor.Entry(streets[secondLevelLast], cityNames[k]);
                 }
                 cityMap.put(streets[secondLevelLast].getName(), cityNames);
+                entries[++entryCount] = entry;
             }
         }
 
@@ -206,7 +212,7 @@ public class Reader implements IReader {
             }
         }
 
-        tp = new TextProcessor(nodeMap, cityMap, 5);
+        tp = new AdvancedTextProcessor(entries, labels, manager, 5);
     }
 
     private class MapManagerReader {

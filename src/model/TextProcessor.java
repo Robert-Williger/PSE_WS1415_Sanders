@@ -4,50 +4,68 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import model.elements.Label;
+import model.elements.Street;
 import model.elements.StreetNode;
+import model.map.AddressNode;
+import model.map.IMapManager;
 
 /*
  * First Implementation of TextProcessing.
  *
  */
 public class TextProcessor implements ITextProcessor {
-
     private final HashMap<String, StreetNode> nodeMap;
-    private final HashMap<String, String[]> cityMap;
     private final int suggestions;
     private final Tuple[] distanceArray;
 
     /**
      * TextProcessing-Constructor.
      * 
+     * @param labels
+     * @param manager
+     * 
      * @param nodeMap
      *            HashMap, which maps every address on a StreetNode.
      * @param suggestions
      *            Number of suggestions, which will be returned as list.
      */
-    public TextProcessor(final HashMap<String, StreetNode> nodeMap, final HashMap<String, String[]> cityMap,
-            final int suggestions) {
-        this.nodeMap = nodeMap;
+    public TextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager, final int suggestions) {
+
+        this.nodeMap = new HashMap<String, StreetNode>(entries.length);
+        for (final Entry[] entry : entries) {
+            final Street street = entry[0].getStreet();
+            nodeMap.put(normalize(street.getName()), new StreetNode(0.5f, street));
+        }
+
+        for (final Label label : labels) {
+            final AddressNode addressNode = manager.getAddressNode(label.getLocation());
+            if (addressNode != null) {
+                nodeMap.put(label.getName(), addressNode.getStreetNode());
+            }
+        }
+
         this.suggestions = suggestions;
-        this.cityMap = cityMap;
         this.distanceArray = new Tuple[nodeMap.size()];
     }
 
     @Override
     public List<String> suggest(final String address) {
 
+        final String normalizedAddress = normalize(address);
         int index = -1;
-        for (final String b : nodeMap.keySet()) {
+        for (final Map.Entry<String, StreetNode> entry : nodeMap.entrySet()) {
 
-            int length = address.length();
-            if (length > b.length()) {
-                length = b.length();
+            int length = normalizedAddress.length();
+            if (length > entry.getKey().length()) {
+                length = entry.getKey().length();
             }
 
-            final int distance = weightedEditDistance(address, b.substring(0, length));
+            final int distance = weightedEditDistance(normalizedAddress, entry.getKey().substring(0, length));
 
-            final Tuple t = new Tuple(b, distance);
+            final Tuple t = new Tuple(entry.getValue().getStreet().getName(), distance);
 
             distanceArray[++index] = t;
         }
@@ -68,8 +86,7 @@ public class TextProcessor implements ITextProcessor {
 
     @Override
     public StreetNode parse(final String address) {
-        System.out.println(Arrays.toString(cityMap.get(address)));
-        return nodeMap.get(address);
+        return nodeMap.get(normalize(address));
     }
 
     /*
@@ -147,7 +164,7 @@ public class TextProcessor implements ITextProcessor {
     }
 
     /*
-     * Normalizes a String. Lowercase, ä, ü, ö, ß. Public for use in admin-tool.
+     * Normalizes a String. Lowercase, ä, ü, ö, ß.
      */
     public static String normalize(String name) {
 
@@ -158,6 +175,7 @@ public class TextProcessor implements ITextProcessor {
         replaceAllSB(nameSB, "ä", "ae");
         replaceAllSB(nameSB, "ü", "ue");
         replaceAllSB(nameSB, "ö", "oe");
+        replaceAllSB(nameSB, "-", " ");
 
         return nameSB.toString();
     }
