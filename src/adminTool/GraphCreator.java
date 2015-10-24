@@ -50,7 +50,7 @@ public class GraphCreator extends AbstractMapCreator {
         // Step one: count the appearance of every node in the given streets and
         for (final UnprocessedStreet s : unprocessedStreets) {
 
-            for (final Node n : s.getNodes()) {
+            for (final Node n : s) {
 
                 // Node not yet generated
                 if (!nodeCount.containsKey(n)) {

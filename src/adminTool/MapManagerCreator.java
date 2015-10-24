@@ -941,6 +941,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             int numberID = -1;
             nameMap.put("", ++id);
 
+            // TODO there are some strange street names atm...
             for (final Building building : buildings) {
                 final String name = building.getStreet();
                 final String number = building.getHouseNumber();

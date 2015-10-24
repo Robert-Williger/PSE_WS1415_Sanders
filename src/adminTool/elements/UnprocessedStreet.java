@@ -2,30 +2,17 @@ package adminTool.elements;
 
 import java.awt.geom.Point2D;
 
-public class UnprocessedStreet extends MultiElement {
+public class UnprocessedStreet extends Way {
 
     private final Point2D[] degrees;
-
-    private final int type;
-    private final String name;
 
     public Point2D[] getDegrees() {
         return degrees;
     }
 
-    public int getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
     public UnprocessedStreet(final Point2D[] degrees, final Node[] nodes, final int type, final String name) {
-        super(nodes);
+        super(nodes, type, name);
         this.degrees = degrees;
-        this.type = type;
-        this.name = name;
     }
 
 }

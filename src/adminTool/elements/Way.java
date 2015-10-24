@@ -1,6 +1,10 @@
 package adminTool.elements;
 
-public class Way extends MultiElement implements Typeable {
+import java.util.Iterator;
+
+import util.Arrays;
+
+public class Way extends MultiElement implements Typeable, IWay {
 
     private final int type;
     private final String name;
@@ -17,6 +21,7 @@ public class Way extends MultiElement implements Typeable {
         return type;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -53,6 +58,11 @@ public class Way extends MultiElement implements Typeable {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Iterator<Node> descendingIterator() {
+        return Arrays.descendingIterator(nodes);
     }
 
 }

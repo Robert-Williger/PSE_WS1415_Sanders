@@ -16,6 +16,10 @@ public class Arrays {
         return new ArrayIterator<T>(array);
     }
 
+    public static <T> Iterator<T> descendingIterator(final T[] array) {
+        return new ReversedIterator<T>(array);
+    }
+
     public static <T> Iterator<T> iterator(final T[] array, final int limit) {
         return new LimitIterator<T>(array, limit);
     }
@@ -41,6 +45,28 @@ public class Arrays {
         @Override
         public T next() {
             return array[count++];
+        }
+
+    }
+
+    private static class ReversedIterator<T> implements Iterator<T> {
+
+        private final T[] array;
+        private int count;
+
+        public ReversedIterator(final T[] array) {
+            this.array = array;
+            this.count = array.length - 1;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return count >= 0;
+        }
+
+        @Override
+        public T next() {
+            return array[count--];
         }
 
     }

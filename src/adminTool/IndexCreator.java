@@ -23,8 +23,10 @@ public class IndexCreator extends AbstractMapCreator {
     private List<List<Boundary>> boundaries;
     private Map<String, Integer> cityMap;
     private Map<String, Set<AssociatedStreet>> streetMap;
+    private int streetNames;
     private int id;
 
+    // TODO speedup
     public IndexCreator(final List<List<Boundary>> boundaries, final Collection<Street> streets, final File file) {
         super(file);
         this.streets = streets;
@@ -43,6 +45,8 @@ public class IndexCreator extends AbstractMapCreator {
         AssociatedStreet[][][] streets = new AssociatedStreet[maxCollisions][][];
 
         fillStreets(streets);
+        streetNames = streetMap.size();
+        streetMap = null;
         sortStreets(streets);
 
         try {
@@ -108,6 +112,7 @@ public class IndexCreator extends AbstractMapCreator {
     }
 
     private void writeStreets(final AssociatedStreet[][][] streets) throws IOException {
+        writeCompressedInt(streetNames);
         writeCompressedInt(streets.length);
         for (int i = 0; i < streets.length; i++) {
             AssociatedStreet[][] firstLevel = streets[i];
@@ -156,7 +161,7 @@ public class IndexCreator extends AbstractMapCreator {
         return id;
     }
 
-    private String getCity(Node[] nodes) {
+    private String getCity(final Node[] nodes) {
         for (int i = 0; i < 5; i++) {
             for (final Boundary boundary : boundaries.get(9 - i)) {
                 for (final Node node : nodes) {

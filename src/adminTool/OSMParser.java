@@ -881,14 +881,14 @@ public class OSMParser implements IOSMParser {
 
     private int getPlaceType(final String place) {
         switch (place) {
-            case "continent":
-                return 0;
-            case "country":
-                return 1;
+        // case "continent":
+        // return 0;
+        // case "country":
+        // return 1;
             case "state":
                 return 2;
-            case "county":
-                return 3;
+                // case "county":
+                // return 3;
             case "city":
                 return 4;
             case "suburb":
@@ -899,27 +899,27 @@ public class OSMParser implements IOSMParser {
                 return 7;
             case "village":
                 return 8;
-            case "hamlet":
-                return 9;
-
-            case "region":
-                return 10;
-            case "province":
-                return 11;
-            case "district":
-                return 12;
-            case "municipality":
-                return 13;
-            case "borough":
-                return 14;
-            case "quarter":
-                return 15;
-            case "city_block":
-                return 16;
-            case "plot":
-                return 17;
-            case "isolated_dwelling":
-                return 18;
+                // case "hamlet":
+                // return 9;
+                //
+                // case "region":
+                // return 10;
+                // case "province":
+                // return 11;
+                // case "district":
+                // return 12;
+                // case "municipality":
+                // return 13;
+                // case "borough":
+                // return 14;
+                // case "quarter":
+                // return 15;
+                // case "city_block":
+                // return 16;
+                // case "plot":
+                // return 17;
+                // case "isolated_dwelling":
+                // return 18;
 
         }
 
