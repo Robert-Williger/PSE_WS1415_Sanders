@@ -1,8 +1,6 @@
 package model;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,14 +10,11 @@ import model.elements.StreetNode;
 import model.map.AddressNode;
 import model.map.IMapManager;
 
-/*
- * First Implementation of TextProcessing.
- *
- */
 public class AdvancedTextProcessor implements ITextProcessor {
     private final int maxDistance;
     private final int suggestions;
     private final TreeNode indexRoot;
+    private int count;
 
     public AdvancedTextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager,
             final int suggestions) {
@@ -36,6 +31,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
         for (int i = 0; i < depth; i++) {
             spaces += "  ";
         }
+        ++count;
         System.out.println(spaces + "[" + depth + "] " + root.getName());
         for (final TreeNode child : root.getChildren()) {
             printIndex(child, depth + 1);
@@ -117,7 +113,9 @@ public class AdvancedTextProcessor implements ITextProcessor {
         final BoundedHeap<Tuple> tuples = new BoundedHeap<Tuple>(suggestions);
         final String normalizedAddress = normalize(address);
 
+        count = 0;
         suggest(normalizedAddress, indexRoot, tuples);
+        System.out.println(count);
 
         int length = Math.min(suggestions, tuples.size());
 
@@ -130,14 +128,19 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     private void suggest(final String input, final TreeNode node, final BoundedHeap<Tuple> heap) {
-        int length = Math.min(input.length(), node.getName().length());
-        int distance = weightedEditDistance(input, node.getName(), length);
+        int distance = prefixEditDistance(input, node.getName());
 
-        if (heap.size() == suggestions && heap.max().getDistance() < distance) {
-            return;
-        }
+        ++count;
 
-        if (distance < maxDistance) {
+        if (distance <= maxDistance) {
+            if (heap.size() == suggestions) {
+                Tuple min = heap.max();
+                if (distance > min.getDistance() || distance == min.getDistance()
+                        && node.getName().length() > min.getName().length()) {
+                    return;
+                }
+            }
+
             if (node.getRealName() != null && node.getName().length() >= input.length() - 1) {
                 heap.insert(new Tuple(node.getRealName(), distance));
             }
@@ -171,44 +174,76 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return null;
     }
 
-    private static int weightedEditDistance(final String a, final String b, final int length) {
-        final int[][] distance = new int[length + 1][length + 1];
-        int cost;
+    private int prefixEditDistance(String a, String b) {
+        if (a.length() > b.length()) {
+            String temp = b;
+            b = a;
+            a = temp;
+        }
 
-        for (int i = 0; i <= length; i++) {
+        final int[][] distance = new int[a.length() + 1][b.length() + 1];
+        final int[][] deletions = new int[a.length() + 1][b.length() + 1];
+
+        for (int i = 0; i <= a.length(); i++) {
             distance[i][0] = i;
-
         }
-        for (int j = 0; j <= length; j++) {
+        for (int j = 0; j <= b.length(); j++) {
             distance[0][j] = j;
-
         }
 
-        for (int i = 0; i < length; i++) {
-            for (int j = 0; j < length; j++) {
+        int minDist = Integer.MAX_VALUE;
 
-                if (a.charAt(i) == b.charAt(j)) {
-                    cost = 0;
+        for (int j = 0; j < b.length(); j++) {
+            for (int i = 0; i < a.length(); i++) {
+
+                final int cost = a.charAt(i) == b.charAt(j) ? 0 : 1;
+
+                final int deletion = distance[i][j + 1] + 1;
+                final int insertion = distance[i + 1][j] + 1;
+                final int substitution = distance[i][j] + cost;
+
+                // TODO improve code!
+                if (deletion <= insertion) {
+                    if (deletion <= substitution) {
+                        deletions[i + 1][j + 1] = deletions[i][j + 1] + 1;
+                        distance[i + 1][j + 1] = deletion;
+                    } else {
+                        deletions[i + 1][j + 1] = deletions[i][j];
+                        distance[i + 1][j + 1] = substitution;
+                    }
                 } else {
-                    cost = 1;
+                    if (insertion <= substitution) {
+                        deletions[i + 1][j + 1] = deletions[i + 1][j] - 1;
+                        distance[i + 1][j + 1] = insertion;
+                    } else {
+                        deletions[i + 1][j + 1] = deletions[i][j];
+                        distance[i + 1][j + 1] = substitution;
+                    }
                 }
 
-                distance[i + 1][j + 1] = minimum(distance[i][j + 1] + 1, distance[i + 1][j] + 1, distance[i][j] + cost);
-
+                // TODO improve code!
                 if ((i > 1) && (j > 1) && (a.charAt(i) == b.charAt(j - 1)) && (a.charAt(i - 1) == b.charAt(j))) {
-                    distance[i + 1][j + 1] = Math.min(distance[i + 1][j + 1], distance[i - 1][j - 1] + cost); // transposition
+                    final int transposition = distance[i - 1][j - 1] + cost;
+                    if (transposition < distance[i + 1][j + 1]) {
+                        distance[i + 1][j + 1] = transposition;
+                        deletions[i + 1][j + 1] = deletions[i - 1][j - 1];
+                    }
                 }
 
             }
 
+            if (j + deletions[a.length()][j + 1] >= a.length() - 1) {
+                if (distance[a.length()][j + 1] <= minDist) {
+                    minDist = distance[a.length()][j + 1];
+                } else {
+                    // TODO minDist may improve later..
+                    return minDist;
+                }
+            }
+
         }
 
-        return distance[length][length];
-
-    }
-
-    private static int minimum(final int a, final int b, final int c) {
-        return Math.min(Math.min(a, b), c);
+        return minDist;
     }
 
     public static String normalize(String name) {
