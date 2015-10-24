@@ -29,40 +29,43 @@ public class JPMSTTest {
 
     @Before
     public void setUp() {
-        final List<Long> edges = new ArrayList<Long>();
-        final List<Integer> weights = new ArrayList<Integer>();
+        final long[] edges = new long[15];
+        final int[] weights = new int[edges.length];
 
-        edges.add(getEdge(0, 1));
-        edges.add(getEdge(0, 2));
-        edges.add(getEdge(0, 5));
-        edges.add(getEdge(1, 2));
-        edges.add(getEdge(1, 3));
-        edges.add(getEdge(1, 5));
-        edges.add(getEdge(2, 4));
-        edges.add(getEdge(3, 4));
-        edges.add(getEdge(3, 6));
-        edges.add(getEdge(4, 5));
-        edges.add(getEdge(6, 7));
-        edges.add(getEdge(6, 8));
-        edges.add(getEdge(6, 9));
-        edges.add(getEdge(7, 8));
-        edges.add(getEdge(8, 9));
+        int count = -1;
 
-        weights.add(1);
-        weights.add(2);
-        weights.add(3);
-        weights.add(9);
-        weights.add(3);
-        weights.add(1);
-        weights.add(2);
-        weights.add(1);
-        weights.add(3);
-        weights.add(4);
-        weights.add(3);
-        weights.add(4);
-        weights.add(5);
-        weights.add(1);
-        weights.add(2);
+        edges[++count] = getEdge(0, 1);
+        edges[++count] = getEdge(0, 2);
+        edges[++count] = getEdge(0, 5);
+        edges[++count] = getEdge(1, 2);
+        edges[++count] = getEdge(1, 3);
+        edges[++count] = getEdge(1, 5);
+        edges[++count] = getEdge(2, 4);
+        edges[++count] = getEdge(3, 4);
+        edges[++count] = getEdge(3, 6);
+        edges[++count] = getEdge(4, 5);
+        edges[++count] = getEdge(6, 7);
+        edges[++count] = getEdge(6, 8);
+        edges[++count] = getEdge(6, 9);
+        edges[++count] = getEdge(7, 8);
+        edges[++count] = getEdge(8, 9);
+
+        count = -1;
+        weights[++count] = 1;
+        weights[++count] = 2;
+        weights[++count] = 3;
+        weights[++count] = 9;
+        weights[++count] = 3;
+        weights[++count] = 1;
+        weights[++count] = 2;
+        weights[++count] = 1;
+        weights[++count] = 3;
+        weights[++count] = 4;
+        weights[++count] = 3;
+        weights[++count] = 4;
+        weights[++count] = 5;
+        weights[++count] = 1;
+        weights[++count] = 2;
 
         final IGraph graph = new Graph(10, edges, weights);
         jp = new JPMST(graph);

@@ -5,37 +5,38 @@ import java.awt.Point;
 public class Street extends Way {
 
     private final long id;
-    private int length;
+    private final int length;
 
     // TODO avoid storage of empty street name
     public Street(final int[] xPoints, final int[] yPoints, final int type, final String name, final long id) {
         super(xPoints, yPoints, type, name);
+        this.length = calculateLength();
         this.id = id;
     }
 
     public int getLength() {
-        if (length == 0) {
-            calculateLength();
-        }
-
         return length;
     }
 
-    private void calculateLength() {
-        float totalLength = 0f;
+    private int calculateLength() {
+        if (xPoints.length > 1) {
+            float totalLength = 0f;
 
-        int lastX = xPoints[0];
-        int lastY = yPoints[0];
+            int lastX = xPoints[0];
+            int lastY = yPoints[0];
 
-        for (int i = 1; i < size(); i++) {
-            int currentX = xPoints[i];
-            int currentY = yPoints[i];
-            totalLength += Point.distance(currentX, currentY, lastX, lastY);
-            lastX = currentX;
-            lastY = currentY;
+            for (int i = 1; i < size(); i++) {
+                int currentX = xPoints[i];
+                int currentY = yPoints[i];
+                totalLength += Point.distance(currentX, currentY, lastX, lastY);
+                lastX = currentX;
+                lastY = currentY;
+            }
+
+            return (int) totalLength;
         }
 
-        length = (int) totalLength;
+        return 0;
     }
 
     public long getID() {

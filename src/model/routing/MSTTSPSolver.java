@@ -100,7 +100,7 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
 
     private IGraph createCompleteGraph(final List<InterNode> points) {
         final int size = points.size() - 1;
-        final long[] edges = new long[size * (size - 1) / 2];
+        final long[] edges = new long[size * (size + 1) / 2];
         final int[] weights = new int[edges.length];
 
         final double progressStep = 100.0 / (points.size() - 1);

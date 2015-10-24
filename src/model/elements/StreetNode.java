@@ -32,33 +32,35 @@ public class StreetNode extends Node {
         final int[] xPoints = street.getXPoints();
         final int[] yPoints = street.getYPoints();
 
-        final float totalLength = street.getLength();
-        final float maxLength = totalLength * offset;
+        if (xPoints.length > 0) {
+            final float totalLength = street.getLength();
+            final float maxLength = totalLength * offset;
 
-        int lastX = xPoints[0];
-        int lastY = yPoints[0];
-        float currentOffsetLength = 0f;
+            int lastX = xPoints[0];
+            int lastY = yPoints[0];
+            float currentOffsetLength = 0f;
 
-        for (int i = 1; i < xPoints.length; i++) {
-            final int currentX = xPoints[i];
-            final int currentY = yPoints[i];
-            final double distance = Point.distance(lastX, lastY, currentX, currentY);
+            for (int i = 1; i < xPoints.length; i++) {
+                final int currentX = xPoints[i];
+                final int currentY = yPoints[i];
+                final double distance = Point.distance(lastX, lastY, currentX, currentY);
 
-            if (currentOffsetLength + distance > maxLength || i == xPoints.length - 1) {
-                final int xDistance = currentX - lastX;
-                final int yDistance = currentY - lastY;
+                if (currentOffsetLength + distance > maxLength || i == xPoints.length - 1) {
+                    final int xDistance = currentX - lastX;
+                    final int yDistance = currentY - lastY;
 
-                final float partOffsetLength = maxLength - currentOffsetLength;
-                final float partOffset = (float) (partOffsetLength / distance);
-                setLocation((int) (lastX + xDistance * partOffset + 0.49f),
-                        (int) (lastY + yDistance * partOffset + 0.49f));
+                    final float partOffsetLength = maxLength - currentOffsetLength;
+                    final float partOffset = (float) (partOffsetLength / distance);
+                    setLocation((int) (lastX + xDistance * partOffset + 0.49f),
+                            (int) (lastY + yDistance * partOffset + 0.49f));
 
-                return;
+                    return;
+                }
+
+                currentOffsetLength += distance;
+                lastX = currentX;
+                lastY = currentY;
             }
-
-            currentOffsetLength += distance;
-            lastX = currentX;
-            lastY = currentY;
         }
     }
 

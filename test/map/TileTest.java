@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Label;
-import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
@@ -33,23 +32,20 @@ public class TileTest {
     public void setUp() {
         streets = new LinkedList<Street>();
 
-        final Street street = new Street(new Node[]{new Node(50, 0), new Node(80, 20), new Node(256, 156)}, 3,
-                "Kaiserstrasse", 0);
+        final Street street = new Street(new int[]{50, 80, 256}, new int[]{0, 20, 156}, 3, "Kaiserstrasse", 0);
         streets.add(street);
 
-        streets.add(new Street(new Node[]{new Node(60, 150), new Node(60, 150), new Node(210, 80), new Node(200, 30)},
-                2, "Waldstrasse", 1));
+        streets.add(new Street(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1));
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
         ways = new LinkedList<Way>();
 
-        ways.add(new Way(new Node[]{new Node(90, 0), new Node(120, 150), new Node(10, 300)}, 3, "Testweg"));
+        ways.add(new Way(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg"));
 
         buildings = new LinkedList<Building>();
 
-        buildings.add(Building.create(new Node[]{new Node(244, 119), new Node(235, 130), new Node(215, 115),
-                new Node(224, 104)}, streetNode, "15"));
+        buildings.add(Building.create(new int[]{244, 235, 215, 224}, new int[]{119, 130, 115, 104}, streetNode, "15"));
 
         areas = new LinkedList<Area>();
 

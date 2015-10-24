@@ -2,8 +2,6 @@ package model.routing;
 
 import static org.junit.Assert.assertNotNull;
 
-import java.util.ArrayList;
-
 import model.map.MapManager;
 
 import org.junit.Before;
@@ -15,7 +13,7 @@ public class RouteManagerTest {
 
     @Before
     public void setUp() {
-        rM = new RouteManager(new Graph(0, new ArrayList<Long>(), new ArrayList<Integer>()), new MapManager());
+        rM = new RouteManager(new Graph(0, new long[0], new int[0]), new MapManager());
     }
 
     @Test

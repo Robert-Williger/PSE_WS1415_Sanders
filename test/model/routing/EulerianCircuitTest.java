@@ -3,8 +3,6 @@ package model.routing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,12 +22,11 @@ public class EulerianCircuitTest {
     public void testCircle() {
         final int nodes = 12;
 
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = new ArrayList<Long>();
+        final int[] weights = new int[nodes];
+        final long[] edges = new long[nodes];
 
         for (int i = 0; i < nodes; i++) {
-            weights.add(0);
-            edges.add(getEdge(i, (i + 1) % nodes));
+            edges[i] = getEdge(i, (i + 1) % nodes);
         }
         final Graph graph = new Graph(nodes, edges, weights);
 
@@ -40,13 +37,13 @@ public class EulerianCircuitTest {
     public void testCircle2() {
         final int nodes = 13;
 
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = new ArrayList<Long>();
+        final int[] weights = new int[nodes];
+        final long[] edges = new long[nodes];
 
         int current = 0;
         for (int i = 0; i < nodes; i++) {
-            weights.add(0);
-            edges.add(getEdge(current % nodes, (current += 2) % nodes));
+
+            edges[i] = getEdge(current % nodes, (current += 2) % nodes);
         }
         final Graph graph = new Graph(nodes, edges, weights);
 
@@ -57,18 +54,15 @@ public class EulerianCircuitTest {
     public void testHourglass() {
         final int nodes = 5;
 
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = new ArrayList<Long>();
+        final int[] weights = new int[nodes + 1];
+        final long[] edges = new long[nodes + 1];
 
-        edges.add(getEdge(4, 2));
-        edges.add(getEdge(2, 0));
+        edges[nodes - 1] = getEdge(4, 2);
+        edges[nodes] = getEdge(2, 0);
 
         for (int i = nodes - 2; i >= 0; i--) {
-            weights.add(0);
-            edges.add(getEdge(i, i + 1));
+            edges[i] = getEdge(i, i + 1);
         }
-        weights.add(0);
-        weights.add(0);
 
         final Graph graph = new Graph(nodes, edges, weights);
 
@@ -79,22 +73,18 @@ public class EulerianCircuitTest {
     public void testCircles() {
         final int nodes = 7;
 
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = new ArrayList<Long>();
+        final int[] weights = new int[nodes + 1];
+        final long[] edges = new long[nodes + 1];
 
-        edges.add(getEdge(3, 4));
-        edges.add(getEdge(4, 5));
-        edges.add(getEdge(5, 6));
-        edges.add(getEdge(6, 3));
+        edges[0] = getEdge(3, 4);
+        edges[1] = getEdge(4, 5);
+        edges[2] = getEdge(5, 6);
+        edges[3] = getEdge(6, 3);
 
-        edges.add(getEdge(0, 1));
-        edges.add(getEdge(1, 2));
-        edges.add(getEdge(2, 3));
-        edges.add(getEdge(3, 0));
-
-        for (int i = 0; i < edges.size(); i++) {
-            weights.add(0);
-        }
+        edges[4] = getEdge(0, 1);
+        edges[5] = getEdge(1, 2);
+        edges[6] = getEdge(2, 3);
+        edges[7] = getEdge(3, 0);
 
         final Graph graph = new Graph(nodes, edges, weights);
 
@@ -105,34 +95,30 @@ public class EulerianCircuitTest {
     public void testComplexGraph() {
         final int nodes = 9;
 
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = new ArrayList<Long>();
+        final int[] weights = new int[15];
+        final long[] edges = new long[15];
 
-        edges.add(getEdge(0, 1));
-        edges.add(getEdge(0, 2));
-        edges.add(getEdge(0, 6));
-        edges.add(getEdge(0, 7));
+        edges[0] = getEdge(0, 1);
+        edges[1] = getEdge(0, 2);
+        edges[2] = getEdge(0, 6);
+        edges[3] = getEdge(0, 7);
 
-        edges.add(getEdge(1, 2));
+        edges[4] = getEdge(1, 2);
 
-        edges.add(getEdge(2, 6));
-        edges.add(getEdge(2, 3));
+        edges[5] = getEdge(2, 6);
+        edges[6] = getEdge(2, 3);
 
-        edges.add(getEdge(3, 6));
-        edges.add(getEdge(3, 8));
-        edges.add(getEdge(3, 4));
+        edges[7] = getEdge(3, 6);
+        edges[8] = getEdge(3, 8);
+        edges[9] = getEdge(3, 4);
 
-        edges.add(getEdge(4, 8));
+        edges[10] = getEdge(4, 8);
 
-        edges.add(getEdge(5, 8));
-        edges.add(getEdge(5, 6));
+        edges[11] = getEdge(5, 8);
+        edges[12] = getEdge(5, 6);
 
-        edges.add(getEdge(6, 8));
-        edges.add(getEdge(6, 7));
-
-        for (int i = 0; i < edges.size(); i++) {
-            weights.add(0);
-        }
+        edges[13] = getEdge(6, 8);
+        edges[14] = getEdge(6, 7);
 
         final Graph graph = new Graph(nodes, edges, weights);
 
@@ -141,16 +127,12 @@ public class EulerianCircuitTest {
 
     @Test
     public void test() {
-
-        final List<Integer> weights = new ArrayList<Integer>();
-        final List<Long> edges = Arrays.asList(1L, 34359738379L, 21474836498L, 8589934605L, 25769803791L, 42949672974L,
+        final long[] edges = new long[]{1L, 34359738379L, 21474836498L, 8589934605L, 25769803791L, 42949672974L,
                 12884901892L, 25769803783L, 17179869191L, 8L, 34359738377L, 38654705675L, 42949672972L, 34359738380L,
                 4294967309L, 8589934605L, 13L, 14L, 8589934607L, 8589934608L, 68719476753L, 12884901906L, 21474836498L,
-                73014444050L);
+                73014444050L};
+        final int[] weights = new int[edges.length];
 
-        for (int i = 0; i < edges.size(); i++) {
-            weights.add(0);
-        }
         final Graph graph = new Graph(19, edges, weights);
 
         checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));

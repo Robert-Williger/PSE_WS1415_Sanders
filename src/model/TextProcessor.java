@@ -1,83 +1,69 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import model.elements.Label;
-import model.elements.Street;
 import model.elements.StreetNode;
-import model.map.AddressNode;
-import model.map.IMapManager;
 
 /*
  * First Implementation of TextProcessing.
  *
  */
 public class TextProcessor implements ITextProcessor {
-    private final HashMap<String, StreetNode> nodeMap;
-    private final int suggestions;
-    private final Tuple[] distanceArray;
+
+    private final HashMap<String, StreetNode> hm;
+    private final int numberOfSuggestions;
 
     /**
      * TextProcessing-Constructor.
      * 
-     * @param labels
-     * @param manager
-     * 
-     * @param nodeMap
+     * @param hashmap
      *            HashMap, which maps every address on a StreetNode.
-     * @param suggestions
-     *            Number of suggestions, which will be returned as list.
+     * @param numberOfSuggestions
+     *            Number of suggestions, which will be return as list.
      */
-    public TextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager, final int suggestions) {
-
-        this.nodeMap = new HashMap<String, StreetNode>(entries.length);
-        for (final Entry[] entry : entries) {
-            final Street street = entry[0].getStreet();
-            nodeMap.put(normalize(street.getName()), new StreetNode(0.5f, street));
-        }
-
-        for (final Label label : labels) {
-            final AddressNode addressNode = manager.getAddressNode(label.getLocation());
-            if (addressNode != null) {
-                nodeMap.put(label.getName(), addressNode.getStreetNode());
-            }
-        }
-
-        this.suggestions = suggestions;
-        this.distanceArray = new Tuple[nodeMap.size()];
+    public TextProcessor(final HashMap<String, StreetNode> hashmap, final int numberOfSuggestions) {
+        hm = hashmap;
+        this.numberOfSuggestions = numberOfSuggestions;
     }
 
     @Override
     public List<String> suggest(final String address) {
 
-        final String normalizedAddress = normalize(address);
-        int index = -1;
-        for (final Map.Entry<String, StreetNode> entry : nodeMap.entrySet()) {
+        List<Tuple> distanceList = new ArrayList<Tuple>();
 
-            int length = normalizedAddress.length();
-            if (length > entry.getKey().length()) {
-                length = entry.getKey().length();
+        for (final String b : hm.keySet()) {
+
+            int length = address.length();
+            if (length > b.length()) {
+                length = b.length();
             }
 
-            final int distance = weightedEditDistance(normalizedAddress, entry.getKey().substring(0, length));
+            final int distance = weightedEditDistance(address, b.substring(0, length));
 
-            final Tuple t = new Tuple(entry.getValue().getStreet().getName(), distance);
+            final Tuple t = new Tuple(b, distance);
 
-            distanceArray[++index] = t;
+            distanceList.add(t);
+
         }
         // Sorts ascending by editDistance
-        Arrays.sort(distanceArray);
+        Collections.sort(distanceList);
+
+        int length = numberOfSuggestions;
 
         // Prevents OutOfBoundsException, if there are only few addresses.
-        int length = Math.min(suggestions, distanceArray.length);
+        if (distanceList.size() < numberOfSuggestions) {
+            length = distanceList.size();
+        }
+
+        distanceList = distanceList.subList(0, length);
 
         final List<String> stringList = new ArrayList<String>();
-        for (int i = 0; i < length; i++) {
-            stringList.add(distanceArray[i].getName());
+
+        for (final Tuple t : distanceList) {
+            stringList.add(t.getName());
         }
 
         return stringList;
@@ -86,7 +72,7 @@ public class TextProcessor implements ITextProcessor {
 
     @Override
     public StreetNode parse(final String address) {
-        return nodeMap.get(normalize(address));
+        return hm.get(address);
     }
 
     /*
@@ -136,7 +122,7 @@ public class TextProcessor implements ITextProcessor {
         return Math.min(Math.min(a, b), c);
     }
 
-    // Inner class: (String, distance)
+    // Intern class: (String, distance)
     private static class Tuple implements Comparable<Tuple> {
 
         private final String s;
@@ -164,7 +150,7 @@ public class TextProcessor implements ITextProcessor {
     }
 
     /*
-     * Normalizes a String. Lowercase, ä, ü, ö, ß.
+     * Normalizes a String. Lowercase, ä, ü, ö, ß. Public for use in admin-tool.
      */
     public static String normalize(String name) {
 
@@ -175,7 +161,6 @@ public class TextProcessor implements ITextProcessor {
         replaceAllSB(nameSB, "ä", "ae");
         replaceAllSB(nameSB, "ü", "ue");
         replaceAllSB(nameSB, "ö", "oe");
-        replaceAllSB(nameSB, "-", " ");
 
         return nameSB.toString();
     }

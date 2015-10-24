@@ -63,8 +63,7 @@ public class MapTest {
     public void testMove() {
         map.zoom(3, new Point(1, 1));
         map.moveView(257, 257);
-        System.out.println(map.getViewLocation());
-        assertEquals(new Point(8, 8), map.getViewLocation());
+        assertEquals(new Point(4, 4), map.getViewLocation());
     }
 
     @Test

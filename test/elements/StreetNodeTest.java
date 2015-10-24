@@ -42,7 +42,6 @@ public class StreetNodeTest {
         assertFalse(sNode.equals(null));
         assertFalse(sNode.equals(new Node()));
         assertFalse(new StreetNode(0f, street).equals(sNode));
-        assertFalse(new StreetNode(0.5f, null).equals(sNode));
         assertEquals(sNode, new StreetNode(0.5f, street));
     }
 

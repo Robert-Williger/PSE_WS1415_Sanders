@@ -12,7 +12,6 @@ import java.util.Arrays;
 import model.elements.Area;
 import model.elements.Building;
 import model.elements.Label;
-import model.elements.Node;
 import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
@@ -42,21 +41,17 @@ public class BackgroundRendererTest {
     public static void setUpClass() {
         renderer = new BackgroundRenderer(new PixelConverter(1));
 
-        areas = new Area[]{new Area(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3), new Node(3, 0)}, 1)};
-        ways = new Way[]{new Way(new Node[]{new Node(90, 0), new Node(120, 150), new Node(10, 300)}, 3, "Testweg")};
+        areas = new Area[]{new Area(new int[]{2, 5, 10, 3}, new int[]{2, 5, 3, 0}, 1)};
+        ways = new Way[]{new Way(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg")};
 
-        final Street street = new Street(new Node[]{new Node(0, 0), new Node(5, 5), new Node(20, 10)}, 1,
-                "Kaiserstrasse", 0);
+        final Street street = new Street(new int[]{0, 5, 20}, new int[]{0, 5, 10}, 1, "Kaiserstrasse", 0);
 
-        streets = new Street[]{
-                street,
-                new Street(new Node[]{new Node(60, 150), new Node(60, 150), new Node(210, 80), new Node(200, 30)}, 2,
-                        "Waldstrasse", 1)};
+        streets = new Street[]{street,
+                new Street(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1)};
 
         final StreetNode streetNode = new StreetNode(0.9f, street);
 
-        buildings = new Building[]{Building.create(new Node[]{new Node(2, 2), new Node(5, 5), new Node(10, 3),
-                new Node(3, 0)}, streetNode, "15")};
+        buildings = new Building[]{Building.create(new int[]{2, 5, 10, 3}, new int[]{2, 5, 3, 0}, streetNode, "15")};
 
         renderImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         emptyImage = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -104,24 +99,10 @@ public class BackgroundRendererTest {
     }
 
     @Test
-    public void testNullAreaRendering() {
-        final Tile tile = new Tile(1, 1, 1, new Way[0], new Street[0], null, new Building[0], new POI[0], new Label[0]);
-        assertFalse(renderer.render(tile, renderImage));
-        assertFalse(imageChanged());
-    }
-
-    @Test
     public void testWayRendering() {
         final Tile tile = new Tile(1, 1, 1, ways, new Street[0], new Area[0], new Building[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
-    }
-
-    @Test
-    public void testNullWayRendering() {
-        final Tile tile = new Tile(1, 1, 1, null, new Street[0], new Area[0], new Building[0], new POI[0], new Label[0]);
-        assertFalse(renderer.render(tile, renderImage));
-        assertFalse(imageChanged());
     }
 
     @Test
@@ -132,24 +113,10 @@ public class BackgroundRendererTest {
     }
 
     @Test
-    public void testNullStreetRendering() {
-        final Tile tile = new Tile(4, 1, 1, new Way[0], null, new Area[0], new Building[0], new POI[0], new Label[0]);
-        assertFalse(renderer.render(tile, renderImage));
-        assertFalse(imageChanged());
-    }
-
-    @Test
     public void testBuildingRendering() {
         final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], buildings, new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
-    }
-
-    @Test
-    public void testNullBuildingRendering() {
-        final Tile tile = new Tile(6, 1, 1, new Way[0], new Street[0], new Area[0], null, new POI[0], new Label[0]);
-        assertFalse(renderer.render(tile, renderImage));
-        assertFalse(imageChanged());
     }
 
     @Test

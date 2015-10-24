@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import model.elements.Node;
 import model.elements.Street;
 import model.elements.StreetNode;
 
@@ -27,7 +26,7 @@ public class TextProcessingTest {
         // Erstellt fuer den richtigen Eintrag der Hashtabelle einen passenden
         // Node
 
-        final Street street = new Street(new Node[]{new Node(0, 0)}, 0, "Teststrasse", 0);
+        final Street street = new Street(new int[0], new int[0], 0, "Teststrasse", 0);
         sn = new StreetNode(0, street);
 
         final HashMap<String, StreetNode> hm = new HashMap<String, StreetNode>();
@@ -37,7 +36,7 @@ public class TextProcessingTest {
         hm.put("EIDAKDSLENCP", null);
         hm.put("Teststrasse", sn);
 
-        tp = new TextProcessor(hm, null, length);
+        tp = new TextProcessor(hm, length);
     }
 
     @Test
