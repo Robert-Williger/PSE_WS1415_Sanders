@@ -119,8 +119,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     @Override
     public List<String> suggest(final String address) {
-        long start = System.currentTimeMillis();
-
         final BoundedHeap<Tuple> tuples = new BoundedHeap<Tuple>(suggestions);
         final String normalizedAddress = normalize(address);
 
@@ -133,7 +131,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
             choice[length - i - 1] = tuples.deleteMax().getName();
         }
 
-        System.out.println(System.currentTimeMillis() - start);
         return Arrays.asList(choice);
     }
 
@@ -161,10 +158,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     @Override
     public StreetNode parse(final String address) {
-        long start = System.currentTimeMillis();
-        final StreetNode node = parse(normalize(address), indexRoot, 0);
-        System.out.println(System.currentTimeMillis() - start);
-        return node;
+        return parse(normalize(address), indexRoot, 0);
     }
 
     private StreetNode parse(final String address, final TreeNode root, int index) {
