@@ -13,34 +13,25 @@ import model.map.IMapManager;
 public class AdvancedTextProcessor implements ITextProcessor {
     private final int maxDistance;
     private final int suggestions;
-    private final TreeNode indexRoot;
-    private int count;
+    private final int[][] distance;
+    private TreeNode indexRoot;
+    private int maxStringLength;
 
     public AdvancedTextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager,
             final int suggestions) {
 
-        this.maxDistance = 3;
+        this.maxDistance = 2;
         this.suggestions = suggestions;
 
-        indexRoot = setupIndex(entries, labels, manager);
-        // printIndex(indexRoot, 0);
+        setupIndex(entries, labels, manager);
+        distance = createDistanceArray();
+        maxStringLength += 2 * maxDistance;
     }
 
-    private void printIndex(final TreeNode root, final int depth) {
-        String spaces = "";
-        for (int i = 0; i < depth; i++) {
-            spaces += "  ";
-        }
-        ++count;
-        System.out.println(spaces + "[" + depth + "] " + root.getName());
-        for (final TreeNode child : root.getChildren()) {
-            printIndex(child, depth + 1);
-        }
-    }
+    private void setupIndex(final Entry[][] entries, final Label[] labels, final IMapManager manager) {
+        indexRoot = new TreeNode("", null, null);
 
-    private TreeNode setupIndex(final Entry[][] entries, final Label[] labels, final IMapManager manager) {
-        final TreeNode root = new TreeNode("", null, null);
-
+        maxStringLength = 0;
         for (final Entry[] entry : entries) {
             for (int i = 0; i < entry.length; i++) {
                 final String streetName = entry[i].getStreet().getName();
@@ -48,8 +39,8 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 final String realName = streetName + " " + cityName;
                 final StreetNode node = new StreetNode(0.5f, entry[i].getStreet());
                 // TODO order by size of city
-                add(normalize(realName), realName, node, root, 0);
-                add(normalize(cityName + " " + streetName), realName, node, root, 0);
+                add(normalize(realName), realName, node);
+                add(normalize(cityName + " " + streetName), realName, node);
             }
         }
 
@@ -57,16 +48,34 @@ public class AdvancedTextProcessor implements ITextProcessor {
         for (final Label label : labels) {
             final AddressNode addressNode = manager.getAddressNode(label.getLocation());
             if (addressNode != null) {
-                add(normalize(label.getName()), label.getName(), addressNode.getStreetNode(), root, 0);
+                add(normalize(label.getName()), label.getName(), addressNode.getStreetNode());
             }
         }
-
-        return root;
     }
 
-    // TODO Epplinger Straße --> Ettlinger Straße instead of Eppinger Straße!?
+    private int[][] createDistanceArray() {
+        final int secondLength = maxStringLength + 2 * maxDistance + 1;
+        final int[][] distance = new int[maxStringLength + 1][secondLength];
+        for (int i = 0; i < distance.length; i++) {
+            distance[i][0] = i;
+        }
+        for (int j = 0; j < secondLength; j++) {
+            distance[0][j] = j;
+        }
+
+        return distance;
+    }
+
+    private void add(final String normalizedName, final String realName, final StreetNode streetNode) {
+        if (normalizedName.length() > maxStringLength) {
+            maxStringLength = normalizedName.length();
+        }
+        add(normalizedName, realName, streetNode, indexRoot, 0);
+    }
+
     private void add(final String normalizedName, final String realName, final StreetNode streetNode,
             final TreeNode root, int index) {
+
         if (normalizedName.length() > 1) {
             for (final Iterator<TreeNode> iterator = root.getChildren().iterator(); iterator.hasNext();) {
                 final TreeNode child = iterator.next();
@@ -110,12 +119,12 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     @Override
     public List<String> suggest(final String address) {
+        long start = System.currentTimeMillis();
+
         final BoundedHeap<Tuple> tuples = new BoundedHeap<Tuple>(suggestions);
         final String normalizedAddress = normalize(address);
 
-        count = 0;
         suggest(normalizedAddress, indexRoot, tuples);
-        System.out.println(count);
 
         int length = Math.min(suggestions, tuples.size());
 
@@ -124,19 +133,18 @@ public class AdvancedTextProcessor implements ITextProcessor {
             choice[length - i - 1] = tuples.deleteMax().getName();
         }
 
+        System.out.println(System.currentTimeMillis() - start);
         return Arrays.asList(choice);
     }
 
     private void suggest(final String input, final TreeNode node, final BoundedHeap<Tuple> heap) {
         int distance = prefixEditDistance(input, node.getName());
 
-        ++count;
-
         if (distance <= maxDistance) {
             if (heap.size() == suggestions) {
-                Tuple min = heap.max();
-                if (distance > min.getDistance() || distance == min.getDistance()
-                        && node.getName().length() > min.getName().length()) {
+                Tuple max = heap.max();
+                if (distance > max.getDistance() || distance == max.getDistance()
+                        && node.getName().length() > max.getName().length()) {
                     return;
                 }
             }
@@ -153,7 +161,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     @Override
     public StreetNode parse(final String address) {
-        return parse(normalize(address), indexRoot, 0);// nodeMap.get(normalize(address));
+        long start = System.currentTimeMillis();
+        final StreetNode node = parse(normalize(address), indexRoot, 0);
+        System.out.println(System.currentTimeMillis() - start);
+        return node;
     }
 
     private StreetNode parse(final String address, final TreeNode root, int index) {
@@ -181,69 +192,49 @@ public class AdvancedTextProcessor implements ITextProcessor {
             a = temp;
         }
 
-        final int[][] distance = new int[a.length() + 1][b.length() + 1];
-        final int[][] deletions = new int[a.length() + 1][b.length() + 1];
+        int minDist = maxDistance + 1;
+        // TODO necessary?
+        int bLength = Math.min(b.length(), maxStringLength);
 
-        for (int i = 0; i <= a.length(); i++) {
-            distance[i][0] = i;
-        }
-        for (int j = 0; j <= b.length(); j++) {
-            distance[0][j] = j;
-        }
-
-        int minDist = Integer.MAX_VALUE;
-
-        for (int j = 0; j < b.length(); j++) {
+        for (int j = 0; j < bLength; j++) {
+            int currentMinDist = minDist + 1;
             for (int i = 0; i < a.length(); i++) {
 
                 final int cost = a.charAt(i) == b.charAt(j) ? 0 : 1;
 
-                final int deletion = distance[i][j + 1] + 1;
-                final int insertion = distance[i + 1][j] + 1;
-                final int substitution = distance[i][j] + cost;
+                distance[i + 1][j + 1] = min( //
+                        distance[i][j + 1] + 1, // deletion
+                        distance[i + 1][j] + 1, // insertion
+                        distance[i][j] + cost // substitution
+                );
 
-                // TODO improve code!
-                if (deletion <= insertion) {
-                    if (deletion <= substitution) {
-                        deletions[i + 1][j + 1] = deletions[i][j + 1] + 1;
-                        distance[i + 1][j + 1] = deletion;
-                    } else {
-                        deletions[i + 1][j + 1] = deletions[i][j];
-                        distance[i + 1][j + 1] = substitution;
+                if (i > 1) {
+                    if (distance[i][j + 1] < currentMinDist) {
+                        currentMinDist = distance[i][j + 1];
                     }
-                } else {
-                    if (insertion <= substitution) {
-                        deletions[i + 1][j + 1] = deletions[i + 1][j] - 1;
-                        distance[i + 1][j + 1] = insertion;
-                    } else {
-                        deletions[i + 1][j + 1] = deletions[i][j];
-                        distance[i + 1][j + 1] = substitution;
-                    }
-                }
-
-                // TODO improve code!
-                if ((i > 1) && (j > 1) && (a.charAt(i) == b.charAt(j - 1)) && (a.charAt(i - 1) == b.charAt(j))) {
-                    final int transposition = distance[i - 1][j - 1] + cost;
-                    if (transposition < distance[i + 1][j + 1]) {
-                        distance[i + 1][j + 1] = transposition;
-                        deletions[i + 1][j + 1] = deletions[i - 1][j - 1];
+                    if (j > 1 && a.charAt(i) == b.charAt(j - 1) && a.charAt(i - 1) == b.charAt(j)) {
+                        distance[i + 1][j + 1] = Math.min( //
+                                distance[i - 1][j - 1] + cost, // transposition
+                                distance[i + 1][j + 1] // current minimum
+                                );
                     }
                 }
 
             }
 
-            if (j + deletions[a.length()][j + 1] >= a.length() - 1) {
-                if (distance[a.length()][j + 1] <= minDist) {
-                    minDist = distance[a.length()][j + 1];
-                } else {
-                    // TODO minDist may improve later..
-                    return minDist;
-                }
+            minDist = Math.min(distance[a.length()][j + 1], minDist);
+            if (currentMinDist > minDist) {
+                // TODO improvement still possible by transposition?
+                return minDist;
             }
-
         }
 
         return minDist;
+
+    }
+
+    private static int min(final int a, final int b, final int c) {
+        return Math.min(Math.min(a, b), c);
     }
 
     public static String normalize(String name) {

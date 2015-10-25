@@ -1,11 +1,9 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class BoundedHeap<T extends Comparable<T>> {
-    private final List<T> heap;
+    private final ArrayList<T> heap;
     private final int capacity;
 
     public BoundedHeap(final int capacity) {
@@ -94,21 +92,6 @@ public class BoundedHeap<T extends Comparable<T>> {
                 swap(index, swapIndex);
                 siftDown(swapIndex);
             }
-        }
-    }
-
-    public static void main(String[] args) {
-        final int[] array = new int[20];
-        final BoundedHeap<Integer> heap = new BoundedHeap<Integer>(10);
-        for (int i = 0; i < array.length; i++) {
-            final int number = (int) (Math.random() * 100);
-            heap.insert(number);
-            array[i] = number;
-        }
-        Arrays.sort(array);
-        System.out.println(Arrays.toString(array));
-        while (!heap.isEmpty()) {
-            System.out.println(heap.deleteMax());
         }
     }
 }
