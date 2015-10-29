@@ -212,7 +212,7 @@ public class Reader implements IReader {
             }
         }
 
-        tp = new AdvancedTextProcessor(entries, labels, manager, 5);
+        tp = new AdvancedTextProcessor(entries, labels, manager);
     }
 
     private class MapManagerReader {

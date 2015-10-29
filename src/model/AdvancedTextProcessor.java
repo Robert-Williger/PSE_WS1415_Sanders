@@ -51,7 +51,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 final String realName = streetName + " " + cityName;
                 final StreetNode node = new StreetNode(0.5f, entry[i].getStreet());
                 // TODO order by size of city
-                add(normalize(realName), realName, root, node);
+                add(normalize(streetName + " " + cityName), realName, root, node);
                 add(normalize(cityName + " " + streetName), realName, root, node);
             }
         }
@@ -65,17 +65,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
         }
 
         return root;
-    }
-
-    private void printIndex(final SortedTree root, final int depth) {
-        String spaces = "";
-        for (int i = 0; i < depth; i++) {
-            spaces += "  ";
-        }
-        System.out.println(spaces + "[" + depth + "] " + root.getIndexName());
-        for (final SortedTree child : root.getChildren()) {
-            printIndex(child, depth + 1);
-        }
     }
 
     private int[][] createDistanceArray() {
@@ -144,12 +133,9 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     @Override
     public List<String> suggest(final String address) {
-        // long start = System.currentTimeMillis();
-
         final String normalizedAddress = normalize(address);
 
         suggestBinary(normalizedAddress, indexRoot, 0);
-        // System.out.println(count);
 
         int length = Math.min(suggestions, heap.size());
 
@@ -158,7 +144,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
             choice[length - i - 1] = heap.deleteMax().getName();
         }
 
-        // System.out.println(System.currentTimeMillis() - start);
         return Arrays.asList(choice);
     }
 
@@ -197,9 +182,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private void suggest(final String input, final SortedTree tree) {
         int distance = prefixEditDistance(input, tree.getIndexName());
 
-        if (tree.getIndexName().equals("eppingerstrassekraichtal")) {
-            System.out.println(distance);
-        }
         if (distance <= maxDistance) {
             if (heap.size() == suggestions) {
                 Tuple max = heap.max();
@@ -208,14 +190,13 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 }
             }
 
-            if (tree.getName() != null && tree.getIndexName().length() >= input.length() - 1) {
+            // TODO improve this?
+            if (tree.getName() != null
+                    && tree.getIndexName().length() >= input.length() - (tree.getIndexName().length() >> 1)) {
                 heap.insert(new Tuple(tree.getName(), distance));
             }
 
             for (final SortedTree node : tree.getChildren()) {
-                if (tree.getIndexName().equals("eppinger")) {
-                    System.out.println(node.getIndexName());
-                }
                 suggest(input, node);
             }
         }
@@ -243,6 +224,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return index == input.length() ? child.getStreetNode() : parse(child, input, index);
     }
 
+    // TODO fit edit costs --> nearby keys lower costs than far away ones
     // binary search looks for child with same character as input at given index
     private SortedTree binarySearch(final SortedTree root, final String input, int index) {
         final SortedTree[] children = root.getChildren();
@@ -268,7 +250,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return null;
     }
 
-    // TODO suggestions for 'Eppsilnger' but not for 'Eppsilnge' atm!
     private int prefixEditDistance(String a, String b) {
         if (a.length() > b.length()) {
             String temp = b;
@@ -277,11 +258,12 @@ public class AdvancedTextProcessor implements ITextProcessor {
         }
 
         int minDist = Integer.MAX_VALUE;
+        int currentMinDist = Integer.MAX_VALUE;
         // TODO necessary?
         int bLength = Math.min(b.length(), maxStringLength);
 
         for (int j = 0; j < bLength; j++) {
-            int currentMinDist = minDist + 1;
+            currentMinDist = minDist + 1;
             for (int i = 0; i < a.length(); i++) {
 
                 final int cost = a.charAt(i) == b.charAt(j) ? 0 : 1;
@@ -313,8 +295,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             }
         }
 
-        // TODO return Math.min(minDist, currentMinDist); ?
-        return minDist;
+        return Math.min(minDist, currentMinDist);
 
     }
 

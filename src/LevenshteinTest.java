@@ -22,9 +22,9 @@ public class LevenshteinTest {
         }
 
         int minDist = Integer.MAX_VALUE;
-
+        int currentMinDist = Integer.MAX_VALUE;
         for (int j = 0; j < big.length(); j++) {
-            int currentMinDist = minDist + 1;
+            currentMinDist = minDist + 1;
             for (int i = 0; i < small.length(); i++) {
 
                 final int cost = small.charAt(i) == big.charAt(j) ? 0 : 1;
@@ -50,7 +50,7 @@ public class LevenshteinTest {
             }
 
             minDist = Math.min(distance[small.length()][j + 1], minDist);
-            if (currentMinDist > minDist) {
+            if (currentMinDist > minDist) { // || currentMinDist > 3) {
                 // TODO improvement still possible by transposition?
                 break;
             }
@@ -64,7 +64,7 @@ public class LevenshteinTest {
             System.out.println(output + "]");
         }
 
-        return minDist;
+        return Math.min(minDist, currentMinDist);
 
     }
 
@@ -73,10 +73,18 @@ public class LevenshteinTest {
     }
 
     public static void main(final String[] args) {
+        System.out.println(weightedEditDistance("eppinger   strasse", "eppinger "));
+        System.out.println(weightedEditDistance("eppinger   strasse", "eppinger strasse "));
+        System.out.println(weightedEditDistance("eppinger   strasse", "eppinger strasse karlsruhe"));
+
         System.out.println(weightedEditDistance("sinsheimerstrasse karls", "sinsheimer strasse karlsruhe"));
         System.out.println(weightedEditDistance("epplinger s", "eppinger weg karlsruhe"));
         System.out.println(weightedEditDistance("epplinger", "eppingerstrasse karlsruhe"));
         System.out.println(weightedEditDistance("am fsnen", "am fasanengarten karlsruhe"));
         System.out.println(weightedEditDistance("epplinger", "ettlingerstrasse karlsruhe"));
+
+        System.out.println(weightedEditDistance("eppsilnge", "eppinger"));
+        System.out.println(weightedEditDistance("eppslingerstrass", "eppingerstrasse"));
+        System.out.println(weightedEditDistance("eppsiingerstrassekarlsruhe", "eppingerstrassekarlsruhe"));
     }
 }
