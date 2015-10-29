@@ -150,11 +150,13 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     }
 
     protected IComplexRouteSolver[] createRouteSolvers(final IGraph graph) {
-        return new IComplexRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph)};
+        return new IComplexRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph),
+                new MSTTSPSolver(graph), new BruteForceTSP(graph)};
     }
 
     protected String[] createNames() {
-        return new String[]{"Via-Route", "TSP-Route"};
+        return new String[]{"Via-Route", "TSP-Route (1.5 Approximation)", "TSP-Route (2.0 Approxation)",
+                "TSP-Route(Brute-Force)"};
     }
 
     @Override
