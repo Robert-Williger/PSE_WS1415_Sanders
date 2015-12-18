@@ -3,20 +3,16 @@ package model.renderEngine;
 import java.awt.Rectangle;
 import java.util.Collection;
 
-import model.targets.IPointList;
-
 public interface IRenderRoute {
 
-    StreetUse getStreetUse(long id);
+    StreetUse getStreetUse(int id);
 
-    Intervall getStreetPart(long id);
+    Intervall getStreetPart(int id);
 
-    Collection<Intervall> getStreetMultiPart(long id);
+    Collection<Intervall> getStreetMultiPart(int id);
 
     int getLength();
 
     Rectangle getBounds();
-
-    IPointList getPointList();
 
 }

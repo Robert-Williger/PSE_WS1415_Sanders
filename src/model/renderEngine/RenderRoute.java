@@ -6,14 +6,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import model.targets.IPointList;
-
 public class RenderRoute implements IRenderRoute {
     private final int length;
-    private final Map<Long, StreetPart> map;
-    private final Map<Long, Collection<Intervall>> multiPartMap;
+    private final Map<Integer, StreetPart> map;
+    private final Map<Integer, Collection<Intervall>> multiPartMap;
     private final Rectangle bounds;
-    private final IPointList pointList;
 
     private class StreetPart {
         StreetUse useage;
@@ -25,20 +22,19 @@ public class RenderRoute implements IRenderRoute {
         }
     }
 
-    public RenderRoute(final int length, final Rectangle bounds, final IPointList pointList) {
+    public RenderRoute(final int length, final Rectangle bounds) {
         this.length = length;
         this.bounds = bounds;
-        this.pointList = pointList;
 
-        map = new HashMap<Long, StreetPart>(64);
-        multiPartMap = new HashMap<Long, Collection<Intervall>>();
+        map = new HashMap<Integer, StreetPart>(64);
+        multiPartMap = new HashMap<Integer, Collection<Intervall>>();
     }
 
-    public void addStreet(final long id) {
-        map.put(id, new StreetPart(StreetUse.full, null));
+    public void addStreet(final int edge) {
+        map.put(getEdgeID(edge), new StreetPart(StreetUse.full, null));
     }
 
-    public void addStreetPart(final long id, final float startIN, final float endIN) {
+    public void addStreetPart(final int edge, final float startIN, final float endIN) {
         Intervall intervall;
 
         if (startIN > endIN) {
@@ -47,11 +43,12 @@ public class RenderRoute implements IRenderRoute {
             intervall = new Intervall(startIN, endIN);
         }
 
-        final StreetPart mapEntry = map.get(id);
+        final int edgeID = getEdgeID(edge);
+        final StreetPart mapEntry = map.get(edgeID);
 
         if (mapEntry == null || mapEntry.useage == StreetUse.none) {
             // not contained yet
-            map.put(id, new StreetPart(StreetUse.part, intervall));
+            map.put(edgeID, new StreetPart(StreetUse.part, intervall));
             return;
         }
 
@@ -97,34 +94,42 @@ public class RenderRoute implements IRenderRoute {
             final Collection<Intervall> multiMapEntry = new LinkedList<Intervall>();
             multiMapEntry.add(mapEntry.intervall);
             multiMapEntry.add(intervall);
-            multiPartMap.put(id, multiMapEntry);
-            map.put(id, new StreetPart(StreetUse.multiPart, null));
-        } else if (!multiPartMap.get(id).contains(intervall)) {
+            multiPartMap.put(edgeID, multiMapEntry);
+            map.put(edgeID, new StreetPart(StreetUse.multiPart, null));
+        } else if (!multiPartMap.get(edgeID).contains(intervall)) {
             // more than one other part already contained
-            multiPartMap.get(id).add(intervall);
+            multiPartMap.get(edgeID).add(intervall);
         }
     }
 
     @Override
-    public StreetUse getStreetUse(final long id) {
-        if (map.containsKey(id)) {
-            return map.get(id).useage;
-        } else {
-            return StreetUse.none;
+    public StreetUse getStreetUse(final int id) {
+        int edgeID = getEdgeID(id);
+        if (map.containsKey(edgeID)) {
+            return map.get(edgeID).useage;
         }
+
+        return StreetUse.none;
     }
 
     @Override
-    public Intervall getStreetPart(final long id) {
-        if (map.containsKey(id)) {
-            return map.get(id).intervall;
+    public Intervall getStreetPart(final int id) {
+        int edgeID = getEdgeID(id);
+        if (map.containsKey(edgeID)) {
+            return map.get(edgeID).intervall;
         }
+
         return null;
     }
 
     @Override
-    public Collection<Intervall> getStreetMultiPart(final long id) {
-        return multiPartMap.get(id);
+    public Collection<Intervall> getStreetMultiPart(final int id) {
+        return multiPartMap.get(getEdgeID(id));
+    }
+
+    // TODO own instance for conversation?
+    private int getEdgeID(final int id) {
+        return id & 0x7FFFFFFF;
     }
 
     @Override
@@ -135,11 +140,6 @@ public class RenderRoute implements IRenderRoute {
     @Override
     public Rectangle getBounds() {
         return bounds;
-    }
-
-    @Override
-    public IPointList getPointList() {
-        return pointList;
     }
 
 }

@@ -3,26 +3,26 @@ package model.map.factories;
 import java.io.IOException;
 
 import model.CompressedInputStream;
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.ITile;
 import model.map.Tile;
 
 public class DefaultTileFactory extends AbstractTileFactory implements ITileFactory {
 
     private static final POI[] EMPTY_POIS;
-    private static final Street[] EMPTY_STREETS;
-    private static final Way[] EMPTY_WAYS;
-    private static final Building[] EMPTY_BUILDINGS;
-    private static final Area[] EMPTY_AREAS;
+    private static final IStreet[] EMPTY_STREETS;
+    private static final IWay[] EMPTY_WAYS;
+    private static final IBuilding[] EMPTY_BUILDINGS;
+    private static final IArea[] EMPTY_AREAS;
     private static final Label[] EMPTY_LABELS;
 
-    public DefaultTileFactory(final CompressedInputStream reader, final POI[] pois, final Street[] streets,
-            final Way[] ways, final Building[] buildings, final Area[] areas, final Label[] labels) {
+    public DefaultTileFactory(final CompressedInputStream reader, final POI[] pois, final IStreet[] streets,
+            final IWay[] ways, final IBuilding[] buildings, final IArea[] areas, final Label[] labels) {
         super(reader, pois, streets, ways, buildings, areas, labels);
     }
 
@@ -35,10 +35,10 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
             tile = EMPTY_TILE;
         } else {
             final POI[] tilePOIs;
-            final Street[] tileStreets;
-            final Way[] tileWays;
-            final Building[] tileBuildings;
-            final Area[] tileAreas;
+            final IStreet[] tileStreets;
+            final IWay[] tileWays;
+            final IBuilding[] tileBuildings;
+            final IArea[] tileAreas;
             final Label[] tileLabels;
 
             if ((flags & 1) == 0) {
@@ -51,29 +51,29 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
             if ((flags >> 1 & 1) == 0) {
                 tileStreets = EMPTY_STREETS;
             } else {
-                tileStreets = new Street[reader.readCompressedInt()];
-                fillElements(streets, tileStreets);
+                tileStreets = new IStreet[reader.readCompressedInt()];
+                fillElements(iStreets, tileStreets);
             }
 
             if ((flags >> 2 & 1) == 0) {
                 tileWays = EMPTY_WAYS;
             } else {
-                tileWays = new Way[reader.readCompressedInt()];
+                tileWays = new IWay[reader.readCompressedInt()];
                 fillElements(ways, tileWays);
             }
 
             if ((flags >> 3 & 1) == 0) {
                 tileBuildings = EMPTY_BUILDINGS;
             } else {
-                tileBuildings = new Building[reader.readCompressedInt()];
-                fillElements(buildings, tileBuildings);
+                tileBuildings = new IBuilding[reader.readCompressedInt()];
+                fillElements(iBuildings, tileBuildings);
             }
 
             if ((flags >> 4 & 1) == 0) {
                 tileAreas = EMPTY_AREAS;
             } else {
-                tileAreas = new Area[reader.readCompressedInt()];
-                fillElements(areas, tileAreas);
+                tileAreas = new IArea[reader.readCompressedInt()];
+                fillElements(iAreas, tileAreas);
             }
 
             if ((flags >> 5 & 1) == 0) {
@@ -91,10 +91,10 @@ public class DefaultTileFactory extends AbstractTileFactory implements ITileFact
 
     static {
         EMPTY_POIS = new POI[0];
-        EMPTY_STREETS = new Street[0];
-        EMPTY_WAYS = new Way[0];
-        EMPTY_BUILDINGS = new Building[0];
-        EMPTY_AREAS = new Area[0];
+        EMPTY_STREETS = new IStreet[0];
+        EMPTY_WAYS = new IWay[0];
+        EMPTY_BUILDINGS = new IBuilding[0];
+        EMPTY_AREAS = new IArea[0];
         EMPTY_LABELS = new Label[0];
     }
 }

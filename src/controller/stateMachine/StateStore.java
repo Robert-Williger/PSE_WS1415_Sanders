@@ -46,13 +46,13 @@ class StateStore {
     void storePoint() {
         storedAddress = storedPoint.getAddress();
         storedNode = storedPoint.getStreetNode();
-        storedIndex = storedPoint.getIndex();
+        storedIndex = storedPoint.getListIndex();
     }
 
     void restorePoint() {
         storedPoint.setAddress(storedAddress);
         storedPoint.setStreetNode(storedNode);
-        application.getRouteManager().getPointList().changeOrder(storedPoint.getIndex(), storedIndex);
+        application.getRouteManager().getPointList().changeOrder(storedPoint.getListIndex(), storedIndex);
     }
 
     Set<String> getSuggestions() {

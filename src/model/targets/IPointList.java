@@ -4,7 +4,7 @@ import model.IModel;
 
 public interface IPointList extends Iterable<IRoutePoint>, IModel {
 
-    int getSize();
+    int size();
 
     boolean remove(IRoutePoint point);
 

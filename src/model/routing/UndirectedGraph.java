@@ -3,23 +3,23 @@ package model.routing;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class Graph implements IGraph {
+public class UndirectedGraph implements IUndirectedGraph {
     private final int[] nodes;
     private final int[] edges;
     private final HashMap<Long, Integer> weights;
 
     private class NodeIterator implements Iterator<Integer> {
         private int currentElement;
-        private final int lastElement;
+        private final int limit;
 
         public NodeIterator(final int node) {
             currentElement = nodes[node];
-            lastElement = nodes[node + 1];
+            limit = nodes[node + 1];
         }
 
         @Override
         public boolean hasNext() {
-            return currentElement < lastElement;
+            return currentElement < limit;
 
         }
 
@@ -35,19 +35,17 @@ public class Graph implements IGraph {
 
     }
 
-    // TODO final int nodes, final int[] from, final int[] to, final int[]
-    // weights
-    public Graph(final int nodes, final long[] edges, final int[] weights) {
+    public UndirectedGraph(final int nodes, final int[] firstNodes, final int[] secondNodes, final int[] weights) {
         this.nodes = new int[nodes + 1];
-        this.edges = new int[edges.length * 2];
+        this.edges = new int[firstNodes.length * 2];
         this.weights = new HashMap<Long, Integer>();
 
-        for (int i = 0; i < edges.length; i++) {
-            final long edge = edges[i];
+        for (int i = 0; i < firstNodes.length; i++) {
+            final long edge = getEdge(firstNodes[i], secondNodes[i]);
             final int weight = weights[i];
 
-            this.nodes[getFirstNode(edge)]++;
-            this.nodes[getSecondNode(edge)]++;
+            this.nodes[firstNodes[i]]++;
+            this.nodes[secondNodes[i]]++;
 
             this.weights.put(edge, weight);
         }
@@ -65,9 +63,9 @@ public class Graph implements IGraph {
 
         final int[] clone = this.nodes.clone();
 
-        for (final long e : edges) {
-            final int node1 = getFirstNode(e);
-            final int node2 = getSecondNode(e);
+        for (int i = 0; i < firstNodes.length; i++) {
+            final int node1 = firstNodes[i];
+            final int node2 = secondNodes[i];
 
             this.edges[clone[node1]] = node2;
             clone[node1]++;

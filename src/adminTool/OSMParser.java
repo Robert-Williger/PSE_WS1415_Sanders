@@ -18,6 +18,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import util.Arrays;
 import adminTool.elements.Boundary;
 import adminTool.elements.UnprocessedStreet;
 import adminTool.elements.Area;
@@ -214,6 +215,8 @@ public class OSMParser implements IOSMParser {
 
             String wayTag;
 
+            String onewayTag;
+
             int terrainType;
             int amenityType;
 
@@ -232,6 +235,7 @@ public class OSMParser implements IOSMParser {
                 addrStreetTag = "";
                 addrNumberTag = "";
                 amenityType = -1;
+                onewayTag = "";
                 foot = false;
                 bicycle = false;
                 tunnel = false;
@@ -305,6 +309,16 @@ public class OSMParser implements IOSMParser {
                         case "barrier":
                             wayTag = value;
                             break;
+                        case "oneway":
+                            if (onewayTag.isEmpty()) {
+                                onewayTag = value;
+                            }
+                            break;
+                        case "oneway:bicycle":
+                            if (value.equals("no")) {
+                                onewayTag = "bicycle";
+                            }
+                            break;
                     }
                 }
 
@@ -335,6 +349,14 @@ public class OSMParser implements IOSMParser {
                             // TODO ways with area tag also valid...
                             type = getStreetType(wayTag);
                             if (type >= 0) {
+                                boolean oneway = false;
+                                switch (onewayTag) {
+                                    case "-1":
+                                        Arrays.reverse(nodes); // fall throug
+                                    case "yes":
+                                        oneway = true;
+                                        break;
+                                }
                                 final Point2D[] degrees = new Point2D[nodes.length];
                                 for (int i = 0; i < nodes.length; i++) {
                                     final Node node = nodes[i];
@@ -352,7 +374,7 @@ public class OSMParser implements IOSMParser {
                                     }
                                 }
 
-                                streetList.add(new UnprocessedStreet(degrees, nodes, type, nameTag));
+                                streetList.add(new UnprocessedStreet(degrees, nodes, type, nameTag, oneway));
                             } else {
                                 type = getWayType(wayTag);
 
@@ -891,14 +913,15 @@ public class OSMParser implements IOSMParser {
                 // return 3;
             case "city":
                 return 4;
-            case "suburb":
-                return 5;
-            case "neighbourhood":
-                return 6;
             case "town":
-                return 7;
+                return 5;
             case "village":
+                return 6;
+            case "neighbourhood":
+                return 7;
+            case "suburb":
                 return 8;
+
                 // case "hamlet":
                 // return 9;
                 //

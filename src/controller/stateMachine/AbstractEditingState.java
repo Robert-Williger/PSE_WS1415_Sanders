@@ -19,12 +19,12 @@ abstract class AbstractEditingState extends AbstractActionState {
     @Override
     public IState movePointUp() {
         final IPointList list = getList();
-        final int fromIndex = getPoint().getIndex();
+        final int fromIndex = getPoint().getListIndex();
         final int toIndex;
         if (fromIndex != 0) {
             toIndex = fromIndex - 1;
         } else {
-            toIndex = list.getSize() - 1;
+            toIndex = list.size() - 1;
         }
 
         return changeOrder(fromIndex, toIndex);
@@ -33,9 +33,9 @@ abstract class AbstractEditingState extends AbstractActionState {
     @Override
     public IState movePointDown() {
         final IPointList list = getList();
-        final int fromIndex = getPoint().getIndex();
+        final int fromIndex = getPoint().getListIndex();
         final int toIndex;
-        if (fromIndex != list.getSize() - 1) {
+        if (fromIndex != list.size() - 1) {
             toIndex = fromIndex + 1;
         } else {
             toIndex = 0;

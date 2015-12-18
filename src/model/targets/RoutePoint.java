@@ -13,7 +13,8 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     private final List<IPointListener> listener;
     private String address;
     private StreetNode node;
-    private int index;
+    private int listIndex;
+    private int targetIndex;
     private PointState state;
     private Point location;
 
@@ -33,7 +34,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     private void fireIndexEvent() {
         fireChange();
         for (final IPointListener e : listener) {
-            e.indexChanged();
+            e.listIndexChanged();
         }
     }
 
@@ -70,9 +71,14 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public void setIndex(final int index) {
-        this.index = index;
+    public void setListIndex(final int index) {
+        this.listIndex = index;
         fireIndexEvent();
+    }
+
+    @Override
+    public void setTargetIndex(final int index) {
+        this.targetIndex = index;
     }
 
     @Override
@@ -98,8 +104,13 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public int getIndex() {
-        return index;
+    public int getListIndex() {
+        return listIndex;
+    }
+
+    @Override
+    public int getTargetIndex() {
+        return targetIndex;
     }
 
     @Override

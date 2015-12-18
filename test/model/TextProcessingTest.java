@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import model.elements.IStreet;
 import model.elements.Street;
 import model.elements.StreetNode;
 
@@ -26,8 +27,8 @@ public class TextProcessingTest {
         // Erstellt fuer den richtigen Eintrag der Hashtabelle einen passenden
         // Node
 
-        final Street street = new Street(new int[0], new int[0], 0, "Teststrasse", 0);
-        sn = new StreetNode(0, street);
+        final IStreet iStreet = new Street(new int[0], 0, "Teststrasse", 0);
+        sn = new StreetNode(0, iStreet);
 
         final HashMap<String, StreetNode> hm = new HashMap<String, StreetNode>();
         hm.put("Te4tst2agse", null);

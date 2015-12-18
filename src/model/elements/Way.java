@@ -1,12 +1,12 @@
 package model.elements;
 
-public class Way extends MultiElement {
+public class Way extends MultiElement implements IWay {
 
     private final int type;
     private final String name;
 
-    public Way(final int[] xPoints, final int[] yPoints, final int type, final String name) {
-        super(xPoints, yPoints);
+    public Way(final int[] points, final int type, final String name) {
+        super(points);
 
         this.type = type;
         this.name = name;
@@ -18,6 +18,10 @@ public class Way extends MultiElement {
 
     public String getName() {
         return name;
+    }
+
+    public IWay getSubElement(final int[] subarray) {
+        return new SubWay(subarray);
     }
 
     @Override
@@ -54,4 +58,38 @@ public class Way extends MultiElement {
         return true;
     }
 
+    private class SubWay implements IWay {
+
+        private final int[] subarray;
+
+        public SubWay(final int[] subarray) {
+            this.subarray = subarray;
+        }
+
+        @Override
+        public int size() {
+            return subarray.length;
+        }
+
+        @Override
+        public int getX(int i) {
+            return Way.this.getX(subarray[i]);
+        }
+
+        @Override
+        public int getY(int i) {
+            return Way.this.getY(subarray[i]);
+        }
+
+        @Override
+        public int getType() {
+            return Way.this.getType();
+        }
+
+        @Override
+        public String getName() {
+            return Way.this.getName();
+        }
+
+    }
 }

@@ -3,14 +3,14 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import model.elements.Street;
+import model.elements.IStreet;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class StreetTest {
-    private Street street;
+    private IStreet iStreet;
     private int type;
     private String name;
     private int id;
@@ -28,31 +28,31 @@ public class StreetTest {
         type = 2;
         name = "Rhein";
         id = 1;
-        street = new Street(x, y, type, name, id);
+        iStreet = new IStreet(x, y, type, name, id);
     }
 
     @Test
     public void testLength() {
-        assertEquals(street.getLength(), 3);
+        assertEquals(iStreet.getLength(), 3);
     }
 
     @Test
     public void testId() {
-        assertEquals(street.getID(), id);
+        assertEquals(iStreet.getID(), id);
     }
 
     @Test
     public void testEquals() {
-        assertEquals(street, street);
-        assertFalse(street.equals(null));
-        assertFalse(street.equals(new Street(x, y, type, name + "x", id)));
-        assertFalse(street.equals(new Street(x, y, type, name, 0)));
-        assertEquals(street, new Street(x, y, type, name, id));
+        assertEquals(iStreet, iStreet);
+        assertFalse(iStreet.equals(null));
+        assertFalse(iStreet.equals(new IStreet(x, y, type, name + "x", id)));
+        assertFalse(iStreet.equals(new IStreet(x, y, type, name, 0)));
+        assertEquals(iStreet, new IStreet(x, y, type, name, id));
     }
 
     @Test
     public void testHashCode() {
-        assertEquals(street.hashCode(), street.hashCode());
-        assertEquals(street.hashCode(), new Street(x, y, type, name, id).hashCode());
+        assertEquals(iStreet.hashCode(), iStreet.hashCode());
+        assertEquals(iStreet.hashCode(), new IStreet(x, y, type, name, id).hashCode());
     }
 }

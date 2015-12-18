@@ -28,9 +28,9 @@ public class EulerianCircuitTest {
         for (int i = 0; i < nodes; i++) {
             edges[i] = getEdge(i, (i + 1) % nodes);
         }
-        final Graph graph = new Graph(nodes, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
     }
 
     @Test
@@ -45,9 +45,9 @@ public class EulerianCircuitTest {
 
             edges[i] = getEdge(current % nodes, (current += 2) % nodes);
         }
-        final Graph graph = new Graph(nodes, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
     }
 
     @Test
@@ -64,9 +64,9 @@ public class EulerianCircuitTest {
             edges[i] = getEdge(i, i + 1);
         }
 
-        final Graph graph = new Graph(nodes, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
     }
 
     @Test
@@ -86,9 +86,9 @@ public class EulerianCircuitTest {
         edges[6] = getEdge(2, 3);
         edges[7] = getEdge(3, 0);
 
-        final Graph graph = new Graph(nodes, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
     }
 
     @Test
@@ -120,9 +120,9 @@ public class EulerianCircuitTest {
         edges[13] = getEdge(6, 8);
         edges[14] = getEdge(6, 7);
 
-        final Graph graph = new Graph(nodes, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
     }
 
     @Test
@@ -133,23 +133,23 @@ public class EulerianCircuitTest {
                 73014444050L};
         final int[] weights = new int[edges.length];
 
-        final Graph graph = new Graph(19, edges, weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(19, edges, weights);
 
-        checkTour(graph, new EulerianCircuitAlgorithm().getEulerianCurcuit(graph));
+        checkTour(undirectedGraph, new EulerianCircuitAlgorithm().getEulerianCurcuit(undirectedGraph));
 
     }
 
-    private void checkTour(final IGraph graph, final List<Integer> tour) {
+    private void checkTour(final IUndirectedGraph undirectedGraph, final List<Integer> tour) {
         final Map<Long, Integer> availableEdges = new HashMap<Long, Integer>();
         int edges = 0;
 
-        for (int node = 0; node < graph.getNodes(); node++) {
-            for (final Iterator<Integer> iterator = graph.getAdjacentNodes(node); iterator.hasNext();) {
+        for (int node = 0; node < undirectedGraph.getNodes(); node++) {
+            for (final Iterator<Integer> iterator = undirectedGraph.getAdjacentNodes(node); iterator.hasNext();) {
                 final int other = iterator.next();
                 if (node < other) {
                     ++edges;
 
-                    final long edge = graph.getEdge(node, other);
+                    final long edge = undirectedGraph.getEdge(node, other);
                     final Integer occurances = availableEdges.get(edge);
                     if (occurances == null) {
                         availableEdges.put(edge, 1);
@@ -165,7 +165,7 @@ public class EulerianCircuitTest {
         final Iterator<Integer> iterator = tour.iterator();
         int lastNode = iterator.next();
         while (iterator.hasNext()) {
-            final long edge = graph.getEdge(lastNode, lastNode = iterator.next());
+            final long edge = undirectedGraph.getEdge(lastNode, lastNode = iterator.next());
             final int occurances = availableEdges.get(edge);
             if (occurances == 1) {
                 availableEdges.remove(edge);

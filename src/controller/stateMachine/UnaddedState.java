@@ -25,7 +25,7 @@ class UnaddedState extends AbstractActionState {
         point.setLocation(null);
         point.setState(PointState.added);
         getSidebarView().setResettable(true);
-        if (getList().getSize() >= 2) {
+        if (getList().size() >= 2) {
             getSidebarView().setStartable(true);
         }
 

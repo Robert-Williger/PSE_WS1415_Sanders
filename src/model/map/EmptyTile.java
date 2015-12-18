@@ -3,20 +3,20 @@ package model.map;
 import java.util.Iterator;
 
 import util.Arrays;
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 
 public class EmptyTile extends AbstractTile {
 
-    private static final Iterator<Way> ways;
-    private static final Iterator<Street> streets;
-    private static final Iterator<Building> buildings;
+    private static final Iterator<IWay> ways;
+    private static final Iterator<IStreet> iStreets;
+    private static final Iterator<IBuilding> iBuildings;
     private static final Iterator<POI> pois;
-    private static final Iterator<Area> terrain;
+    private static final Iterator<IArea> terrain;
     private static final Iterator<Label> labels;
 
     public EmptyTile(int zoomStep, int row, int column) {
@@ -24,22 +24,22 @@ public class EmptyTile extends AbstractTile {
     }
 
     @Override
-    public Iterator<Street> getStreets() {
-        return streets;
+    public Iterator<IStreet> getStreets() {
+        return iStreets;
     }
 
     @Override
-    public Iterator<Way> getWays() {
+    public Iterator<IWay> getWays() {
         return ways;
     }
 
     @Override
-    public Iterator<Building> getBuildings() {
-        return buildings;
+    public Iterator<IBuilding> getBuildings() {
+        return iBuildings;
     }
 
     @Override
-    public Iterator<Area> getTerrain() {
+    public Iterator<IArea> getTerrain() {
         return terrain;
     }
 
@@ -55,8 +55,8 @@ public class EmptyTile extends AbstractTile {
 
     static {
         ways = Arrays.iterator();
-        streets = Arrays.iterator();
-        buildings = Arrays.iterator();
+        iStreets = Arrays.iterator();
+        iBuildings = Arrays.iterator();
         pois = Arrays.iterator();
         terrain = Arrays.iterator();
         labels = Arrays.iterator();

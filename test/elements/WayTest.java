@@ -3,14 +3,14 @@ package elements;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import model.elements.Way;
+import model.elements.IWay;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class WayTest {
-    private Way way;
+    private IWay iWay;
     private int type;
     private String name;
     private static int[] x;
@@ -26,33 +26,33 @@ public class WayTest {
     public void setUp() {
         type = 2;
         name = "Rhein";
-        way = new Way(x, y, type, name);
+        iWay = new IWay(x, y, type, name);
     }
 
     @Test
     public void testType() {
-        assertEquals(way.getType(), type);
+        assertEquals(iWay.getType(), type);
     }
 
     @Test
     public void testName() {
-        assertEquals(way.getName(), name);
+        assertEquals(iWay.getName(), name);
     }
 
     @Test
     public void testEquals() {
-        assertEquals(way, way);
-        assertFalse(new Way(x, y, type, null).equals(way));
-        assertFalse(way.equals(null));
-        assertFalse(way.equals(x));
-        assertFalse(way.equals(new Way(x, y, type, name + "x")));
-        assertFalse(way.equals(new Way(x, y, 0, name)));
-        assertEquals(way, new Way(x, y, type, name));
+        assertEquals(iWay, iWay);
+        assertFalse(new IWay(x, y, type, null).equals(iWay));
+        assertFalse(iWay.equals(null));
+        assertFalse(iWay.equals(x));
+        assertFalse(iWay.equals(new IWay(x, y, type, name + "x")));
+        assertFalse(iWay.equals(new IWay(x, y, 0, name)));
+        assertEquals(iWay, new IWay(x, y, type, name));
     }
 
     @Test
     public void testHashCode() {
-        assertEquals(way.hashCode(), way.hashCode());
-        assertEquals(way.hashCode(), new Way(x, y, type, name).hashCode());
+        assertEquals(iWay.hashCode(), iWay.hashCode());
+        assertEquals(iWay.hashCode(), new IWay(x, y, type, name).hashCode());
     }
 }

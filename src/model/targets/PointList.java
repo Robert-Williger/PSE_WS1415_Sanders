@@ -29,7 +29,7 @@ public class PointList extends AbstractModel implements IPointList {
 
     private void refreshIndexes(final int from) {
         for (int i = from; i < pointList.size(); i++) {
-            pointList.get(i).setIndex(i);
+            pointList.get(i).setListIndex(i);
         }
     }
 
@@ -39,7 +39,7 @@ public class PointList extends AbstractModel implements IPointList {
     }
 
     @Override
-    public int getSize() {
+    public int size() {
         return pointList.size();
     }
 
@@ -47,8 +47,8 @@ public class PointList extends AbstractModel implements IPointList {
     public boolean remove(final IRoutePoint point) {
         boolean ret = false;
 
-        if (point.getIndex() < pointList.size() && pointList.get(point.getIndex()).equals(point)) {
-            this.remove(point.getIndex());
+        if (point.getListIndex() < pointList.size() && pointList.get(point.getListIndex()).equals(point)) {
+            this.remove(point.getListIndex());
             ret = true;
         }
         return ret;
@@ -64,7 +64,8 @@ public class PointList extends AbstractModel implements IPointList {
 
     @Override
     public void add(final IRoutePoint point) {
-        point.setIndex(pointList.size());
+        point.setListIndex(pointList.size());
+        point.setTargetIndex(pointList.size());
         pointList.add(point);
         fireAddEvent(point);
     }

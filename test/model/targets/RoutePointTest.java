@@ -45,7 +45,7 @@ public class RoutePointTest {
             }
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
 
             }
 
@@ -61,7 +61,7 @@ public class RoutePointTest {
 
     @Test
     public void streetNodeTest() {
-        final StreetNode node = new StreetNode(12, new Street(new int[0], new int[0], 1, "Test", 142313));
+        final StreetNode node = new StreetNode(12, new Street(new int[0], 1, "Test", 142313));
 
         routePoint.setStreetNode(node);
         assertEquals(node, routePoint.getStreetNode());
@@ -84,7 +84,7 @@ public class RoutePointTest {
             }
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
 
             }
 
@@ -94,7 +94,7 @@ public class RoutePointTest {
             }
         });
 
-        routePoint.setStreetNode(new StreetNode(12, new Street(new int[0], new int[0], 1, "Test", 142313)));
+        routePoint.setStreetNode(new StreetNode(12, new Street(new int[0], 1, "Test", 142313)));
         assertFalse(error);
     }
 
@@ -102,9 +102,9 @@ public class RoutePointTest {
     public void indexTest() {
         final int index = 2;
 
-        routePoint.setIndex(index);
+        routePoint.setListIndex(index);
         ;
-        assertEquals(index, routePoint.getIndex());
+        assertEquals(index, routePoint.getListIndex());
     }
 
     @Test
@@ -124,7 +124,7 @@ public class RoutePointTest {
             }
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
                 error = false;
             }
 
@@ -134,7 +134,7 @@ public class RoutePointTest {
             }
         });
 
-        routePoint.setIndex(2);
+        routePoint.setListIndex(2);
         assertFalse(error);
     }
 
@@ -169,7 +169,7 @@ public class RoutePointTest {
             }
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
 
             }
 
@@ -213,7 +213,7 @@ public class RoutePointTest {
             }
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
 
             }
 

@@ -5,8 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import adminTool.elements.Node;
@@ -19,11 +19,14 @@ public class GraphCreator extends AbstractMapCreator {
     private HashMap<Node, Integer> nodeCount;
 
     // ID's
-    private int idCount;
-    private HashMap<Node, Integer> idMap;
+    private int nodeIdCount;
+    private int edgeIdCount;
 
-    private List<WeightedEdge> edgesList;
+    private HashMap<Node, Integer> nodeIdMap;
+
+    private List<WeightedEdge> edges;
     private final List<Street> processedStreets;
+    private List<Integer> oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
     public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final File file) {
@@ -34,18 +37,17 @@ public class GraphCreator extends AbstractMapCreator {
     }
 
     public Collection<Street> getStreets() {
-
         return processedStreets;
     }
 
     @Override
     public void create() {
 
-        idCount = 0;
-        idMap = new HashMap<Node, Integer>();
+        nodeIdCount = 0;
+        nodeIdMap = new HashMap<Node, Integer>();
         nodeCount = new HashMap<Node, Integer>();
 
-        edgesList = new ArrayList<WeightedEdge>();
+        edges = new ArrayList<WeightedEdge>();
 
         // Step one: count the appearance of every node in the given streets and
         for (final UnprocessedStreet s : unprocessedStreets) {
@@ -65,6 +67,8 @@ public class GraphCreator extends AbstractMapCreator {
 
         // Step two: get the cuttings of the street at intersections (and dead
         // ends)
+
+        oneways = new LinkedList<Integer>();
         for (final UnprocessedStreet street : unprocessedStreets) {
 
             final List<Integer> intersections = getStreetCuts(street);
@@ -88,56 +92,61 @@ public class GraphCreator extends AbstractMapCreator {
                             degrees[j + 1].getX());
                 }
 
+                int id = edgeIdCount++;
                 final WeightedEdge edge;
-                final long id;
-                if (id1 > id2) {
-                    edge = new WeightedEdge(id2, id1, (int) weight);
-                    id = ((long) id2 << 32) | id1;
-                    for (int j = currentCut; j >= lastCut; j--) {
-                        streetNodes[currentCut - j] = nodes[j];
-                    }
+                if (street.isOneway()) {
+                    oneways.add(id);
+                    id = 0x80000000 | id;
+                    edge = new WeightedEdge(id1, id2, (int) weight);
                 } else {
                     edge = new WeightedEdge(id1, id2, (int) weight);
-                    id = ((long) id1 << 32) | id2;
-                    for (int j = lastCut; j <= currentCut; j++) {
-                        streetNodes[j - lastCut] = nodes[j];
-                    }
+                }
+
+                for (int j = lastCut; j <= currentCut; j++) {
+                    streetNodes[j - lastCut] = nodes[j];
                 }
 
                 final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
 
                 processedStreets.add(newStreet);
-                edgesList.add(edge);
+                edges.add(edge);
 
                 lastCut = currentCut;
             }
         }
 
         unprocessedStreets = null;
-        idMap = null;
+        nodeIdMap = null;
         nodeCount = null;
 
-        Collections.sort(edgesList);
+        // TODO minimize disk space by other method
+        // Collections.sort(edgesList);
 
         try {
             createOutputStream(false);
 
-            writeCompressedInt(idCount);
-            writeCompressedInt(edgesList.size());
+            writeCompressedInt(nodeIdCount);
+            writeCompressedInt(edges.size());
+            writeCompressedInt(oneways.size());
 
-            int lastWeight = 0;
-            for (final WeightedEdge edge : edgesList) {
+            for (final WeightedEdge edge : edges) {
                 writeCompressedInt(edge.node1);
-                writeCompressedInt(edge.node2 - edge.node1);
-                writeCompressedInt(edge.weight - lastWeight);
-                lastWeight = edge.weight;
+                writeCompressedInt(edge.node2);
+                writeCompressedInt(edge.weight);
+            }
+
+            int last = 0;
+            for (final int id : oneways) {
+                writeCompressedInt(id - last);
+                last = id;
             }
 
             stream.close();
         } catch (final IOException e) {
         }
 
-        edgesList = null;
+        edges = null;
+        oneways = null;
     }
 
     /*
@@ -175,13 +184,13 @@ public class GraphCreator extends AbstractMapCreator {
      */
     private int generateID(final Node parsedNode) {
 
-        if (idMap.get(parsedNode) != null) {
-            return idMap.get(parsedNode);
+        if (nodeIdMap.get(parsedNode) != null) {
+            return nodeIdMap.get(parsedNode);
         }
 
         else {
-            idMap.put(parsedNode, idCount);
-            return idCount++;
+            nodeIdMap.put(parsedNode, nodeIdCount);
+            return nodeIdCount++;
         }
     }
 

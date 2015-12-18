@@ -1,6 +1,7 @@
 package model.renderEngine;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -9,10 +10,13 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.font.TextLayout;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.Map;
 
+import model.elements.IBuilding;
+import model.elements.IMultiElement;
 import model.elements.Label;
 import model.map.IPixelConverter;
 import model.map.ITile;
@@ -21,17 +25,22 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
     private static final LabelStyle[] styles;
 
+    private static final int buildingNumberMinZoomstep = 18;
+    private static final Font buildingNumberFont = new Font("Times New Roman", Font.PLAIN, 10);
+    private static final Color buildingNumberColor = new Color(96, 96, 96);
+
     static {
         styles = new LabelStyle[19];
 
         styles[2] = new LabelStyle(8, 14, new int[]{12, 12, 12, 14, 14, 16, 16}, Color.DARK_GRAY, true);
         styles[4] = new LabelStyle(8, 14, new int[]{11, 12, 14, 16, 16, 16, 16}, Color.DARK_GRAY, true);
-        styles[5] = new LabelStyle(13, 16, new int[]{11, 12, 13, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
-        styles[7] = new LabelStyle(10, 15, new int[]{10, 11, 12, 13, 14, 16}, new Color[]{Color.GRAY, Color.GRAY,
+        styles[5] = new LabelStyle(10, 15, new int[]{10, 11, 12, 13, 14, 16}, new Color[]{Color.GRAY, Color.GRAY,
                 Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
-        styles[8] = new LabelStyle(12, 16, new int[]{10, 11, 12, 13, 14}, new Color[]{Color.GRAY, Color.GRAY,
+        styles[6] = new LabelStyle(12, 16, new int[]{10, 11, 12, 13, 14}, new Color[]{Color.GRAY, Color.GRAY,
                 Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
+        styles[8] = new LabelStyle(13, 16, new int[]{11, 12, 13, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
+                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
+
         // case "continent":
         // return 0;
         // case "country":
@@ -80,7 +89,6 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
     @Override
     public boolean render(final ITile tile, final Image image) {
-        final Iterator<Label> iterator = tile.getLabels();
 
         final Graphics2D g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -96,8 +104,21 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
         }
 
         final Point tileLocation = getTileLocation(tile, image);
+
+        boolean rendered = drawBuildingNumbers(tile, tileLocation, g) | drawLabels(tile, tileLocation, g);
+
+        g.dispose();
+        if (rendered) {
+            fireChange();
+        }
+
+        return rendered;
+    }
+
+    private boolean drawLabels(final ITile tile, final Point tileLocation, final Graphics2D g) {
         final int zoom = tile.getZoomStep();
 
+        final Iterator<Label> iterator = tile.getLabels();
         boolean rendered = false;
         while (iterator.hasNext()) {
             rendered = true;
@@ -134,11 +155,84 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
             }
         }
 
-        g.dispose();
-        if (rendered) {
-            fireChange();
+        return rendered;
+    }
+
+    private boolean drawBuildingNumbers(final ITile tile, final Point tileLocation, final Graphics2D g) {
+        final int zoom = tile.getZoomStep();
+
+        boolean rendered = false;
+
+        if (zoom >= buildingNumberMinZoomstep) {
+            final FontMetrics metrics = g.getFontMetrics(buildingNumberFont);
+
+            g.setFont(buildingNumberFont);
+            g.setColor(buildingNumberColor);
+
+            Iterator<IBuilding> iterator = tile.getBuildings();
+
+            while (iterator.hasNext()) {
+                final IBuilding building = iterator.next();
+
+                int minX = Integer.MAX_VALUE;
+                int minY = Integer.MAX_VALUE;
+                int maxX = Integer.MIN_VALUE;
+                int maxY = Integer.MIN_VALUE;
+
+                for (int i = 0; i < building.size(); i++) {
+                    int x = building.getX(i);
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    int y = building.getY(i);
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                }
+
+                int width = converter.getPixelDistance(maxX - minX, zoom);
+                int height = converter.getPixelDistance(maxY - minY, zoom);
+                minX = converter.getPixelDistance(minX - tileLocation.x, zoom);
+                minY = converter.getPixelDistance(minY - tileLocation.y, zoom);
+
+                final String number = building.getHouseNumber();
+                if (!number.isEmpty()) {
+                    final Rectangle2D fontRect = metrics.getStringBounds(number, g);
+
+                    if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
+                        rendered = true;
+                        final Point2D.Float center = calculateCenter(building, tileLocation, zoom);
+                        center.setLocation((center.getX() + minX + width / 2) / 2f,
+                                (center.getY() + minY + height / 2) / 2f);
+
+                        g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f), (float) (center.y
+                                - fontRect.getHeight() / 2f + metrics.getAscent()));
+                    }
+                }
+            }
         }
 
         return rendered;
+    }
+
+    private Point2D.Float calculateCenter(final IMultiElement element, final Point tileLocation, final int zoom) {
+        float x = 0f;
+        float y = 0f;
+
+        int totalPoints = element.size() - 1;
+        for (int i = 0; i < totalPoints; i++) {
+            x += element.getX(i);
+            y += element.getY(i);
+        }
+
+        if (element.getX(0) != element.getX(totalPoints) || element.getY(0) != element.getY(totalPoints)) {
+            x += element.getX(totalPoints);
+            y += element.getY(totalPoints);
+            totalPoints++;
+        }
+
+        x = x / totalPoints;
+        y = y / totalPoints;
+
+        return new Point.Float(converter.getPixelDistancef(x - tileLocation.x, zoom), converter.getPixelDistancef(y
+                - tileLocation.y, zoom));
     }
 }

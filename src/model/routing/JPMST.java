@@ -3,15 +3,15 @@ package model.routing;
 import java.util.Iterator;
 
 public class JPMST {
-    IGraph graph;
+    private IUndirectedGraph undirectedGraph;
     private final int[] distance;
     private final int[] parent;
     private final IAddressablePriorityQueue<Integer> queue;
     private final boolean ready;
 
-    public JPMST(final IGraph graph) {
-        this.graph = graph;
-        final int nodes = graph.getNodes();
+    public JPMST(final IUndirectedGraph undirectedGraph) {
+        this.undirectedGraph = undirectedGraph;
+        final int nodes = undirectedGraph.getNodes();
         distance = new int[nodes];
         parent = new int[nodes];
         queue = createQueue();
@@ -42,7 +42,7 @@ public class JPMST {
     private void scan(final int u) {
         if (ready != true) {
 
-            final Iterator<Integer> it = graph.getAdjacentNodes(u);
+            final Iterator<Integer> it = undirectedGraph.getAdjacentNodes(u);
             while (it.hasNext()) {
                 relax(u, it.next());
             }
@@ -50,7 +50,7 @@ public class JPMST {
     }
 
     private void relax(final int firstNode, final int secondNode) {
-        final int weight = graph.getWeight(graph.getEdge(firstNode, secondNode));
+        final int weight = undirectedGraph.getWeight(undirectedGraph.getEdge(firstNode, secondNode));
         if (weight < distance[secondNode]) {
             distance[secondNode] = weight;
             parent[secondNode] = firstNode;
@@ -63,19 +63,21 @@ public class JPMST {
         }
     }
 
-    public IGraph calculateMST() {
+    public IUndirectedGraph calculateMST() {
 
         initializeJP();
         executeJP();
 
-        final long[] edges = new long[parent.length - 1];
-        final int[] weights = new int[edges.length];
+        final int[] firstNodes = new int[parent.length - 1];
+        final int[] secondNodes = new int[firstNodes.length];
+        final int[] weights = new int[firstNodes.length];
         for (int i = 1; i < parent.length; i++) {
-            edges[i - 1] = graph.getEdge(i, parent[i]);
-            weights[i - 1] = Integer.MAX_VALUE;
+            firstNodes[i - 1] = i;
+            secondNodes[i - 1] = parent[i];
+            weights[i - 1] = undirectedGraph.getWeight(undirectedGraph.getEdge(i, parent[i]));
         }
 
-        return new Graph(graph.getNodes(), edges, weights);
+        return new UndirectedGraph(undirectedGraph.getNodes(), firstNodes, secondNodes, weights);
     }
 
     public IAddressablePriorityQueue<Integer> createQueue() {

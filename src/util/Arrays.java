@@ -3,7 +3,7 @@ package util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class Arrays {
+public final class Arrays {
 
     private Arrays() {
     }
@@ -26,6 +26,14 @@ public class Arrays {
 
     public static <T> Iterator<T> iterator(final T[] array, final int[] subarray) {
         return new SubarrayIterator<T>(array, subarray);
+    }
+
+    public static <T> void reverse(final T[] array) {
+        for (int i = 0; i < array.length / 2; i++) {
+            T temp = array[i];
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = temp;
+        }
     }
 
     private static class ArrayIterator<T> implements Iterator<T> {

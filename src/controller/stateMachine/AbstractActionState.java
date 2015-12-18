@@ -12,11 +12,11 @@ abstract class AbstractActionState extends AbstractState {
 
     @Override
     public IState removePoint(final IRoutePoint point) {
-        getList().remove(point.getIndex());
+        getList().remove(point.getListIndex());
         getImageLoader().setRenderRoute(null);
         getSidebarView().setRouteLength(0);
 
-        int size = getList().getSize();
+        int size = getList().size();
         if (size < 2) {
             getSidebarView().setStartable(false);
             if (size == 0) {

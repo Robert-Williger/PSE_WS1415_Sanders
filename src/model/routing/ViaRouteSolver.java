@@ -1,16 +1,15 @@
 package model.routing;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import model.IProgressListener;
 
-public class ViaRouteSolver extends AbstractComplexRouteSolver {
+public class ViaRouteSolver extends AbstractRouteSolver {
     private int state;
     private final ISPSPSolver solver;
     private int paths;
 
-    public ViaRouteSolver(final IGraph graph) {
+    public ViaRouteSolver(final IDirectedGraph graph) {
         super(graph);
 
         solver = createSPSPSolver();
@@ -34,21 +33,27 @@ public class ViaRouteSolver extends AbstractComplexRouteSolver {
     }
 
     @Override
-    public List<Path> calculateRoute(final List<InterNode> edges) {
+    public Route calculateRoute(final List<InterNode> edges) {
         fireProgressDone(-1);
         solver.cancelCalculation();
         // 0 working, 1 ready, 2 cancel/error
         state = 0;
 
-        final List<Path> ret = new ArrayList<Path>();
-
         paths = edges.size();
+        final Path[] pathArray = new Path[paths - 1];
+        final int[] targetIndices = new int[paths];
+        targetIndices[0] = 0;
         for (int i = 1; i < paths && state == 0; i++) {
-            ret.add(solver.calculateShortestPath(edges.get(i - 1), edges.get(i)));
+            final Path path = solver.calculateShortestPath(edges.get(i - 1), edges.get(i));
+            if (path == null) {
+                return emptyRoute();
+            }
+            pathArray[i - 1] = path;
+            targetIndices[i] = i;
         }
         fireProgressDone(100);
 
-        return ret;
+        return new Route(pathArray, targetIndices);
     }
 
     @Override

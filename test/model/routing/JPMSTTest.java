@@ -15,7 +15,7 @@ import org.junit.Test;
 public class JPMSTTest {
 
     private JPMST jp;
-    private IGraph mst;
+    private IUndirectedGraph mst;
 
     public static long getEdge(final int node1, final int node2) {
         long ret;
@@ -67,8 +67,8 @@ public class JPMSTTest {
         weights[++count] = 1;
         weights[++count] = 2;
 
-        final IGraph graph = new Graph(10, edges, weights);
-        jp = new JPMST(graph);
+        final IUndirectedGraph undirectedGraph = new UndirectedGraph(10, edges, weights);
+        jp = new JPMST(undirectedGraph);
         mst = jp.calculateMST();
     }
 

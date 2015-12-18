@@ -2,7 +2,9 @@ package model.targets;
 
 public interface IPointListener {
 
-    void indexChanged();
+    void listIndexChanged();
+
+    void targetIndexChanged();
 
     void addressChanged();
 

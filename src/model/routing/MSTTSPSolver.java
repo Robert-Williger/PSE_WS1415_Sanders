@@ -1,20 +1,19 @@
 package model.routing;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import model.IProgressListener;
 
-public class MSTTSPSolver extends AbstractComplexRouteSolver {
-    private IGraph mst;
-    private HashMap<Long, Path> mapping;
+public class MSTTSPSolver extends AbstractRouteSolver {
+    private IUndirectedGraph mst;
+    private Path[] completeMapping;
     private List<Integer> tspNodes;
     private boolean canceled;
     private final ISPSPSolver solver;
 
-    public MSTTSPSolver(final IGraph graph) {
+    public MSTTSPSolver(final IDirectedGraph graph) {
         super(graph);
 
         solver = createSPSPSolver();
@@ -42,16 +41,12 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
     }
 
     @Override
-    public List<Path> calculateRoute(final List<InterNode> edges) {
+    public Route calculateRoute(final List<InterNode> edges) {
         fireProgressDone(-1);
-
-        mapping = new HashMap<Long, Path>();
 
         canceled = false;
 
-        final IGraph completeGraph = createCompleteGraph(edges);
-
-        final List<Path> ret = new ArrayList<Path>();
+        final IUndirectedGraph completeGraph = createCompleteGraph(edges);
 
         if (!canceled) {
             mst = new JPMST(completeGraph).calculateMST();
@@ -67,8 +62,8 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
 
                 int weightSum = 0;
                 for (int j = 0; j < num; j++) {
-                    final long e = graph.getEdge(tspNodes.get(j), tspNodes.get((j + 1) % num));
-                    weightSum += mapping.get(e).getLength();
+                    weightSum += completeMapping[getPathIndex(tspNodes.get(j), tspNodes.get((j + 1) % num), edges.size())]
+                            .getLength();
                 }
 
                 if (weightSum < minRouteLength) {
@@ -77,13 +72,17 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
                 }
             }
 
+            final Path[] paths = new Path[num];
+            final int[] targetIndices = new int[num];
             for (int j = 0; j < num; j++) {
-                final long e = graph.getEdge(minRoute.get(j), minRoute.get((j + 1) % num));
-                ret.add(mapping.get(e));
+                paths[j] = completeMapping[getPathIndex(minRoute.get(j), minRoute.get((j + 1) % num), edges.size())];
+                targetIndices[minRoute.get(j)] = j;
             }
+
+            return new Route(paths, targetIndices);
         }
 
-        return ret;
+        return emptyRoute();
     }
 
     private void dfs(final int u, final int v) {
@@ -98,30 +97,43 @@ public class MSTTSPSolver extends AbstractComplexRouteSolver {
         }
     }
 
-    private IGraph createCompleteGraph(final List<InterNode> points) {
-        final int size = points.size() - 1;
-        final long[] edges = new long[size * (size + 1) / 2];
-        final int[] weights = new int[edges.length];
+    private IUndirectedGraph createCompleteGraph(final List<InterNode> points) {
+        final int size = points.size();
+        completeMapping = new Path[size * (size - 1) / 2];
+        final int[] weights = new int[completeMapping.length];
+        final int[] firstNodes = new int[completeMapping.length];
+        final int[] secondNodes = new int[firstNodes.length];
 
         final double progressStep = 100.0 / (points.size() - 1);
 
-        int i = 0;
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] = Integer.MAX_VALUE;
+        }
         for (int u = 0; u < points.size() && !canceled; u++) {
-            for (int v = (u + 1); v < points.size() && !canceled; v++) {
-                final long edge = graph.getEdge(u, v);
-                edges[i] = edge;
+            for (int v = u + 1; v < points.size() && !canceled; v++) {
                 final Path path = solver.calculateShortestPath(points.get(u), points.get(v));
+                // TODO can we handle this?
                 if (path == null) {
                     canceled = true;
-                } else {
-                    weights[i] = path.getLength();
-                    mapping.put(edge, path);
+                    return null;
                 }
-                ++i;
+                final int index = getPathIndex(u, v, size);
+                if (path.getLength() < weights[index]) {
+                    firstNodes[index] = u;
+                    secondNodes[index] = v;
+                    weights[index] = path.getLength();
+                    completeMapping[index] = path;
+                }
             }
             fireProgressDone(progressStep);
         }
-        return !canceled ? new Graph(points.size(), edges, weights) : null;
+        return new UndirectedGraph(size, firstNodes, secondNodes, weights);
+    }
+
+    private int getPathIndex(final int firstNode, final int secondNode, final int nodes) {
+        int min = Math.min(firstNode, secondNode);
+        int max = Math.max(firstNode, secondNode);
+        return (nodes * (nodes - 1) - (nodes - min) * (nodes - min - 1)) / 2 + max - min - 1;
     }
 
     @Override

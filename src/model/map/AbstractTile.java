@@ -3,8 +3,8 @@ package model.map;
 import java.awt.Point;
 import java.util.Iterator;
 
-import model.elements.Building;
-import model.elements.Street;
+import model.elements.IBuilding;
+import model.elements.IStreet;
 import model.elements.StreetNode;
 
 public abstract class AbstractTile implements ITile {
@@ -47,21 +47,18 @@ public abstract class AbstractTile implements ITile {
 
         long minDistSq = Long.MAX_VALUE;
 
-        for (final Iterator<Street> streetIt = getStreets(); streetIt.hasNext();) {
-            final Street street = streetIt.next();
+        for (final Iterator<IStreet> streetIt = getStreets(); streetIt.hasNext();) {
+            final IStreet iStreet = streetIt.next();
 
             float totalLength = 0;
-            final int maxLength = street.getLength();
+            final int maxLength = iStreet.getLength();
 
-            final int[] xPoints = street.getXPoints();
-            final int[] yPoints = street.getYPoints();
+            int lastX = iStreet.getX(0);
+            int lastY = iStreet.getY(0);
 
-            int lastX = xPoints[0];
-            int lastY = yPoints[0];
-
-            for (int i = 1; i < street.size(); i++) {
-                int currentX = xPoints[i];
-                int currentY = yPoints[i];
+            for (int i = 1; i < iStreet.size(); i++) {
+                int currentX = iStreet.getX(i);
+                int currentY = iStreet.getY(i);
 
                 if (currentX != lastX || currentY != lastY) {
                     final long dx = currentX - lastX;
@@ -81,7 +78,7 @@ public abstract class AbstractTile implements ITile {
                     final long distanceSq = (long) (distX * distX + distY * distY);
 
                     if (distanceSq < minDistSq) {
-                        ret = new StreetNode((float) ((totalLength + s * length) / maxLength), street);
+                        ret = new StreetNode((float) ((totalLength + s * length) / maxLength), iStreet);
                         minDistSq = distanceSq;
                     }
 
@@ -96,10 +93,10 @@ public abstract class AbstractTile implements ITile {
     }
 
     @Override
-    public final Building getBuilding(final Point coordinate) {
-        for (final Iterator<Building> iterator = getBuildings(); iterator.hasNext();) {
-            final Building building = iterator.next();
-            if (building.getPolygon().contains(coordinate)) {
+    public final IBuilding getBuilding(final Point coordinate) {
+        for (final Iterator<IBuilding> iterator = getBuildings(); iterator.hasNext();) {
+            final IBuilding building = iterator.next();
+            if (building.contains(coordinate.x, coordinate.y)) {
                 return building;
             }
         }

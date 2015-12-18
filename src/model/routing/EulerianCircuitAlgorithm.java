@@ -11,14 +11,14 @@ public class EulerianCircuitAlgorithm {
 
     private List<Map<Integer, Integer>> availableNodes;
     private int availableEdges;
-    private IGraph graph;
+    private IUndirectedGraph undirectedGraph;
 
-    public List<Integer> getEulerianCurcuit(final IGraph graph) {
-        return getEulerianCurcuit(graph, 0);
+    public List<Integer> getEulerianCurcuit(final IUndirectedGraph undirectedGraph) {
+        return getEulerianCurcuit(undirectedGraph, 0);
     }
 
-    public List<Integer> getEulerianCurcuit(final IGraph graph, final int startNode) {
-        this.graph = graph;
+    public List<Integer> getEulerianCurcuit(final IUndirectedGraph undirectedGraph, final int startNode) {
+        this.undirectedGraph = undirectedGraph;
         initialize();
 
         final LinkedNode head = new LinkedNode(startNode);
@@ -37,10 +37,10 @@ public class EulerianCircuitAlgorithm {
     }
 
     private void initialize() {
-        availableNodes = new ArrayList<Map<Integer, Integer>>(graph.getNodes());
-        for (int node = 0; node < graph.getNodes(); node++) {
+        availableNodes = new ArrayList<Map<Integer, Integer>>(undirectedGraph.getNodes());
+        for (int node = 0; node < undirectedGraph.getNodes(); node++) {
             final Map<Integer, Integer> adjacentNodes = new HashMap<Integer, Integer>();
-            for (final Iterator<Integer> iterator = graph.getAdjacentNodes(node); iterator.hasNext();) {
+            for (final Iterator<Integer> iterator = undirectedGraph.getAdjacentNodes(node); iterator.hasNext();) {
 
                 final int other = iterator.next();
                 Integer occurances = adjacentNodes.get(other);

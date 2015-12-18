@@ -22,6 +22,7 @@ public class CreateTest {
         final File output = new File("default.map");
 
         System.out.println(System.currentTimeMillis() - start);
+
         start = System.currentTimeMillis();
 
         GraphCreator graph = new GraphCreator(parser.getStreets(), output);

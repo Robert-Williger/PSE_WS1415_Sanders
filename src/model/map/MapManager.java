@@ -5,7 +5,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
 
-import model.elements.Building;
+import model.elements.IBuilding;
 import model.elements.StreetNode;
 
 public class MapManager implements IMapManager {
@@ -59,13 +59,14 @@ public class MapManager implements IMapManager {
     public AddressNode getAddressNode(final Point coordinate) {
 
         final ITile zoomedTile = getTile(coordinate, state.getMaxZoomStep());
-        final Building building = zoomedTile.getBuilding(coordinate);
+        final IBuilding iBuilding = zoomedTile.getBuilding(coordinate);
 
-        if (building != null && building.getStreetNode() != null) {
-            return new AddressNode(building.getAddress(), building.getStreetNode());
+        if (iBuilding != null && iBuilding.getStreetNode() != null) {
+            return new AddressNode(iBuilding.getAddress(), iBuilding.getStreetNode());
         } else {
             int zoomStep = state.getMaxZoomStep();
-            //TODO find better abort criterion .. + define consistent max distance for search
+            // TODO find better abort criterion .. + define consistent max
+            // distance for search
             while (zoomStep >= state.getZoomStep()) {
                 final ITile tile = getTile(coordinate, zoomStep);
                 AddressNode node = locateAddressNode(coordinate, tile);
@@ -122,7 +123,7 @@ public class MapManager implements IMapManager {
         }
 
         if (streetNode != null) {
-            Building building = null;
+            IBuilding iBuilding = null;
             int buildingDistance = Integer.MAX_VALUE;
 
             for (int i = 0; i < 4; i++) {
@@ -132,13 +133,13 @@ public class MapManager implements IMapManager {
                     final DistancedBuilding dBuilding = locateBuilding(streetNode, tile, buildingDistance);
                     if (dBuilding != null) {
                         buildingDistance = dBuilding.distance;
-                        building = dBuilding.building;
+                        iBuilding = dBuilding.iBuilding;
                     }
                 }
             }
 
-            if (building != null) {
-                ret = new AddressNode(building.getAddress(), streetNode);
+            if (iBuilding != null) {
+                ret = new AddressNode(iBuilding.getAddress(), streetNode);
             } else {
                 ret = new AddressNode(streetNode.getStreet().getName(), streetNode);
             }
@@ -154,18 +155,15 @@ public class MapManager implements IMapManager {
 
         final String streetName = streetNode.getStreet().getName();
 
-        for (final Iterator<Building> buildingIt = tile.getBuildings(); buildingIt.hasNext();) {
-            final Building building = buildingIt.next();
-            final StreetNode buildingNode = building.getStreetNode();
+        for (final Iterator<IBuilding> buildingIt = tile.getBuildings(); buildingIt.hasNext();) {
+            final IBuilding iBuilding = buildingIt.next();
+            final StreetNode buildingNode = iBuilding.getStreetNode();
             if (buildingNode != null && buildingNode.getStreet().getName().equals(streetName)) {
-                final int[] xPoints = building.getXPoints();
-                final int[] yPoints = building.getYPoints();
-
-                for (int i = 0; i < building.size(); i++) {
-                    final int distance = (int) Point.distance(streetNode.getX(), streetNode.getY(), xPoints[i],
-                            yPoints[i]);
+                for (int i = 0; i < iBuilding.size(); i++) {
+                    final int distance = (int) Point.distance(streetNode.getX(), streetNode.getY(), iBuilding.getX(i),
+                            iBuilding.getY(i));
                     if (distance < minDistance) {
-                        ret = new DistancedBuilding(building, distance);
+                        ret = new DistancedBuilding(iBuilding, distance);
                         minDistance = distance;
                     }
                 }
@@ -237,11 +235,11 @@ public class MapManager implements IMapManager {
     }
 
     private class DistancedBuilding {
-        private final Building building;
+        private final IBuilding iBuilding;
         private final int distance;
 
-        public DistancedBuilding(final Building building, final int distance) {
-            this.building = building;
+        public DistancedBuilding(final IBuilding iBuilding, final int distance) {
+            this.iBuilding = iBuilding;
             this.distance = distance;
         }
     }

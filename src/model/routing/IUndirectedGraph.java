@@ -2,7 +2,7 @@ package model.routing;
 
 import java.util.Iterator;
 
-public interface IGraph {
+public interface IUndirectedGraph {
 
     int getNodes();
 
@@ -10,11 +10,11 @@ public interface IGraph {
 
     Iterator<Integer> getAdjacentNodes(int node);
 
+    long getEdge(int firstNode, int secondNode);
+
     int getFirstNode(long edge);
 
     int getSecondNode(long edge);
-
-    long getEdge(int node1, int node2);
 
     int getWeight(long edge);
 

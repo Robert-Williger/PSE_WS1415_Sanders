@@ -17,12 +17,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import model.elements.Area;
-import model.elements.Building;
-import model.elements.MultiElement;
+import model.elements.IArea;
+import model.elements.IBuilding;
+import model.elements.IMultiElement;
 import model.elements.Node;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.IPixelConverter;
 import model.map.ITile;
 
@@ -522,7 +522,7 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     // }
 
     private boolean drawAreas(final ITile tile, final Point tileLoc, final Graphics2D g) {
-        final Iterator<Area> iterator = tile.getTerrain();
+        final Iterator<IArea> iterator = tile.getTerrain();
         if (iterator == null) {
             return false;
         }
@@ -535,14 +535,14 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         }
 
         while (iterator.hasNext()) {
-            final Area area = iterator.next();
+            final IArea iArea = iterator.next();
 
-            if (area == null) {
+            if (iArea == null) {
                 return false;
             }
-            if (areaMinZoomstep[area.getType()] <= zoom) {
+            if (areaMinZoomstep[iArea.getType()] <= zoom) {
                 // TODO polygons sometimes do not have same start and endpoint!
-                appendPath(area, tileLoc, zoom, path[area.getType()]);
+                appendPath(iArea, tileLoc, zoom, path[iArea.getType()]);
             }
         }
 
@@ -612,7 +612,7 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
             return true;
         }
 
-        Iterator<Building> iterator = tile.getBuildings();
+        Iterator<IBuilding> iterator = tile.getBuildings();
         if (tile.getBuildings() == null) {
             return false;
         }
@@ -620,12 +620,12 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
         while (iterator.hasNext()) {
-            final Building building = iterator.next();
-            if (building == null) {
+            final IBuilding iBuilding = iterator.next();
+            if (iBuilding == null) {
                 return false;
             }
 
-            appendPath(building, tileLoc, zoom, path);
+            appendPath(iBuilding, tileLoc, zoom, path);
         }
 
         // draw buildings
@@ -697,30 +697,27 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         return Math.atan2(dy, dx);
     }
 
-    private boolean appendWays(final Iterator<? extends Way> iterator, final int zoom, final Path2D[] path,
+    private boolean appendWays(final Iterator<? extends IWay> iterator, final int zoom, final Path2D[] path,
             final Point tileLoc) {
         while (iterator.hasNext()) {
-            final Way way = iterator.next();
-            if (way == null) {
+            final IWay iWay = iterator.next();
+            if (iWay == null) {
                 return false;
             }
-            if (wayMinZoomstep[way.getType()] <= zoom) {
-                appendPath(way, tileLoc, zoom, path[way.getType()]);
+            if (wayMinZoomstep[iWay.getType()] <= zoom) {
+                appendPath(iWay, tileLoc, zoom, path[iWay.getType()]);
             }
         }
         return true;
     }
 
-    private void appendPath(final MultiElement element, final Point tileLoc, final int zoomStep, final Path2D path) {
-        final int[] xPoints = element.getXPoints();
-        final int[] yPoints = element.getYPoints();
-
-        path.moveTo(converter.getPixelDistancef(xPoints[0] - tileLoc.x, zoomStep),
-                converter.getPixelDistancef(yPoints[0] - tileLoc.y, zoomStep));
+    private void appendPath(final IMultiElement element, final Point tileLoc, final int zoomStep, final Path2D path) {
+        path.moveTo(converter.getPixelDistancef(element.getX(0) - tileLoc.x, zoomStep),
+                converter.getPixelDistancef(element.getY(0) - tileLoc.y, zoomStep));
 
         for (int i = 0; i < element.size(); i++) {
-            path.lineTo(converter.getPixelDistancef(xPoints[i] - tileLoc.x, zoomStep),
-                    converter.getPixelDistancef(yPoints[i] - tileLoc.y, zoomStep));
+            path.lineTo(converter.getPixelDistancef(element.getX(i) - tileLoc.x, zoomStep),
+                    converter.getPixelDistancef(element.getY(0) - tileLoc.y, zoomStep));
         }
     }
 

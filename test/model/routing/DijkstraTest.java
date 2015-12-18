@@ -76,8 +76,8 @@ public class DijkstraTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IGraph graph = new Graph(21, edges, weights);
-        routing = new Dijkstra(graph);
+        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, edges, weights);
+        routing = new Dijkstra(undirectedGraph);
     }
 
     @Test

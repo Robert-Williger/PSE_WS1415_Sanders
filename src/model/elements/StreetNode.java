@@ -5,47 +5,42 @@ import java.awt.Point;
 public class StreetNode extends Node {
 
     private final float offset;
-    private Street street;
+    private final IStreet street;
 
     private static final float EPSILON = 0.00001f;
 
-    public StreetNode(final float offset, final Street street) {
+    public StreetNode(final float offset, final IStreet street) {
         this.offset = Math.max(0, Math.min(1, offset));
-        setStreet(street);
+        this.street = street;
+        calculateLocation();
     }
 
     public float getOffset() {
         return offset;
     }
 
-    public Street getStreet() {
+    public IStreet getStreet() {
         return street;
-    }
-
-    public void setStreet(final Street street) {
-        this.street = street;
-        calculateLocation();
     }
 
     private void calculateLocation() {
 
-        final int[] xPoints = street.getXPoints();
-        final int[] yPoints = street.getYPoints();
+        final int size = street.size();
 
-        if (xPoints.length > 0) {
+        if (size > 0) {
             final float totalLength = street.getLength();
             final float maxLength = totalLength * offset;
 
-            int lastX = xPoints[0];
-            int lastY = yPoints[0];
+            int lastX = street.getX(0);
+            int lastY = street.getY(0);
             float currentOffsetLength = 0f;
 
-            for (int i = 1; i < xPoints.length; i++) {
-                final int currentX = xPoints[i];
-                final int currentY = yPoints[i];
+            for (int i = 1; i < size; i++) {
+                final int currentX = street.getX(i);
+                final int currentY = street.getY(i);
                 final double distance = Point.distance(lastX, lastY, currentX, currentY);
 
-                if (currentOffsetLength + distance > maxLength || i == xPoints.length - 1) {
+                if (currentOffsetLength + distance > maxLength || i == size - 1) {
                     final int xDistance = currentX - lastX;
                     final int yDistance = currentY - lastY;
 

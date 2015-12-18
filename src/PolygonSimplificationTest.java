@@ -12,12 +12,13 @@ import javax.swing.JFrame;
 
 import adminTool.VisvalingamWhyatt;
 import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import adminTool.elements.Node;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.BackgroundRenderer;
@@ -49,7 +50,7 @@ public class PolygonSimplificationTest extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        Area origArea = null;
+        IArea origArea = null;
         Node[] origNodes = null;
         List<Node> nodes = new ArrayList<Node>();
 
@@ -83,8 +84,8 @@ public class PolygonSimplificationTest extends JFrame {
 
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
-            int[][] conversion = convert(origNodes);
-            origArea = new Area(conversion[0], conversion[1], 3);
+            int[] conversion = convert(origNodes);
+            origArea = new Area(conversion, 3);
 
             stream.close();
         } catch (IOException e) {
@@ -93,8 +94,8 @@ public class PolygonSimplificationTest extends JFrame {
 
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
 
-        Tile origTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{origArea},
-                new Building[]{}, new POI[]{}, new Label[0]);
+        Tile origTile = new Tile(zoom, row, column, new IWay[]{}, new IStreet[]{}, new IArea[]{origArea},
+                new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(origTile, orig);
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
@@ -104,9 +105,9 @@ public class PolygonSimplificationTest extends JFrame {
         for (int i = 0; i < simplifiedNodes.length; i++) {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
-        int[][] conversion = convert(simplifiedNodes);
-        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                conversion[0], conversion[1], origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
+        int[] conversion = convert(simplifiedNodes);
+        Tile simplifiedTile = new Tile(zoom, row, column, new IWay[]{}, new IStreet[]{}, new IArea[]{new Area(
+                conversion, origArea.getType())}, new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
@@ -116,8 +117,8 @@ public class PolygonSimplificationTest extends JFrame {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
         conversion = convert(doubleSimplifiedNodes);
-        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{}, new Street[]{}, new Area[]{new Area(
-                conversion[0], conversion[1], origArea.getType())}, new Building[]{}, new POI[]{}, new Label[0]);
+        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new IWay[]{}, new IStreet[]{}, new IArea[]{new Area(
+                conversion, origArea.getType())}, new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
         simpleNumber = simplifiedNodes.length;
@@ -127,11 +128,11 @@ public class PolygonSimplificationTest extends JFrame {
 
     }
 
-    private int[][] convert(final Node[] node) {
-        int[][] ret = new int[2][node.length];
+    private int[] convert(final Node[] node) {
+        int[] ret = new int[2 * node.length];
         for (int i = 0; i < node.length; i++) {
-            ret[0][i] = node[i].getX();
-            ret[1][i] = node[i].getY();
+            ret[2 * i] = node[i].getX();
+            ret[2 * i + 1] = node[i].getY();
         }
         return ret;
     }

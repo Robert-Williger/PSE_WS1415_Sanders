@@ -11,13 +11,14 @@ import java.util.List;
 import javax.swing.JFrame;
 
 import adminTool.VisvalingamWhyatt;
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
+import model.elements.Way;
 import adminTool.elements.Node;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.BackgroundRenderer;
@@ -49,7 +50,7 @@ public class MultilineSimplificationTest extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        Way origWay = null;
+        IWay origWay = null;
         Node[] origNodes = null;
         List<Node> nodes = new ArrayList<Node>();
 
@@ -80,8 +81,8 @@ public class MultilineSimplificationTest extends JFrame {
 
             origNumber = nodes.size();
             origNodes = nodes.toArray(new Node[origNumber]);
-            int[][] conversion = convert(origNodes);
-            origWay = new Way(conversion[0], conversion[1], 15, "");
+            int[] conversion = convert(origNodes);
+            origWay = new Way(conversion, 15, "");
 
             row = minY / converter.getCoordDistance(256, zoom);
             column = minX / converter.getCoordDistance(256, zoom);
@@ -93,8 +94,8 @@ public class MultilineSimplificationTest extends JFrame {
 
         BackgroundRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 21));
 
-        Tile origTile = new Tile(zoom, row, column, new Way[]{origWay}, new Street[]{}, new Area[]{}, new Building[]{},
-                new POI[]{}, new Label[0]);
+        Tile origTile = new Tile(zoom, row, column, new IWay[]{origWay}, new IStreet[]{}, new IArea[]{},
+                new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(origTile, orig);
 
         VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, simpleThreshHold);
@@ -105,9 +106,9 @@ public class MultilineSimplificationTest extends JFrame {
             simplifiedNodes[i] = origNodes[simplifiedIndices[i]];
         }
 
-        int[][] conversion = convert(simplifiedNodes);
-        Tile simplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(conversion[0], conversion[1],
-                origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
+        int[] conversion = convert(simplifiedNodes);
+        Tile simplifiedTile = new Tile(zoom, row, column, new IWay[]{new Way(conversion, origWay.getType(), "")},
+                new IStreet[]{}, new IArea[]{}, new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(simplifiedTile, simple);
 
         simplificator = new VisvalingamWhyatt(converter, doubleSimpleThreshHold);
@@ -117,8 +118,8 @@ public class MultilineSimplificationTest extends JFrame {
             doubleSimplifiedNodes[i] = origNodes[doubleSimplifiedIndices[i]];
         }
         conversion = convert(doubleSimplifiedNodes);
-        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new Way[]{new Way(conversion[0], conversion[1],
-                origWay.getType(), "")}, new Street[]{}, new Area[]{}, new Building[]{}, new POI[]{}, new Label[0]);
+        Tile doubleSimplifiedTile = new Tile(zoom, row, column, new IWay[]{new Way(conversion, origWay.getType(), "")},
+                new IStreet[]{}, new IArea[]{}, new IBuilding[]{}, new POI[]{}, new Label[0]);
         renderer.render(doubleSimplifiedTile, doubleSimple);
 
         simpleNumber = simplifiedNodes.length;
@@ -128,11 +129,11 @@ public class MultilineSimplificationTest extends JFrame {
 
     }
 
-    private int[][] convert(final Node[] node) {
-        int[][] ret = new int[2][node.length];
+    private int[] convert(final Node[] node) {
+        int[] ret = new int[node.length * 2];
         for (int i = 0; i < node.length; i++) {
-            ret[0][i] = node[i].getX();
-            ret[1][i] = node[i].getY();
+            ret[2 * i] = node[i].getX();
+            ret[2 * i + 1] = node[i].getY();
         }
         return ret;
     }

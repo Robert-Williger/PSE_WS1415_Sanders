@@ -2,22 +2,19 @@ package model.renderEngine;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import model.elements.Area;
-import model.elements.Building;
-import model.elements.MultiElement;
-import model.elements.Way;
+import model.elements.IArea;
+import model.elements.IBuilding;
+import model.elements.IMultiElement;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.IPixelConverter;
 import model.map.ITile;
 
@@ -36,9 +33,6 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
     // buildings
     private static final ShapeStyle[] buildingStyles;
     private static final int buildingMinZoomstep;
-    private static final int buildingNumberMinZoomstep;
-    private static final Font buildingNumberFont;
-    private static final Color buildingNumberColor;
 
     private static final int maxElements;
 
@@ -310,10 +304,6 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         buildingStyles[0] = new ShapeStyle(buildingMinZoomstep, new float[]{0}, new float[]{0, 0.5f, 0.75f, 1},
                 new Color(217, 208, 201), new Color(188, 174, 162));
 
-        buildingNumberMinZoomstep = 18;
-        buildingNumberFont = new Font("Times New Roman", Font.PLAIN, 10);
-        buildingNumberColor = new Color(96, 96, 96);
-
         maxElements = Math.max(areaStyles.length, wayStyles.length);
     }
 
@@ -324,10 +314,6 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
 
     @Override
     public boolean render(final ITile tile, final Image image) {
-        if (tile == null || image == null) {
-            return false;
-        }
-
         final Graphics2D g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -336,12 +322,11 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
-        // RenderingHints.KEY
         final Point tileLocation = getTileLocation(tile, image);
 
         final Path2D[] paths = setupPaths();
-        final boolean rendered = drawAreas(tile, tileLocation, paths, g) && drawBuildings(tile, tileLocation, paths, g)
-                && drawWays(tile, tileLocation, paths, g);
+        final boolean rendered = drawAreas(tile, tileLocation, paths, g) | drawBuildings(tile, tileLocation, paths, g)
+                | drawWays(tile, tileLocation, paths, g);
 
         g.dispose();
         freeList.offer(paths);
@@ -371,23 +356,22 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
     }
 
     private boolean drawAreas(final ITile tile, final Point tileLoc, final Path2D[] paths, final Graphics2D g) {
-        final Iterator<Area> iterator = tile.getTerrain();
-        if (iterator == null) {
-            return false;
-        }
+        final Iterator<IArea> iterator = tile.getTerrain();
 
+        boolean rendered = false;
         final int zoom = tile.getZoomStep();
         clearPaths(paths, areaStyles.length);
 
+        if (!tile.getTerrain().hasNext()) {
+            return false;
+        }
         while (iterator.hasNext()) {
-            final Area area = iterator.next();
+            final IArea iArea = iterator.next();
 
-            if (area == null) {
-                return false;
-            }
-            if (areaMinZoomstep[area.getType()] <= zoom) {
-                final Path2D path = paths[area.getType()];
-                appendPath(area, tileLoc, zoom, path);
+            if (areaMinZoomstep[iArea.getType()] <= zoom) {
+                final Path2D path = paths[iArea.getType()];
+                appendPath(iArea, tileLoc, zoom, path);
+                rendered = true;
                 // TODO polygons sometimes do not have same start and endpoint!
                 // ... improve this
                 path.closePath();
@@ -404,44 +388,34 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
             }
         }
 
-        return true;
+        return rendered;
     }
 
     private boolean drawWays(final ITile tile, final Point tileLoc, final Path2D[] paths, final Graphics2D g) {
-        if (tile.getStreets() == null || tile.getWays() == null) {
-            return false;
-        }
+        Iterator<IStreet> streets = tile.getStreets();
+        Iterator<IWay> ways = tile.getWays();
 
         final int zoom = tile.getZoomStep();
         clearPaths(paths, wayStyles.length);
 
-        if (!appendWays(tile.getStreets(), zoom, paths, tileLoc) || !appendWays(tile.getWays(), zoom, paths, tileLoc)) {
+        if (!appendWays(streets, zoom, paths, tileLoc) & !appendWays(ways, zoom, paths, tileLoc)) {
             return false;
         }
 
         for (final int[] layer : wayOrder) {
             for (final int way : layer) {
-                // TODO remove
-                if (wayMinZoomstep[way] <= zoom) {
-                    if (wayStyles[way].outlineStroke(g, zoom)) {
-                        g.draw(paths[way]);
-                    }
+                if (wayMinZoomstep[way] <= zoom && wayStyles[way].outlineStroke(g, zoom)) {
+                    g.draw(paths[way]);
                 }
             }
             for (final int way : layer) {
-                // TODO remove
-                if (wayMinZoomstep[way] <= zoom) {
-                    if (wayStyles[way].mainStroke(g, zoom)) {
-                        g.draw(paths[way]);
-                    }
+                if (wayMinZoomstep[way] <= zoom && wayStyles[way].mainStroke(g, zoom)) {
+                    g.draw(paths[way]);
                 }
             }
             for (final int way : layer) {
-                // TODO remove
-                if (wayMinZoomstep[way] <= zoom) {
-                    if (wayStyles[way].middleLineStroke(g, zoom)) {
-                        g.draw(paths[way]);
-                    }
+                if (wayMinZoomstep[way] <= zoom && wayStyles[way].middleLineStroke(g, zoom)) {
+                    g.draw(paths[way]);
                 }
             }
         }
@@ -454,19 +428,16 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         clearPaths(paths, 1);
 
         if (zoom < buildingMinZoomstep) {
-            return true;
+            return false;
         }
 
-        Iterator<Building> iterator = tile.getBuildings();
-        if (tile.getBuildings() == null) {
+        final Iterator<IBuilding> iterator = tile.getBuildings();
+        if (!iterator.hasNext()) {
             return false;
         }
 
         while (iterator.hasNext()) {
-            final Building building = iterator.next();
-            if (building == null) {
-                return false;
-            }
+            final IBuilding building = iterator.next();
 
             appendPath(building, tileLoc, zoom, paths[0]);
         }
@@ -483,96 +454,31 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
 
         // draw building numbers
 
-        if (zoom >= buildingNumberMinZoomstep) {
-            g.setFont(buildingNumberFont);
-            g.setColor(buildingNumberColor);
-
-            iterator = tile.getBuildings();
-            while (iterator.hasNext()) {
-                final Building building = iterator.next();
-                final Polygon poly = convertPolygon(building.getPolygon(), tileLoc, zoom);
-
-                final String number = building.getHouseNumber();
-                if (!number.isEmpty()) {
-                    final Rectangle2D fontRect = g.getFontMetrics(buildingNumberFont).getStringBounds(number, g);
-                    final Rectangle2D polyRect = poly.getBounds();
-
-                    if (fontRect.getWidth() < polyRect.getWidth() && fontRect.getHeight() < polyRect.getHeight()) {
-                        final Point2D.Float center = calculateCenter(poly);
-                        center.setLocation((center.getX() + polyRect.getCenterX()) / 2f,
-                                (center.getY() + polyRect.getCenterY()) / 2f);
-
-                        g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f), (float) (center.y
-                                - fontRect.getHeight() / 2f + g.getFontMetrics().getAscent()));
-                    }
-                }
-            }
-        }
-
         return true;
     }
 
-    private Polygon convertPolygon(final Polygon polygon, final Point tileLoc, final int zoomStep) {
-        final int[] xPoints = new int[polygon.npoints];
-        final int[] yPoints = new int[polygon.npoints];
-
-        for (int i = 0; i < polygon.npoints; i++) {
-            xPoints[i] = converter.getPixelDistance(polygon.xpoints[i] - tileLoc.x, zoomStep);
-            yPoints[i] = converter.getPixelDistance(polygon.ypoints[i] - tileLoc.y, zoomStep);
-        }
-
-        final Polygon ret = new Polygon();
-        ret.xpoints = xPoints;
-        ret.ypoints = yPoints;
-        ret.npoints = polygon.npoints;
-        return ret;
-    }
-
-    private boolean appendWays(final Iterator<? extends Way> iterator, final int zoom, final Path2D[] path,
+    private boolean appendWays(final Iterator<? extends IWay> iterator, final int zoom, final Path2D[] path,
             final Point tileLoc) {
+        boolean appended = false;
         while (iterator.hasNext()) {
-            final Way way = iterator.next();
-            if (way == null) {
-                return false;
-            }
-            if (wayMinZoomstep[way.getType()] <= zoom) {
-                appendPath(way, tileLoc, zoom, path[way.getType()]);
+            final IWay iWay = iterator.next();
+
+            if (wayMinZoomstep[iWay.getType()] <= zoom) {
+                appended = true;
+                appendPath(iWay, tileLoc, zoom, path[iWay.getType()]);
             }
         }
-        return true;
+        return appended;
     }
 
-    private void appendPath(final MultiElement element, final Point tileLoc, final int zoomStep, final Path2D path) {
-        final int[] xPoints = element.getXPoints();
-        final int[] yPoints = element.getYPoints();
+    private void appendPath(final IMultiElement element, final Point tileLoc, final int zoomStep, final Path2D path) {
 
-        path.moveTo(converter.getPixelDistancef(xPoints[0] - tileLoc.x, zoomStep),
-                converter.getPixelDistancef(yPoints[0] - tileLoc.y, zoomStep));
+        path.moveTo(converter.getPixelDistancef(element.getX(0) - tileLoc.x, zoomStep),
+                converter.getPixelDistancef(element.getY(0) - tileLoc.y, zoomStep));
 
         for (int i = 0; i < element.size(); i++) {
-            path.lineTo(converter.getPixelDistancef(xPoints[i] - tileLoc.x, zoomStep),
-                    converter.getPixelDistancef(yPoints[i] - tileLoc.y, zoomStep));
+            path.lineTo(converter.getPixelDistancef(element.getX(i) - tileLoc.x, zoomStep),
+                    converter.getPixelDistancef(element.getY(i) - tileLoc.y, zoomStep));
         }
-    }
-
-    private Point2D.Float calculateCenter(final Polygon poly) {
-        float x = 0f;
-        float y = 0f;
-        int totalPoints = poly.npoints - 1;
-        for (int i = 0; i < totalPoints; i++) {
-            x += poly.xpoints[i];
-            y += poly.ypoints[i];
-        }
-
-        if (poly.xpoints[0] != poly.xpoints[totalPoints] || poly.ypoints[0] != poly.ypoints[totalPoints]) {
-            x += poly.xpoints[totalPoints];
-            y += poly.ypoints[totalPoints];
-            totalPoints++;
-        }
-
-        x = x / totalPoints;
-        y = y / totalPoints;
-
-        return new Point.Float(x, y);
     }
 }

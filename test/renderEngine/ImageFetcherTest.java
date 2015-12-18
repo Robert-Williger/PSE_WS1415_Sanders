@@ -14,13 +14,13 @@ import java.util.Iterator;
 
 import javax.swing.event.ChangeListener;
 
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
+import model.elements.IStreet;
 import model.elements.StreetNode;
-import model.elements.Way;
+import model.elements.IWay;
 import model.map.AddressNode;
 import model.map.IMapManager;
 import model.map.IMapState;
@@ -170,22 +170,22 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return null;
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return null;
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return null;
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return null;
         }
 
@@ -205,7 +205,7 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public Building getBuilding(final Point coordinate) {
+        public IBuilding getBuilding(final Point coordinate) {
             return null;
         }
 

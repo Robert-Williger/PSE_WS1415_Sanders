@@ -13,7 +13,7 @@ public class RouteManagerTest {
 
     @Before
     public void setUp() {
-        rM = new RouteManager(new Graph(0, new long[0], new int[0]), new MapManager());
+        rM = new RouteManager(new UndirectedGraph(0, new long[0], new int[0]), new MapManager());
     }
 
     @Test

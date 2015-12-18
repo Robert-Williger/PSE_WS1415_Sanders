@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class ChristophidesTSPAlgorithmTest {
 
-    private IComplexRouteSolver routing;
+    private IRouteSolver routing;
     private boolean error;
 
     public static long getEdge(final int node1, final int node2) {
@@ -78,8 +78,8 @@ public class ChristophidesTSPAlgorithmTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IGraph graph = new Graph(21, edges, weights);
-        routing = new ChristofidesTSPSolver(graph);
+        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, edges, weights);
+        routing = new ChristofidesTSPSolver(undirectedGraph);
     }
 
     @Test

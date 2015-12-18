@@ -644,7 +644,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         }
 
         @Override
-        public void indexChanged() {
+        public void listIndexChanged() {
             repaint();
         }
 
@@ -667,6 +667,11 @@ public class SidebarView extends JPanel implements ISidebarView {
                 textField.setText(point.getAddress());
                 textField.requestFocus();
             }
+        }
+
+        @Override
+        public void targetIndexChanged() {
+            repaint();
         }
     }
 

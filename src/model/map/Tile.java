@@ -3,19 +3,19 @@ package model.map;
 import java.util.Iterator;
 
 import util.Arrays;
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 
 public class Tile extends AbstractTile {
 
-    private final Way[] ways;
-    private final Area[] areas;
-    private final Street[] streets;
-    private final Building[] buildings;
+    private final IWay[] ways;
+    private final IArea[] iAreas;
+    private final IStreet[] iStreets;
+    private final IBuilding[] iBuildings;
     private final POI[] pois;
     private final Label[] labels;
 
@@ -24,38 +24,38 @@ public class Tile extends AbstractTile {
     }
 
     public Tile(final int zoomStep, final int row, final int column) {
-        this(zoomStep, row, column, new Way[0], new Street[0], new Area[0], new Building[0], new POI[0], new Label[0]);
+        this(zoomStep, row, column, new IWay[0], new IStreet[0], new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
     }
 
-    public Tile(final int zoomStep, final int row, final int column, final Way[] ways, final Street[] streets,
-            final Area[] areas, final Building[] buildings, final POI[] pois, final Label[] labels) {
+    public Tile(final int zoomStep, final int row, final int column, final IWay[] ways, final IStreet[] streets,
+            final IArea[] areas, final IBuilding[] buildings, final POI[] pois, final Label[] labels) {
         super(zoomStep, row, column);
         this.ways = ways;
-        this.areas = areas;
-        this.streets = streets;
-        this.buildings = buildings;
+        this.iAreas = areas;
+        this.iStreets = streets;
+        this.iBuildings = buildings;
         this.pois = pois;
         this.labels = labels;
     }
 
     @Override
-    public Iterator<Street> getStreets() {
-        return Arrays.iterator(streets);
+    public Iterator<IStreet> getStreets() {
+        return Arrays.iterator(iStreets);
     }
 
     @Override
-    public Iterator<Way> getWays() {
+    public Iterator<IWay> getWays() {
         return Arrays.iterator(ways);
     }
 
     @Override
-    public Iterator<Building> getBuildings() {
-        return Arrays.iterator(buildings);
+    public Iterator<IBuilding> getBuildings() {
+        return Arrays.iterator(iBuildings);
     }
 
     @Override
-    public Iterator<Area> getTerrain() {
-        return Arrays.iterator(areas);
+    public Iterator<IArea> getTerrain() {
+        return Arrays.iterator(iAreas);
     }
 
     @Override

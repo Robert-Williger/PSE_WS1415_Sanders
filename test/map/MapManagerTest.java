@@ -7,13 +7,13 @@ import static org.junit.Assert.assertNull;
 import java.awt.Dimension;
 import java.awt.Point;
 
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
+import model.elements.IStreet;
 import model.elements.StreetNode;
-import model.elements.Way;
+import model.elements.IWay;
 import model.map.AddressNode;
 import model.map.DefaultTileSource;
 import model.map.IMapManager;
@@ -31,39 +31,39 @@ public class MapManagerTest {
 
     private IMapManager manager;
     private ITile[][][] tiles;
-    private Building building;
-    private Street street;
+    private IBuilding iBuilding;
+    private IStreet iStreet;
     private IPixelConverter converter;
 
     @Before
     public void setUp() {
-        final Street[] streets = new Street[5];
+        final IStreet[] streets = new IStreet[5];
 
-        streets[0] = new Street(new int[]{0, 500, 1240, 2750}, new int[]{750, 750, 700, 500}, 3, "Haid und Neu Straße",
+        streets[0] = new IStreet(new int[]{0, 500, 1240, 2750}, new int[]{750, 750, 700, 500}, 3, "Haid und Neu Straße",
                 0);
-        streets[1] = new Street(new int[]{500, 550, 525, 505}, new int[]{750, 1350, 2000, 2750}, 4, "Tullastraße", 0);
-        streets[2] = new Street(new int[]{1240, 1250, 1250, 1250}, new int[]{700, 1150, 1900, 2750}, 5,
+        streets[1] = new IStreet(new int[]{500, 550, 525, 505}, new int[]{750, 1350, 2000, 2750}, 4, "Tullastraße", 0);
+        streets[2] = new IStreet(new int[]{1240, 1250, 1250, 1250}, new int[]{700, 1150, 1900, 2750}, 5,
                 "Helmertstraße", 0);
-        streets[3] = street = new Street(new int[]{550, 1250}, new int[]{1350, 1150}, 5, "Gaußstraße", 0);
-        streets[4] = new Street(new int[]{525, 1250, 1250, 1900, 2750}, new int[]{525, 1250, 1250, 1900, 2750}, 5,
+        streets[3] = iStreet = new IStreet(new int[]{550, 1250}, new int[]{1350, 1150}, 5, "Gaußstraße", 0);
+        streets[4] = new IStreet(new int[]{525, 1250, 1250, 1900, 2750}, new int[]{525, 1250, 1250, 1900, 2750}, 5,
                 "Jordanstraße", 0);
 
-        final Way[] ways = new Way[0];
+        final IWay[] ways = new IWay[0];
         final POI[] pois = new POI[0];
-        final Area[] areas = new Area[0];
-        final Building[] buildings = new Building[6];
+        final IArea[] areas = new IArea[0];
+        final IBuilding[] buildings = new IBuilding[6];
 
-        buildings[0] = building = Building.create(new int[]{362, 362, 462, 462}, new int[]{945, 1046, 1046, 946},
+        buildings[0] = iBuilding = IBuilding.create(new int[]{362, 362, 462, 462}, new int[]{945, 1046, 1046, 946},
                 new StreetNode(0.125f, streets[1]), "10");
-        buildings[1] = Building.create(new int[]{358, 358, 458, 458}, new int[]{1626, 1726, 1726, 1626},
+        buildings[1] = IBuilding.create(new int[]{358, 358, 458, 458}, new int[]{1626, 1726, 1726, 1626},
                 new StreetNode(0.475f, streets[1]), "30");
-        buildings[2] = Building.create(new int[]{852, 852, 952, 952}, new int[]{1386, 1286, 1286, 1386},
+        buildings[2] = IBuilding.create(new int[]{852, 852, 952, 952}, new int[]{1386, 1286, 1286, 1386},
                 new StreetNode(0.5f, streets[3]), "21");
-        buildings[3] = Building.create(new int[]{682, 682, 782, 782}, new int[]{1826, 1926, 1926, 1826},
+        buildings[3] = IBuilding.create(new int[]{682, 682, 782, 782}, new int[]{1826, 1926, 1926, 1826},
                 new StreetNode(0.1f, streets[4]), "8");
-        buildings[4] = Building.create(new int[]{1274, 1274, 1374, 1374}, new int[]{850, 950, 950, 850},
+        buildings[4] = IBuilding.create(new int[]{1274, 1274, 1374, 1374}, new int[]{850, 950, 950, 850},
                 new StreetNode(0.1f, streets[2]), "7");
-        buildings[5] = Building.create(new int[]{1118, 1118, 1218, 1218}, new int[]{1474, 1574, 1574, 1474},
+        buildings[5] = IBuilding.create(new int[]{1118, 1118, 1218, 1218}, new int[]{1474, 1574, 1574, 1474},
                 new StreetNode(0.4f, streets[2]), "21");
 
         tiles = new Tile[3][][];
@@ -155,13 +155,13 @@ public class MapManagerTest {
 
     @Test
     public void testNormalSearch() {
-        assertEquals(new AddressNode("Gaußstraße 21", new StreetNode(0.5f, street)),
+        assertEquals(new AddressNode("Gaußstraße 21", new StreetNode(0.5f, iStreet)),
                 manager.getAddressNode(new Point(900, 1250)));
     }
 
     @Test
     public void testSearchWithBuilding() {
-        assertEquals(new AddressNode(building.getAddress(), building.getStreetNode()),
+        assertEquals(new AddressNode(iBuilding.getAddress(), iBuilding.getStreetNode()),
                 manager.getAddressNode(new Point(380, 1000)));
     }
 

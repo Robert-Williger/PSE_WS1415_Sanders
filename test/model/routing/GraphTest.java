@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class GraphTest {
-    private IGraph graph;
+    private IUndirectedGraph undirectedGraph;
 
     public static long getEdge(final int node1, final int node2) {
         long ret;
@@ -73,42 +73,42 @@ public class GraphTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        graph = new Graph(21, edges, weights);
+        undirectedGraph = new UndirectedGraph(21, edges, weights);
     }
 
     @Test
     public void testNumberOfNodes() {
-        assertEquals(21, graph.getNodes());
+        assertEquals(21, undirectedGraph.getNodes());
     }
 
     @Test
     public void testNumberOfEdges() {
-        assertEquals(21, graph.getEdges());
+        assertEquals(21, undirectedGraph.getEdges());
     }
 
     @Test
     public void testEdgeMapping1() {
-        assertEquals(51539607763L, graph.getEdge(211, 12));
+        assertEquals(51539607763L, undirectedGraph.getEdge(211, 12));
     }
 
     @Test
     public void testEdgeMapping2() {
-        assertEquals(51539607763L, graph.getEdge(12, 211));
+        assertEquals(51539607763L, undirectedGraph.getEdge(12, 211));
     }
 
     @Test
     public void testEdgeMapping3() {
-        assertEquals(1L, graph.getEdge(1, 0));
+        assertEquals(1L, undirectedGraph.getEdge(1, 0));
     }
 
     @Test
     public void testNode1() {
-        assertEquals(12, graph.getFirstNode(51539607763L));
+        assertEquals(12, undirectedGraph.getFirstNode(51539607763L));
     }
 
     @Test
     public void testNode2() {
-        assertEquals(211, graph.getSecondNode(51539607763L));
+        assertEquals(211, undirectedGraph.getSecondNode(51539607763L));
     }
 
     @Test
@@ -119,7 +119,7 @@ public class GraphTest {
         nodes.add(12);
         nodes.add(17);
 
-        final Iterator<Integer> it = graph.getAdjacentNodes(13);
+        final Iterator<Integer> it = undirectedGraph.getAdjacentNodes(13);
         while (it.hasNext()) {
             ret.add(it.next());
         }
@@ -129,7 +129,7 @@ public class GraphTest {
 
     @Test
     public void testWeight() {
-        assertEquals(200, graph.getWeight(graph.getEdge(5, 11)));
+        assertEquals(200, undirectedGraph.getWeight(undirectedGraph.getEdge(5, 11)));
     }
 
 }

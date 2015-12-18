@@ -3,13 +3,13 @@ package model.map;
 import java.awt.Point;
 import java.util.Iterator;
 
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
+import model.elements.IStreet;
 import model.elements.StreetNode;
-import model.elements.Way;
+import model.elements.IWay;
 
 public interface ITile {
 
@@ -21,13 +21,13 @@ public interface ITile {
 
     int getZoomStep();
 
-    Iterator<Street> getStreets();
+    Iterator<IStreet> getStreets();
 
-    Iterator<Way> getWays();
+    Iterator<IWay> getWays();
 
-    Iterator<Building> getBuildings();
+    Iterator<IBuilding> getBuildings();
 
-    Iterator<Area> getTerrain();
+    Iterator<IArea> getTerrain();
 
     Iterator<POI> getPOIs();
 
@@ -37,6 +37,6 @@ public interface ITile {
 
     StreetNode getStreetNode(Point coordinate);
 
-    Building getBuilding(Point coordinate);
+    IBuilding getBuilding(Point coordinate);
 
 }

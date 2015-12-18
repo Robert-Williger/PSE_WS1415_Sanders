@@ -2,22 +2,26 @@ package model.routing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolver {
-    private final IGraph graph;
+    private final IDirectedGraph graph;
     private final int[] distance;
     private final int[] parent;
+    private final Set<Integer> endNodeSet;
     private int[] endNodes;
     private IAddressablePriorityQueue<Integer> queue;
     private boolean canceled;
 
     private InterNode start;
 
-    public ReusableDijkstra(final IGraph graph) {
+    public ReusableDijkstra(final IDirectedGraph graph) {
         this.graph = graph;
         final int nodes = graph.getNodes();
+        endNodeSet = new HashSet<Integer>(2);
         distance = new int[nodes];
         parent = new int[nodes];
     }
@@ -53,23 +57,31 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
                 parent[i] = -1;
             }
 
-            final int[] startNodes = {graph.getFirstNode(start.getEdge()), graph.getSecondNode(start.getEdge())};
             final int weight = graph.getWeight(start.getEdge());
             final float offset = start.getOffset();
 
-            distance[startNodes[0]] = (int) (weight * offset);
-            distance[startNodes[1]] = (int) (weight * (1 - offset));
-
-            for (int i = 0; i < 2; i++) {
-                parent[startNodes[i]] = startNodes[i];
-            }
-
-            queue.insert(startNodes[0], (int) (weight * offset));
-            queue.insert(startNodes[1], (int) (weight * (1 - offset)));
+            initializeStartNode(start.getEdge(), (int) (weight * offset));
+            initializeStartNode(start.getCorrespondingEdge(), (int) (weight * (1 - offset)));
         }
 
         canceled = false;
-        endNodes = new int[]{graph.getFirstNode(end.getEdge()), graph.getSecondNode(end.getEdge())};
+        // TODO handle one-ways!
+        endNodes = new int[]{graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge())};
+    }
+
+    private void initializeStartNode(final int edge, final int weight) {
+        if (edge != -1) {
+            final int node = graph.getStartNode(edge);
+            distance[node] = weight;
+            parent[node] = edge;
+            queue.insert(node, weight);
+        }
+    }
+
+    private void initializeEndNode(final int edge, final int index) {
+        final int node = graph.getStartNode(edge);
+        endNodeSet.add(node);
+        endNodes[index] = node;
     }
 
     private void execute() {
@@ -94,90 +106,73 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     private final void scan(final int u) {
-        final Iterator<Integer> it = graph.getAdjacentNodes(u);
-        while (it.hasNext()) {
-            relax(u, it.next());
+        final Iterator<Integer> iterator = graph.getOutgoingEdges(u);
+        while (iterator.hasNext()) {
+            relax(u, iterator.next());
         }
     }
 
-    private final void relax(final int firstNode, final int secondNode) {
-        final int totalDistance = distance[firstNode] + graph.getWeight(graph.getEdge(firstNode, secondNode));
-        if (totalDistance < distance[secondNode]) {
-            distance[secondNode] = totalDistance;
-            parent[secondNode] = firstNode;
+    private final void relax(final int startNode, final int edge) {
+        final int endNode = graph.getEndNode(edge);
+        final int totalDistance = distance[startNode] + graph.getWeight(edge);
+        if (totalDistance < distance[endNode]) {
+            distance[endNode] = totalDistance;
+            parent[endNode] = edge;
 
-            if (!queue.contains(secondNode)) {
-                queue.insert(secondNode, totalDistance);
+            if (!queue.contains(endNode)) {
+                queue.insert(endNode, totalDistance);
             } else {
-                queue.changeKey(secondNode, totalDistance);
+                queue.changeKey(endNode, totalDistance);
             }
         }
     }
 
-    private List<Integer> createListOfPoints(final int endNode) {
-        final List<Integer> ret = new ArrayList<Integer>();
+    private List<Integer> createListOfEdges(final int endNode) {
+        final List<Integer> edges = new ArrayList<Integer>();
 
         int node = endNode;
-        ret.add(node);
+        int edge = parent[node];
+        node = graph.getStartNode(edge);
 
-        while (parent[node] != node) {
-            ret.add(parent[node]);
-            node = parent[node];
-        }
-        Collections.reverse(ret);
-        return ret;
-    }
-
-    private List<Long> createListOfEdges(final List<Integer> points) {
-        final List<Long> edges = new ArrayList<Long>();
-        for (int i = 1; i < points.size(); i++) {
-            final long edge = graph.getEdge(points.get(i - 1), points.get(i));
+        while (parent[node] != edge) {
             edges.add(edge);
+            edge = parent[node];
+            node = graph.getStartNode(edge);
         }
+
+        Collections.reverse(edges);
+
         return edges;
     }
 
     private Path createPath(final InterNode start, final InterNode end) {
-        final int[] weights = {0, 0};
 
-        final int[] endNodes = {graph.getFirstNode(end.getEdge()), graph.getSecondNode(end.getEdge())};
-
-        weights[0] = distance[endNodes[0]];
-        weights[1] = distance[endNodes[1]];
-
-        if (weights[0] == Integer.MAX_VALUE && weights[1] == Integer.MAX_VALUE) {
+        if (distance[endNodes[0]] == Integer.MAX_VALUE && distance[endNodes[1]] == Integer.MAX_VALUE) {
             fireNoRouteError();
             return null;
         }
 
-        if (endNodes[0] < endNodes[1]) {
-            weights[0] += graph.getWeight(end.getEdge()) * end.getOffset();
-            weights[1] += graph.getWeight(end.getEdge()) * (1 - end.getOffset());
-        } else {
-            weights[0] += graph.getWeight(end.getEdge()) * (1 - end.getOffset());
-            weights[1] += graph.getWeight(end.getEdge()) * end.getOffset();
-        }
+        final int[] weights = new int[endNodes.length];
+        final float[] offsets = new float[]{end.getOffset(), 1 - end.getOffset()};
+        int minIndex = 0;
 
-        int weight;
-
-        List<Long> edges;
-        if (weights[0] < weights[1]) {
-            weight = weights[0];
-            edges = createListOfEdges(createListOfPoints(endNodes[0]));
-        } else {
-            weight = weights[1];
-            edges = createListOfEdges(createListOfPoints(endNodes[1]));
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] = distance[endNodes[i]] + Math.round(graph.getWeight(end.getEdge()) * offsets[i]);
+            if (weights[i] < weights[minIndex]) {
+                minIndex = i;
+            }
         }
 
         fireReadyEvent();
 
         if (start.getEdge() == end.getEdge()) {
-            final int temp = (int) (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
-            if (temp <= weight) {
-                return new Path(temp, new ArrayList<Long>(), start, end);
+            final float temp = (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
+            if (temp <= weights[minIndex]) {
+                return new Path(Math.round(temp), new ArrayList<Integer>(), start, end);
             }
         }
-        return new Path(weight, edges, start, end);
+
+        return new Path(weights[minIndex], createListOfEdges(endNodes[minIndex]), start, end);
     }
 
     private void fireNoRouteError() {

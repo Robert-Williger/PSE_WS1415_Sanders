@@ -1,16 +1,22 @@
 package model.routing;
 
 public class InterNode {
-    private final long edge;
+    private final int edge;
+    private final int correspondingEdge;
     private final float offset;
 
-    public InterNode(final long edge, final float offset) {
+    public InterNode(final int edge, final int correspondingEdge, final float offset) {
         this.edge = edge;
+        this.correspondingEdge = correspondingEdge;
         this.offset = offset;
     }
 
-    public long getEdge() {
+    public int getEdge() {
         return edge;
+    }
+
+    public int getCorrespondingEdge() {
+        return correspondingEdge;
     }
 
     public float getOffset() {

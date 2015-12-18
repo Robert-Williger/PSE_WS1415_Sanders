@@ -8,18 +8,12 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import model.elements.MultiElement;
-import model.elements.Street;
+import model.elements.IMultiElement;
+import model.elements.IStreet;
 import model.map.IPixelConverter;
 import model.map.ITile;
-import model.targets.IRoutePoint;
 
 public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
@@ -62,109 +56,39 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
     }
 
     private boolean drawRoute(final ITile tile, final Point tileLoc, final Graphics2D g) {
-        final Iterator<Street> iterator = tile.getStreets();
+        final Iterator<IStreet> iterator = tile.getStreets();
         if (tile.getStreets() == null) {
             return false;
         }
 
         final Path2D.Float path = new Path2D.Float();
 
-        final Map<Long, Collection<Street>> map = new HashMap<Long, Collection<Street>>();
-
         while (iterator.hasNext()) {
-            final Street street = iterator.next();
+            final IStreet street = iterator.next();
             if (street == null) {
                 return false;
             }
 
-            final long id = street.getID();
+            final int id = street.getID();
 
-            if (route.getStreetUse(id) != StreetUse.none) {
-                if (!map.containsKey(id)) {
-                    map.put(id, new HashSet<Street>());
-                }
-
-                map.get(id).add(street);
-            }
-        }
-
-        if (map.isEmpty()) {
-            return false;
-        }
-
-        for (final Entry<Long, Collection<Street>> entry : map.entrySet()) {
-            if (entry.getValue().size() <= 1) {
-                for (final Street street : entry.getValue()) {
-                    switch (route.getStreetUse(street.getID())) {
-                        case full:
-                            path.append(drawLines(street, tileLoc, tile.getZoomStep()).getPathIterator(null), false);
-                            break;
-                        case part:
-                            path.append(
-                                    createStreetPartPath(street, tileLoc, tile.getZoomStep(),
-                                            route.getStreetPart(street.getID())).getPathIterator(null), false);
-                            break;
-                        case multiPart:
-                            for (final Intervall streetPart : route.getStreetMultiPart(street.getID())) {
-                                path.append(createStreetPartPath(street, tileLoc, tile.getZoomStep(), streetPart)
-                                        .getPathIterator(null), false);
-                            }
-                            break;
-                        default:
-                            break;
+            // TODO optimize this --> no switch case needed
+            switch (route.getStreetUse(id)) {
+                case full:
+                    path.append(drawLines(street, tileLoc, tile.getZoomStep()).getPathIterator(null), false);
+                    break;
+                case part:
+                    path.append(
+                            createStreetPartPath(street, tileLoc, tile.getZoomStep(),
+                                    route.getStreetPart(street.getID())).getPathIterator(null), false);
+                    break;
+                case multiPart:
+                    for (final Intervall streetPart : route.getStreetMultiPart(street.getID())) {
+                        path.append(createStreetPartPath(street, tileLoc, tile.getZoomStep(), streetPart)
+                                .getPathIterator(null), false);
                     }
-                }
-            } else {
-                switch (route.getStreetUse(entry.getKey())) {
-                    case full:
-                        Street renderStreet = null;
-                        int minLength = Integer.MAX_VALUE;
-
-                        for (final Street street : entry.getValue()) {
-                            if (street.getLength() < minLength) {
-                                minLength = street.getLength();
-                                renderStreet = street;
-                            }
-                        }
-
-                        path.append(drawLines(renderStreet, tileLoc, tile.getZoomStep()).getPathIterator(null), false);
-                        break;
-                    case part:
-                        for (final IRoutePoint routePoint : route.getPointList()) {
-                            if (routePoint.getStreetNode().getStreet().getID() == entry.getKey()) {
-                                for (final Street street : entry.getValue()) {
-                                    if (street.equals(routePoint.getStreetNode().getStreet())) {
-                                        path.append(
-                                                createStreetPartPath(street, tileLoc, tile.getZoomStep(),
-                                                        route.getStreetPart(street.getID())).getPathIterator(null),
-                                                false);
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-                        break;
-                    case multiPart:
-                        for (final IRoutePoint routePoint : route.getPointList()) {
-                            if (routePoint.getStreetNode().getStreet().getID() == entry.getKey()) {
-                                for (final Street street : entry.getValue()) {
-                                    if (street.equals(routePoint.getStreetNode().getStreet())) {
-                                        for (final Intervall streetPart : route.getStreetMultiPart(street.getID())) {
-                                            path.append(
-                                                    createStreetPartPath(street, tileLoc, tile.getZoomStep(),
-                                                            streetPart).getPathIterator(null), false);
-                                        }
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -184,16 +108,13 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         return true;
     }
 
-    private Path2D.Float createStreetPartPath(final Street street, final Point tileLoc, final int zoomStep,
+    private Path2D.Float createStreetPartPath(final IStreet street, final Point tileLoc, final int zoomStep,
             final Intervall streetPart) {
         final Path2D.Float path = new Path2D.Float();
         float currentLength = 0f;
 
-        final int[] xPoints = street.getXPoints();
-        final int[] yPoints = street.getYPoints();
-
-        int lastCoordX = xPoints[0];
-        int lastCoordY = yPoints[0];
+        int lastCoordX = street.getX(0);
+        int lastCoordY = street.getY(0);
         int lastPixelX = converter.getPixelDistance(lastCoordX - tileLoc.x, zoomStep);
         int lastPixelY = converter.getPixelDistance(lastCoordY - tileLoc.y, zoomStep);
 
@@ -202,8 +123,8 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
         for (int i = 1; i < street.size() && currentLength <= street.getLength() * streetPart.getEnd(); i++) {
 
-            final int currentCoordX = xPoints[i];
-            final int currentCoordY = yPoints[i];
+            final int currentCoordX = street.getX(i);
+            final int currentCoordY = street.getY(i);
             final double distance = Point.distance(lastCoordX, lastCoordY, currentCoordX, currentCoordY);
 
             final int xDist = converter.getPixelDistance(currentCoordX - lastCoordX, zoomStep);
@@ -250,20 +171,17 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         return path;
     }
 
-    private Path2D.Float drawLines(final MultiElement element, final Point tileLoc, final int zoomStep) {
+    private Path2D.Float drawLines(final IMultiElement element, final Point tileLoc, final int zoomStep) {
         final Path2D.Float path = new Path2D.Float();
 
-        final int[] xPoints = element.getXPoints();
-        final int[] yPoints = element.getYPoints();
-
-        int x = converter.getPixelDistance(xPoints[0] - tileLoc.x, zoomStep);
-        int y = converter.getPixelDistance(yPoints[0] - tileLoc.y, zoomStep);
+        int x = converter.getPixelDistance(element.getX(0) - tileLoc.x, zoomStep);
+        int y = converter.getPixelDistance(element.getY(0) - tileLoc.y, zoomStep);
 
         path.moveTo(x, y);
         for (int i = 1; i < element.size(); i++) {
 
-            x = converter.getPixelDistance(xPoints[i] - tileLoc.x, zoomStep);
-            y = converter.getPixelDistance(yPoints[i] - tileLoc.y, zoomStep);
+            x = converter.getPixelDistance(element.getX(i) - tileLoc.x, zoomStep);
+            y = converter.getPixelDistance(element.getY(i) - tileLoc.y, zoomStep);
 
             path.lineTo(x, y);
         }

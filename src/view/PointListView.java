@@ -27,6 +27,7 @@ import model.targets.IPointList;
 import model.targets.IPointListListener;
 import model.targets.IPointListener;
 import model.targets.IRoutePoint;
+import model.targets.PointAdapter;
 import model.targets.PointState;
 
 public class PointListView extends JPanel {
@@ -194,13 +195,13 @@ public class PointListView extends JPanel {
     }
 
     private IPointListener createPointListener(final IRoutePoint point) {
-        return new IPointListener() {
+        return new PointAdapter() {
             private boolean added;
 
             @Override
-            public void indexChanged() {
-                if (point.getIndex() < model.size()) {
-                    model.setElementAt(point, point.getIndex());
+            public void listIndexChanged() {
+                if (point.getListIndex() < model.size()) {
+                    model.setElementAt(point, point.getListIndex());
                 }
             }
 
@@ -210,15 +211,16 @@ public class PointListView extends JPanel {
             }
 
             @Override
-            public void locationChanged() {
-            }
-
-            @Override
             public void stateChanged() {
                 if (!added && point.getState() == PointState.added) {
                     add(point);
                     added = true;
                 }
+                repaint();
+            }
+
+            @Override
+            public void targetIndexChanged() {
                 repaint();
             }
 
@@ -377,7 +379,7 @@ public class PointListView extends JPanel {
         @Override
         public JPanel getListCellRendererComponent(final JList<? extends IRoutePoint> list, final IRoutePoint value,
                 final int index, final boolean isSelected, final boolean cellHasFocus) {
-            indexLabel.setText((value.getIndex() + 1) + ": ");
+            indexLabel.setText((value.getTargetIndex() + 1) + ". ");
             addressLabel.setText(value.getAddress());
             switch (value.getState()) {
                 case added:

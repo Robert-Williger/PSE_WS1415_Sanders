@@ -6,6 +6,7 @@ import java.util.List;
 
 import model.AbstractModel;
 import model.IProgressListener;
+import model.elements.IStreet;
 import model.elements.StreetNode;
 import model.map.IMapManager;
 import model.renderEngine.IRenderRoute;
@@ -17,17 +18,17 @@ import model.targets.RoutePoint;
 
 public class RouteManager extends AbstractModel implements IRouteManager {
 
-    private IGraph graph;
+    private final IDirectedGraph graph;
     private final IMapManager manager;
     private final IPointList pointList;
 
-    private final IComplexRouteSolver[] routeSolvers;
+    private final IRouteSolver[] routeSolvers;
     private final String[] routeSolverNames;
 
     private int routeSolver;
     private boolean calculating;
 
-    public RouteManager(final IGraph graph, final IMapManager manager) {
+    public RouteManager(final IDirectedGraph graph, final IMapManager manager) {
         this.graph = graph;
         this.manager = manager;
 
@@ -39,34 +40,24 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         pointList = new PointList();
     }
 
-    private IComplexRouteSolver getCurrentRouteSolver() {
+    private IRouteSolver getCurrentRouteSolver() {
         return routeSolvers[routeSolver];
     }
 
     private List<InterNode> createInterNodeList() {
-        final List<InterNode> interNodeList = new ArrayList<InterNode>();
+        final List<InterNode> interNodeList = new ArrayList<InterNode>(pointList.size());
 
-        for (int i = 0; i < pointList.getSize(); i++) {
+        for (int i = 0; i < pointList.size(); i++) {
             final StreetNode streetNode = pointList.get(i).getStreetNode();
-            final InterNode interNode = new InterNode(streetNode.getStreet().getID(), streetNode.getOffset());
+            final IStreet street = streetNode.getStreet();
+
+            // TODO own instance for mapping from id to graph edges?
+            int edge = street.getID();
+            int correspondingEdge = !street.isOneWay() ? (street.getID() | 0x80000000) : -1;
+            final InterNode interNode = new InterNode(edge, correspondingEdge, streetNode.getOffset());
             interNodeList.add(interNode);
         }
         return interNodeList;
-    }
-
-    private float[] calcStreetPartInterval(final InterNode node, final long edge) {
-        final float[] ret = new float[2];
-
-        final int firstNode = graph.getFirstNode(edge);
-        final int secondNode = graph.getSecondNode(edge);
-        if (graph.getFirstNode(node.getEdge()) == firstNode || graph.getFirstNode(node.getEdge()) == secondNode) {
-            ret[0] = 0;
-            ret[1] = node.getOffset();
-        } else {
-            ret[0] = node.getOffset();
-            ret[1] = 1;
-        }
-        return ret;
     }
 
     private Rectangle calcBounds() {
@@ -89,10 +80,10 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    protected IRenderRoute createRenderRoute(final List<Path> paths) {
+    protected IRenderRoute createRenderRoute(final Route route) {
         int length = 0;
 
-        for (final Path p : paths) {
+        for (final Path p : route.getPaths()) {
             if (p != null) {
                 length += p.getLength();
             } else {
@@ -100,75 +91,90 @@ public class RouteManager extends AbstractModel implements IRouteManager {
             }
 
         }
-        final RenderRoute renderRoute = new RenderRoute(length, calcBounds(), pointList);
+        final RenderRoute renderRoute = new RenderRoute(length, calcBounds());
 
         float[] interval;
 
-        for (final Path p : paths) {
-            final List<Long> edges = p.getEdges();
+        int index = 0;
+        for (final IRoutePoint point : pointList) {
+            point.setTargetIndex(route.getTargetIndex(index++));
+        }
 
-            if (edges.size() == 0) {
+        for (final Path p : route.getPaths()) {
+            final List<Integer> edges = p.getEdges();
+
+            if (!edges.isEmpty()) {
+                interval = calcStreetPartInterval(p.getStartNode(), graph.getStartNode(edges.get(0)));
+                renderRoute.addStreetPart(p.getStartNode().getEdge(), interval[0], interval[1]);
+
+                for (final int e : edges) {
+                    renderRoute.addStreet(e);
+                }
+
+                interval = calcStreetPartInterval(p.getEndNode(), graph.getEndNode(edges.get(edges.size() - 1)));
+                renderRoute.addStreetPart(p.getEndNode().getEdge(), interval[0], interval[1]);
+            } else {
                 final InterNode start = p.getStartNode();
                 final InterNode end = p.getEndNode();
                 if (start.getEdge() == end.getEdge()) {
                     renderRoute.addStreetPart(start.getEdge(), start.getOffset(), end.getOffset());
                 } else {
-                    final int[] nodes0 = {graph.getFirstNode(start.getEdge()), graph.getSecondNode(start.getEdge())};
-                    final int[] nodes1 = {graph.getFirstNode(end.getEdge()), graph.getSecondNode(end.getEdge())};
+                    final int[] startNodes = {graph.getStartNode(start.getEdge()), graph.getEndNode(start.getEdge())};
+                    final int[] endNodes = {graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge())};
 
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
-                            if (nodes0[i] == nodes1[j]) {
-                                if (i == 0) {
-                                    renderRoute.addStreetPart(start.getEdge(), 0, start.getOffset());
-                                } else {
-                                    renderRoute.addStreetPart(start.getEdge(), start.getOffset(), 1);
-                                }
-                                if (j == 0) {
-                                    renderRoute.addStreetPart(end.getEdge(), 0, end.getOffset());
-                                } else {
-                                    renderRoute.addStreetPart(end.getEdge(), end.getOffset(), 1);
-                                }
+                            if (startNodes[i] == endNodes[j]) {
+                                renderRoute.addStreetPart(start.getEdge(), Math.min(i, start.getOffset()),
+                                        Math.max(i, start.getOffset()));
+
+                                renderRoute.addStreetPart(end.getEdge(), Math.min(j, end.getOffset()),
+                                        Math.max(j, end.getOffset()));
+
                             }
                         }
                     }
                 }
-            } else {
-                interval = calcStreetPartInterval(p.getStartNode(), edges.get(0));
-                renderRoute.addStreetPart(p.getStartNode().getEdge(), interval[0], interval[1]);
-
-                for (final long e : edges) {
-                    renderRoute.addStreet(e);
-                }
-
-                interval = calcStreetPartInterval(p.getEndNode(), edges.get(edges.size() - 1));
-                renderRoute.addStreetPart(p.getEndNode().getEdge(), interval[0], interval[1]);
             }
         }
 
         return renderRoute;
     }
 
-    protected IComplexRouteSolver[] createRouteSolvers(final IGraph graph) {
-        return new IComplexRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph),
-                new MSTTSPSolver(graph), new BruteForceTSP(graph)};
+    private float[] calcStreetPartInterval(final InterNode routePoint, final int graphNode) {
+        final float[] ret = new float[2];
+
+        if (graph.getEndNode(routePoint.getEdge()) == graphNode) {
+            ret[0] = routePoint.getOffset();
+            ret[1] = 1;
+        } else {
+            ret[0] = 0;
+            ret[1] = routePoint.getOffset();
+        }
+
+        return ret;
+    }
+
+    protected IRouteSolver[] createRouteSolvers(final IDirectedGraph graph) {
+        return new IRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph), new MSTTSPSolver(graph),
+                new BruteForceTSP(graph)};
     }
 
     protected String[] createNames() {
         return new String[]{"Via-Route", "TSP-Route (1.5 Approximation)", "TSP-Route (2.0 Approxation)",
-                "TSP-Route(Brute-Force)"};
+                "TSP-Route (Brute-Force)"};
     }
 
     @Override
     public void addProgressListener(final IProgressListener listener) {
-        for (final IComplexRouteSolver solver : routeSolvers) {
+        for (final IRouteSolver solver : routeSolvers) {
             solver.addProgressListener(listener);
         }
     }
 
     @Override
     public void removeProgressListener(final IProgressListener listener) {
-        for (final IComplexRouteSolver solver : routeSolvers) {
+        for (final IRouteSolver solver : routeSolvers) {
             solver.removeProgressListener(listener);
         }
     }

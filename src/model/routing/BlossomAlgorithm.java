@@ -15,7 +15,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
     private static final double EPSILON = 0.0000001;
 
-    private IGraph graph;
+    private IUndirectedGraph undirectedGraph;
 
     // Set of currently unmatched nodes, excluding the root of the current tree
     private Set<Integer> unmatchedNodes;
@@ -49,16 +49,16 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
     private boolean debug;// = true;
 
     @Override
-    public Set<Long> calculatePerfectMatching(final IGraph graph) {
-        initialize(graph);
+    public Set<Long> calculatePerfectMatching(final IUndirectedGraph undirectedGraph) {
+        initialize(undirectedGraph);
         execute();
         return createFinalMatching();
     }
 
-    private void initialize(final IGraph graph) {
-        final int nodes = graph.getNodes();
+    private void initialize(final IUndirectedGraph undirectedGraph) {
+        final int nodes = undirectedGraph.getNodes();
 
-        this.graph = graph;
+        this.undirectedGraph = undirectedGraph;
 
         unmatchedNodes = new HashSet<Integer>(nodes);
         matchedNonTreeNodes = new HashSet<Integer>();
@@ -221,7 +221,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
     }
 
     private int getNextRoot() {
-        for (int node = 0; node < graph.getNodes(); node++) {
+        for (int node = 0; node < undirectedGraph.getNodes(); node++) {
             if (getPseudoNode(node) == node && match[node] == -1) {
                 return node;
             }
@@ -234,7 +234,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
         this.root = root;
 
-        for (int node = 0; node < graph.getNodes(); node++) {
+        for (int node = 0; node < undirectedGraph.getNodes(); node++) {
             parent[node] = -1;
             if (match[node] != -1) {
                 matchedNonTreeNodes.add(node);
@@ -352,13 +352,13 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
         int crossing = toNode;
 
-        edges.add(graph.getEdge(fromNode, toNode));
+        edges.add(undirectedGraph.getEdge(fromNode, toNode));
         while (!set.contains(getPseudoNode(crossing))) {
             nodes.addAll(getNodes(getPseudoNode(crossing)));
 
             for (final int node : getNodes(getPseudoNode(crossing))) {
                 if (parent[node] != -1) {
-                    edges.add(graph.getEdge(node, parent[node]));
+                    edges.add(undirectedGraph.getEdge(node, parent[node]));
                     crossing = parent[node];
                     break;
                 }
@@ -378,7 +378,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
             for (final int node : getNodes(current)) {
                 if (parent[node] != -1) {
-                    invertedEdgeOrder.add(graph.getEdge(node, parent[node]));
+                    invertedEdgeOrder.add(undirectedGraph.getEdge(node, parent[node]));
                     current = getPseudoNode(parent[node]);
                     break;
                 }
@@ -425,7 +425,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
     }
 
     private void expand(final int oddBlossom) {
-        final List<Long> edges = blossomEdges.get(oddBlossom - graph.getNodes());
+        final List<Long> edges = blossomEdges.get(oddBlossom - undirectedGraph.getNodes());
 
         int treeNode = -1;
         int matchIndex = -1;
@@ -443,7 +443,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
         for (final Iterator<Long> it = edges.iterator(); it.hasNext() && matchNode == -1; ++matchIndex) {
             final long edge = it.next();
-            final int[] nodes = {getPseudoNode(graph.getFirstNode(edge)), getPseudoNode(graph.getSecondNode(edge))};
+            final int[] nodes = {getPseudoNode(undirectedGraph.getFirstNode(edge)), getPseudoNode(undirectedGraph.getSecondNode(edge))};
             for (final int node : nodes) {
                 for (final int innerNode : getNodes(node)) {
                     if (match[innerNode] != -1) {
@@ -456,8 +456,8 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
         final int pseudoMatchNode = getPseudoNode(matchNode);
 
         final long nextEdge = edges.get(matchIndex + 1);
-        if (getPseudoNode(graph.getFirstNode(nextEdge)) != pseudoMatchNode
-                && getPseudoNode(graph.getSecondNode(nextEdge)) != pseudoMatchNode) {
+        if (getPseudoNode(undirectedGraph.getFirstNode(nextEdge)) != pseudoMatchNode
+                && getPseudoNode(undirectedGraph.getSecondNode(nextEdge)) != pseudoMatchNode) {
             matchIndex = edges.size() - 1;
         }
 
@@ -482,8 +482,8 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
                     ++steps;
 
                     final long edge = edges.get((i + matchIndex + 1) % edges.size());
-                    if (getPseudoNode(graph.getFirstNode(edge)) == pseudoTreeNode
-                            || getPseudoNode(graph.getSecondNode(edge)) == pseudoTreeNode) {
+                    if (getPseudoNode(undirectedGraph.getFirstNode(edge)) == pseudoTreeNode
+                            || getPseudoNode(undirectedGraph.getSecondNode(edge)) == pseudoTreeNode) {
                         break;
                     }
                 }
@@ -507,8 +507,8 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
 
                     int currentNode;
 
-                    int firstNode = graph.getFirstNode(edge);
-                    int secondNode = graph.getSecondNode(edge);
+                    int firstNode = undirectedGraph.getFirstNode(edge);
+                    int secondNode = undirectedGraph.getSecondNode(edge);
 
                     if (firstNode == lastNode) {
                         currentNode = secondNode;
@@ -549,7 +549,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
                         edges.get((matchIndex - i + edges.size()) % edges.size())};
                 for (final long edge : currentEdges) {
                     match(edge);
-                    int[] currentNodes = {graph.getFirstNode(edge), graph.getSecondNode(edge)};
+                    int[] currentNodes = {undirectedGraph.getFirstNode(edge), undirectedGraph.getSecondNode(edge)};
                     for (final int node : currentNodes) {
                         if (!treeNodes.contains(getPseudoNode(node))) {
                             matchedNonTreeNodes.add(node);
@@ -568,7 +568,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
         }
 
         nodeToNodes.set(oddBlossom, null);
-        blossomEdges.set(oddBlossom - graph.getNodes(), null);
+        blossomEdges.set(oddBlossom - undirectedGraph.getNodes(), null);
     }
 
     private void expandFinally() {
@@ -583,7 +583,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
     }
 
     private void match(final long edge) {
-        match(graph.getFirstNode(edge), graph.getSecondNode(edge));
+        match(undirectedGraph.getFirstNode(edge), undirectedGraph.getSecondNode(edge));
     }
 
     private void match(final int node1, final int node2) {
@@ -592,7 +592,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
     }
 
     private double getReducedWeight(final int node1, final int node2) {
-        double ret = graph.getWeight(graph.getEdge(node1, node2));
+        double ret = undirectedGraph.getWeight(undirectedGraph.getEdge(node1, node2));
         for (final int node : nodeToPseudoNode.get(node1)) {
             ret -= y.get(node);
         }
@@ -614,7 +614,7 @@ public class BlossomAlgorithm implements IPerfectMatchingFinder {
         final Set<Long> ret = new HashSet<Long>();
 
         for (int i = 0; i < match.length; i++) {
-            ret.add(graph.getEdge(i, match[i]));
+            ret.add(undirectedGraph.getEdge(i, match[i]));
         }
 
         return ret;

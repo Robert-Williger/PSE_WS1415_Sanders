@@ -57,7 +57,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final int POI_MIN_ZOOMSTEP = 16;
 
     private static final int AREA_THRESHHOLD = 2;
-    private static final int WAY_THRESHHOLD = 2;
+    private static final int WAY_THRESHHOLD = 20;
     private static final double AREA_SHRINK_FACTOR = 0.9;
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
@@ -78,11 +78,12 @@ public class MapManagerCreator extends AbstractMapCreator {
     private TypeSorter<Area> terrainSorter;
     private TypeSorter<Label> labelSorter;
 
-    // TODO make simplifications relative to last simplifications
     private Node[][] areaNodes;
     private int[][] areaSimplifications;
     private Node[][] wayNodes;
     private int[][] waySimplifications;
+    private Node[][] streetNodes;
+    private int[][] streetSimplifications;
 
     private PixelConverter converter;
     private ReferencedTile[][] tiles;
@@ -195,10 +196,12 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         areaSimplifications = new int[areaNodes.length][];
         waySimplifications = new int[wayNodes.length][];
+        streetSimplifications = new int[streetNodes.length][];
         TileWriter writer = new TileWriter();
 
         int[][] nextAreaSimplifications = new int[areaNodes.length][];
         int[][] nextWaySimplifications = new int[wayNodes.length][];
+        int[][] nextStreetSimplifications = new int[streetNodes.length][];
 
         for (int zoom = maxZoomStep - 1; zoom >= minZoomStep; zoom--) {
 
@@ -208,6 +211,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             final List<Integer> simplifiedAreas = simplifyAreas(nextAreaSimplifications, new HashSet<Integer>(), zoom);
 
             final List<Integer> simplifiedWays = simplifyWays(nextWaySimplifications, zoom);
+            final List<Integer> simplifiedStreets = simplifyStreets(nextStreetSimplifications, zoom);
 
             final ReferencedTile[][] next = mergeUp(removedAreas, zoom);
 
@@ -219,15 +223,18 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             int[][] swapAreaSimplifications = areaSimplifications;
             int[][] swapWaySimplifications = waySimplifications;
+            int[][] swapStreetSimplifications = streetSimplifications;
 
             areaSimplifications = nextAreaSimplifications;
             waySimplifications = nextWaySimplifications;
+            streetSimplifications = nextStreetSimplifications;
 
             nextAreaSimplifications = swapAreaSimplifications;
             nextWaySimplifications = swapWaySimplifications;
+            nextStreetSimplifications = swapStreetSimplifications;
 
             tiles = next;
-            writer = new TileWriter(simplifiedAreas, simplifiedWays);
+            writer = new TileWriter(simplifiedAreas, simplifiedWays, simplifiedStreets);
         }
 
         referencedLabels = null;
@@ -260,10 +267,8 @@ public class MapManagerCreator extends AbstractMapCreator {
             if (areaSimplification != null) {
                 oldLength = areaSimplification.length;
                 if (oldLength != 0) {
+                    // TODO use latest simplifications to speedup
                     simplified = simplificator.simplifyPolygon(Arrays.iterator(nodes), zoom);
-                    // for (int j = 0; j < simplified.length; j++) {
-                    // simplified[j] = areaSimplification[simplified[j]];
-                    // }
                 } else {
                     simplified = areaSimplification;
                 }
@@ -279,11 +284,6 @@ public class MapManagerCreator extends AbstractMapCreator {
             } else if ((double) simplified.length / oldLength <= AREA_SHRINK_FACTOR) {
                 simplifiedAreas.add(i);
                 simplifications[i] = simplified;
-                final Node[] newNodes = new Node[simplified.length];
-                for (int j = 0; j < simplified.length; j++) {
-                    newNodes[j] = nodes[simplified[j]];
-                }
-                areaNodes[i] = newNodes;
             } else {
                 simplifications[i] = areaSimplification;
             }
@@ -305,10 +305,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             if (waySimplification != null) {
                 oldSize = waySimplification.length;
+                // TODO use latest simplifications to speedup
                 simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
-                // for (int j = 0; j < simplified.length; j++) {
-                // simplified[j] = waySimplification[simplified[j]];
-                // }
             } else {
                 oldSize = nodes.length;
                 simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
@@ -317,13 +315,40 @@ public class MapManagerCreator extends AbstractMapCreator {
             if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
                 ret.add(i);
                 simplifications[i] = simplified;
-                final Node[] newNodes = new Node[simplified.length];
-                for (int j = 0; j < simplified.length; j++) {
-                    newNodes[j] = nodes[simplified[j]];
-                }
-                wayNodes[i] = newNodes;
             } else {
                 simplifications[i] = waySimplification;
+            }
+
+        }
+
+        return ret;
+    }
+
+    private List<Integer> simplifyStreets(final int[][] simplifications, final int zoom) {
+        final List<Integer> ret = new LinkedList<Integer>();
+
+        final VisvalingamWhyatt simplificator = new VisvalingamWhyatt(converter, WAY_THRESHHOLD);
+        for (int i = 0; i < streetNodes.length; i++) {
+            final Node[] nodes = streetNodes[i];
+            final int[] streetSimplification = streetSimplifications[i];
+
+            final int oldSize;
+            final int[] simplified;
+
+            if (streetSimplification != null) {
+                oldSize = streetSimplification.length;
+                // TODO use latest simplifications to speedup
+                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
+            } else {
+                oldSize = nodes.length;
+                simplified = simplificator.simplifyMultiline(Arrays.iterator(nodes), zoom);
+            }
+
+            if ((double) simplified.length / oldSize <= WAY_SHRINK_FACTOR) {
+                ret.add(i);
+                simplifications[i] = simplified;
+            } else {
+                simplifications[i] = streetSimplification;
             }
 
         }
@@ -422,14 +447,46 @@ public class MapManagerCreator extends AbstractMapCreator {
             final int coordHeight = converter.getCoordDistance(label.getHeight(), zoom);
             rectangle.setBounds(label.getX() - coordWidth / 2, label.getY() - coordHeight / 2, coordWidth, coordHeight);
 
-            final Rectangle poiTileBounds = locateRectangle(rectangle, zoom);
-            for (int row = poiTileBounds.y; row <= poiTileBounds.height + poiTileBounds.y; row++) {
-                for (int column = poiTileBounds.x; column <= poiTileBounds.width + poiTileBounds.x; column++) {
-                    getTile(row, column, tiles).getLabels().add(label);
+            final Rectangle labelTileBounds = locateRectangle(rectangle, zoom);
+
+            if (!hasLabelIntersection(labelTileBounds, label, zoom, tiles)) {
+                for (int row = labelTileBounds.y; row <= labelTileBounds.height + labelTileBounds.y; row++) {
+                    for (int column = labelTileBounds.x; column <= labelTileBounds.width + labelTileBounds.x; column++) {
+                        getTile(row, column, tiles).getLabels().add(label);
+                    }
+                }
+            } else {
+                it.remove();
+            }
+        }
+
+    }
+
+    private boolean hasLabelIntersection(final Rectangle labelTileBounds, final ReferencedRectangle rectangle,
+            final int zoom, final ReferencedTile[][] tiles) {
+        for (int row = labelTileBounds.y; row <= labelTileBounds.height + labelTileBounds.y; row++) {
+            for (int column = labelTileBounds.x; column <= labelTileBounds.width + labelTileBounds.x; column++) {
+                for (final ReferencedRectangle other : getTile(row, column, tiles).getLabels()) {
+                    if (intersects(rectangle, other, zoom)) {
+                        return true;
+                    }
                 }
             }
         }
 
+        return false;
+    }
+
+    public boolean intersects(final ReferencedRectangle rect1, final ReferencedRectangle rect2, final int zoom) {
+        return inside(rect1.getX(), rect2.getX(), converter.getCoordDistance(rect1.getWidth(), zoom),
+                converter.getCoordDistance(rect2.getWidth(), zoom))
+                && inside(rect1.getY(), rect2.getY(), converter.getCoordDistance(rect1.getHeight(), zoom),
+                        converter.getCoordDistance(rect2.getHeight(), zoom));
+    }
+
+    private boolean inside(final int value1, final int value2, final int range1, final int range2) {
+        int dif = value1 - value2;
+        return dif < 0 ? -dif <= range1 : dif <= range2;
     }
 
     private ReferencedTile getTile(final int row, final int column) {
@@ -618,6 +675,8 @@ public class MapManagerCreator extends AbstractMapCreator {
 
         @Override
         public void run() {
+            streetNodes = new Node[streetSorter.getSorting().size()][];
+
             try {
                 streetSorter.join();
             } catch (final InterruptedException e) {
@@ -629,6 +688,7 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             int id = 0;
             for (final Street street : streetSorter.getSorting()) {
+                streetNodes[id] = street.getNodes();
                 final Path2D.Float path = createPath(street.iterator());
                 final Stroke stroke = new BasicStroke(maxWayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 
@@ -697,7 +757,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         public LabelPartitioner() {
             super("Label partitioner");
             context = new FontRenderContext(new AffineTransform(), true, true);
-            font = new Font("Arial", Font.PLAIN, 20);
+            font = new Font("Arial", Font.BOLD, 16);
         }
 
         @Override
@@ -708,7 +768,7 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            referencedLabels = new ArrayList<ReferencedRectangle>(labelSorter.getSorting().size());
+            referencedLabels = new LinkedList<ReferencedRectangle>();
             for (final Label label : labelSorter.getSorting()) {
                 referencedLabels.add(getReferencedLabel(label));
             }
@@ -1025,10 +1085,7 @@ public class MapManagerCreator extends AbstractMapCreator {
             writeDistribution(streetSorter.getTypeDistribution());
 
             for (final Street street : streetSorter.getSorting()) {
-                int node1 = (int) (street.getID() >> 32);
-                int node2 = (int) (street.getID() & 0xFFFFFFFF);
-                writeCompressedInt(node1);
-                writeCompressedInt(node2 - node1);
+                writeCompressedInt(street.getID());
 
                 writeWay(street);
             }
@@ -1148,18 +1205,21 @@ public class MapManagerCreator extends AbstractMapCreator {
 
     private class TileWriter extends Thread {
 
-        final List<Integer> simplifiedAreas;
-        final List<Integer> simplifiedWays;
+        private final List<Integer> simplifiedAreas;
+        private final List<Integer> simplifiedWays;
+        private final List<Integer> simplifiedStreets;
 
         public TileWriter() {
-            this(null, null);
+            this(null, null, null);
         }
 
-        public TileWriter(final List<Integer> simplifiedAreas, final List<Integer> simplifiedWays) {
+        public TileWriter(final List<Integer> simplifiedAreas, final List<Integer> simplifiedWays,
+                final List<Integer> simplifiedStreets) {
             super("Tile writer");
 
             this.simplifiedAreas = simplifiedAreas;
             this.simplifiedWays = simplifiedWays;
+            this.simplifiedStreets = simplifiedStreets;
         }
 
         @Override
@@ -1177,6 +1237,7 @@ public class MapManagerCreator extends AbstractMapCreator {
         private void writeSimplifications() throws IOException {
             writeSimplifications(simplifiedAreas, areaSimplifications);
             writeSimplifications(simplifiedWays, waySimplifications);
+            writeSimplifications(simplifiedStreets, streetSimplifications);
         }
 
         private void writeSimplifications(final List<Integer> simplifiedElements, final int[][] simplifications)
@@ -1187,17 +1248,19 @@ public class MapManagerCreator extends AbstractMapCreator {
 
             writeCompressedInt(size);
 
+            int lastElement = 0;
             for (int i = 0; i < size; i++) {
                 final int element = elementsIt.next();
                 final int[] simplification = simplifications[element];
 
-                writeCompressedInt(element);
+                writeCompressedInt(element - lastElement);
+                lastElement = element;
                 writeCompressedInt(simplification.length);
 
-                int last = 0;
+                int lastPoint = 0;
                 for (final int index : simplification) {
-                    writeCompressedInt(index - last);
-                    last = index;
+                    writeCompressedInt(index - lastPoint);
+                    lastPoint = index;
                 }
             }
         }

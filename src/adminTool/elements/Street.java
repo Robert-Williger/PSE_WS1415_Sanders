@@ -5,10 +5,10 @@ import java.util.Iterator;
 
 public class Street extends Way {
 
-    private final long id;
+    private final int id;
     private int length;
 
-    public Street(final Node[] nodes, final int type, final String name, final long id) {
+    public Street(final Node[] nodes, final int type, final String name, final int id) {
         super(nodes, type, name);
         this.id = id;
     }
@@ -35,7 +35,7 @@ public class Street extends Way {
         length = (int) totalLength;
     }
 
-    public long getID() {
+    public int getID() {
         return id;
     }
 
@@ -43,31 +43,27 @@ public class Street extends Way {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + (int) (id ^ (id >>> 32));
-        // no need to add length to hashCode because it is fully depending on
-        // the already hashed nodes/street
+        result = prime * result + id;
         return result;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof Street)) {
             return false;
         }
-        final Street other = (Street) obj;
+        Street other = (Street) obj;
         if (id != other.id) {
             return false;
         }
-        // no need to compare length because it is fully depending on the
-        // already compared nodes/street
-
         return true;
     }
+
 
 }

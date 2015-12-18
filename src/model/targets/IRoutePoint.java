@@ -13,7 +13,9 @@ public interface IRoutePoint extends IModel {
 
     void setStreetNode(StreetNode node);
 
-    void setIndex(int index);
+    void setListIndex(int index);
+
+    void setTargetIndex(int index);
 
     void setState(PointState state);
 
@@ -23,7 +25,9 @@ public interface IRoutePoint extends IModel {
 
     Point getLocation();
 
-    int getIndex();
+    int getListIndex();
+
+    int getTargetIndex();
 
     PointState getState();
 

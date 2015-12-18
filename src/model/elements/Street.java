@@ -2,32 +2,42 @@ package model.elements;
 
 import java.awt.Point;
 
-public class Street extends Way {
+public class Street extends Way implements IStreet {
 
-    private final long id;
+    private final int id;
     private final int length;
 
     // TODO avoid storage of empty street name
-    public Street(final int[] xPoints, final int[] yPoints, final int type, final String name, final long id) {
-        super(xPoints, yPoints, type, name);
+    public Street(final int[] points, final int type, final String name, final int id, final boolean oneway) {
+        super(points, type, name);
         this.length = calculateLength();
-        this.id = id;
+        if (!oneway) {
+            this.id = id;
+        } else {
+            this.id = id | 0x80000000;
+        }
     }
 
+    @Override
     public int getLength() {
         return length;
     }
 
+    @Override
+    public IStreet getSubElement(final int[] subarray) {
+        return new SubStreet(subarray);
+    }
+
     private int calculateLength() {
-        if (xPoints.length > 1) {
+        if (size() > 1) {
             float totalLength = 0f;
 
-            int lastX = xPoints[0];
-            int lastY = yPoints[0];
+            int lastX = getX(0);
+            int lastY = getY(0);
 
             for (int i = 1; i < size(); i++) {
-                int currentX = xPoints[i];
-                int currentY = yPoints[i];
+                int currentX = getX(i);
+                int currentY = getY(i);
                 totalLength += Point.distance(currentX, currentY, lastX, lastY);
                 lastX = currentX;
                 lastY = currentY;
@@ -39,8 +49,14 @@ public class Street extends Way {
         return 0;
     }
 
-    public long getID() {
-        return id;
+    @Override
+    public int getID() {
+        return id & 0x7FFFFFFF;
+    }
+
+    @Override
+    public boolean isOneWay() {
+        return id >>> 31 == 1;
     }
 
     @Override
@@ -68,10 +84,83 @@ public class Street extends Way {
         if (id != other.id) {
             return false;
         }
-        // no need to compare length because it is fully depending on the
-        // already compared nodes/street
 
         return true;
+    }
+
+    private class SubStreet implements IStreet {
+        private final int[] subarray;
+        //TODO store me?
+        private final int length;
+
+        public SubStreet(final int[] subarray) {
+            this.subarray = subarray;
+            this.length = calculateLength();
+        }
+
+        private int calculateLength() {
+            if (size() > 1) {
+                float totalLength = 0f;
+
+                int lastX = getX(0);
+                int lastY = getY(0);
+
+                for (int i = 1; i < size(); i++) {
+                    int currentX = getX(i);
+                    int currentY = getY(i);
+                    totalLength += Point.distance(currentX, currentY, lastX, lastY);
+                    lastX = currentX;
+                    lastY = currentY;
+                }
+
+                return (int) totalLength;
+            }
+
+            return 0;
+        }
+
+        @Override
+        public int getType() {
+            return Street.this.getType();
+        }
+
+        @Override
+        public String getName() {
+            return Street.this.getName();
+        }
+
+        @Override
+        public int size() {
+            return subarray.length;
+        }
+
+        @Override
+        public int getX(final int i) {
+            return Street.this.getX(subarray[i]);
+        }
+
+        @Override
+        public int getY(final int i) {
+            return Street.this.getY(subarray[i]);
+        }
+
+        @Override
+        public int getLength() {
+            // return Street.this.getLength();
+            // TODO improve this?
+            return length;
+        }
+
+        @Override
+        public int getID() {
+            return Street.this.getID();
+        }
+
+        @Override
+        public boolean isOneWay() {
+            return Street.this.isOneWay();
+        }
+
     }
 
 }

@@ -16,8 +16,8 @@ import java.util.HashMap;
 
 import javax.swing.JPanel;
 
-import model.targets.IPointListener;
 import model.targets.IRoutePoint;
+import model.targets.PointAdapter;
 import model.targets.PointState;
 
 public class RoutePointView extends JPanel implements IRoutePointView {
@@ -34,10 +34,10 @@ public class RoutePointView extends JPanel implements IRoutePointView {
         this.point = point;
         setSize(DIAMETER, DIAMETER);
         setOpaque(false);
-        point.addPointListener(new IPointListener() {
+        point.addPointListener(new PointAdapter() {
 
             @Override
-            public void indexChanged() {
+            public void listIndexChanged() {
                 repaint();
             }
 
@@ -55,7 +55,8 @@ public class RoutePointView extends JPanel implements IRoutePointView {
             }
 
             @Override
-            public void addressChanged() {
+            public void targetIndexChanged() {
+                repaint();
             }
         });
     }
@@ -115,7 +116,7 @@ public class RoutePointView extends JPanel implements IRoutePointView {
         g.drawOval(0, 0, DIAMETER - 1, DIAMETER - 1);
         g.setColor(Color.BLACK);
 
-        final String number = (point.getIndex() + 1) + "";
+        final String number = (point.getTargetIndex() + 1) + "";
         g.drawString(number + "", (DIAMETER - g.getFontMetrics(g.getFont()).stringWidth(number)) / 2, 14);
     }
 

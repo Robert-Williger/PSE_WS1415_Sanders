@@ -6,11 +6,11 @@ import java.io.IOException;
 import util.Arrays;
 import model.CompressedInputStream;
 import model.elements.Label;
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 
 import model.map.AbstractTile;
 import model.map.ITile;
@@ -19,8 +19,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private final ITileFactory[] factories;
 
-    public StorageTileFactory(final CompressedInputStream reader, POI[] pois, Street[] streets, Way[] ways,
-            Building[] buildings, Area[] areas, Label[] labels) {
+    public StorageTileFactory(final CompressedInputStream reader, POI[] pois, IStreet[] streets, IWay[] ways,
+            IBuilding[] buildings, IArea[] areas, Label[] labels) {
         super(reader, pois, streets, ways, buildings, areas, labels);
 
         factories = new ITileFactory[64];
@@ -129,22 +129,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -158,19 +158,19 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
             return new Tile2(tilestreets, zoom, row, column);
         }
     }
 
     private static class Tile2 extends AbstractTile {
 
-        private final Street[] streets;
+        private final IStreet[] iStreets;
 
-        public Tile2(final Street[] streets, final int zoom, final int row, final int column) {
+        public Tile2(final IStreet[] streets, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
         }
 
         @Override
@@ -179,22 +179,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -210,8 +210,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
             return new Tile3(tilepois, tilestreets, zoom, row, column);
         }
     }
@@ -219,12 +219,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile3 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
+        private final IStreet[] iStreets;
 
-        public Tile3(final POI[] pois, final Street[] streets, final int zoom, final int row, final int column) {
+        public Tile3(final POI[] pois, final IStreet[] streets, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
         }
 
         @Override
@@ -233,22 +233,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -262,7 +262,7 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             return new Tile4(tileways, zoom, row, column);
         }
@@ -270,9 +270,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile4 extends AbstractTile {
 
-        private final Way[] ways;
+        private final IWay[] ways;
 
-        public Tile4(final Way[] ways, final int zoom, final int row, final int column) {
+        public Tile4(final IWay[] ways, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
         }
@@ -283,22 +283,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -314,7 +314,7 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             return new Tile5(tilepois, tileways, zoom, row, column);
         }
@@ -323,9 +323,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile5 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
+        private final IWay[] ways;
 
-        public Tile5(final POI[] pois, final Way[] ways, final int zoom, final int row, final int column) {
+        public Tile5(final POI[] pois, final IWay[] ways, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
@@ -337,22 +337,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -366,9 +366,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             return new Tile6(tilestreets, tileways, zoom, row, column);
         }
@@ -376,12 +376,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile6 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
 
-        public Tile6(final Street[] streets, final Way[] ways, final int zoom, final int row, final int column) {
+        public Tile6(final IStreet[] streets, final IWay[] ways, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
         }
 
@@ -391,22 +391,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -422,9 +422,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             return new Tile7(tilepois, tilestreets, tileways, zoom, row, column);
         }
@@ -433,14 +433,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile7 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
 
-        public Tile7(final POI[] pois, final Street[] streets, final Way[] ways, final int zoom, final int row,
+        public Tile7(final POI[] pois, final IStreet[] streets, final IWay[] ways, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
         }
 
@@ -450,22 +450,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -479,19 +479,19 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile8(tilebuildings, zoom, row, column);
         }
     }
 
     private static class Tile8 extends AbstractTile {
 
-        private final Building[] buildings;
+        private final IBuilding[] iBuildings;
 
-        public Tile8(final Building[] buildings, final int zoom, final int row, final int column) {
+        public Tile8(final IBuilding[] buildings, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -500,22 +500,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -531,8 +531,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile9(tilepois, tilebuildings, zoom, row, column);
         }
     }
@@ -540,12 +540,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile9 extends AbstractTile {
 
         private final POI[] pois;
-        private final Building[] buildings;
+        private final IBuilding[] iBuildings;
 
-        public Tile9(final POI[] pois, final Building[] buildings, final int zoom, final int row, final int column) {
+        public Tile9(final POI[] pois, final IBuilding[] buildings, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -554,22 +554,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -583,24 +583,24 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile10(tilestreets, tilebuildings, zoom, row, column);
         }
     }
 
     private static class Tile10 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
 
-        public Tile10(final Street[] streets, final Building[] buildings, final int zoom, final int row,
+        public Tile10(final IStreet[] streets, final IBuilding[] buildings, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.buildings = buildings;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -609,22 +609,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -640,10 +640,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile11(tilepois, tilestreets, tilebuildings, zoom, row, column);
         }
     }
@@ -651,15 +651,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile11 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
 
-        public Tile11(final POI[] pois, final Street[] streets, final Building[] buildings, final int zoom,
+        public Tile11(final POI[] pois, final IStreet[] streets, final IBuilding[] buildings, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.buildings = buildings;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -668,22 +668,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -697,23 +697,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile12(tileways, tilebuildings, zoom, row, column);
         }
     }
 
     private static class Tile12 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
 
-        public Tile12(final Way[] ways, final Building[] buildings, final int zoom, final int row, final int column) {
+        public Tile12(final IWay[] ways, final IBuilding[] buildings, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -722,22 +722,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -753,10 +753,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile13(tilepois, tileways, tilebuildings, zoom, row, column);
         }
     }
@@ -764,15 +764,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile13 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
 
-        public Tile13(final POI[] pois, final Way[] ways, final Building[] buildings, final int zoom, final int row,
+        public Tile13(final POI[] pois, final IWay[] ways, final IBuilding[] buildings, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -781,22 +781,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -810,28 +810,28 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile14(tilestreets, tileways, tilebuildings, zoom, row, column);
         }
     }
 
     private static class Tile14 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
 
-        public Tile14(final Street[] streets, final Way[] ways, final Building[] buildings, final int zoom,
+        public Tile14(final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -840,22 +840,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -871,12 +871,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             return new Tile15(tilepois, tilestreets, tileways, tilebuildings, zoom, row, column);
         }
     }
@@ -884,17 +884,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile15 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
 
-        public Tile15(final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings,
+        public Tile15(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
         }
 
         @Override
@@ -903,22 +903,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -932,19 +932,19 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile16(tileareas, zoom, row, column);
         }
     }
 
     private static class Tile16 extends AbstractTile {
 
-        private final Area[] areas;
+        private final IArea[] iAreas;
 
-        public Tile16(final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile16(final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -953,23 +953,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -984,8 +984,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile17(tilepois, tileareas, zoom, row, column);
         }
     }
@@ -993,12 +993,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile17 extends AbstractTile {
 
         private final POI[] pois;
-        private final Area[] areas;
+        private final IArea[] iAreas;
 
-        public Tile17(final POI[] pois, final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile17(final POI[] pois, final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1007,23 +1007,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1036,23 +1036,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile18(tilestreets, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile18 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IArea[] iAreas;
 
-        public Tile18(final Street[] streets, final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile18(final IStreet[] streets, final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1061,23 +1061,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1092,10 +1092,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile19(tilepois, tilestreets, tileareas, zoom, row, column);
         }
     }
@@ -1103,15 +1103,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile19 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IArea[] iAreas;
 
-        public Tile19(final POI[] pois, final Street[] streets, final Area[] areas, final int zoom, final int row,
+        public Tile19(final POI[] pois, final IStreet[] streets, final IArea[] areas, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1120,23 +1120,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1149,23 +1149,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile20(tileways, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile20 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
 
-        public Tile20(final Way[] ways, final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile20(final IWay[] ways, final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1174,23 +1174,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1205,10 +1205,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile21(tilepois, tileways, tileareas, zoom, row, column);
         }
     }
@@ -1216,15 +1216,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile21 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
 
-        public Tile21(final POI[] pois, final Way[] ways, final Area[] areas, final int zoom, final int row,
+        public Tile21(final POI[] pois, final IWay[] ways, final IArea[] areas, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1233,23 +1233,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1262,28 +1262,28 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile22(tilestreets, tileways, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile22 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
 
-        public Tile22(final Street[] streets, final Way[] ways, final Area[] areas, final int zoom, final int row,
+        public Tile22(final IStreet[] streets, final IWay[] ways, final IArea[] areas, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1292,23 +1292,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1323,12 +1323,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile23(tilepois, tilestreets, tileways, tileareas, zoom, row, column);
         }
     }
@@ -1336,17 +1336,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile23 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
 
-        public Tile23(final POI[] pois, final Street[] streets, final Way[] ways, final Area[] areas, final int zoom,
+        public Tile23(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IArea[] areas, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1355,23 +1355,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1384,23 +1384,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile24(tilebuildings, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile24 extends AbstractTile {
 
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile24(final Building[] buildings, final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile24(final IBuilding[] buildings, final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1409,23 +1409,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1440,10 +1440,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile25(tilepois, tilebuildings, tileareas, zoom, row, column);
         }
     }
@@ -1451,15 +1451,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile25 extends AbstractTile {
 
         private final POI[] pois;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile25(final POI[] pois, final Building[] buildings, final Area[] areas, final int zoom, final int row,
+        public Tile25(final POI[] pois, final IBuilding[] buildings, final IArea[] areas, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1468,23 +1468,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1497,28 +1497,28 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile26(tilestreets, tilebuildings, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile26 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile26(final Street[] streets, final Building[] buildings, final Area[] areas, final int zoom,
+        public Tile26(final IStreet[] streets, final IBuilding[] buildings, final IArea[] areas, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1527,23 +1527,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1558,12 +1558,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile27(tilepois, tilestreets, tilebuildings, tileareas, zoom, row, column);
         }
     }
@@ -1571,17 +1571,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile27 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile27(final POI[] pois, final Street[] streets, final Building[] buildings, final Area[] areas,
+        public Tile27(final POI[] pois, final IStreet[] streets, final IBuilding[] buildings, final IArea[] areas,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1590,23 +1590,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1619,28 +1619,28 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile28(tileways, tilebuildings, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile28 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile28(final Way[] ways, final Building[] buildings, final Area[] areas, final int zoom, final int row,
+        public Tile28(final IWay[] ways, final IBuilding[] buildings, final IArea[] areas, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1649,23 +1649,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1680,12 +1680,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile29(tilepois, tileways, tilebuildings, tileareas, zoom, row, column);
         }
     }
@@ -1693,17 +1693,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile29 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile29(final POI[] pois, final Way[] ways, final Building[] buildings, final Area[] areas,
+        public Tile29(final POI[] pois, final IWay[] ways, final IBuilding[] buildings, final IArea[] areas,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1712,23 +1712,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1741,32 +1741,32 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile30(tilestreets, tileways, tilebuildings, tileareas, zoom, row, column);
         }
     }
 
     private static class Tile30 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile30(final Street[] streets, final Way[] ways, final Building[] buildings, final Area[] areas,
+        public Tile30(final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings, final IArea[] areas,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1775,23 +1775,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1806,14 +1806,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             return new Tile31(tilepois, tilestreets, tileways, tilebuildings, tileareas, zoom, row, column);
         }
     }
@@ -1821,19 +1821,19 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile31 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
 
-        public Tile31(final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings,
-                final Area[] areas, final int zoom, final int row, final int column) {
+        public Tile31(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings,
+                final IArea[] areas, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
         }
 
         @Override
@@ -1842,23 +1842,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -1892,22 +1892,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -1946,22 +1946,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -1975,8 +1975,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile34(tilestreets, tilelabels, zoom, row, column);
@@ -1985,12 +1985,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile34 extends AbstractTile {
 
-        private final Street[] streets;
+        private final IStreet[] iStreets;
         private final Label[] labels;
 
-        public Tile34(final Street[] streets, final Label[] labels, final int zoom, final int row, final int column) {
+        public Tile34(final IStreet[] streets, final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.labels = labels;
         }
 
@@ -2000,22 +2000,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2031,8 +2031,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile35(tilepois, tilestreets, tilelabels, zoom, row, column);
@@ -2042,14 +2042,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile35 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
+        private final IStreet[] iStreets;
         private final Label[] labels;
 
-        public Tile35(final POI[] pois, final Street[] streets, final Label[] labels, final int zoom, final int row,
+        public Tile35(final POI[] pois, final IStreet[] streets, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.labels = labels;
         }
 
@@ -2059,22 +2059,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2088,7 +2088,7 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
@@ -2098,10 +2098,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile36 extends AbstractTile {
 
-        private final Way[] ways;
+        private final IWay[] ways;
         private final Label[] labels;
 
-        public Tile36(final Way[] ways, final Label[] labels, final int zoom, final int row, final int column) {
+        public Tile36(final IWay[] ways, final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
             this.labels = labels;
@@ -2113,22 +2113,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2144,7 +2144,7 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
@@ -2155,10 +2155,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile37 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
+        private final IWay[] ways;
         private final Label[] labels;
 
-        public Tile37(final POI[] pois, final Way[] ways, final Label[] labels, final int zoom, final int row,
+        public Tile37(final POI[] pois, final IWay[] ways, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
@@ -2172,22 +2172,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2201,9 +2201,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
@@ -2213,14 +2213,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile38 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
         private final Label[] labels;
 
-        public Tile38(final Street[] streets, final Way[] ways, final Label[] labels, final int zoom, final int row,
+        public Tile38(final IStreet[] streets, final IWay[] ways, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
             this.labels = labels;
         }
@@ -2231,22 +2231,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2262,9 +2262,9 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
@@ -2275,15 +2275,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile39 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
         private final Label[] labels;
 
-        public Tile39(final POI[] pois, final Street[] streets, final Way[] ways, final Label[] labels, final int zoom,
+        public Tile39(final POI[] pois, final IStreet[] streets, final IWay[] ways, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
             this.labels = labels;
         }
@@ -2294,22 +2294,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2323,8 +2323,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile40(tilebuildings, tilelabels, zoom, row, column);
@@ -2333,12 +2333,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile40 extends AbstractTile {
 
-        private final Building[] buildings;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile40(final Building[] buildings, final Label[] labels, final int zoom, final int row, final int column) {
+        public Tile40(final IBuilding[] buildings, final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2348,22 +2348,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2379,8 +2379,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile41(tilepois, tilebuildings, tilelabels, zoom, row, column);
@@ -2390,14 +2390,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile41 extends AbstractTile {
 
         private final POI[] pois;
-        private final Building[] buildings;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile41(final POI[] pois, final Building[] buildings, final Label[] labels, final int zoom,
+        public Tile41(final POI[] pois, final IBuilding[] buildings, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2407,22 +2407,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2436,10 +2436,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile42(tilestreets, tilebuildings, tilelabels, zoom, row, column);
@@ -2448,15 +2448,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile42 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile42(final Street[] streets, final Building[] buildings, final Label[] labels, final int zoom,
+        public Tile42(final IStreet[] streets, final IBuilding[] buildings, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.buildings = buildings;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2466,22 +2466,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2497,10 +2497,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile43(tilepois, tilestreets, tilebuildings, tilelabels, zoom, row, column);
@@ -2510,16 +2510,16 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile43 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile43(final POI[] pois, final Street[] streets, final Building[] buildings, final Label[] labels,
+        public Tile43(final POI[] pois, final IStreet[] streets, final IBuilding[] buildings, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.buildings = buildings;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2529,22 +2529,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2558,10 +2558,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile44(tileways, tilebuildings, tilelabels, zoom, row, column);
@@ -2570,15 +2570,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile44 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile44(final Way[] ways, final Building[] buildings, final Label[] labels, final int zoom,
+        public Tile44(final IWay[] ways, final IBuilding[] buildings, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2588,22 +2588,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2619,10 +2619,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile45(tilepois, tileways, tilebuildings, tilelabels, zoom, row, column);
@@ -2632,16 +2632,16 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile45 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile45(final POI[] pois, final Way[] ways, final Building[] buildings, final Label[] labels,
+        public Tile45(final POI[] pois, final IWay[] ways, final IBuilding[] buildings, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2651,22 +2651,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2680,12 +2680,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile46(tilestreets, tileways, tilebuildings, tilelabels, zoom, row, column);
@@ -2694,17 +2694,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile46 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile46(final Street[] streets, final Way[] ways, final Building[] buildings, final Label[] labels,
+        public Tile46(final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2714,22 +2714,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2745,12 +2745,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile47(tilepois, tilestreets, tileways, tilebuildings, tilelabels, zoom, row, column);
@@ -2760,18 +2760,18 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile47 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
         private final Label[] labels;
 
-        public Tile47(final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings,
+        public Tile47(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings,
                 final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
+            this.iBuildings = buildings;
             this.labels = labels;
         }
 
@@ -2781,22 +2781,22 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
+        public Iterator<IArea> getTerrain() {
             return Arrays.iterator();
         }
 
@@ -2810,8 +2810,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile48(tileareas, tilelabels, zoom, row, column);
@@ -2820,12 +2820,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile48 extends AbstractTile {
 
-        private final Area[] areas;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile48(final Area[] areas, final Label[] labels, final int zoom, final int row, final int column) {
+        public Tile48(final IArea[] areas, final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -2835,23 +2835,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -2866,8 +2866,8 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile49(tilepois, tileareas, tilelabels, zoom, row, column);
@@ -2877,14 +2877,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile49 extends AbstractTile {
 
         private final POI[] pois;
-        private final Area[] areas;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile49(final POI[] pois, final Area[] areas, final Label[] labels, final int zoom, final int row,
+        public Tile49(final POI[] pois, final IArea[] areas, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -2894,23 +2894,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -2923,10 +2923,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile50(tilestreets, tileareas, tilelabels, zoom, row, column);
@@ -2935,15 +2935,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile50 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile50(final Street[] streets, final Area[] areas, final Label[] labels, final int zoom, final int row,
+        public Tile50(final IStreet[] streets, final IArea[] areas, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -2953,23 +2953,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -2984,10 +2984,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile51(tilepois, tilestreets, tileareas, tilelabels, zoom, row, column);
@@ -2997,16 +2997,16 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile51 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile51(final POI[] pois, final Street[] streets, final Area[] areas, final Label[] labels,
+        public Tile51(final POI[] pois, final IStreet[] streets, final IArea[] areas, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3016,23 +3016,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3045,10 +3045,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile52(tileways, tileareas, tilelabels, zoom, row, column);
@@ -3057,15 +3057,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile52 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile52(final Way[] ways, final Area[] areas, final Label[] labels, final int zoom, final int row,
+        public Tile52(final IWay[] ways, final IArea[] areas, final Label[] labels, final int zoom, final int row,
                 final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3075,23 +3075,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3106,10 +3106,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile53(tilepois, tileways, tileareas, tilelabels, zoom, row, column);
@@ -3119,16 +3119,16 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile53 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile53(final POI[] pois, final Way[] ways, final Area[] areas, final Label[] labels, final int zoom,
+        public Tile53(final POI[] pois, final IWay[] ways, final IArea[] areas, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3138,23 +3138,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3167,12 +3167,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile54(tilestreets, tileways, tileareas, tilelabels, zoom, row, column);
@@ -3181,17 +3181,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile54 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile54(final Street[] streets, final Way[] ways, final Area[] areas, final Label[] labels,
+        public Tile54(final IStreet[] streets, final IWay[] ways, final IArea[] areas, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3201,23 +3201,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3232,12 +3232,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile55(tilepois, tilestreets, tileways, tileareas, tilelabels, zoom, row, column);
@@ -3247,18 +3247,18 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile55 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile55(final POI[] pois, final Street[] streets, final Way[] ways, final Area[] areas,
+        public Tile55(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IArea[] areas,
                 final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.areas = areas;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3268,23 +3268,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
+        public Iterator<IBuilding> getBuildings() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3297,10 +3297,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile56(tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3309,15 +3309,15 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile56 extends AbstractTile {
 
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile56(final Building[] buildings, final Area[] areas, final Label[] labels, final int zoom,
+        public Tile56(final IBuilding[] buildings, final IArea[] areas, final Label[] labels, final int zoom,
                 final int row, final int column) {
             super(zoom, row, column);
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3327,23 +3327,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3358,10 +3358,10 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile57(tilepois, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3371,16 +3371,16 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile57 extends AbstractTile {
 
         private final POI[] pois;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile57(final POI[] pois, final Building[] buildings, final Area[] areas, final Label[] labels,
+        public Tile57(final POI[] pois, final IBuilding[] buildings, final IArea[] areas, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3390,23 +3390,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3419,12 +3419,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile58(tilestreets, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3433,17 +3433,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile58 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile58(final Street[] streets, final Building[] buildings, final Area[] areas, final Label[] labels,
+        public Tile58(final IStreet[] streets, final IBuilding[] buildings, final IArea[] areas, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3453,23 +3453,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3484,12 +3484,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile59(tilepois, tilestreets, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3499,18 +3499,18 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile59 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile59(final POI[] pois, final Street[] streets, final Building[] buildings, final Area[] areas,
+        public Tile59(final POI[] pois, final IStreet[] streets, final IBuilding[] buildings, final IArea[] areas,
                 final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iStreets = streets;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3520,23 +3520,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3549,12 +3549,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile60(tileways, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3563,17 +3563,17 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile60 extends AbstractTile {
 
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile60(final Way[] ways, final Building[] buildings, final Area[] areas, final Label[] labels,
+        public Tile60(final IWay[] ways, final IBuilding[] buildings, final IArea[] areas, final Label[] labels,
                 final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3583,23 +3583,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3614,12 +3614,12 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile61(tilepois, tileways, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3629,18 +3629,18 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile61 extends AbstractTile {
 
         private final POI[] pois;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile61(final POI[] pois, final Way[] ways, final Building[] buildings, final Area[] areas,
+        public Tile61(final POI[] pois, final IWay[] ways, final IBuilding[] buildings, final IArea[] areas,
                 final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3650,23 +3650,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
+        public Iterator<IStreet> getStreets() {
             return Arrays.iterator();
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3679,14 +3679,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
         @Override
         public ITile createTile(int zoom, int row, int column) throws IOException {
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile62(tilestreets, tileways, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3695,19 +3695,19 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
 
     private static class Tile62 extends AbstractTile {
 
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile62(final Street[] streets, final Way[] ways, final Building[] buildings, final Area[] areas,
+        public Tile62(final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings, final IArea[] areas,
                 final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3717,23 +3717,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override
@@ -3748,14 +3748,14 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         public ITile createTile(int zoom, int row, int column) throws IOException {
             POI[] tilepois = new POI[reader.readCompressedInt()];
             fillElements(pois, tilepois);
-            Street[] tilestreets = new Street[reader.readCompressedInt()];
-            fillElements(streets, tilestreets);
-            Way[] tileways = new Way[reader.readCompressedInt()];
+            IStreet[] tilestreets = new IStreet[reader.readCompressedInt()];
+            fillElements(iStreets, tilestreets);
+            IWay[] tileways = new IWay[reader.readCompressedInt()];
             fillElements(ways, tileways);
-            Building[] tilebuildings = new Building[reader.readCompressedInt()];
-            fillElements(buildings, tilebuildings);
-            Area[] tileareas = new Area[reader.readCompressedInt()];
-            fillElements(areas, tileareas);
+            IBuilding[] tilebuildings = new IBuilding[reader.readCompressedInt()];
+            fillElements(iBuildings, tilebuildings);
+            IArea[] tileareas = new IArea[reader.readCompressedInt()];
+            fillElements(iAreas, tileareas);
             Label[] tilelabels = new Label[reader.readCompressedInt()];
             fillElements(labels, tilelabels);
             return new Tile63(tilepois, tilestreets, tileways, tilebuildings, tileareas, tilelabels, zoom, row, column);
@@ -3765,20 +3765,20 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
     private static class Tile63 extends AbstractTile {
 
         private final POI[] pois;
-        private final Street[] streets;
-        private final Way[] ways;
-        private final Building[] buildings;
-        private final Area[] areas;
+        private final IStreet[] iStreets;
+        private final IWay[] ways;
+        private final IBuilding[] iBuildings;
+        private final IArea[] iAreas;
         private final Label[] labels;
 
-        public Tile63(final POI[] pois, final Street[] streets, final Way[] ways, final Building[] buildings,
-                final Area[] areas, final Label[] labels, final int zoom, final int row, final int column) {
+        public Tile63(final POI[] pois, final IStreet[] streets, final IWay[] ways, final IBuilding[] buildings,
+                final IArea[] areas, final Label[] labels, final int zoom, final int row, final int column) {
             super(zoom, row, column);
             this.pois = pois;
-            this.streets = streets;
+            this.iStreets = streets;
             this.ways = ways;
-            this.buildings = buildings;
-            this.areas = areas;
+            this.iBuildings = buildings;
+            this.iAreas = areas;
             this.labels = labels;
         }
 
@@ -3788,23 +3788,23 @@ public class StorageTileFactory extends AbstractTileFactory implements ITileFact
         }
 
         @Override
-        public Iterator<Street> getStreets() {
-            return Arrays.iterator(streets);
+        public Iterator<IStreet> getStreets() {
+            return Arrays.iterator(iStreets);
         }
 
         @Override
-        public Iterator<Way> getWays() {
+        public Iterator<IWay> getWays() {
             return Arrays.iterator(ways);
         }
 
         @Override
-        public Iterator<Building> getBuildings() {
-            return Arrays.iterator(buildings);
+        public Iterator<IBuilding> getBuildings() {
+            return Arrays.iterator(iBuildings);
         }
 
         @Override
-        public Iterator<Area> getTerrain() {
-            return Arrays.iterator(areas);
+        public Iterator<IArea> getTerrain() {
+            return Arrays.iterator(iAreas);
         }
 
         @Override

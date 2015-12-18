@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import model.routing.BlossomAlgorithm;
-import model.routing.Graph;
-import model.routing.IGraph;
+import model.routing.UndirectedGraph;
+import model.routing.IUndirectedGraph;
 
 public class TestCaseWriter {
 
@@ -26,8 +26,8 @@ public class TestCaseWriter {
             for (int i = 0; i < nodeNumber * (nodeNumber - 1) / 2; i++) {
                 weights[i] = (int) (Math.random() * 1000);
             }
-            final Graph graph = new Graph(nodeNumber, createEdges(nodeNumber), weights);
-            new BlossomAlgorithm().calculatePerfectMatching(graph);
+            final UndirectedGraph undirectedGraph = new UndirectedGraph(nodeNumber, createEdges(nodeNumber), weights);
+            new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
             System.out.println(++count);
         }
         // TestCaseWriter writer = new TestCaseWriter();
@@ -49,7 +49,7 @@ public class TestCaseWriter {
             weights[i] = (int) (Math.random() * 1000);
         }
 
-        final Graph graph = new Graph(nodeNumber, createEdges(nodeNumber), weights);
+        final UndirectedGraph undirectedGraph = new UndirectedGraph(nodeNumber, createEdges(nodeNumber), weights);
 
         final ArrayList<Integer> nodeNumbers = new ArrayList<Integer>();
         for (int i = 0; i < nodeNumber; i++) {
@@ -63,7 +63,7 @@ public class TestCaseWriter {
         for (final Collection<Long> edges : permutations) {
             int currentWeight = 0;
             for (final long edge : edges) {
-                currentWeight += graph.getWeight(edge);
+                currentWeight += undirectedGraph.getWeight(edge);
             }
             if (currentWeight < minWeight) {
                 minWeight = currentWeight;
@@ -74,11 +74,11 @@ public class TestCaseWriter {
         Set<Long> matching = null;
 
         try {
-            matching = new BlossomAlgorithm().calculatePerfectMatching(graph);
+            matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
         } catch (Exception e) {
         }
 
-        if (matching == null || !validMatching(matching, graph, minWeight)) {
+        if (matching == null || !validMatching(matching, undirectedGraph, minWeight)) {
             writer.println();
             writer.println("@Test");
             writer.println("public void computerGeneratedTest" + testNumber++ + "() {");
@@ -171,11 +171,11 @@ public class TestCaseWriter {
         return ret;
     }
 
-    private boolean validMatching(final Set<Long> matching, final IGraph graph, final int expectedWeight) {
+    private boolean validMatching(final Set<Long> matching, final IUndirectedGraph undirectedGraph, final int expectedWeight) {
         int actualWeight = 0;
 
         for (final long edge : matching) {
-            actualWeight += graph.getWeight(edge);
+            actualWeight += undirectedGraph.getWeight(edge);
         }
 
         return actualWeight == expectedWeight;

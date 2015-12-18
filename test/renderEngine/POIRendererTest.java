@@ -9,12 +9,12 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
-import model.elements.Area;
-import model.elements.Building;
+import model.elements.IArea;
+import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.Street;
-import model.elements.Way;
+import model.elements.IStreet;
+import model.elements.IWay;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.POIRenderer;
@@ -79,7 +79,7 @@ public class POIRendererTest {
 
     @Test
     public void testPOIRendering() {
-        final Tile tile = new Tile(17, 0, 0, new Way[0], new Street[0], new Area[0], new Building[0], pois,
+        final Tile tile = new Tile(17, 0, 0, new IWay[0], new IStreet[0], new IArea[0], new IBuilding[0], pois,
                 new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());

@@ -4,6 +4,6 @@ import java.util.Set;
 
 public interface IPerfectMatchingFinder {
 
-    Set<Long> calculatePerfectMatching(final IGraph graph);
+    Set<Long> calculatePerfectMatching(final IUndirectedGraph undirectedGraph);
 
 }

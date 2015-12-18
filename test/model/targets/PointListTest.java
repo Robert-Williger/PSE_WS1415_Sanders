@@ -22,7 +22,7 @@ public class PointListTest {
 
     @Test
     public void sizeNull() {
-        assertEquals(0, pointList.getSize());
+        assertEquals(0, pointList.size());
     }
 
     @Test
@@ -31,7 +31,7 @@ public class PointListTest {
         pointList.add(new RoutePoint(null));
         pointList.add(new RoutePoint(null));
 
-        assertEquals(3, pointList.getSize());
+        assertEquals(3, pointList.size());
     }
 
     @Test
@@ -42,7 +42,7 @@ public class PointListTest {
 
         pointList.remove(1);
 
-        assertEquals(2, pointList.getSize());
+        assertEquals(2, pointList.size());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class PointListTest {
 
         pointList.reset();
 
-        assertEquals(0, pointList.getSize());
+        assertEquals(0, pointList.size());
     }
 
     @Test
@@ -108,7 +108,7 @@ public class PointListTest {
         final Iterator<IRoutePoint> it = pointList.iterator();
         int i = 0;
         while (it.hasNext()) {
-            if (it.next().getIndex() != i) {
+            if (it.next().getListIndex() != i) {
                 error = true;
             }
             i++;
