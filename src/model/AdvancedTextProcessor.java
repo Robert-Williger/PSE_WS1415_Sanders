@@ -58,9 +58,11 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
         // TODO suburbs can collide --> include city names
         for (final Label label : labels) {
-            final AddressNode addressNode = manager.getAddressNode(label.getLocation());
-            if (addressNode != null) {
-                add(normalize(label.getName()), label.getName(), root, addressNode.getStreetNode());
+            if (label.getType() != 30) {
+                final AddressNode addressNode = manager.getAddressNode(label.getLocation());
+                if (addressNode != null) {
+                    add(normalize(label.getName()), label.getName(), root, addressNode.getStreetNode());
+                }
             }
         }
 

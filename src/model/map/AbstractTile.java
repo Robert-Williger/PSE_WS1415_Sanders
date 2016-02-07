@@ -36,12 +36,6 @@ public abstract class AbstractTile implements ITile {
     }
 
     @Override
-    public final String getAddress(final Point coordinate) {
-        final StreetNode node = getStreetNode(coordinate);
-        return node != null ? node.getStreet().getName() : null;
-    }
-
-    @Override
     public final StreetNode getStreetNode(final Point coordinate) {
         StreetNode ret = null;
 

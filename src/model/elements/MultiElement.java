@@ -10,6 +10,15 @@ public abstract class MultiElement implements IMultiElement {
         this.points = points;
     }
 
+    @Deprecated
+    public MultiElement(final int[] x, final int[] y) {
+        points = new int[x.length * 2];
+        for (int i = 0; i < x.length; i++) {
+            points[i << 1] = x[i];
+            points[(i << 1) + 1] = y[i];
+        }
+    }
+
     public int size() {
         return points.length >> 1;
     }

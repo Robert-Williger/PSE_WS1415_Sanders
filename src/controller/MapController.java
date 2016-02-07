@@ -157,6 +157,8 @@ public class MapController extends AbstractController<IMapView> {
                     application.getImageLoader().update();
                     start = e.getPoint();
                 }
+
+                // TODO scale smooth drag to sample rate of mouse!
             }
 
             @Override

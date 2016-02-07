@@ -5,6 +5,14 @@ public class Way extends MultiElement implements IWay {
     private final int type;
     private final String name;
 
+    @Deprecated
+    public Way(final int[] x, final int[] y, final int type, final String name) {
+        super(x, y);
+
+        this.type = type;
+        this.name = name;
+    }
+
     public Way(final int[] points, final int type, final String name) {
         super(points);
 

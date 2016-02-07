@@ -15,21 +15,29 @@ public class ShapeStyle {
     protected final Stroke[] outlineStrokes;
 
     // add minZoomstep & maxZoomstep -> zoom only in range (-> width)
-    public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor,
-            final int cap, final int join) {
-        this(0, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor, outlineColor, cap, join);
+    /*
+     * public ShapeStyle(final float mainWidth, final float outlineWidth, final
+     * Color mainColor, final Color outlineColor, final int cap, final int join)
+     * { this(0, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor,
+     * outlineColor, cap, join); }
+     * 
+     * 
+     * 
+     * public ShapeStyle(final float mainWidth, final Color mainColor, final int
+     * cap, final int join) { this(mainWidth, 0f, mainColor, null, cap, join); }
+     * 
+     * public ShapeStyle(final float mainWidth, final Color mainColor) {
+     * this(mainWidth, mainColor, BasicStroke.CAP_ROUND,
+     * BasicStroke.JOIN_ROUND); }
+     */
+
+    public ShapeStyle(final int minZoomStep, final float mainWidth, final Color mainColor) {
+        this(minZoomStep, mainWidth, 0, mainColor, null);
     }
 
-    public ShapeStyle(final float mainWidth, final float outlineWidth, final Color mainColor, final Color outlineColor) {
-        this(mainWidth, outlineWidth, mainColor, outlineColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-    }
-
-    public ShapeStyle(final float mainWidth, final Color mainColor, final int cap, final int join) {
-        this(mainWidth, 0f, mainColor, null, cap, join);
-    }
-
-    public ShapeStyle(final float mainWidth, final Color mainColor) {
-        this(mainWidth, mainColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    public ShapeStyle(final int minZoomStep, final float mainWidth, final float outlineWidth, final Color mainColor,
+            final Color outlineColor) {
+        this(minZoomStep, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor, outlineColor);
     }
 
     public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth,

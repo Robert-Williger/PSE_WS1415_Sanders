@@ -10,11 +10,19 @@ public class Area extends MultiElement implements IArea {
         this.type = type;
     }
 
+    @Deprecated
+    public Area(final int[] x, final int[] y, final int type) {
+        super(x, y);
+
+        this.type = type;
+    }
+
     @Override
     public int getType() {
         return type;
     }
 
+    @Override
     public IArea getSubElement(final int[] subarray) {
         return new SubArea(subarray);
     }

@@ -13,7 +13,7 @@ import model.elements.IArea;
 import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.IStreet;
+import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
 import model.map.MapManager;
@@ -30,13 +30,13 @@ import org.junit.Test;
 
 public class RouteRendererTest {
 
-    private static IStreet[] iStreets;
+    private static Street[] streets;
     private static BufferedImage emptyImage;
     private static BufferedImage renderImage;
     private static RouteRenderer renderer;
-    private static IStreet iStreet;
+    private static Street Street;
     private static PointList pList;
-    private static IStreet[] doubleStreets;
+    private static Street[] doubleStreets;
     private RenderRoute route;
 
     private final static int streetId = 7;
@@ -48,14 +48,14 @@ public class RouteRendererTest {
     public static void setUpClass() {
         renderer = new RouteRenderer(new PixelConverter(1));
 
-        iStreets = new IStreet[1];
-        iStreet = new IStreet(new int[]{0, 5, 0}, new int[]{0, 5, 1}, 1, "Kaiserstrasse", streetId);
-        iStreets[0] = iStreet;
+        streets = new Street[1];
+        Street = new Street(new int[]{0, 5, 0}, new int[]{0, 5, 1}, 1, "Kaiserstrasse", streetId);
+        streets[0] = Street;
 
-        doubleStreets = new IStreet[2];
-        final IStreet newStreet = new IStreet(new int[]{0, 2, 0}, new int[]{0, 2, 1}, 1, "Teststraße", doubleStreetID);
+        doubleStreets = new Street[2];
+        final Street newStreet = new Street(new int[]{0, 2, 0}, new int[]{0, 2, 1}, 1, "Teststraße", doubleStreetID);
         doubleStreets[0] = newStreet;
-        doubleStreets[1] = new IStreet(new int[]{0, 5, 0}, new int[]{0, 5, 1}, 1, "Testgasse", doubleStreetID);
+        doubleStreets[1] = new Street(new int[]{0, 5, 0}, new int[]{0, 5, 1}, 1, "Testgasse", doubleStreetID);
 
         final MapManager emptyMapManager = new MapManager();
         final RoutePoint rPoint1 = new RoutePoint(emptyMapManager);
@@ -82,7 +82,7 @@ public class RouteRendererTest {
         g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         g.dispose();
 
-        route = new RenderRoute(0, null, pList);
+        route = new RenderRoute(0, null);
         renderer.setRenderRoute(route);
     }
 
@@ -112,7 +112,7 @@ public class RouteRendererTest {
     public void testFullStreetRouteRendering() {
         route.addStreet(streetId);
 
-        final Tile tile = new Tile(6, 1, 1, new IWay[0], new IStreet[0], new IArea[0], new IBuilding[0], new POI[0],
+        final Tile tile = new Tile(6, 1, 1, new IWay[0], new Street[0], new IArea[0], new IBuilding[0], new POI[0],
                 new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
@@ -122,19 +122,19 @@ public class RouteRendererTest {
     public void testStreetPartRouteRendering() {
         route.addStreetPart(streetId, 0.1f, 0.4f);
 
-        final Tile tile = new Tile(6, 1, 1, new IWay[0], iStreets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
+        final Tile tile = new Tile(6, 1, 1, new IWay[0], streets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
 
     @Test
-    public void testMultiStreetPartRouteRendering() {
+    public void testMultStreetPartRouteRendering() {
         route.addStreetPart(streetId, 0.3f, 0.4f);
         route.addStreetPart(streetId, 0.4f, 0.5f);
         route.addStreetPart(streetId, 0.3f, 0.2f);
         route.addStreetPart(streetId, 0.7f, 0.8f);
 
-        final Tile tile = new Tile(6, 1, 1, new IWay[0], iStreets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
+        final Tile tile = new Tile(6, 1, 1, new IWay[0], streets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertTrue(imageChanged());
     }
@@ -143,7 +143,7 @@ public class RouteRendererTest {
     public void testInvalidRouteRendering() {
         route.addStreet(streetId + 3);
 
-        final Tile tile = new Tile(6, 1, 1, new IWay[0], iStreets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
+        final Tile tile = new Tile(6, 1, 1, new IWay[0], streets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
         assertFalse(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }
@@ -151,7 +151,7 @@ public class RouteRendererTest {
     @Test
     public void testNullRouteRendering() {
         renderer.setRenderRoute(null);
-        final Tile tile = new Tile(6, 1, 1, new IWay[0], iStreets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
+        final Tile tile = new Tile(6, 1, 1, new IWay[0], streets, new IArea[0], new IBuilding[0], new POI[0], new Label[0]);
         assertTrue(renderer.render(tile, renderImage));
         assertFalse(imageChanged());
     }

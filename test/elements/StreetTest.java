@@ -2,8 +2,8 @@ package elements;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-
 import model.elements.IStreet;
+import model.elements.Street;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,7 +28,7 @@ public class StreetTest {
         type = 2;
         name = "Rhein";
         id = 1;
-        iStreet = new IStreet(x, y, type, name, id);
+        iStreet = new Street(x, y, type, name, id);
     }
 
     @Test
@@ -45,14 +45,14 @@ public class StreetTest {
     public void testEquals() {
         assertEquals(iStreet, iStreet);
         assertFalse(iStreet.equals(null));
-        assertFalse(iStreet.equals(new IStreet(x, y, type, name + "x", id)));
-        assertFalse(iStreet.equals(new IStreet(x, y, type, name, 0)));
-        assertEquals(iStreet, new IStreet(x, y, type, name, id));
+        assertFalse(iStreet.equals(new Street(x, y, type, name + "x", id)));
+        assertFalse(iStreet.equals(new Street(x, y, type, name, 0)));
+        assertEquals(iStreet, new Street(x, y, type, name, id));
     }
 
     @Test
     public void testHashCode() {
         assertEquals(iStreet.hashCode(), iStreet.hashCode());
-        assertEquals(iStreet.hashCode(), new IStreet(x, y, type, name, id).hashCode());
+        assertEquals(iStreet.hashCode(), new Street(x, y, type, name, id).hashCode());
     }
 }

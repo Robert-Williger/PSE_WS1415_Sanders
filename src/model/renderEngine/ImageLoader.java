@@ -39,7 +39,7 @@ public class ImageLoader implements IImageLoader {
     private Point lastGridLocation;
     private int lastRowCount;
     private int lastColumnCount;
-    private final int prefetchCount = 2;
+    private final int prefetchCount = 1;
 
     private int priority;
 

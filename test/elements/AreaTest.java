@@ -2,9 +2,10 @@ package elements;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-
+import model.elements.Area;
 import model.elements.IArea;
 import model.elements.IMultiElement;
+import model.elements.MultiElement;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,7 +38,6 @@ public class AreaTest {
     @Test
     public void testEquals() {
         assertEquals(area, area);
-        assertFalse(area.equals(new MultiElement(x, y)));
         assertFalse(area.equals(new Area(x, y, type + 1)));
         assertEquals(area, new Area(x, y, type));
     }
@@ -45,6 +45,6 @@ public class AreaTest {
     @Test
     public void testHashCode() {
         assertEquals(area.hashCode(), area.hashCode());
-        assertEquals(area.hashCode(), new IArea(x, y, type).hashCode());
+        assertEquals(area.hashCode(), new Area(x, y, type).hashCode());
     }
 }

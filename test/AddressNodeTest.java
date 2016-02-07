@@ -15,7 +15,7 @@ public class AddressNodeTest {
 
     @Before
     public void setUp() {
-        streetNode = new StreetNode(0.5f, new Street(new int[]{0, 0}, 0, "Teststraße", 0));
+        streetNode = new StreetNode(0.5f, new Street(new int[]{0, 0}, 0, "Teststraße", 0, false));
         addressNode = new AddressNode("Teststraße 42", streetNode);
     }
 
@@ -41,7 +41,7 @@ public class AddressNodeTest {
         assertFalse(new AddressNode("Teststraße 42", null).equals(addressNode));
 
         assertFalse(addressNode.equals(new AddressNode("Teststraße 42", new StreetNode(0.6f, new Street(
-                new int[]{0, 0}, 0, "", 0)))));
+                new int[]{0, 0}, 0, "", 0, false)))));
     }
 
     @Test

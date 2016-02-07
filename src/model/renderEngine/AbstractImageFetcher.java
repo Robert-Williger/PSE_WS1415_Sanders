@@ -5,7 +5,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -93,9 +97,17 @@ public abstract class AbstractImageFetcher implements IImageFetcher {
             new Thread() {
                 @Override
                 public void run() {
+                    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                    GraphicsDevice device = env.getDefaultScreenDevice();
+                    GraphicsConfiguration config = device.getDefaultConfiguration();
                     for (int i = 0; i < getCacheSize(); i++) {
-                        final BufferedImage img = new BufferedImage(imageSize.width, imageSize.height,
-                                BufferedImage.TYPE_INT_ARGB);
+                        // TODO is this an improvement?
+                        // TODO BITMASK instead of TRANSCLUENT?
+                        BufferedImage img = config.createCompatibleImage(imageSize.width, imageSize.height,
+                                Transparency.TRANSLUCENT);
+                        // final BufferedImage img = new
+                        // BufferedImage(imageSize.width, imageSize.height,
+                        // BufferedImage.TYPE_INT_ARGB);
                         freeList.add(img);
                     }
                 }
@@ -178,7 +190,7 @@ public abstract class AbstractImageFetcher implements IImageFetcher {
         }
     }
 
-    private class RenderPool extends ThreadPool<Boolean, RenderJob> {
+    private class RenderPool extends ThreadPoolTest<Boolean, RenderJob> {
 
         public RenderPool(final int threadCount) {
             super(threadCount);

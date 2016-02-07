@@ -30,7 +30,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     private static final Color buildingNumberColor = new Color(96, 96, 96);
 
     static {
-        styles = new LabelStyle[19];
+        styles = new LabelStyle[31];
 
         styles[2] = new LabelStyle(8, 14, new int[]{12, 12, 12, 14, 14, 16, 16}, Color.DARK_GRAY, true);
         styles[4] = new LabelStyle(8, 14, new int[]{11, 12, 14, 16, 16, 16, 16}, Color.DARK_GRAY, true);
@@ -41,6 +41,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
         styles[8] = new LabelStyle(13, 16, new int[]{11, 12, 13, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
                 Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
 
+        styles[30] = new LabelStyle(10, 20, new int[]{10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, Color.black, false);
         // case "continent":
         // return 0;
         // case "country":
@@ -89,13 +90,15 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
     @Override
     public boolean render(final ITile tile, final Image image) {
-
         final Graphics2D g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+        g.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
 
         final Toolkit tk = Toolkit.getDefaultToolkit();
         final Map<?, ?> map = (Map<?, ?>) (tk.getDesktopProperty("awt.font.desktophints"));
@@ -126,30 +129,44 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
             if (styles[label.getType()] != null && styles[label.getType()].mainStroke(g, zoom)) {
                 // TODO avoid object generation
+                final float angle = label.getRotation();
+                final double sin = Math.sin(angle);
+                final double cos = Math.cos(angle);
                 if (styles[label.getType()].outlineStroke(g, zoom)) {
                     TextLayout text = new TextLayout(label.getName(), g.getFont(), g.getFontRenderContext());
+
                     final Shape shape = text.getOutline(g.getTransform());
                     final Rectangle2D rect = text.getBounds();
 
-                    double x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep())
-                            - rect.getWidth() / 2.0;
-                    double y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep())
-                            - text.getDescent() + rect.getHeight() / 2.0;
+                    final double xOffset = -cos * rect.getWidth() / 2 - sin * rect.getHeight() / 2 + sin
+                            * text.getDescent();
+                    final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2 - cos
+                            * text.getDescent();
+                    double x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep()) + xOffset;
+                    double y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep()) + yOffset;
 
                     g.translate(x, y);
+                    g.rotate(angle);
                     g.draw(shape);
                     styles[label.getType()].mainStroke(g, zoom);
                     g.drawString(label.getName(), 0, 0);
+                    g.rotate(-angle);
                     g.translate(-x, -y);
                 } else if (styles[label.getType()].mainStroke(g, zoom)) {
                     final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
                     final int width = fontMetrics.stringWidth(label.getName());
                     final int height = fontMetrics.getHeight();
-                    float x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep()) - width
-                            / 2.0f;
-                    float y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep())
-                            - fontMetrics.getDescent() + height / 2.0f;
-                    g.drawString(label.getName(), x, y);
+                    final int descent = fontMetrics.getDescent();
+                    final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
+                    final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
+                    double x = converter.getPixelDistancef(label.getX() - tileLocation.x, tile.getZoomStep()) + xOffset;
+                    double y = converter.getPixelDistancef(label.getY() - tileLocation.y, tile.getZoomStep()) + yOffset;
+
+                    g.translate(x, y);
+                    g.rotate(label.getRotation());
+                    g.drawString(label.getName(), 0, 0);
+                    g.rotate(-label.getRotation());
+                    g.translate(-x, -y);
                 }
 
             }

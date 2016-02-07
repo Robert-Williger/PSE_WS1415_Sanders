@@ -13,7 +13,7 @@ import model.elements.IArea;
 import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.IStreet;
+import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
 import model.map.DefaultTileSource;
@@ -39,15 +39,15 @@ public class ImageLoaderTest {
 
     @BeforeClass
     public static void setUpClass() {
-        final IStreet[] streets = new IStreet[5];
+        final Street[] streets = new Street[5];
 
-        streets[0] = new IStreet(new int[]{0, 500, 1240, 2750}, new int[]{750, 750, 700, 500}, 3, "Haid und Neu Straße",
+        streets[0] = new Street(new int[]{0, 500, 1240, 2750}, new int[]{750, 750, 700, 500}, 3, "Haid und Neu Straße",
                 0);
-        streets[1] = new IStreet(new int[]{500, 550, 525, 505}, new int[]{750, 1350, 2000, 2750}, 4, "Tullastraße", 0);
-        streets[2] = new IStreet(new int[]{1240, 1250, 1250, 1250}, new int[]{700, 1150, 1900, 2750}, 5,
+        streets[1] = new Street(new int[]{500, 550, 525, 505}, new int[]{750, 1350, 2000, 2750}, 4, "Tullastraße", 0);
+        streets[2] = new Street(new int[]{1240, 1250, 1250, 1250}, new int[]{700, 1150, 1900, 2750}, 5,
                 "Helmertstraße", 0);
-        streets[3] = new IStreet(new int[]{550, 1250}, new int[]{1350, 1150}, 5, "Gaußstraße", 0);
-        streets[4] = new IStreet(new int[]{525, 1250, 1250, 1900, 2750}, new int[]{525, 1250, 1250, 1900, 2750}, 5,
+        streets[3] = new Street(new int[]{550, 1250}, new int[]{1350, 1150}, 5, "Gaußstraße", 0);
+        streets[4] = new Street(new int[]{525, 1250, 1250, 1900, 2750}, new int[]{525, 1250, 1250, 1900, 2750}, 5,
                 "Jordanstraße", 0);
 
         final IWay[] ways = new IWay[0];

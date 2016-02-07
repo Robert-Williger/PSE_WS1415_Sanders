@@ -21,13 +21,13 @@ public abstract class Label extends Node implements Typeable {
         return name;
     }
 
-    public abstract int getRotation();
+    public abstract float getRotation();
 
     public static Label create(final String name, final int type, final int x, final int y) {
         return new DefaultLabel(name, type, x, y);
     }
 
-    public static Label create(final String name, final int type, final int x, final int y, final int rotation) {
+    public static Label create(final String name, final int type, final int x, final int y, final float rotation) {
         return new RotatedLabel(name, type, x, y, rotation);
     }
 
@@ -37,21 +37,21 @@ public abstract class Label extends Node implements Typeable {
         }
 
         @Override
-        public int getRotation() {
+        public float getRotation() {
             return 0;
         }
     }
 
     private static class RotatedLabel extends Label {
-        private final int rotation;
+        private final float rotation;
 
-        public RotatedLabel(final String name, final int type, final int x, final int y, final int rotation) {
+        public RotatedLabel(final String name, final int type, final int x, final int y, final float rotation) {
             super(name, type, x, y);
             this.rotation = rotation;
         }
 
         @Override
-        public int getRotation() {
+        public float getRotation() {
             return rotation;
         }
     }

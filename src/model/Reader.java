@@ -22,7 +22,6 @@ import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
 import model.elements.Way;
-import model.map.AddressNode;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
@@ -215,12 +214,14 @@ public class Reader implements IReader {
             }
         }
 
-        for (final Label label : labels) {
-            final AddressNode addressNode = manager.getAddressNode(label.getLocation());
-            if (addressNode != null) {
-                nodeMap.put(label.getName(), addressNode.getStreetNode());
-            }
-        }
+        // TODO reactivate!
+        // for (final Label label : labels) {
+        // final AddressNode addressNode =
+        // manager.getAddressNode(label.getLocation());
+        // if (addressNode != null) {
+        // nodeMap.put(label.getName(), addressNode.getStreetNode());
+        // }
+        // }
 
         tp = new AdvancedTextProcessor(entries, labels, manager);
     }
@@ -406,13 +407,25 @@ public class Reader implements IReader {
             distribution = readIntArray(reader.readCompressedInt());
             labels = new Label[distribution[distribution.length - 1]];
 
-            for (int i = 0; i < distribution.length; i++) {
+            // TODO improve this!
+            for (int i = 0; i < Math.min(20, distribution.length); i++) {
                 final int number = distribution[i];
                 for (; count < number; count++) {
                     int x = reader.readCompressedInt();
                     int y = reader.readCompressedInt();
 
                     labels[count] = Label.create(reader.readUTF(), type, x, y);
+                }
+                ++type;
+            }
+
+            for (int i = Math.min(20, distribution.length); i < distribution.length; i++) {
+                final int number = distribution[i];
+                for (; count < number; count++) {
+                    int x = reader.readCompressedInt();
+                    int y = reader.readCompressedInt();
+
+                    labels[count] = Label.create(reader.readUTF(), type, x, y, reader.readFloat());
                 }
                 ++type;
             }

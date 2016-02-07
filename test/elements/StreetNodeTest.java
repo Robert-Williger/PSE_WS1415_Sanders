@@ -8,6 +8,7 @@ import java.awt.Point;
 
 import model.elements.Node;
 import model.elements.IStreet;
+import model.elements.Street;
 import model.elements.StreetNode;
 
 import org.junit.Before;
@@ -21,7 +22,7 @@ public class StreetNodeTest {
 
     @Before
     public void setUp() {
-        iStreet = new IStreet(new int[]{0, 5, 10, 20}, new int[]{0, 5, 10, 20}, 0, "Kaiserstraße 5", 1);
+        iStreet = new Street(new int[]{0, 5, 10, 20}, new int[]{0, 5, 10, 20}, 0, "Kaiserstraße 5", 1);
         offset = 0.5f;
         sNode = new StreetNode(offset, iStreet);
     }

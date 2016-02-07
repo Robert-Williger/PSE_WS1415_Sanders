@@ -13,4 +13,8 @@ public class HighlyCachedImageFetcher extends AbstractImageFetcher {
         return 1024;
     }
 
+    @Override
+    protected int getWorkerThreads() {
+        return 8;
+    }
 }

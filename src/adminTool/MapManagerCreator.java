@@ -29,7 +29,9 @@ import java.util.Set;
 import util.Arrays;
 import adminTool.elements.Area;
 import adminTool.elements.Building;
+import adminTool.elements.IWay;
 import adminTool.elements.Label;
+import adminTool.elements.LabelCandidate;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Node;
 import adminTool.elements.POI;
@@ -57,7 +59,7 @@ public class MapManagerCreator extends AbstractMapCreator {
     private static final int POI_MIN_ZOOMSTEP = 16;
 
     private static final int AREA_THRESHHOLD = 2;
-    private static final int WAY_THRESHHOLD = 20;
+    private static final int WAY_THRESHHOLD = 5;
     private static final double AREA_SHRINK_FACTOR = 0.9;
     private static final double WAY_SHRINK_FACTOR = 0.9;
 
@@ -139,6 +141,8 @@ public class MapManagerCreator extends AbstractMapCreator {
         waySorter.start();
         streetSorter.start();
         terrainSorter.start();
+
+//        createCandidates();
         labelSorter.start();
 
         ElementWriter elementWriter = new ElementWriter();
@@ -247,6 +251,41 @@ public class MapManagerCreator extends AbstractMapCreator {
         } catch (final IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void createCandidates() {
+        long start = System.currentTimeMillis();
+
+        final LabelCandidateCreator creator = new LabelCandidateCreator(converter);
+
+        int candidateCount = 0;
+        long labelCount = 0;
+        for (final IWay way : waySorter.getSorting()) {
+            final LabelCandidate candidate = creator.createFirstClassCandidates(way, maxZoomStep);
+            if (candidate != null) {
+                for (int i = 0; i < candidate.size(); i++) {
+                    labelSorter.typeables.add(Label.create(candidate.getWay().getName(), 30, candidate.getX(i),
+                            candidate.getY(i), candidate.getAngle(i)));
+                }
+                ++candidateCount;
+                labelCount += candidate.size();
+            }
+        }
+        for (final IWay way : streetSorter.getSorting()) {
+            final LabelCandidate candidate = creator.createFirstClassCandidates(way, maxZoomStep);
+            if (candidate != null) {
+                for (int i = 0; i < candidate.size(); i++) {
+                    labelSorter.typeables.add(Label.create(candidate.getWay().getName(), 30, candidate.getX(i),
+                            candidate.getY(i), candidate.getAngle(i)));
+                }
+                ++candidateCount;
+                labelCount += candidate.size();
+            }
+        }
+
+        System.out.println("Elapsed Time: " + (System.currentTimeMillis() - start));
+        System.out.println("Candidates: " + candidateCount);
+        System.out.println("Labels:" + labelCount);
     }
 
     public Collection<Street> getOrderedStreets() {
@@ -1139,10 +1178,27 @@ public class MapManagerCreator extends AbstractMapCreator {
                 e.printStackTrace();
             }
 
-            writeDistribution(labelSorter.getTypeDistribution());
-            for (final Label label : labelSorter.getSorting()) {
+            int[] distribution = labelSorter.getTypeDistribution();
+            writeDistribution(distribution);
+
+            int count = 0;
+            // TODO improve this
+            for (int i = 0; i < Math.min(distribution.length, 20); i++) {
+                count += distribution[i];
+            }
+
+            final Iterator<Label> iterator = labelSorter.getSorting().iterator();
+            for (int i = 0; i < count; i++) {
+                final Label label = iterator.next();
                 writePoint(label);
                 stream.writeUTF(label.getName());
+            }
+
+            while (iterator.hasNext()) {
+                final Label label = iterator.next();
+                writePoint(label);
+                stream.writeUTF(label.getName());
+                stream.writeFloat(label.getRotation());
             }
         }
 

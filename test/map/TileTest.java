@@ -10,9 +10,10 @@ import model.elements.IArea;
 import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
-import model.elements.IStreet;
+import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
+import model.elements.Way;
 import model.map.ITile;
 import model.map.Tile;
 
@@ -22,40 +23,40 @@ import org.junit.Test;
 public class TileTest {
 
     private ITile tile;
-    private LinkedList<IStreet> iStreets;
+    private LinkedList<Street> streets;
     private LinkedList<IWay> ways;
-    private LinkedList<IBuilding> iBuildings;
-    private LinkedList<IArea> iAreas;
+    private LinkedList<IBuilding> buildings;
+    private LinkedList<IArea> areas;
     private LinkedList<POI> pois;
 
     @Before
     public void setUp() {
-        iStreets = new LinkedList<IStreet>();
+        streets = new LinkedList<Street>();
 
-        final IStreet iStreet = new IStreet(new int[]{50, 80, 256}, new int[]{0, 20, 156}, 3, "Kaiserstrasse", 0);
-        iStreets.add(iStreet);
+        final Street Street = new Street(new int[]{50, 80, 256}, new int[]{0, 20, 156}, 3, "Kaiserstrasse", 0);
+        streets.add(Street);
 
-        iStreets.add(new IStreet(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1));
+        streets.add(new Street(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1));
 
-        final StreetNode streetNode = new StreetNode(0.9f, iStreet);
+        final StreetNode streetNode = new StreetNode(0.9f, Street);
 
         ways = new LinkedList<IWay>();
 
-        ways.add(new IWay(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg"));
+        ways.add(new Way(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg"));
 
-        iBuildings = new LinkedList<IBuilding>();
+        buildings = new LinkedList<IBuilding>();
 
-        iBuildings.add(IBuilding.create(new int[]{244, 235, 215, 224}, new int[]{119, 130, 115, 104}, streetNode, "15"));
+        buildings.add(IBuilding.create(new int[]{244, 235, 215, 224}, new int[]{119, 130, 115, 104}, streetNode, "15"));
 
-        iAreas = new LinkedList<IArea>();
+        areas = new LinkedList<IArea>();
 
         pois = new LinkedList<POI>();
         pois.add(new POI(240, 150, 3));
         pois.add(new POI(120, 50, 2));
         pois.add(new POI(40, 170, 0));
 
-        tile = new Tile(1, 3, 2, ways.toArray(new IWay[1]), iStreets.toArray(new IStreet[2]), iAreas.toArray(new IArea[0]),
-                iBuildings.toArray(new IBuilding[1]), pois.toArray(new POI[1]), new Label[0]);
+        tile = new Tile(1, 3, 2, ways.toArray(new IWay[1]), streets.toArray(new Street[2]), areas.toArray(new IArea[0]),
+                buildings.toArray(new IBuilding[1]), pois.toArray(new POI[1]), new Label[0]);
     }
 
     @Test
@@ -110,7 +111,7 @@ public class TileTest {
 
     @Test
     public void testSuccessfulBuildingSearch() {
-        assertEquals(iBuildings.get(0), tile.getBuilding(new Point(225, 120)));
+        assertEquals(buildings.get(0), tile.getBuilding(new Point(225, 120)));
     }
 
     @Test
@@ -120,21 +121,11 @@ public class TileTest {
 
     @Test
     public void testSuccessfulStreetNodeSearch() {
-        assertEquals(new StreetNode(0, iStreets.get(0)), tile.getStreetNode(new Point(0, 0)));
+        assertEquals(new StreetNode(0, streets.get(0)), tile.getStreetNode(new Point(0, 0)));
     }
 
     @Test
     public void testUnsuccessfulStreetNodeSearch() {
         assertNull(new Tile().getStreetNode(new Point(20, 20)));
-    }
-
-    @Test
-    public void testSuccessfulAddressSearch() {
-        assertEquals("Waldstrasse", tile.getAddress(new Point(150, 150)));
-    }
-
-    @Test
-    public void testUnsuccesfulAddressSearch() {
-        assertNull(new Tile().getAddress(new Point(30, 30)));
     }
 }

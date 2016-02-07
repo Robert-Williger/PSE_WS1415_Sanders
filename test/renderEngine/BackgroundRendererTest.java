@@ -9,13 +9,16 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
+import model.elements.Area;
 import model.elements.IArea;
 import model.elements.IBuilding;
 import model.elements.Label;
 import model.elements.POI;
 import model.elements.IStreet;
+import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
+import model.elements.Way;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.BackgroundRenderer;
@@ -41,13 +44,13 @@ public class BackgroundRendererTest {
     public static void setUpClass() {
         renderer = new BackgroundRenderer(new PixelConverter(1));
 
-        iAreas = new IArea[]{new IArea(new int[]{2, 5, 10, 3}, new int[]{2, 5, 3, 0}, 1)};
-        ways = new IWay[]{new IWay(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg")};
+        iAreas = new IArea[]{new Area(new int[]{2, 5, 10, 3}, new int[]{2, 5, 3, 0}, 1)};
+        ways = new IWay[]{new Way(new int[]{90, 120, 10}, new int[]{0, 150, 300}, 3, "Testweg")};
 
-        final IStreet iStreet = new IStreet(new int[]{0, 5, 20}, new int[]{0, 5, 10}, 1, "Kaiserstrasse", 0);
+        final IStreet iStreet = new Street(new int[]{0, 5, 20}, new int[]{0, 5, 10}, 1, "Kaiserstrasse", 0);
 
         iStreets = new IStreet[]{iStreet,
-                new IStreet(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1)};
+                new Street(new int[]{60, 60, 210, 200}, new int[]{150, 150, 80, 30}, 2, "Waldstrasse", 1)};
 
         final StreetNode streetNode = new StreetNode(0.9f, iStreet);
 

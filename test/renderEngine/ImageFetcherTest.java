@@ -195,11 +195,6 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public String getAddress(final Point coordinate) {
-            return null;
-        }
-
-        @Override
         public StreetNode getStreetNode(final Point coordinate) {
             return null;
         }

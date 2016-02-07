@@ -18,6 +18,26 @@ public class Street extends Way implements IStreet {
         }
     }
 
+    public Street(final int[] points, final int type, final String name, final int id) {
+        this(points, type, name, id, false);
+    }
+
+    @Deprecated
+    public Street(final int[] x, final int[] y, final int type, final String name, final int id, final boolean oneway) {
+        super(x, y, type, name);
+        this.length = calculateLength();
+        if (!oneway) {
+            this.id = id;
+        } else {
+            this.id = id | 0x80000000;
+        }
+    }
+
+    @Deprecated
+    public Street(final int[] x, final int[] y, final int type, final String name, final int id) {
+        this(x, y, type, name, id, false);
+    }
+
     @Override
     public int getLength() {
         return length;
@@ -90,7 +110,7 @@ public class Street extends Way implements IStreet {
 
     private class SubStreet implements IStreet {
         private final int[] subarray;
-        //TODO store me?
+        // TODO store me?
         private final int length;
 
         public SubStreet(final int[] subarray) {

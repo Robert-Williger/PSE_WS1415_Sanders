@@ -33,8 +33,6 @@ public interface ITile {
 
     Iterator<Label> getLabels();
 
-    String getAddress(Point coordinate);
-
     StreetNode getStreetNode(Point coordinate);
 
     IBuilding getBuilding(Point coordinate);

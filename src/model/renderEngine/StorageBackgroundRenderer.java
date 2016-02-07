@@ -129,14 +129,14 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         // primary street (orange + dark orange outline)
         wayMinZoomstep[14] = 7;
         wayStyles[14] = new WayStyle(wayMinZoomstep[14], new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 2.5f, 6f, 6f, 11f,
-                11f, 16f}, new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 3.4f, 7f, 7f, 12f, 12f, 17f}, new Color(230, 165,
-                65), new Color(211, 138, 29));
+                11f, 16f}, new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 3.4f, 7f, 7f, 12f, 12f, 17f}, new Color(248, 178,
+                156), new Color(240, 92, 43));
 
         // motorway (red/pink + gray red outline)
         wayMinZoomstep[15] = 5;
         wayStyles[15] = new WayStyle(wayMinZoomstep[15], new float[]{1, 1, 1.1225f, 1.1225f, 1.1225f, 1.25f, 2f, 3f,
                 6f, 13f, 13f, 13f, 17f}, new float[]{1, 1, 1, 1.1225f, 1.1225f, 1.25f, 2f, 4f, 7f, 14f, 14f, 14f, 18f},
-                new Color(220, 158, 158), new Color(194, 108, 108));
+                new Color(231, 145, 161), new Color(194, 108, 108));
 
         // trunk (green + gray green outline)
         wayMinZoomstep[16] = 5;
@@ -147,12 +147,12 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         // primary_link (see primary)
         wayMinZoomstep[17] = 11;
         wayStyles[17] = new WayStyle(wayMinZoomstep[17], new float[]{1, 1, 3, 3, 7, 7, 11, 11, 11}, new float[]{1, 1,
-                4, 4, 8, 8, 12, 12, 12}, new Color(230, 165, 65), new Color(211, 138, 29));
+                4, 4, 8, 8, 12, 12, 12}, new Color(248, 178, 156), new Color(240, 92, 43));
 
         // motorway_link (see motorway)
         wayMinZoomstep[18] = 11;
         wayStyles[18] = new WayStyle(wayMinZoomstep[18], new float[]{1, 1, 3, 3, 7, 7, 11, 11, 11}, new float[]{1, 1,
-                4, 4, 8, 8, 12, 12, 12}, new Color(220, 158, 158), new Color(194, 108, 108));
+                4, 4, 8, 8, 12, 12, 12}, new Color(231, 145, 161), new Color(194, 108, 108));
 
         // trunk_link (see trunk)
         wayMinZoomstep[19] = 11;
@@ -186,24 +186,24 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         areaStyles = new ShapeStyle[25];
 
         // forest (dark green)
-        areaStyles[0] = new ShapeStyle(1, new Color(172, 208, 157));
         areaMinZoomstep[0] = 8;
+        areaStyles[0] = new ShapeStyle(areaMinZoomstep[0], 1, new Color(172, 208, 157));
 
         // wood (dark green)
-        areaStyles[1] = new ShapeStyle(1, new Color(174, 209, 160));
         areaMinZoomstep[1] = 10;
+        areaStyles[1] = new ShapeStyle(areaMinZoomstep[1], 1, new Color(174, 209, 160));
 
         // scrub (dark green [brighter])
-        areaStyles[2] = new ShapeStyle(1, new Color(181, 226, 180));
         areaMinZoomstep[2] = 10;
+        areaStyles[2] = new ShapeStyle(areaMinZoomstep[2], 1, new Color(181, 226, 180));
 
         // grass / meadow / grassland ... (light yellow-green)
-        areaStyles[3] = new ShapeStyle(1, new Color(205, 236, 165));
         areaMinZoomstep[3] = 10;
+        areaStyles[3] = new ShapeStyle(areaMinZoomstep[3], 1, new Color(205, 236, 165));
 
         // grassfield (ligth grey-brown)
-        areaStyles[4] = new ShapeStyle(1, new Color(181, 181, 141));
         areaMinZoomstep[4] = 10;
+        areaStyles[4] = new ShapeStyle(areaMinZoomstep[4], 1, new Color(181, 181, 141));
 
         // residential / railway (gray)
         areaMinZoomstep[5] = 10;
@@ -211,16 +211,16 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 218, 218, 218), new Color(200, 200, 200));
 
         // water / reservoir (light blue)
-        areaStyles[6] = new ShapeStyle(1, new Color(181, 208, 208));
         areaMinZoomstep[6] = 8;
+        areaStyles[6] = new ShapeStyle(areaMinZoomstep[6], 1, new Color(181, 208, 208));
 
         // industrial (light purple)
-        areaStyles[7] = new ShapeStyle(1, new Color(223, 209, 214));
         areaMinZoomstep[7] = 12;
+        areaStyles[7] = new ShapeStyle(areaMinZoomstep[7], 1, new Color(223, 209, 214));
 
         // park (very light green)
-        areaStyles[8] = new ShapeStyle(1, new Color(205, 247, 201));
         areaMinZoomstep[8] = 14;
+        areaStyles[8] = new ShapeStyle(areaMinZoomstep[8], 1, new Color(205, 247, 201));
 
         // retail (light pink)
         areaMinZoomstep[9] = 12;
@@ -228,20 +228,20 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 216, 216), new Color(226, 200, 198));
 
         // heath / fell (light brown)
-        areaStyles[10] = new ShapeStyle(1, new Color(214, 217, 159));
         areaMinZoomstep[10] = 12;
+        areaStyles[10] = new ShapeStyle(areaMinZoomstep[10], 1, new Color(214, 217, 159));
 
         // sand (light yellow)
-        areaStyles[11] = new ShapeStyle(1, new Color(240, 228, 184));
         areaMinZoomstep[11] = 13;
+        areaStyles[11] = new ShapeStyle(areaMinZoomstep[11], 1, new Color(240, 228, 184));
 
         // mud /scree (very light pink-grey)
-        areaStyles[12] = new ShapeStyle(1, new Color(228, 219, 208));
         areaMinZoomstep[12] = 12;
+        areaStyles[12] = new ShapeStyle(areaMinZoomstep[12], 1, new Color(228, 219, 208));
 
         // quarry (gray)
-        areaStyles[13] = new ShapeStyle(1, new Color(195, 195, 195));
         areaMinZoomstep[13] = 12;
+        areaStyles[13] = new ShapeStyle(areaMinZoomstep[13], 1, new Color(195, 195, 195));
 
         // cemetery (darker green)
         areaMinZoomstep[14] = 13;
@@ -259,12 +259,12 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 237, 237, 237), new Color(200, 200, 200));
 
         // farmland (light orange-brown)
-        areaStyles[17] = new ShapeStyle(1, new Color(235, 221, 199));
         areaMinZoomstep[17] = 10;
+        areaStyles[17] = new ShapeStyle(areaMinZoomstep[17], 1, new Color(235, 221, 199));
 
         // playground (very light turquoise + light blue outline)
-        areaStyles[18] = new ShapeStyle(0, 1, new Color(204, 255, 241), new Color(148, 217, 197));
         areaMinZoomstep[18] = 15;
+        areaStyles[18] = new ShapeStyle(areaMinZoomstep[18], 0, 1, new Color(204, 255, 241), new Color(148, 217, 197));
 
         // pitch (light turquoise + dark green outline)
         areaMinZoomstep[19] = 14;
@@ -272,8 +272,8 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 new Color(138, 211, 175), new Color(111, 170, 141));
 
         // sports_centre stadium (turquoise)
-        areaStyles[20] = new ShapeStyle(1, new Color(51, 204, 153));
         areaMinZoomstep[20] = 14;
+        areaStyles[20] = new ShapeStyle(areaMinZoomstep[20], 1, new Color(51, 204, 153));
 
         // track (light turquoise + dark green outline)
         areaMinZoomstep[21] = 14;
@@ -281,8 +281,8 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
                 new Color(116, 220, 186), new Color(111, 170, 141));
 
         // golf_course (light green)
-        areaStyles[22] = new ShapeStyle(1, new Color(181, 226, 181));
         areaMinZoomstep[22] = 15;
+        areaStyles[22] = new ShapeStyle(areaMinZoomstep[22], 1, new Color(181, 226, 181));
 
         // school university college kindergarten (very light yellow)
         areaMinZoomstep[23] = 13;
@@ -366,11 +366,11 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
             return false;
         }
         while (iterator.hasNext()) {
-            final IArea iArea = iterator.next();
+            final IArea area = iterator.next();
 
-            if (areaMinZoomstep[iArea.getType()] <= zoom) {
-                final Path2D path = paths[iArea.getType()];
-                appendPath(iArea, tileLoc, zoom, path);
+            if (zoom >= areaMinZoomstep[area.getType()]) {
+                final Path2D path = paths[area.getType()];
+                appendPath(area, tileLoc, zoom, path);
                 rendered = true;
                 // TODO polygons sometimes do not have same start and endpoint!
                 // ... improve this
@@ -405,7 +405,7 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         for (final int[] layer : wayOrder) {
             for (final int way : layer) {
                 if (wayMinZoomstep[way] <= zoom && wayStyles[way].outlineStroke(g, zoom)) {
-                    g.draw(paths[way]);
+                    // g.draw(paths[way]);
                 }
             }
             for (final int way : layer) {
