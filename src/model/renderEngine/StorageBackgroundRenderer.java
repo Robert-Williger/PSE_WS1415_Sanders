@@ -46,23 +46,23 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         // pedestrian / living street / residential / unclassified (white +
         // light gray outline)
         wayMinZoomstep[0] = 13;
-        wayStyles[0] = new WayStyle(wayMinZoomstep[0], new float[]{1.5f, 3f, 6f, 9f, 12f, 13f, 14f}, new float[]{2.5f,
-                4f, 7f, 10f, 13f, 14f, 15f}, Color.WHITE, new Color(200, 200, 200));
+        wayStyles[0] = new WayStyle(wayMinZoomstep[0], new float[]{1.5f, 3f, 6f, 9f, 12f, 13f, 14f}, new float[]{1.5f,
+                3f, 6f, 10f, 13f, 14f, 15f}, Color.WHITE, new Color(200, 200, 200));
 
         // service (white + light gray outline, small)
         wayMinZoomstep[1] = 15;
-        wayStyles[1] = new WayStyle(wayMinZoomstep[1], new float[]{2, 2, 4, 6, 8}, new float[]{3, 3, 5, 7, 9},
+        wayStyles[1] = new WayStyle(wayMinZoomstep[1], new float[]{2, 2, 4, 6, 8}, new float[]{2, 2, 4, 7, 9},
                 Color.WHITE, new Color(200, 200, 200));
 
         // secondary (orange)
         wayMinZoomstep[2] = 9;
-        wayStyles[2] = new WayStyle(wayMinZoomstep[2], new float[]{1.1225f, 1.25f, 2f, 2f, 6f, 6f, 11f, 11f, 16f},
+        wayStyles[2] = new WayStyle(wayMinZoomstep[2], new float[]{1.1225f, 1.25f, 2f, 3f, 6f, 6f, 11f, 11f, 16f},
                 new float[]{1.1225f, 1.25f, 2f, 3f, 7f, 7f, 12f, 12f, 17f}, new Color(248, 213, 168), new Color(208,
                         167, 114));
 
         // tertiary (yellow)
         wayMinZoomstep[3] = 12;
-        wayStyles[3] = new WayStyle(wayMinZoomstep[3], new float[]{2f, 6f, 6f, 11f, 11f, 16f}, new float[]{3f, 7f, 7f,
+        wayStyles[3] = new WayStyle(wayMinZoomstep[3], new float[]{2f, 6f, 6f, 11f, 11f, 16f}, new float[]{2f, 7f, 7f,
                 12f, 12f, 17f}, new Color(248, 248, 186), new Color(200, 200, 200));
 
         // road (gray + darker gray outline)
@@ -128,36 +128,36 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
 
         // primary street (orange + dark orange outline)
         wayMinZoomstep[14] = 7;
-        wayStyles[14] = new WayStyle(wayMinZoomstep[14], new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 2.5f, 6f, 6f, 11f,
-                11f, 16f}, new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 3.4f, 7f, 7f, 12f, 12f, 17f}, new Color(248, 178,
+        wayStyles[14] = new WayStyle(wayMinZoomstep[14], new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 3.5f, 6f, 6f, 11f,
+                11f, 16f}, new float[]{0.5f, 1f, 1.1225f, 1.25f, 2f, 3.5f, 7f, 7f, 12f, 12f, 17f}, new Color(248, 178,
                 156), new Color(240, 92, 43));
 
         // motorway (red/pink + gray red outline)
         wayMinZoomstep[15] = 5;
-        wayStyles[15] = new WayStyle(wayMinZoomstep[15], new float[]{1, 1, 1.1225f, 1.1225f, 1.1225f, 1.25f, 2f, 3f,
+        wayStyles[15] = new WayStyle(wayMinZoomstep[15], new float[]{1, 1, 1.1225f, 1.1225f, 1.1225f, 1.25f, 2f, 4f,
                 6f, 13f, 13f, 13f, 17f}, new float[]{1, 1, 1, 1.1225f, 1.1225f, 1.25f, 2f, 4f, 7f, 14f, 14f, 14f, 18f},
                 new Color(231, 145, 161), new Color(194, 108, 108));
 
         // trunk (green + gray green outline)
         wayMinZoomstep[16] = 5;
-        wayStyles[16] = new WayStyle(wayMinZoomstep[16], new float[]{1, 1, 1, 1.1225f, 1.1225f, 1.25f, 2f, 3f, 6f, 13f,
+        wayStyles[16] = new WayStyle(wayMinZoomstep[16], new float[]{1, 1, 1, 1.1225f, 1.1225f, 1.25f, 2f, 4f, 6f, 13f,
                 13f, 13f, 17f}, new float[]{1, 1, 1, 1.1225f, 1.1225f, 1.25f, 2f, 4f, 7f, 14f, 14f, 14f, 18f},
                 new Color(148, 212, 148), new Color(131, 158, 131));
 
         // primary_link (see primary)
         wayMinZoomstep[17] = 11;
         wayStyles[17] = new WayStyle(wayMinZoomstep[17], new float[]{1, 1, 3, 3, 7, 7, 11, 11, 11}, new float[]{1, 1,
-                4, 4, 8, 8, 12, 12, 12}, new Color(248, 178, 156), new Color(240, 92, 43));
+                3, 4, 8, 8, 12, 12, 12}, new Color(248, 178, 156), new Color(240, 92, 43));
 
         // motorway_link (see motorway)
         wayMinZoomstep[18] = 11;
         wayStyles[18] = new WayStyle(wayMinZoomstep[18], new float[]{1, 1, 3, 3, 7, 7, 11, 11, 11}, new float[]{1, 1,
-                4, 4, 8, 8, 12, 12, 12}, new Color(231, 145, 161), new Color(194, 108, 108));
+                3, 4, 8, 8, 12, 12, 12}, new Color(231, 145, 161), new Color(194, 108, 108));
 
         // trunk_link (see trunk)
         wayMinZoomstep[19] = 11;
         wayStyles[19] = new WayStyle(wayMinZoomstep[19], new float[]{1, 1, 3, 3, 7, 7, 11, 11, 11}, new float[]{1, 1,
-                4, 4, 8, 8, 12, 12, 12}, new Color(148, 212, 148), new Color(131, 158, 131));
+                3, 4, 8, 8, 12, 12, 12}, new Color(148, 212, 148), new Color(131, 158, 131));
 
         // track[career] (dark green)
         wayMinZoomstep[20] = 17;
@@ -405,7 +405,7 @@ public class StorageBackgroundRenderer extends AbstractRenderer implements IRend
         for (final int[] layer : wayOrder) {
             for (final int way : layer) {
                 if (wayMinZoomstep[way] <= zoom && wayStyles[way].outlineStroke(g, zoom)) {
-                    // g.draw(paths[way]);
+                    g.draw(paths[way]);
                 }
             }
             for (final int way : layer) {

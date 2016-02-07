@@ -143,19 +143,28 @@ public class MapController extends AbstractController<IMapView> {
 
         view.addMapListener(new IMapListener() {
 
-            private Point start;
-            private int x;
-            private int y;
+            private final Point startPoint;
+            private final Point movement;
+            private long startTime;
+            private long elapsedTime;
+            private boolean pressed;
+            private static final int SCALE_FACTOR = 10_000_000;
+
+            {
+                startPoint = new Point();
+                movement = new Point();
+            }
 
             @Override
             public void mouseDragged(final MouseEvent e) {
-                if (start != null) { // Check whether left button was pressed
-                                     // before
-                    application.getMap().moveView(start.x - e.getX(), start.y - e.getY());
-                    x = start.x - e.getX();
-                    y = start.y - e.getY();
+                if (pressed) {
+                    movement.setLocation(startPoint.x - e.getX(), startPoint.y - e.getY());
+                    application.getMap().moveView(movement.x, movement.y);
+                    long time = System.nanoTime();
+                    elapsedTime = time - startTime;
+                    startTime = time;
                     application.getImageLoader().update();
-                    start = e.getPoint();
+                    startPoint.setLocation(e.getX(), e.getY());
                 }
 
                 // TODO scale smooth drag to sample rate of mouse!
@@ -175,7 +184,9 @@ public class MapController extends AbstractController<IMapView> {
             @Override
             public void mousePressed(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    start = e.getPoint();
+                    pressed = true;
+                    startTime = System.nanoTime();
+                    startPoint.setLocation(e.getX(), e.getY());
                     smoothDrag.haltSpeed();
                 }
             }
@@ -183,10 +194,11 @@ public class MapController extends AbstractController<IMapView> {
             @Override
             public void mouseReleased(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    start = null;
-                    smoothDrag.setSpeed(x, y);
-                    x = 0;
-                    y = 0;
+                    pressed = false;
+                    if (elapsedTime != 0) {
+                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000), (int) (movement.getY()
+                                / elapsedTime * 10_000_000));
+                    }
                 }
             }
 
