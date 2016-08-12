@@ -1,58 +1,45 @@
 package model.map;
 
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 
-public class AddressNode {
+public class AddressNode extends AccessPoint {
 
     private final String address;
-    private final StreetNode streetNode;
 
-    public AddressNode(final String address, final StreetNode streetNode) {
+    public AddressNode(final String address, final float offset, final int street) {
+        super(offset, street);
         this.address = address;
-        this.streetNode = streetNode;
     }
 
     public String getAddress() {
         return address;
     }
 
-    public StreetNode getStreetNode() {
-        return streetNode;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((address == null) ? 0 : address.hashCode());
-        result = prime * result + ((streetNode == null) ? 0 : streetNode.hashCode());
         return result;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof AddressNode)) {
             return false;
         }
-        final AddressNode other = (AddressNode) obj;
+        AddressNode other = (AddressNode) obj;
         if (address == null) {
             if (other.address != null) {
                 return false;
             }
         } else if (!address.equals(other.address)) {
-            return false;
-        }
-        if (streetNode == null) {
-            if (other.streetNode != null) {
-                return false;
-            }
-        } else if (!streetNode.equals(other.streetNode)) {
             return false;
         }
         return true;

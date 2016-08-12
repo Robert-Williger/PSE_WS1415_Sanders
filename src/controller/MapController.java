@@ -95,7 +95,7 @@ public class MapController extends AbstractController<IMapView> {
                     final IRoutePointView view = (IRoutePointView) e.getSource();
                     final IRoutePoint point = view.getRoutePoint();
                     if (e.getClickCount() == 2) {
-                        application.getMap().center(point.getStreetNode().getLocation());
+                        application.getMap().center(point.getLocation());
                         application.getImageLoader().update();
                     }
                 }
@@ -196,9 +196,10 @@ public class MapController extends AbstractController<IMapView> {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     pressed = false;
                     if (elapsedTime != 0) {
-                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000), (int) (movement.getY()
-                                / elapsedTime * 10_000_000));
+                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * SCALE_FACTOR),
+                                (int) (movement.getY() / elapsedTime * SCALE_FACTOR));
                     }
+                    movement.setLocation(0, 0);
                 }
             }
 

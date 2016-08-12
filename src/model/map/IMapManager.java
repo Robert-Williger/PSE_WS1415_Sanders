@@ -3,21 +3,23 @@ package model.map;
 import java.awt.Dimension;
 import java.awt.Point;
 
+import model.elements.dereferencers.ITileDereferencer;
+
 public interface IMapManager {
 
-    ITile getTile(long tileID);
+    long getTileID(Point coordinate, int zoomStep);
 
-    ITile getTile(Point coordinate, int zoomStep);
+    long getTileID(int row, int column, int zoomStep);
 
-    ITile getTile(int row, int column, int zoomStep);
+    int getRows();
+
+    int getColumns();
 
     Dimension getTileSize();
 
     AddressNode getAddressNode(Point coordinate);
 
-    int getRows();
-
-    int getColumns();
+    AddressNode getAddressNode(Point coordinate, final int zoomStep);
 
     Point getCurrentGridLocation();
 
@@ -28,5 +30,7 @@ public interface IMapManager {
     IMapState getMapState();
 
     IPixelConverter getConverter();
+
+    ITileDereferencer createTileDereferencer();
 
 }

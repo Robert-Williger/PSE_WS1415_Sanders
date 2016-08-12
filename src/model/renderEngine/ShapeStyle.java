@@ -7,29 +7,12 @@ import java.awt.Shape;
 import java.awt.Stroke;
 
 public class ShapeStyle {
-    protected final int minZoomStep;
-    protected final Color mainColor;
-    protected final Color outlineColor;
+    protected int minZoomStep;
+    protected Color mainColor;
+    protected Color outlineColor;
 
-    protected final Stroke[] mainStrokes;
-    protected final Stroke[] outlineStrokes;
-
-    // add minZoomstep & maxZoomstep -> zoom only in range (-> width)
-    /*
-     * public ShapeStyle(final float mainWidth, final float outlineWidth, final
-     * Color mainColor, final Color outlineColor, final int cap, final int join)
-     * { this(0, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor,
-     * outlineColor, cap, join); }
-     * 
-     * 
-     * 
-     * public ShapeStyle(final float mainWidth, final Color mainColor, final int
-     * cap, final int join) { this(mainWidth, 0f, mainColor, null, cap, join); }
-     * 
-     * public ShapeStyle(final float mainWidth, final Color mainColor) {
-     * this(mainWidth, mainColor, BasicStroke.CAP_ROUND,
-     * BasicStroke.JOIN_ROUND); }
-     */
+    protected Stroke[] mainStrokes;
+    protected Stroke[] outlineStrokes;
 
     public ShapeStyle(final int minZoomStep, final float mainWidth, final Color mainColor) {
         this(minZoomStep, mainWidth, 0, mainColor, null);
@@ -59,7 +42,6 @@ public class ShapeStyle {
         } else {
             outlineStrokes = createOutlineCompositeStrokes(outlineWidth, mainWidth, cap, join);
         }
-
     }
 
     private Stroke[] createMainStrokes(final float[] mainWidth, final int cap, final int join) {
@@ -117,6 +99,10 @@ public class ShapeStyle {
         }
 
         return false;
+    }
+
+    public boolean isVisible(final int zoomStep) {
+        return zoomStep >= minZoomStep;
     }
 
     public boolean outlineStroke(final Graphics2D g, final int zoomStep) {

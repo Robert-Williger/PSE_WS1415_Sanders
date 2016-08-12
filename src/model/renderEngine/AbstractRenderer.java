@@ -1,24 +1,33 @@
 package model.renderEngine;
 
-import java.awt.Image;
-import java.awt.Point;
-
 import model.AbstractModel;
+import model.elements.dereferencers.ITileDereferencer;
+import model.map.IMapManager;
 import model.map.IPixelConverter;
-import model.map.ITile;
 
 public abstract class AbstractRenderer extends AbstractModel implements IRenderer {
 
     protected IPixelConverter converter;
+    protected ITileDereferencer tile;
 
-    @Override
-    public void setConverter(final IPixelConverter converter) {
-        this.converter = converter;
+    protected int zoom;
+    protected int x;
+    protected int y;
+
+    public AbstractRenderer(final IMapManager manager) {
+        setMapManager(manager);
     }
 
-    protected Point getTileLocation(final ITile tile, final Image image) {
-        final int zoom = tile.getZoomStep();
-        return new Point(tile.getColumn() * converter.getCoordDistance(image.getWidth(null), zoom), tile.getRow()
-                * converter.getCoordDistance(image.getHeight(null), zoom));
+    @Override
+    public void setMapManager(final IMapManager manager) {
+        this.converter = manager.getConverter();
+        this.tile = manager.createTileDereferencer();
+    }
+
+    protected void setTileID(final long id) {
+        tile.setID(id);
+        this.zoom = tile.getZoomStep();
+        this.x = tile.getX();
+        this.y = tile.getY();
     }
 }

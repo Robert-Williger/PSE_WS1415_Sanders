@@ -86,12 +86,12 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public ITile getTile(final Point coordinate, final int zoomStep) {
+        public ITile getTileID(final Point coordinate, final int zoomStep) {
             return null;
         }
 
         @Override
-        public ITile getTile(final int row, final int column, final int zoomStep) {
+        public ITile getTileID(final int row, final int column, final int zoomStep) {
             return null;
         }
 

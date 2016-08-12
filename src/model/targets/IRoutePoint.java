@@ -3,15 +3,17 @@ package model.targets;
 import java.awt.Point;
 
 import model.IModel;
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 
 public interface IRoutePoint extends IModel {
 
     void addPointListener(IPointListener listener);
 
+    void removePointListener(IPointListener listener);
+
     void setAddress(String address);
 
-    void setStreetNode(StreetNode node);
+    void setAccessPoint(AccessPoint point);
 
     void setListIndex(int index);
 
@@ -31,6 +33,6 @@ public interface IRoutePoint extends IModel {
 
     PointState getState();
 
-    StreetNode getStreetNode();
+    AccessPoint getAccessPoint();
 
 }

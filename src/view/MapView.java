@@ -1,8 +1,9 @@
 package view;
 
-import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
@@ -10,7 +11,6 @@ import java.util.HashMap;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -24,8 +24,6 @@ import model.targets.IRoutePoint;
 public class MapView extends JPanel implements IMapView {
     private static final long serialVersionUID = 1L;
 
-    private final JViewport viewport;
-    private final MapLayer mapLayer;
     private final PointLayer pointLayer;
 
     private final ChangeListener mapListener;
@@ -34,16 +32,13 @@ public class MapView extends JPanel implements IMapView {
     private IMap map;
 
     public MapView(final IImageLoader loader, final IPointList list, final IMap map) {
-        viewport = new JViewport();
         pointLayer = new PointLayer();
-        mapLayer = new MapLayer();
 
         mapListener = new ChangeListener() {
 
             @Override
             public void stateChanged(final ChangeEvent e) {
-                pointLayer.repaint();
-                viewport.setViewPosition(MapView.this.map.getViewLocation());
+                repaint();
             }
 
         };
@@ -68,25 +63,19 @@ public class MapView extends JPanel implements IMapView {
 
     public void setModels(final IImageLoader loader, final IPointList list, final IMap map) {
         this.map = map;
-        mapLayer.setLoader(loader);
+        removeAll();
+        add(pointLayer);
+        setLoader(loader);
         pointLayer.reset();
         list.addPointListListener(pointListListener);
         map.addChangeListener(mapListener);
-
-        viewport.setViewPosition(map.getViewLocation());
     }
 
     private void initialize() {
         setLayout(new FullLayout());
         setOpaque(false);
 
-        viewport.setView(mapLayer);
-
-        viewport.setOpaque(false);
-
         add(pointLayer);
-        add(viewport);
-
     }
 
     @Override
@@ -106,53 +95,26 @@ public class MapView extends JPanel implements IMapView {
     public Image createScreenshot() {
         final BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
-        paint(image.getGraphics());
+        final Graphics2D g = image.createGraphics();
+        paint(g);
+        g.dispose();
 
         return image;
     }
 
-    private class MapLayer extends JPanel {
-        private static final long serialVersionUID = 1L;
+    public void setLoader(final IImageLoader loader) {
+        final ChangeListener listener = new ChangeListener() {
 
-        private IImageLoader loader;
-
-        private int tileWidth;
-        private int tileHeight;
-
-        public MapLayer() {
-            super(new FullLayout());
-            setOpaque(false);
-        }
-
-        public void setLoader(final IImageLoader loader) {
-            this.loader = loader;
-
-            final Image image = loader.getImageAccessors().get(0).getImage(0, 0);
-            tileWidth = image.getWidth(null);
-            tileHeight = image.getHeight(null);
-
-            removeAll();
-
-            final ChangeListener listener = new ChangeListener() {
-
-                @Override
-                public void stateChanged(final ChangeEvent e) {
-                    MapView.this.repaint();
-                }
-
-            };
-            for (final IImageAccessor accessor : loader.getImageAccessors()) {
-                final PaintingLayer layer = new PaintingLayer(accessor);
-                accessor.addChangeListener(listener);
-                add(layer);
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                MapView.this.repaint();
             }
-        }
 
-        @Override
-        public Dimension getPreferredSize() {
-            return new Dimension(loader.getImageAccessors().get(0).getColumns() * tileWidth, loader.getImageAccessors()
-                    .get(0).getRows()
-                    * tileHeight);
+        };
+        for (final IImageAccessor accessor : loader.getImageAccessors()) {
+            final PaintingLayer layer = new PaintingLayer(accessor);
+            accessor.addChangeListener(listener);
+            add(layer);
         }
     }
 
@@ -164,6 +126,7 @@ public class MapView extends JPanel implements IMapView {
         private int tileHeight;
 
         public PaintingLayer(final IImageAccessor accessor) {
+            setDoubleBuffered(false);
             this.accessor = accessor;
             final Image image = accessor.getImage(0, 0);
             tileWidth = image.getWidth(null);
@@ -175,10 +138,14 @@ public class MapView extends JPanel implements IMapView {
         @Override
         public void paint(final Graphics g) {
             if (accessor.isVisible()) {
+                final Point location = map.getViewLocation();
                 for (int row = 0; row < accessor.getRows(); row++) {
                     for (int column = 0; column < accessor.getColumns(); column++) {
                         final Image image = accessor.getImage(row, column);
-                        g.drawImage(image, column * tileWidth, row * tileHeight, this);
+                        g.drawImage(image, column * tileWidth - location.x, row * tileHeight - location.y, this);
+                        // g.drawRect(column * tileWidth - location.x, row *
+                        // tileHeight - location.y, tileWidth,
+                        // tileHeight);
                     }
                 }
             }
@@ -211,8 +178,8 @@ public class MapView extends JPanel implements IMapView {
                 public void mouseWheelMoved(final MouseWheelEvent e) {
                     // TODO improve this?
                     MapView.this.processMouseWheelEvent(new MouseWheelEvent(MapView.this, e.getID(), e.getWhen(), e
-                            .getModifiers(), e.getX() - viewport.getX(), e.getY() - viewport.getY(), e.getClickCount(),
-                            e.isPopupTrigger(), e.getScrollType(), e.getScrollAmount(), e.getWheelRotation()));
+                            .getModifiers(), e.getX() - getX(), e.getY() - getY(), e.getClickCount(), e
+                            .isPopupTrigger(), e.getScrollType(), e.getScrollAmount(), e.getWheelRotation()));
                 }
             });
             add(view);

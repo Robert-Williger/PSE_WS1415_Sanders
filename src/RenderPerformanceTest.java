@@ -17,7 +17,7 @@ import model.map.IMapManager;
 import model.renderEngine.AbstractImageFetcher;
 import model.renderEngine.IImageFetcher;
 import model.renderEngine.IRenderer;
-import model.renderEngine.StorageBackgroundRenderer;
+import model.renderEngine.BackgroundRenderer;
 
 public class RenderPerformanceTest {
 
@@ -44,7 +44,7 @@ public class RenderPerformanceTest {
 
         reader.read(new File("default.map"));
         final IMapManager manager = reader.getMapManager();
-        final IImageFetcher fetcher = new ImageFetcher(new StorageBackgroundRenderer(manager.getConverter()), manager);
+        final IImageFetcher fetcher = new ImageFetcher(new BackgroundRenderer(manager.getConverter()), manager);
 
         System.out.println("Read test data");
 

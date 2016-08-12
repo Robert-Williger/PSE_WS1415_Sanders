@@ -2,21 +2,20 @@ package model;
 
 import java.util.List;
 
-import model.elements.IStreet;
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 
 public interface ITextProcessor {
 
     List<String> suggest(String address);
 
-    StreetNode parse(String address);
+    AccessPoint parse(String address);
 
     public static class Entry {
-        private final IStreet iStreet;
+        private final int street;
         private final String city;
 
-        public Entry(final IStreet iStreet, final String city) {
-            this.iStreet = iStreet;
+        public Entry(final int street, final String city) {
+            this.street = street;
             this.city = city;
         }
 
@@ -24,8 +23,8 @@ public interface ITextProcessor {
             return city;
         }
 
-        public IStreet getStreet() {
-            return iStreet;
+        public int getStreet() {
+            return street;
         }
     }
 }

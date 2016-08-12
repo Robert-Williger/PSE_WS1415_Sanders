@@ -78,7 +78,7 @@ public class WayStyle extends ShapeStyle {
         this(minZoomStep, mainWidth, mainColor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     }
 
-    public Stroke[] createMiddleLineStrokes(final float[] middleLineWidths, final float[] dash,
+    private Stroke[] createMiddleLineStrokes(final float[] middleLineWidths, final float[] dash,
             final float[] dashSpacing) {
 
         final Stroke[] ret;

@@ -31,6 +31,12 @@ public abstract class AbstractTile implements ITile {
     }
 
     @Override
+    public String toString() {
+        return "AbstractTile [id=" + id + ", row = " + getRow() + ", column = " + getColumn() + ", zoomstep = "
+                + getZoomStep() + "]";
+    }
+
+    @Override
     public final int getZoomStep() {
         return (int) (id >> 58);
     }

@@ -1,13 +1,12 @@
 package model.routing;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.AbstractModel;
 import model.IProgressListener;
-import model.elements.IStreet;
-import model.elements.StreetNode;
 import model.map.IMapManager;
 import model.renderEngine.IRenderRoute;
 import model.renderEngine.RenderRoute;
@@ -24,16 +23,18 @@ public class RouteManager extends AbstractModel implements IRouteManager {
 
     private final IRouteSolver[] routeSolvers;
     private final String[] routeSolverNames;
+    private final IAccessPointConverter converter;
 
     private int routeSolver;
     private boolean calculating;
 
-    public RouteManager(final IDirectedGraph graph, final IMapManager manager) {
+    public RouteManager(final IDirectedGraph graph, final IMapManager manager, final IAccessPointConverter converter) {
         this.graph = graph;
         this.manager = manager;
 
         this.routeSolverNames = createNames();
         this.routeSolvers = createRouteSolvers(graph);
+        this.converter = converter;
 
         setRouteSolver(0);
 
@@ -47,14 +48,15 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     private List<InterNode> createInterNodeList() {
         final List<InterNode> interNodeList = new ArrayList<InterNode>(pointList.size());
 
-        for (int i = 0; i < pointList.size(); i++) {
-            final StreetNode streetNode = pointList.get(i).getStreetNode();
-            final IStreet street = streetNode.getStreet();
+        // for (int i = 0; i < pointList.size(); i++) {
+        for (final IRoutePoint point : pointList) {
+            final InterNode interNode = converter.convert(point.getAccessPoint());
+            /*- final IStreet street = accessPoint.getStreet();
 
             // TODO own instance for mapping from id to graph edges?
             int edge = street.getID();
             int correspondingEdge = !street.isOneWay() ? (street.getID() | 0x80000000) : -1;
-            final InterNode interNode = new InterNode(edge, correspondingEdge, streetNode.getOffset());
+            final InterNode interNode = new InterNode(edge, correspondingEdge, accessPoint.getOffset());*/
             interNodeList.add(interNode);
         }
         return interNodeList;
@@ -68,13 +70,13 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int maxY = Integer.MIN_VALUE;
 
         for (final IRoutePoint routePoint : pointList) {
-            final int x = routePoint.getStreetNode().getX();
-            final int y = routePoint.getStreetNode().getY();
-            minX = Math.min(minX, x);
-            maxX = Math.max(maxX, x);
+            Point location = routePoint.getLocation();
 
-            minY = Math.min(minY, y);
-            maxY = Math.max(maxY, y);
+            minX = Math.min(minX, location.x);
+            maxX = Math.max(maxX, location.x);
+
+            minY = Math.min(minY, location.y);
+            maxY = Math.max(maxY, location.y);
         }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);

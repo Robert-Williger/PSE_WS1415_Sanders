@@ -84,7 +84,7 @@ abstract class AbstractActionState extends AbstractState {
             final IRoutePoint routePoint = getPoint();
 
             routePoint.setAddress(node.getAddress());
-            routePoint.setStreetNode(node.getStreetNode());
+            routePoint.setAccessPoint(node);
             routePoint.setLocation(null);
             getSidebarView().setCancelable(true);
 

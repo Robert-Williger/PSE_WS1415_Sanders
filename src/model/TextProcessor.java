@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 
 /*
  * First Implementation of TextProcessing.
@@ -13,7 +13,7 @@ import model.elements.StreetNode;
  */
 public class TextProcessor implements ITextProcessor {
 
-    private final HashMap<String, StreetNode> hm;
+    private final HashMap<String, AccessPoint> hm;
     private final int numberOfSuggestions;
 
     /**
@@ -24,7 +24,7 @@ public class TextProcessor implements ITextProcessor {
      * @param numberOfSuggestions
      *            Number of suggestions, which will be return as list.
      */
-    public TextProcessor(final HashMap<String, StreetNode> hashmap, final int numberOfSuggestions) {
+    public TextProcessor(final HashMap<String, AccessPoint> hashmap, final int numberOfSuggestions) {
         hm = hashmap;
         this.numberOfSuggestions = numberOfSuggestions;
     }
@@ -71,7 +71,7 @@ public class TextProcessor implements ITextProcessor {
     }
 
     @Override
-    public StreetNode parse(final String address) {
+    public AccessPoint parse(final String address) {
         return hm.get(address);
     }
 

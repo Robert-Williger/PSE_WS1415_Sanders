@@ -135,17 +135,17 @@ public class MapManagerTest {
 
     @Test
     public void testTileByCoord() {
-        assertEquals(tiles[1][2][2], manager.getTile(new Point(512, 512), 1));
+        assertEquals(tiles[1][2][2], manager.getTileID(new Point(512, 512), 1));
     }
 
     @Test
     public void testTileByZRC() {
-        assertEquals(tiles[1][2][3], manager.getTile(2, 3, 1));
+        assertEquals(tiles[1][2][3], manager.getTileID(2, 3, 1));
     }
 
     @Test
     public void testTileInvalid() {
-        assertEquals(-1, manager.getTile(0, 0, 3).getID());
+        assertEquals(-1, manager.getTileID(0, 0, 3).getID());
     }
 
     @Test

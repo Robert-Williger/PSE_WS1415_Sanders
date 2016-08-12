@@ -2,7 +2,7 @@ package controller.stateMachine;
 
 import java.util.List;
 
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 import model.targets.IRoutePoint;
 
 abstract class AbstractEditingTextedState extends AbstractEditingState {
@@ -10,11 +10,11 @@ abstract class AbstractEditingTextedState extends AbstractEditingState {
     @Override
     public IState searchPoint() {
         final String address = getStore().getCurrentAddress();
-        final StreetNode node = getTextProcessor().parse(address);
-        if (node != null) {
+        final AccessPoint accessPoint = getTextProcessor().parse(address);
+        if (accessPoint != null) {
             final IRoutePoint point = getPoint();
             point.setAddress(address);
-            point.setStreetNode(node);
+            point.setAccessPoint(accessPoint);
 
             return EditingChangedState.getInstance();
         }

@@ -5,8 +5,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import model.elements.AccessPoint;
 import model.elements.Label;
-import model.elements.StreetNode;
+import model.elements.dereferencers.IStreetDereferencer;
 import model.map.AddressNode;
 import model.map.IMapManager;
 
@@ -43,13 +44,16 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private Tree setupIndex(final Entry[][] entries, final Label[] labels, final IMapManager manager) {
         final Tree root = new Tree("", null, null);
 
+        final IStreetDereferencer dereferencer = manager.createTileDereferencer().getStreetDereferencer();
+        // TODO do not explictly store as AccessPoint
         maxStringLength = 0;
         for (final Entry[] entry : entries) {
             for (int i = 0; i < entry.length; i++) {
-                final String streetName = entry[i].getStreet().getName();
+                dereferencer.setID(entry[i].getStreet());
+                final String streetName = dereferencer.getName();
                 final String cityName = entry[i].getCity();
                 final String realName = streetName + " " + cityName;
-                final StreetNode node = new StreetNode(0.5f, entry[i].getStreet());
+                final AccessPoint node = new AccessPoint(0.5f, entry[i].getStreet());
                 // TODO order by size of city
                 add(normalize(streetName + " " + cityName), realName, root, node);
                 add(normalize(cityName + " " + streetName), realName, root, node);
@@ -61,7 +65,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             if (label.getType() != 30) {
                 final AddressNode addressNode = manager.getAddressNode(label.getLocation());
                 if (addressNode != null) {
-                    add(normalize(label.getName()), label.getName(), root, addressNode.getStreetNode());
+                    add(normalize(label.getName()), label.getName(), root, addressNode);
                 }
             }
         }
@@ -82,15 +86,15 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return distance;
     }
 
-    private void add(final String normalizedName, final String realName, final Tree tree, final StreetNode streetNode) {
+    private void add(final String normalizedName, final String realName, final Tree tree, final AccessPoint accessPoint) {
         if (normalizedName.length() > maxStringLength) {
             maxStringLength = normalizedName.length();
         }
-        add(normalizedName, realName, streetNode, tree, 0);
+        add(normalizedName, realName, accessPoint, tree, 0);
     }
 
-    private void add(final String normalizedName, final String realName, final StreetNode streetNode, final Tree root,
-            int index) {
+    private void add(final String normalizedName, final String realName, final AccessPoint accessPoint,
+            final Tree root, int index) {
 
         if (normalizedName.length() > 1) {
             for (final Iterator<Tree> iterator = root.getChildren().iterator(); iterator.hasNext();) {
@@ -105,7 +109,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
                             iterator.remove();
                             final Tree splitNode = new Tree(normalizedName.substring(0, index), null, null);
                             splitNode.addChild(child);
-                            splitNode.addChild(new Tree(normalizedName, realName, streetNode));
+                            splitNode.addChild(new Tree(normalizedName, realName, accessPoint));
                             root.getChildren().add(splitNode);
                             return;
                         }
@@ -114,22 +118,22 @@ public class AdvancedTextProcessor implements ITextProcessor {
                     if (normalizedName.length() == index) {
                         if (child.getIndexName().length() != index) {
                             iterator.remove();
-                            final Tree splitNode = new Tree(normalizedName, realName, streetNode);
+                            final Tree splitNode = new Tree(normalizedName, realName, accessPoint);
                             splitNode.addChild(child);
                             root.getChildren().add(splitNode);
                         } else if (child.getName() == null) {
                             child.setName(realName);
-                            child.setStreetNode(streetNode);
+                            child.setAccessPoint(accessPoint);
                         }
                         return;
                     }
-                    add(normalizedName, realName, streetNode, child, index);
+                    add(normalizedName, realName, accessPoint, child, index);
                     return;
                 }
 
             }
 
-            root.getChildren().add(new Tree(normalizedName, realName, streetNode));
+            root.getChildren().add(new Tree(normalizedName, realName, accessPoint));
         }
     }
 
@@ -205,11 +209,11 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     @Override
-    public StreetNode parse(final String address) {
+    public AccessPoint parse(final String address) {
         return parse(indexRoot, normalize(address), 0);
     }
 
-    private StreetNode parse(final SortedTree root, final String input, int index) {
+    private AccessPoint parse(final SortedTree root, final String input, int index) {
         final SortedTree child = binarySearch(root, input, index);
         int childLength;
         if (child == null || (childLength = child.getIndexName().length()) > input.length()) {
@@ -223,7 +227,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             ++index;
         }
 
-        return index == input.length() ? child.getStreetNode() : parse(child, input, index);
+        return index == input.length() ? child.getAccessPoint() : parse(child, input, index);
     }
 
     // TODO fit edit costs --> nearby keys lower costs than far away ones
@@ -365,12 +369,12 @@ public class AdvancedTextProcessor implements ITextProcessor {
         private String name;
         private final String indexName;
         private final List<Tree> children;
-        private StreetNode streetNode;
+        private AccessPoint accessPoint;
 
-        public Tree(final String indexName, final String name, final StreetNode streetNode) {
+        public Tree(final String indexName, final String name, final AccessPoint accessPoint) {
             this.indexName = indexName;
             this.name = name;
-            this.streetNode = streetNode;
+            this.accessPoint = accessPoint;
             children = new LinkedList<Tree>();
         }
 
@@ -382,8 +386,8 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return indexName;
         }
 
-        public void setStreetNode(final StreetNode node) {
-            this.streetNode = node;
+        public void setAccessPoint(final AccessPoint accessPoint) {
+            this.accessPoint = accessPoint;
         }
 
         public List<Tree> getChildren() {
@@ -416,7 +420,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 children = emptyChildren;
             }
 
-            return new SortedTree(indexName, name, streetNode, children);
+            return new SortedTree(indexName, name, accessPoint, children);
         }
     }
 
@@ -424,13 +428,13 @@ public class AdvancedTextProcessor implements ITextProcessor {
         private final String name;
         private final String indexName;
         private final SortedTree[] children;
-        private final StreetNode streetNode;
+        private final AccessPoint accessPoint;
 
-        public SortedTree(final String indexName, final String name, final StreetNode streetNode,
+        public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
                 final SortedTree[] children) {
             this.indexName = indexName;
             this.name = name;
-            this.streetNode = streetNode;
+            this.accessPoint = accessPoint;
             this.children = children;
         }
 
@@ -438,8 +442,8 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return indexName;
         }
 
-        public StreetNode getStreetNode() {
-            return streetNode;
+        public AccessPoint getAccessPoint() {
+            return accessPoint;
         }
 
         public SortedTree[] getChildren() {

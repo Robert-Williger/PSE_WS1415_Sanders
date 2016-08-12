@@ -24,13 +24,13 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
     @Override
     public void removeChangeListener(final ChangeListener listener) {
         super.removeChangeListener(listener);
-        imageFetcher.getRenderer().removeChangeListener(listener);
+        imageFetcher.removeChangeListener(listener);
     }
 
     @Override
     public void addChangeListener(final ChangeListener listener) {
         super.addChangeListener(listener);
-        imageFetcher.getRenderer().addChangeListener(listener);
+        imageFetcher.addChangeListener(listener);
     }
 
     @Override
@@ -58,8 +58,8 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     @Override
     public Image getImage(final int row, final int column) {
-        final long tileID = mapManager.getTile(row + mapManager.getCurrentGridLocation().y,
-                column + mapManager.getCurrentGridLocation().x, mapManager.getMapState().getZoomStep()).getID();
+        final long tileID = mapManager.getTileID(row + mapManager.getCurrentGridLocation().y,
+                column + mapManager.getCurrentGridLocation().x, mapManager.getMapState().getZoomStep());
         return imageFetcher.getImage(tileID);
     }
 

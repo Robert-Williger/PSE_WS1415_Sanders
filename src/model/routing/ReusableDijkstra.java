@@ -78,6 +78,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
         }
     }
 
+    // TODO ?
     private void initializeEndNode(final int edge, final int index) {
         final int node = graph.getStartNode(edge);
         endNodeSet.add(node);

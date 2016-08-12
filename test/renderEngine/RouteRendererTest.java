@@ -59,9 +59,9 @@ public class RouteRendererTest {
 
         final MapManager emptyMapManager = new MapManager();
         final RoutePoint rPoint1 = new RoutePoint(emptyMapManager);
-        rPoint1.setStreetNode(new StreetNode(0.2f, newStreet));
+        rPoint1.setAccessPoint(new StreetNode(0.2f, newStreet));
         final RoutePoint rPoint2 = new RoutePoint(emptyMapManager);
-        rPoint2.setStreetNode(new StreetNode(0.8f, newStreet));
+        rPoint2.setAccessPoint(new StreetNode(0.8f, newStreet));
 
         pList = new PointList();
         pList.add(rPoint1);

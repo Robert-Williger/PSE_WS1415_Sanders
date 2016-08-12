@@ -17,7 +17,7 @@ import model.elements.Way;
 import model.map.PixelConverter;
 import model.map.Tile;
 import model.renderEngine.IRenderer;
-import model.renderEngine.StorageBackgroundRenderer;
+import model.renderEngine.BackgroundRenderer;
 
 public class ColorExplanation extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -30,7 +30,7 @@ public class ColorExplanation extends JFrame {
 
         image = new BufferedImage(1280, 1024, BufferedImage.TYPE_INT_ARGB);
 
-        final IRenderer renderer = new StorageBackgroundRenderer(new PixelConverter(1 << 19));
+        final IRenderer renderer = new BackgroundRenderer(new PixelConverter(1 << 19));
 
         String[] areaNames = new String[]{"Wald", "Wald", "Gras", "Weide", "Wohngebiet", "Wasser", "Industriegebiet",
                 "Park", "Handel", "Heide", "Sand", "Schlamm/Geröll", "Steinbruch", "Friedhof", "Parkplatz",

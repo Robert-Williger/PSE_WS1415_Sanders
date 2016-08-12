@@ -6,7 +6,7 @@ public class Node {
     // TODO exentends Point?
     private int x;
     private int y;
-    
+
     public Node() {
         this(0, 0);
     }

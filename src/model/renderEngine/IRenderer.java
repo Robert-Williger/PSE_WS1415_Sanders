@@ -3,13 +3,12 @@ package model.renderEngine;
 import java.awt.Image;
 
 import model.IModel;
-import model.map.IPixelConverter;
-import model.map.ITile;
+import model.map.IMapManager;
 
 public interface IRenderer extends IModel {
 
-    boolean render(ITile tile, Image image);
+    boolean render(long tileID, Image image);
 
-    void setConverter(IPixelConverter converter);
+    void setMapManager(IMapManager manager);
 
 }

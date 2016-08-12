@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import model.IApplication;
-import model.elements.StreetNode;
+import model.elements.AccessPoint;
 import model.targets.IRoutePoint;
 
 class StateStore {
@@ -12,7 +12,7 @@ class StateStore {
     private IApplication application;
 
     private IRoutePoint storedPoint;
-    private StreetNode storedNode;
+    private AccessPoint storedAccessPoint;
     private int storedIndex;
     private String storedAddress;
     private String currentAddress;
@@ -45,13 +45,13 @@ class StateStore {
 
     void storePoint() {
         storedAddress = storedPoint.getAddress();
-        storedNode = storedPoint.getStreetNode();
+        storedAccessPoint = storedPoint.getAccessPoint();
         storedIndex = storedPoint.getListIndex();
     }
 
     void restorePoint() {
         storedPoint.setAddress(storedAddress);
-        storedPoint.setStreetNode(storedNode);
+        storedPoint.setAccessPoint(storedAccessPoint);
         application.getRouteManager().getPointList().changeOrder(storedPoint.getListIndex(), storedIndex);
     }
 

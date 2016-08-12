@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Paint;
 import java.awt.Point;
@@ -12,23 +13,23 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
-import java.util.HashMap;
+import java.awt.image.BufferedImage;
 
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import model.targets.IRoutePoint;
 import model.targets.PointAdapter;
 import model.targets.PointState;
 
-public class RoutePointView extends JPanel implements IRoutePointView {
+public class RoutePointView extends JComponent implements IRoutePointView {
 
     private static final long serialVersionUID = 1L;
     private static final int DIAMETER = 19;
 
-    private static final Ellipse2D circle = new Ellipse2D.Double(0, 0, DIAMETER, DIAMETER);
+    private static final Ellipse2D circle;
 
     private final IRoutePoint point;
-    private static final HashMap<PointState, Paint> map;
+    private static Image[] images;
 
     public RoutePointView(final IRoutePoint point) {
         this.point = point;
@@ -104,19 +105,11 @@ public class RoutePointView extends JPanel implements IRoutePointView {
 
     @Override
     public void paint(final Graphics g) {
-        final Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2.setPaint(map.get(point.getState()));
-        g2.fillOval(1, 1, DIAMETER - 2, DIAMETER - 2);
-
+        g.drawImage(images[point.getState().getIndex()], 0, 0, this);
         g.setFont(g.getFont().deriveFont(Font.BOLD));
-        g.setColor(point.getState() != PointState.unadded ? new Color(94, 94, 94) : Color.DARK_GRAY);
-        g.drawOval(0, 0, DIAMETER - 1, DIAMETER - 1);
         g.setColor(Color.BLACK);
-
-        final String number = (point.getTargetIndex() + 1) + "";
+        // TODO getTargetIndex
+        final String number = (point.getListIndex() + 1) + "";
         g.drawString(number + "", (DIAMETER - g.getFontMetrics(g.getFont()).stringWidth(number)) / 2, 14);
     }
 
@@ -126,15 +119,36 @@ public class RoutePointView extends JPanel implements IRoutePointView {
     }
 
     static {
+        circle = new Ellipse2D.Double(0, 0, DIAMETER, DIAMETER);
+
         final float[] fractions = {0f, 1f};
 
-        map = new HashMap<PointState, Paint>();
-        map.put(PointState.added, new RadialGradientPaint(new Rectangle(0, 0, DIAMETER, DIAMETER), fractions,
-                new Color[]{Color.green, Color.green.darker()}, CycleMethod.NO_CYCLE));
-        map.put(PointState.editing, new RadialGradientPaint(new Rectangle(0, 0, DIAMETER, DIAMETER), fractions,
-                new Color[]{Color.yellow, Color.yellow.darker()}, CycleMethod.NO_CYCLE));
-        map.put(PointState.unadded, new RadialGradientPaint(new Rectangle(0, 0, DIAMETER, DIAMETER), fractions,
-                new Color[]{Color.red, Color.red.darker()}, CycleMethod.NO_CYCLE));
+        final Rectangle bounds = new Rectangle(0, 0, DIAMETER, DIAMETER);
+        final Paint paints[] = new Paint[]{
+                new RadialGradientPaint(bounds, fractions, new Color[]{Color.green, Color.green.darker()},
+                        CycleMethod.NO_CYCLE),
+                new RadialGradientPaint(bounds, fractions, new Color[]{Color.yellow, Color.yellow.darker()},
+                        CycleMethod.NO_CYCLE),
+                new RadialGradientPaint(bounds, fractions, new Color[]{Color.red, Color.red.darker()},
+                        CycleMethod.NO_CYCLE)};
+        images = new BufferedImage[3];
+        for (final PointState state : PointState.values()) {
+            final BufferedImage image = new BufferedImage(DIAMETER, DIAMETER, BufferedImage.TYPE_INT_ARGB);
+
+            final Graphics2D g2 = image.createGraphics();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g2.setPaint(paints[state.getIndex()]);
+            g2.fillOval(1, 1, DIAMETER - 2, DIAMETER - 2);
+
+            g2.setColor(Color.DARK_GRAY);
+            g2.drawOval(0, 0, DIAMETER - 1, DIAMETER - 1);
+
+            g2.dispose();
+
+            images[state.getIndex()] = image;
+        }
     }
 
 }

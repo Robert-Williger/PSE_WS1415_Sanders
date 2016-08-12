@@ -34,6 +34,7 @@ public class Map extends AbstractModel implements IMap {
         final int weightedY;
         final int trueSteps;
 
+        // TODO check this
         if (steps > 0) {
             trueSteps = Math.min(steps, state.getMaxZoomStep() - state.getZoomStep());
             weightedX = (coordLocation.x - midPoint.x) >> trueSteps;
@@ -46,7 +47,8 @@ public class Map extends AbstractModel implements IMap {
 
         if (trueSteps != 0) {
             state.setZoomStep(state.getZoomStep() + steps);
-            center(coordLocation.x - weightedX, coordLocation.y - weightedY);
+            Point pixelLocation = manager.getPixel(new Point(coordLocation.x - weightedX, coordLocation.y - weightedY));
+            center(pixelLocation.x, pixelLocation.y);
         }
     }
 
@@ -96,18 +98,21 @@ public class Map extends AbstractModel implements IMap {
     @Override
     public void center(final Point point) {
         center(point.x, point.y);
-    }
 
-    private void center(final int x, final int y) {
+        final Point location = manager.getCoord(point);
         final Dimension size = state.getSize();
 
         final int zoomFactor = (1 << state.getZoomStep() - state.getMinZoomStep());
         final int coordWidth = (int) ((double) size.width / zoomFactor);
         final int coordHeight = (int) ((double) size.height / zoomFactor);
 
-        state.setLocation(x - coordWidth / 2, y - coordHeight / 2);
+        state.setLocation(location.x - coordWidth / 2, location.y - coordHeight / 2);
 
         fireChange();
+    }
+
+    private void center(final int x, final int y) {
+        center(new Point(x, y));
     }
 
     private double log2(final double value) {

@@ -3,7 +3,6 @@ package model.renderEngine;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -12,12 +11,11 @@ import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
-import model.elements.POI;
-import model.map.IPixelConverter;
-import model.map.ITile;
+import model.elements.dereferencers.IPOIDereferencer;
+import model.map.IMapManager;
 
 public class POIRenderer extends AbstractRenderer implements IRenderer {
-
+    private Graphics2D g;
     private static final Image[] poiImage;
     private static final int[] poiMinZoomStep;
     private static final Dimension imageSize;
@@ -46,24 +44,20 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
         }
     }
 
-    public POIRenderer(final IPixelConverter converter) {
-        setConverter(converter);
+    public POIRenderer(final IMapManager manager) {
+        super(manager);
     }
 
     @Override
-    public boolean render(final ITile tile, final Image image) {
-        if (tile == null || image == null) {
-            return false;
-        }
+    public boolean render(final long tile, final Image image) {
+        setTileID(tile);
 
-        final Graphics2D g = (Graphics2D) image.getGraphics();
+        g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        final Point location = getTileLocation(tile, image);
-
-        if (drawPOIs(tile, location, g)) {
+        if (drawPOIs()) {
             g.dispose();
             fireChange();
             return true;
@@ -73,27 +67,21 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
         return false;
     }
 
-    private boolean drawPOIs(final ITile tile, final Point location, final Graphics2D g) {
-        final Iterator<POI> iterator = tile.getPOIs();
-        if (tile.getPOIs() == null) {
-            return false;
-        }
+    private boolean drawPOIs() {
+        final Iterator<Integer> iterator = tile.getPOIs();
 
         boolean ret = false;
 
-        final int zoom = tile.getZoomStep();
-
+        final IPOIDereferencer dereferencer = tile.getPOIDereferencer();
         while (iterator.hasNext()) {
-            final POI poi = iterator.next();
-            if (poi == null) {
-                return false;
-            }
+            final int poi = iterator.next();
+            dereferencer.setID(poi);
 
-            if (zoom >= poiMinZoomStep[poi.getType()]) {
+            final int type = dereferencer.getType();
+            if (zoom >= poiMinZoomStep[type]) {
                 ret = true;
-                g.drawImage(poiImage[poi.getType()], converter.getPixelDistance(poi.getX() - location.x, zoom)
-                        - imageSize.width / 2, converter.getPixelDistance(poi.getY() - location.y, zoom)
-                        - imageSize.height / 2, null);
+                g.drawImage(poiImage[type], converter.getPixelDistance(dereferencer.getX() - x, zoom) - imageSize.width
+                        / 2, converter.getPixelDistance(dereferencer.getY() - y, zoom) - imageSize.height / 2, null);
             }
 
         }

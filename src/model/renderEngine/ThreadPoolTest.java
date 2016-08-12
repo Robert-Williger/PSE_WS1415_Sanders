@@ -6,22 +6,27 @@ import java.util.Set;
 
 import model.routing.AddressableBinaryHeap;
 
-public abstract class ThreadPoolTest<T, J extends ThreadJob<T>> {
+public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 
     private final AddressableBinaryHeap<J> queue;
-    private final Set<J> jobs;
+    private final Thread[] threads;
+    private final Set<Long> jobs;
 
-    public ThreadPoolTest(final int threadCount) {
+    public ThreadPoolTest(final int workerCount) {
         queue = new AddressableBinaryHeap<J>();
-        jobs = Collections.synchronizedSet(new HashSet<J>());
-        for (int i = 0; i < threadCount; i++) {
-            new Worker().start();
+        jobs = Collections.synchronizedSet(new HashSet<Long>());
+        this.threads = new Thread[workerCount];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = createWorker();
+            threads[i].start();
         }
     }
 
+    protected abstract Worker createWorker();
+
     public void add(final J job, final int priority) {
         synchronized (queue) {
-            jobs.add(job);
+            jobs.add(job.getID());
             queue.insert(job, priority);
             queue.notifyAll();
         }
@@ -36,13 +41,19 @@ public abstract class ThreadPoolTest<T, J extends ThreadJob<T>> {
 
     public boolean remove(final J job) {
         synchronized (queue) {
-            jobs.remove(job);
+            jobs.remove(job.getID());
             return queue.remove(job);
         }
     }
 
-    public boolean contains(final J job) {
-        return jobs.contains(job);
+    public boolean contains(final long id) {
+        return jobs.contains(id);
+    }
+
+    public void shutdown() {
+        for (final Thread thread : threads) {
+            thread.interrupt();
+        }
     }
 
     public void flush() {
@@ -56,37 +67,28 @@ public abstract class ThreadPoolTest<T, J extends ThreadJob<T>> {
         }
     }
 
-    protected abstract void processResult(final J job, final T result);
+    protected abstract void processResult(final J job);
 
-    private class Worker extends Thread {
+    abstract class Worker extends Thread {
+
+        protected abstract void work(final J job);
+
         public void run() {
             while (!interrupted()) {
                 J job;
-                J job2;
-                J job3;
                 synchronized (queue) {
                     while ((job = queue.deleteMin()) == null) {
                         try {
                             queue.wait();
-                        } catch (InterruptedException e) {
+                        } catch (final InterruptedException e) {
                             interrupt();
+                            return;
                         }
                     }
-                    job2 = queue.deleteMin();
-                    job3 = queue.deleteMin();
                 }
-                processResult(job, job.work());
-                jobs.remove(job);
-
-                if (job2 != null) {
-                    processResult(job2, job2.work());
-                    jobs.remove(job2);
-                }
-                if (job3 != null) {
-                    processResult(job3, job3.work());
-                    jobs.remove(job3);
-                }
-
+                work(job);
+                processResult(job);
+                jobs.remove(job.getID());
             }
         }
     }

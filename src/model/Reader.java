@@ -283,7 +283,6 @@ public class Reader implements IReader {
             fireStepCommenced("Lade Nodes...");
 
             int count = 0;
-            // nodes = new Node[reader.readCompressedInt()];
             xPoints = new int[reader.readCompressedInt()];
             yPoints = new int[xPoints.length];
             for (count = 0; count < xPoints.length; count++) {

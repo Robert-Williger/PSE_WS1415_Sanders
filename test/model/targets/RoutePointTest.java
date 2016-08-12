@@ -63,7 +63,7 @@ public class RoutePointTest {
     public void streetNodeTest() {
         final StreetNode node = new StreetNode(12, new Street(new int[0], 1, "Test", 142313));
 
-        routePoint.setStreetNode(node);
+        routePoint.setAccessPoint(node);
         assertEquals(node, routePoint.getStreetNode());
     }
 
@@ -94,7 +94,7 @@ public class RoutePointTest {
             }
         });
 
-        routePoint.setStreetNode(new StreetNode(12, new Street(new int[0], 1, "Test", 142313)));
+        routePoint.setAccessPoint(new StreetNode(12, new Street(new int[0], 1, "Test", 142313)));
         assertFalse(error);
     }
 
