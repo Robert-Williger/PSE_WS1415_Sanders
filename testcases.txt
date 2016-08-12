@@ -1,0 +1,12 @@
+
+@Test
+public void computerGeneratedTest9() {
+final int nodes = 8;
+final List<Integer> weights = Arrays.asList(40, 46, 67, 41, 45, 38, 95, 91, 36, 90, 16, 11, 46, 6, 75, 0, 7, 70, 65, 92, 77, 84, 53, 96, 26, 60, 91, 38);
+final Graph graph = new Graph(nodes, createEdges(nodes), weights);
+final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(graph);
+
+// matching [(4,7)(2,3)(1,5)(0,6)]
+checkMatching(matching, graph, 86);
+}
+
