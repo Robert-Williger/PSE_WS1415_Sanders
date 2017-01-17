@@ -95,36 +95,36 @@ public class MapManagerTest {
 
     @Test
     public void testMapState() {
-        assertNotNull(manager.getMapState());
+        assertNotNull(manager.getState());
     }
 
     @Test
     public void testRows() {
-        manager.getMapState().setSize(0, 1025);
+        manager.getState().setSize(0, 1025);
         assertEquals(3, manager.getRows());
     }
 
     @Test
     public void testColumns() {
-        manager.getMapState().setSize(1025, 0);
+        manager.getState().setSize(1025, 0);
         assertEquals(3, manager.getColumns());
     }
 
     @Test
     public void testGridLocation() {
-        manager.getMapState().setLocation(512, 512);
-        assertEquals(new Point(1, 1), manager.getCurrentGridLocation());
+        manager.getState().setLocation(512, 512);
+        assertEquals(new Point(1, 1), manager.getGridLocation());
     }
 
     @Test
     public void testCoordConversion() {
-        manager.getMapState().setLocation(280, 230);
+        manager.getState().setLocation(280, 230);
         assertEquals(new Point(360, 310), manager.getCoord(new Point(40, 40)));
     }
 
     @Test
     public void testPixelConversion() {
-        manager.getMapState().setLocation(280, 230);
+        manager.getState().setLocation(280, 230);
         assertEquals(new Point(40, 40), manager.getPixel(new Point(360, 310)));
     }
 
@@ -135,34 +135,34 @@ public class MapManagerTest {
 
     @Test
     public void testTileByCoord() {
-        assertEquals(tiles[1][2][2], manager.getTileID(new Point(512, 512), 1));
+        assertEquals(tiles[1][2][2], manager.getTile(new Point(512, 512), 1));
     }
 
     @Test
     public void testTileByZRC() {
-        assertEquals(tiles[1][2][3], manager.getTileID(2, 3, 1));
+        assertEquals(tiles[1][2][3], manager.getTile(2, 3, 1));
     }
 
     @Test
     public void testTileInvalid() {
-        assertEquals(-1, manager.getTileID(0, 0, 3).getID());
+        assertEquals(-1, manager.getTile(0, 0, 3).getID());
     }
 
     @Test
     public void testUnsuccessfulSearch() {
-        assertNull(new MapManager().getAddressNode(new Point(200, 200)));
+        assertNull(new MapManager().getAddress(new Point(200, 200)));
     }
 
     @Test
     public void testNormalSearch() {
         assertEquals(new AddressNode("Gaußstraße 21", new StreetNode(0.5f, street)),
-                manager.getAddressNode(new Point(900, 1250)));
+                manager.getAddress(new Point(900, 1250)));
     }
 
     @Test
     public void testSearchWithBuilding() {
         assertEquals(new AddressNode(iBuilding.getAddress(), iBuilding.getStreetNode()),
-                manager.getAddressNode(new Point(380, 1000)));
+                manager.getAddress(new Point(380, 1000)));
     }
 
 }

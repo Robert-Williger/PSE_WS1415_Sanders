@@ -1,13 +1,14 @@
 package model.routing;
 
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.AbstractModel;
 import model.IProgressListener;
+import model.elements.AccessPoint;
 import model.map.IMapManager;
+import model.map.accessors.ICollectiveAccessor;
 import model.renderEngine.IRenderRoute;
 import model.renderEngine.RenderRoute;
 import model.targets.IPointList;
@@ -16,29 +17,27 @@ import model.targets.PointList;
 import model.targets.RoutePoint;
 
 public class RouteManager extends AbstractModel implements IRouteManager {
-
+    private final ICollectiveAccessor streetAccessor;
     private final IDirectedGraph graph;
-    private final IMapManager manager;
     private final IPointList pointList;
 
     private final IRouteSolver[] routeSolvers;
     private final String[] routeSolverNames;
-    private final IAccessPointConverter converter;
 
     private int routeSolver;
     private boolean calculating;
 
-    public RouteManager(final IDirectedGraph graph, final IMapManager manager, final IAccessPointConverter converter) {
+    public RouteManager(final IDirectedGraph graph, final IMapManager manager) {
         this.graph = graph;
-        this.manager = manager;
 
         this.routeSolverNames = createNames();
         this.routeSolvers = createRouteSolvers(graph);
-        this.converter = converter;
 
         setRouteSolver(0);
 
         pointList = new PointList();
+
+        streetAccessor = manager.createCollectiveAccessor("street");
     }
 
     private IRouteSolver getCurrentRouteSolver() {
@@ -48,15 +47,14 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     private List<InterNode> createInterNodeList() {
         final List<InterNode> interNodeList = new ArrayList<InterNode>(pointList.size());
 
-        // for (int i = 0; i < pointList.size(); i++) {
-        for (final IRoutePoint point : pointList) {
-            final InterNode interNode = converter.convert(point.getAccessPoint());
-            /*- final IStreet street = accessPoint.getStreet();
-
+        for (int i = 0; i < pointList.size(); i++) {
+            final AccessPoint accessPoint = pointList.get(i).getAccessPoint();
+            final int street = accessPoint.getStreet();
+            streetAccessor.setID(street);
+            int edge = streetAccessor.getAttribute("graphId");
             // TODO own instance for mapping from id to graph edges?
-            int edge = street.getID();
-            int correspondingEdge = !street.isOneWay() ? (street.getID() | 0x80000000) : -1;
-            final InterNode interNode = new InterNode(edge, correspondingEdge, accessPoint.getOffset());*/
+            int correspondingEdge = streetAccessor.getAttribute("oneway") != 0 ? (edge | 0x80000000) : -1;
+            final InterNode interNode = new InterNode(edge, correspondingEdge, accessPoint.getOffset());
             interNodeList.add(interNode);
         }
         return interNodeList;
@@ -69,15 +67,17 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int minY = Integer.MAX_VALUE;
         int maxY = Integer.MIN_VALUE;
 
-        for (final IRoutePoint routePoint : pointList) {
-            Point location = routePoint.getLocation();
-
-            minX = Math.min(minX, location.x);
-            maxX = Math.max(maxX, location.x);
-
-            minY = Math.min(minY, location.y);
-            maxY = Math.max(maxY, location.y);
-        }
+        // TODO calculate route bounds
+        // for (final IRoutePoint routePoint : pointList) {
+        // // TODO
+        // final int x = routePoint.getStreetNode().getX();
+        // final int y = routePoint.getStreetNode().getY();
+        // minX = Math.min(minX, x);
+        // maxX = Math.max(maxX, x);
+        //
+        // minY = Math.min(minY, y);
+        // maxY = Math.max(maxY, y);
+        // }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
@@ -201,7 +201,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
 
     @Override
     public IRoutePoint createPoint() {
-        return new RoutePoint(manager);
+        return new RoutePoint();
     }
 
     @Override

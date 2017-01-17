@@ -16,8 +16,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import model.routing.AddressableBinaryHeap;
-import model.routing.IAddressablePriorityQueue;
+import util.AddressableBinaryHeap;
+import util.IAddressablePriorityQueue;
 
 public abstract class ThreadPool<T, J extends ThreadJob<T>> {
 

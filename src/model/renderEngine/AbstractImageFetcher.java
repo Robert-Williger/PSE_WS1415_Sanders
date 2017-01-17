@@ -2,7 +2,6 @@ package model.renderEngine;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -20,11 +19,9 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     private final GraphicsConfiguration config;
 
     private Image defaultImage;
-    private final Dimension imageSize;
+    private int imageSize;
 
     public AbstractImageFetcher(final IMapManager manager) {
-        imageSize = new Dimension();
-
         freeList = new ConcurrentLinkedQueue<Image>();
         cache = new LRUCache(getCacheSize(), true, freeList);
 
@@ -63,14 +60,14 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     public void setMapManager(final IMapManager manager) {
         flush();
 
-        if (!manager.getTileSize().equals(imageSize)) {
+        if (manager.getTileSize() != imageSize) {
             updateTileSize(manager.getTileSize());
         }
     }
 
-    private void updateTileSize(final Dimension size) {
+    private void updateTileSize(final int size) {
         freeList.clear();
-        imageSize.setSize(size);
+        imageSize = size;
 
         defaultImage = getNewImage();
 
@@ -80,8 +77,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
                 for (int i = 0; i < getCacheSize(); i++) {
                     // TODO is this an improvement?
                     // TODO BITMASK instead of TRANSCLUENT?
-                    freeList.add(config.createCompatibleImage(imageSize.width, imageSize.height,
-                            Transparency.TRANSLUCENT));
+                    freeList.add(createImage());
                 }
             }
 
@@ -93,15 +89,19 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
         if (!freeList.isEmpty()) {
             ret = freeList.poll();
         } else {
-            ret = config.createCompatibleImage(imageSize.width, imageSize.height, Transparency.TRANSLUCENT);
+            ret = createImage();
         }
 
         final Graphics2D g = (Graphics2D) ret.getGraphics();
         g.setComposite(AlphaComposite.Src);
         g.setColor(new Color(255, 255, 255, 0));
-        g.fillRect(0, 0, imageSize.width, imageSize.height);
+        g.fillRect(0, 0, imageSize, imageSize);
         g.dispose();
 
         return ret;
+    }
+
+    protected Image createImage() {
+        return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
     }
 }

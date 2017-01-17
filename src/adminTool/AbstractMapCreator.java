@@ -20,7 +20,12 @@ public abstract class AbstractMapCreator {
         stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, append)));
     }
 
-    protected void writeCompressedInt(final int value) throws IOException {
+    protected int writeCompressedInt(final int value) throws IOException {
+        return writeCompressedInt(value, stream);
+    }
+
+    protected int writeCompressedInt(final int value, final DataOutputStream stream) throws IOException {
+        int ret = 1;
         int temp = value >>> 28;
 
         if (temp == 0) {
@@ -31,23 +36,29 @@ public abstract class AbstractMapCreator {
                     temp = (value >> 7) & 0x7F;
                     if (temp != 0) {
                         stream.write(temp);
+                        ret = 2;
                     }
                 } else {
                     stream.write(temp);
                     stream.write((value >> 7 & 0x7F));
+                    ret = 3;
                 }
             } else {
                 stream.write(temp);
                 stream.write((value >> 14) & 0x7F);
                 stream.write((value >> 7) & 0x7F);
+                ret = 4;
             }
         } else {
             stream.write(temp);
             stream.write((value >> 21) & 0x7F);
             stream.write((value >> 14) & 0x7F);
             stream.write((value >> 7) & 0x7F);
+            ret = 5;
         }
         stream.write((value & 0x7F) | 0x80);
+
+        return ret;
     }
 
     public abstract void create();

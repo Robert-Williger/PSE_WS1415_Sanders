@@ -2,16 +2,18 @@ package model.routing;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+
+import util.AddressableBinaryHeap;
+import util.IAddressablePriorityQueue;
 
 public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolver {
     private final IDirectedGraph graph;
     private final int[] distance;
     private final int[] parent;
-    private final Set<Integer> endNodeSet;
+    // TODO
+    // private final Set<Integer> endNodeSet;
     private int[] endNodes;
     private IAddressablePriorityQueue<Integer> queue;
     private boolean canceled;
@@ -21,7 +23,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     public ReusableDijkstra(final IDirectedGraph graph) {
         this.graph = graph;
         final int nodes = graph.getNodes();
-        endNodeSet = new HashSet<Integer>(2);
+        // endNodeSet = new HashSet<Integer>(2);
         distance = new int[nodes];
         parent = new int[nodes];
     }
@@ -78,12 +80,12 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
         }
     }
 
-    // TODO ?
-    private void initializeEndNode(final int edge, final int index) {
-        final int node = graph.getStartNode(edge);
-        endNodeSet.add(node);
-        endNodes[index] = node;
-    }
+    // TODO
+    // private void initializeEndNode(final int edge, final int index) {
+    // final int node = graph.getStartNode(edge);
+    // endNodeSet.add(node);
+    // endNodes[index] = node;
+    // }
 
     private void execute() {
 

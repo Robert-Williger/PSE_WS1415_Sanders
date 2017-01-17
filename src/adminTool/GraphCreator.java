@@ -130,7 +130,7 @@ public class GraphCreator extends AbstractMapCreator {
             writeCompressedInt(oneways.size());
 
             for (final WeightedEdge edge : edges) {
-                writeCompressedInt(edge.node1);
+                stream.writeInt(edge.node1);
                 writeCompressedInt(edge.node2);
                 writeCompressedInt(edge.weight);
             }

@@ -5,11 +5,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import util.BoundedHeap;
 import model.elements.AccessPoint;
-import model.elements.Label;
-import model.elements.dereferencers.IStreetDereferencer;
-import model.map.AddressNode;
 import model.map.IMapManager;
+import model.map.MapManager;
+import model.map.accessors.ICollectiveAccessor;
+import model.map.accessors.IStringAccessor;
 
 public class AdvancedTextProcessor implements ITextProcessor {
     private final int maxDistance;
@@ -20,37 +21,40 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private int maxStringLength;
 
     public AdvancedTextProcessor() {
-        this(new Entry[0][], new Label[0], null);
+        this(new Entry[0][], new MapManager());
     }
 
-    public AdvancedTextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager) {
-        this(entries, labels, manager, 5, 2);
+    public AdvancedTextProcessor(final Entry[][] entries, final IMapManager manager) {
+        this(entries, manager, 5, 2);
     }
 
-    public AdvancedTextProcessor(final Entry[][] entries, final Label[] labels, final IMapManager manager,
-            final int suggestions, final int maxDistance) {
+    public AdvancedTextProcessor(final Entry[][] entries, final IMapManager manager, final int suggestions,
+            final int maxDistance) {
 
         this.suggestions = suggestions;
         this.heap = new BoundedHeap<Tuple>(suggestions);
         this.maxDistance = maxDistance;
 
-        final Tree unsortedRoot = setupIndex(entries, labels, manager);
+        final Tree unsortedRoot = setupIndex(entries, manager);
         distance = createDistanceArray();
         maxStringLength += 2 * maxDistance;
 
         indexRoot = unsortedRoot.toSortedTree();
     }
 
-    private Tree setupIndex(final Entry[][] entries, final Label[] labels, final IMapManager manager) {
+    private Tree setupIndex(final Entry[][] entries, final IMapManager manager) {
         final Tree root = new Tree("", null, null);
 
-        final IStreetDereferencer dereferencer = manager.createTileDereferencer().getStreetDereferencer();
+        final ICollectiveAccessor streetAccessor = manager.createCollectiveAccessor("street");
+        final IStringAccessor stringAccessor = manager.createStringAccessor();
+
         // TODO do not explictly store as AccessPoint
         maxStringLength = 0;
         for (final Entry[] entry : entries) {
             for (int i = 0; i < entry.length; i++) {
-                dereferencer.setID(entry[i].getStreet());
-                final String streetName = dereferencer.getName();
+                streetAccessor.setID(entry[i].getStreet());
+                stringAccessor.setID(streetAccessor.getAttribute("name"));
+                final String streetName = stringAccessor.getString();
                 final String cityName = entry[i].getCity();
                 final String realName = streetName + " " + cityName;
                 final AccessPoint node = new AccessPoint(0.5f, entry[i].getStreet());
@@ -61,14 +65,17 @@ public class AdvancedTextProcessor implements ITextProcessor {
         }
 
         // TODO suburbs can collide --> include city names
-        for (final Label label : labels) {
-            if (label.getType() != 30) {
-                final AddressNode addressNode = manager.getAddressNode(label.getLocation());
-                if (addressNode != null) {
-                    add(normalize(label.getName()), label.getName(), root, addressNode);
-                }
-            }
-        }
+        // for (final Label label : labels) {
+        // if (label.getType() != 30) {
+        // final AddressNode addressNode =
+        // manager.getAddress(label.getLocation());
+        // if (addressNode != null) {
+        // // TODO add me
+        // // add(normalize(label.getName()), label.getName(), root,
+        // // addressNode);
+        // }
+        // }
+        // }
 
         return root;
     }

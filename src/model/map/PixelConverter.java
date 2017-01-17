@@ -15,11 +15,11 @@ public class PixelConverter implements IPixelConverter {
 
     @Override
     public int getPixelDistance(final int coordDistance, final int zoomStep) {
-        return (int) ((coordDistance / conversionFactor * (1 << zoomStep)));
+        return (int) (coordDistance / conversionFactor * (1 << zoomStep));
     }
 
     @Override
     public float getPixelDistancef(final float coordDistance, final int zoomStep) {
-        return (float) ((coordDistance / conversionFactor * (1 << zoomStep)));
+        return (float) (coordDistance / conversionFactor * (1 << zoomStep));
     }
 }

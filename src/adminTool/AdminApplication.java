@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import adminTool.elements.Boundary;
+import adminTool.map.MapManagerCreator;
 
 public class AdminApplication {
 

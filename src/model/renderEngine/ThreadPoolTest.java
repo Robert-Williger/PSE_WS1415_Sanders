@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import model.routing.AddressableBinaryHeap;
+import util.AddressableBinaryHeap;
 
 public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 

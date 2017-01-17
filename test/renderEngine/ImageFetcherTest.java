@@ -86,12 +86,12 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public ITile getTileID(final Point coordinate, final int zoomStep) {
+        public ITile getTile(final Point coordinate, final int zoomStep) {
             return null;
         }
 
         @Override
-        public ITile getTileID(final int row, final int column, final int zoomStep) {
+        public ITile getTile(final int row, final int column, final int zoomStep) {
             return null;
         }
 
@@ -101,7 +101,7 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public AddressNode getAddressNode(final Point coordinate) {
+        public AddressNode getAddress(final Point coordinate) {
             return null;
         }
 
@@ -116,7 +116,7 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public Point getCurrentGridLocation() {
+        public Point getGridLocation() {
             return null;
         }
 
@@ -131,7 +131,7 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public IMapState getMapState() {
+        public IMapState getState() {
             return null;
         }
 

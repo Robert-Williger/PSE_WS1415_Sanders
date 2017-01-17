@@ -4,20 +4,12 @@ import java.awt.Polygon;
 
 public class Area extends MultiElement implements Typeable {
 
-    protected Polygon polygon;
     private final int type;
 
     public Area(final Node[] nodes, final int type) {
         super(nodes);
 
         this.type = type;
-    }
-
-    public Polygon getPolygon() {
-
-        calculatePolygon();
-
-        return polygon;
     }
 
     protected Polygon calculatePolygon(final Node[] nodes) {
@@ -35,12 +27,6 @@ public class Area extends MultiElement implements Typeable {
         return new Polygon(xpoints, ypoints, nodes.length);
     }
 
-    private void calculatePolygon() {
-        if (polygon == null) {
-            polygon = calculatePolygon(nodes);
-        }
-    }
-
     public int getType() {
         return type;
     }
@@ -49,40 +35,26 @@ public class Area extends MultiElement implements Typeable {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-
-        // make sure polygon != null
-        calculatePolygon();
-
-        int polyHash = 0;
-        for (int i = 0; i < polygon.npoints; i++) {
-            polyHash = 7 * polyHash + polygon.xpoints[i];
-            polyHash = 7 * polyHash + polygon.ypoints[i];
-        }
-        result = prime * result + polyHash;
-
         result = prime * result + type;
         return result;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof Area)) {
             return false;
         }
-        final Area other = (Area) obj;
-
-        // polygon is not compared because polygon doesn't override equals and
-        // polygon is never null
-
+        Area other = (Area) obj;
         if (type != other.type) {
             return false;
         }
         return true;
     }
+
 }

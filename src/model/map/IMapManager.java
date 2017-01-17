@@ -1,36 +1,40 @@
 package model.map;
 
-import java.awt.Dimension;
 import java.awt.Point;
 
-import model.elements.dereferencers.ITileDereferencer;
+import model.map.accessors.ICollectiveAccessor;
+import model.map.accessors.IPointAccessor;
+import model.map.accessors.IStringAccessor;
+import model.map.accessors.ITileAccessor;
 
 public interface IMapManager {
 
-    long getTileID(Point coordinate, int zoomStep);
+    long getID(int row, int column, int zoom);
 
-    long getTileID(int row, int column, int zoomStep);
+    int getTileSize();
+
+    AddressNode getAddress(Point coordinate);
 
     int getRows();
 
     int getColumns();
 
-    Dimension getTileSize();
-
-    AddressNode getAddressNode(Point coordinate);
-
-    AddressNode getAddressNode(Point coordinate, final int zoomStep);
-
-    Point getCurrentGridLocation();
+    Point getGridLocation();
 
     Point getCoord(Point pixelPoint);
 
     Point getPixel(Point coordinate);
 
-    IMapState getMapState();
+    IMapState getState();
 
     IPixelConverter getConverter();
 
-    ITileDereferencer createTileDereferencer();
+    ITileAccessor createTileAccessor();
+
+    IStringAccessor createStringAccessor();
+
+    ICollectiveAccessor createCollectiveAccessor(String identifier);
+
+    IPointAccessor createPointAccessor(String identifier);
 
 }

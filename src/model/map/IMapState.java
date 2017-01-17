@@ -6,7 +6,7 @@ import java.awt.Rectangle;
 
 public interface IMapState {
 
-    void setZoomStep(int zoomState);
+    void setZoomStep(int zoomStep);
 
     void setSize(int width, int height);
 

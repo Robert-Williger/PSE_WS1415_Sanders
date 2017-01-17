@@ -5,14 +5,11 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 
-import model.elements.dereferencers.IAreaDereferencer;
-import model.elements.dereferencers.IBuildingDereferencer;
-import model.elements.dereferencers.IMultiElementDereferencer;
-import model.elements.dereferencers.IWayDereferencer;
 import model.map.IMapManager;
+import model.map.accessors.ICollectiveAccessor;
 
 public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     private static final Map<RenderingHints.Key, Object> hints;
@@ -20,6 +17,10 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     private Graphics2D g;
     private ColorScheme colorScheme;
     private final Path2D[] paths;
+    private ICollectiveAccessor areaAccessor;
+    private ICollectiveAccessor buildingAccessor;
+    private ICollectiveAccessor wayAccessor;
+    private ICollectiveAccessor streetAccessor;
 
     public BackgroundRenderer(final IMapManager manager, final ColorScheme colorScheme) {
         super(manager);
@@ -45,9 +46,7 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     }
 
     @Override
-    public boolean render(final long tile, final Image image) {
-        setTileID(tile);
-
+    protected boolean render(final Image image) {
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
 
@@ -62,6 +61,15 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         return rendered;
     }
 
+    @Override
+    public void setMapManager(final IMapManager manager) {
+        super.setMapManager(manager);
+        areaAccessor = manager.createCollectiveAccessor("area");
+        buildingAccessor = manager.createCollectiveAccessor("building");
+        wayAccessor = manager.createCollectiveAccessor("way");
+        streetAccessor = manager.createCollectiveAccessor("street");
+    }
+
     private void clearPaths(final Path2D[] paths, final int max) {
         for (int i = 0; i < max; i++) {
             paths[i].reset();
@@ -69,25 +77,25 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     }
 
     private boolean drawAreas() {
-        final Iterator<Integer> iterator = tile.getTerrain();
+        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("area");
         if (!iterator.hasNext()) {
             return false;
         }
 
+        final int zoom = tileAccessor.getZoom();
         final ShapeStyle[] areaStyles = colorScheme.getAreaStyles();
-        final IAreaDereferencer areaDereferencer = tile.getAreaDereferencer();
         boolean rendered = false;
 
         clearPaths(paths, areaStyles.length);
 
         while (iterator.hasNext()) {
-            final int area = iterator.next();
-            areaDereferencer.setID(area);
+            final long area = iterator.nextLong();
+            areaAccessor.setID(area);
+            final int type = areaAccessor.getType();
 
-            final int type = areaDereferencer.getType();
             if (areaStyles[type].isVisible(zoom)) {
                 final Path2D path = paths[type];
-                appendPath(path, areaDereferencer);
+                appendPath(path, areaAccessor);
                 rendered = true;
                 // TODO polygons sometimes do not have same start and endpoint!
                 // ... improve this
@@ -109,15 +117,19 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     }
 
     private boolean drawWays() {
-        Iterator<Integer> streets = tile.getStreets();
-        Iterator<Integer> ways = tile.getWays();
+        PrimitiveIterator.OfLong streets = tileAccessor.getElements("street");
+        PrimitiveIterator.OfLong ways = tileAccessor.getElements("way");
 
+        final int zoom = tileAccessor.getZoom();
         final WayStyle[] wayStyles = colorScheme.getWayStyles();
         clearPaths(paths, wayStyles.length);
 
-        if (!appendWays(streets) & !appendWays(ways)) {
+        if (!appendWays(streets, streetAccessor) & !appendWays(ways, wayAccessor)) {
             return false;
         }
+        // if (!appendWays(ways, wayAccessor)) {
+        // return false;
+        // }
 
         for (final int[] layer : colorScheme.getWayOrder()) {
             for (final int way : layer) {
@@ -144,23 +156,22 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         clearPaths(paths, 1);
 
         final ShapeStyle[] buildingStyles = colorScheme.getBuildingStyles();
+        final int zoom = tileAccessor.getZoom();
 
         if (!buildingStyles[0].isVisible(zoom)) {
             return false;
         }
 
-        final Iterator<Integer> iterator = tile.getBuildings();
+        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("building");
         if (!iterator.hasNext()) {
             return false;
         }
 
-        final IBuildingDereferencer dereferencer = tile.getBuildingDereferencer();
-
         while (iterator.hasNext()) {
-            final int building = iterator.next();
-            dereferencer.setID(building);
+            final long buildingID = iterator.nextLong();
+            buildingAccessor.setID(buildingID);
 
-            appendPath(paths[0], dereferencer);
+            appendPath(paths[0], buildingAccessor);
         }
 
         if (buildingStyles[0].mainStroke(g, zoom)) {
@@ -174,30 +185,36 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         return true;
     }
 
-    private boolean appendWays(final Iterator<Integer> iterator) {
+    private boolean appendWays(final PrimitiveIterator.OfLong iterator, final ICollectiveAccessor accessor) {
         boolean appended = false;
-        final IWayDereferencer wayDereferencer = tile.getWayDereferencer();
-        while (iterator.hasNext()) {
-            final int way = iterator.next();
-            wayDereferencer.setID(way);
+        final int zoom = tileAccessor.getZoom();
 
-            final int type = wayDereferencer.getType();
+        while (iterator.hasNext()) {
+            final long wayID = iterator.nextLong();
+            accessor.setID(wayID);
+
+            final int type = accessor.getType();
+
             if (colorScheme.getWayStyles()[type].isVisible(zoom)) {
                 appended = true;
-                appendPath(paths[type], wayDereferencer);
+                appendPath(paths[type], accessor);
             }
         }
         return appended;
     }
 
-    private void appendPath(final Path2D path, final IMultiElementDereferencer element) {
+    private void appendPath(final Path2D path, final ICollectiveAccessor accessor) {
+        final int x = tileAccessor.getX();
+        final int y = tileAccessor.getY();
+        final int zoom = tileAccessor.getZoom();
+        final int size = accessor.size();
 
-        path.moveTo(converter.getPixelDistancef(element.getX(0) - tile.getX(), tile.getZoomStep()),
-                converter.getPixelDistancef(element.getY(0) - tile.getY(), tile.getZoomStep()));
+        path.moveTo(converter.getPixelDistancef(accessor.getX(0) - x, zoom),
+                converter.getPixelDistancef(accessor.getY(0) - y, zoom));
 
-        for (int i = 0; i < element.size(); i++) {
-            path.lineTo(converter.getPixelDistancef(element.getX(i) - tile.getX(), tile.getZoomStep()),
-                    converter.getPixelDistancef(element.getY(i) - tile.getY(), tile.getZoomStep()));
+        for (int i = 1; i < size; i++) {
+            path.lineTo(converter.getPixelDistancef(accessor.getX(i) - x, zoom),
+                    converter.getPixelDistancef(accessor.getY(i) - y, zoom));
         }
     }
 }

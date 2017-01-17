@@ -12,7 +12,7 @@ public interface IMap extends IModel {
 
     void moveView(int deltaX, int deltaY);
 
-    AddressNode getAddressNode(Point location);
+    AddressNode getAddressNode(int x, int y);
 
     void setViewSize(Dimension size);
 

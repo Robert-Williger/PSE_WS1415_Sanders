@@ -44,19 +44,19 @@ public class MapTest {
     @Test
     public void testViewSize() {
         map.setViewSize(new Dimension(500, 500));
-        assertEquals(new Dimension(500 << 3, 500 << 3), manager.getMapState().getSize());
+        assertEquals(new Dimension(500 << 3, 500 << 3), manager.getState().getSize());
     }
 
     @Test
     public void testCenterPoint() {
         map.center(new Point(256, 256));
-        assertEquals(new Point(256, 256), manager.getMapState().getLocation());
+        assertEquals(new Point(256, 256), manager.getState().getLocation());
     }
 
     @Test
     public void testCenterRectangle() {
         map.center(new Rectangle(256, 256, 128, 128));
-        assertEquals(new Point(320, 320), manager.getMapState().getLocation());
+        assertEquals(new Point(320, 320), manager.getState().getLocation());
     }
 
     @Test
@@ -69,6 +69,6 @@ public class MapTest {
     @Test
     public void testZoom() {
         map.zoom(2, new Point(50, 50));
-        assertEquals(2, manager.getMapState().getZoomStep());
+        assertEquals(2, manager.getState().getZoomStep());
     }
 }

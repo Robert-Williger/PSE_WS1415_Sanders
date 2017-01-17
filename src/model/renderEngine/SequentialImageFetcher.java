@@ -2,8 +2,8 @@ package model.renderEngine;
 
 import java.awt.Image;
 
+import util.AddressableBinaryHeap;
 import model.map.IMapManager;
-import model.routing.AddressableBinaryHeap;
 
 public class SequentialImageFetcher extends AbstractImageFetcher {
     private final AddressableBinaryHeap<Long> queue;

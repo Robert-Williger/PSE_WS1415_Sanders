@@ -2,6 +2,9 @@ package model.routing;
 
 import java.util.Iterator;
 
+import util.AddressableBinaryHeap;
+import util.IAddressablePriorityQueue;
+
 public class JPMST {
     private IUndirectedGraph undirectedGraph;
     private final int[] distance;

@@ -82,13 +82,13 @@ public class ImageLoaderTest {
 
         mapManager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(1), new MapState(2048, 2048, 0,
                 2), new Dimension(256, 256));
-        mapManager.getMapState().setSize(10, 10);
+        mapManager.getState().setSize(10, 10);
         loader = new ImageLoader(mapManager);
     }
 
     @Before
     public void setUp() {
-        mapManager.getMapState().setLocation(0, 0);
+        mapManager.getState().setLocation(0, 0);
         loader.setMapManager(mapManager);
         defaultImage = (BufferedImage) loader.getImageAccessors().get(0).getImage(-1, -1);
     }
@@ -135,8 +135,8 @@ public class ImageLoaderTest {
                 (BufferedImage) loader
                         .getImageAccessors()
                         .get(0)
-                        .getImage(mapManager.getCurrentGridLocation().y + mapManager.getRows() + 1,
-                                mapManager.getCurrentGridLocation().x + mapManager.getColumns() + 1), defaultImage));
+                        .getImage(mapManager.getGridLocation().y + mapManager.getRows() + 1,
+                                mapManager.getGridLocation().x + mapManager.getColumns() + 1), defaultImage));
     }
 
     @Test
@@ -150,13 +150,13 @@ public class ImageLoaderTest {
             }
         }
 
-        final int row = mapManager.getCurrentGridLocation().y + mapManager.getRows() + 1;
-        final int column = mapManager.getCurrentGridLocation().x + mapManager.getColumns() + 1;
+        final int row = mapManager.getGridLocation().y + mapManager.getRows() + 1;
+        final int column = mapManager.getGridLocation().x + mapManager.getColumns() + 1;
 
         assertTrue(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(row, column), defaultImage));
 
         // move by 1 tile size in x and y direction
-        mapManager.getMapState().move(256, 256);
+        mapManager.getState().move(256, 256);
 
         loader.update();
         synchronized (this) {

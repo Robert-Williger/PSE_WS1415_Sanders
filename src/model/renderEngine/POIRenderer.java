@@ -7,14 +7,16 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Iterator;
+import java.util.PrimitiveIterator;
 
 import javax.imageio.ImageIO;
 
-import model.elements.dereferencers.IPOIDereferencer;
 import model.map.IMapManager;
+import model.map.accessors.IPointAccessor;
 
 public class POIRenderer extends AbstractRenderer implements IRenderer {
+    private IPointAccessor poiAccessor;
+
     private Graphics2D g;
     private static final Image[] poiImage;
     private static final int[] poiMinZoomStep;
@@ -49,9 +51,7 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
     }
 
     @Override
-    public boolean render(final long tile, final Image image) {
-        setTileID(tile);
-
+    public boolean render(final Image image) {
         g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -67,21 +67,29 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
         return false;
     }
 
+    @Override
+    public void setMapManager(final IMapManager manager) {
+        super.setMapManager(manager);
+        poiAccessor = manager.createPointAccessor("poi");
+    }
+
     private boolean drawPOIs() {
-        final Iterator<Integer> iterator = tile.getPOIs();
+        final int zoom = tileAccessor.getZoom();
+        final int x = tileAccessor.getX();
+        final int y = tileAccessor.getY();
+
+        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("poi");
 
         boolean ret = false;
 
-        final IPOIDereferencer dereferencer = tile.getPOIDereferencer();
         while (iterator.hasNext()) {
-            final int poi = iterator.next();
-            dereferencer.setID(poi);
+            poiAccessor.setID(iterator.nextLong());
 
-            final int type = dereferencer.getType();
+            final int type = poiAccessor.getType();
             if (zoom >= poiMinZoomStep[type]) {
                 ret = true;
-                g.drawImage(poiImage[type], converter.getPixelDistance(dereferencer.getX() - x, zoom) - imageSize.width
-                        / 2, converter.getPixelDistance(dereferencer.getY() - y, zoom) - imageSize.height / 2, null);
+                g.drawImage(poiImage[type], converter.getPixelDistance(poiAccessor.getX() - x, zoom) - imageSize.width
+                        / 2, converter.getPixelDistance(poiAccessor.getY() - y, zoom) - imageSize.height / 2, null);
             }
 
         }

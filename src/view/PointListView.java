@@ -4,8 +4,12 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
@@ -26,24 +30,25 @@ import model.targets.IRoutePoint;
 import model.targets.PointAdapter;
 import model.targets.PointState;
 
-public class PointListView extends JList<IRoutePoint> {
+public class PointListView extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final Color HOVERED_COLOR = new Color(240, 240, 240);
     private static final Color SELECTED_COLOR = Color.LIGHT_GRAY;
     private static final Color NEUTRAL_COLOR = Color.WHITE;
 
-    private static int CELL_SIZE = 20;
-
     private final DefaultListModel<IRoutePoint> model;
     private final RoutePointRenderer renderer;
+    private final ButtonPanel listButtons;
+    private final JList<IRoutePoint> list;
     private int hoveredIndex;
     private boolean added;
     private boolean removed;
 
     public PointListView(final IPointList pointList) {
         model = new DefaultListModel<IRoutePoint>();
-        setModel(model);
+        listButtons = new ButtonPanel();
+        list = new JList<IRoutePoint>(model);
         renderer = new RoutePointRenderer();
 
         setPointList(pointList);
@@ -53,6 +58,7 @@ public class PointListView extends JList<IRoutePoint> {
     @Override
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
+        list.setEnabled(enabled);
         renderer.setEnabled(enabled);
         hoveredIndex = -1;
         repaint();
@@ -79,14 +85,17 @@ public class PointListView extends JList<IRoutePoint> {
     }
 
     private void initialize() {
-        setTransferHandler(new ListTransferHandler<IRoutePoint>(this));
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        setDropMode(DropMode.INSERT);
-        setCellRenderer(renderer);
-        setDragEnabled(true);
-        setFocusable(false);
+        list.setTransferHandler(new ListTransferHandler<IRoutePoint>(list));
+        setTransferHandler(new ListTransferHandler<IRoutePoint>(list));
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setDropMode(DropMode.INSERT);
+        list.setCellRenderer(renderer);
+        list.setDragEnabled(true);
+        list.setFocusable(false);
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
         setBackground(NEUTRAL_COLOR);
+        add(list);
+        add(listButtons);
 
         final MouseAdapter listener = new MouseAdapter() {
 
@@ -101,7 +110,7 @@ public class PointListView extends JList<IRoutePoint> {
             @Override
             public void mouseMoved(final MouseEvent e) {
                 if (isEnabled()) {
-                    final int index = e.getY() / CELL_SIZE;
+                    final int index = e.getY() / 20;
                     hoveredIndex = index < model.size() ? index : -1;
                     repaint();
                 }
@@ -110,14 +119,9 @@ public class PointListView extends JList<IRoutePoint> {
             @Override
             public void mousePressed(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1 && isEnabled()) {
-                    final int index = e.getY() / CELL_SIZE;
+                    final int index = e.getY() / 20;
                     if (index < model.size()) {
-                        if (renderer.button.contains(e.getX() - renderer.button.getX(), e.getY() - hoveredIndex
-                                * CELL_SIZE)) {
-                            model.remove(index);
-                        } else {
-                            fireIndexClicked(index, e);
-                        }
+                        fireIndexClicked(index, e);
                     }
 
                     repaint();
@@ -125,8 +129,19 @@ public class PointListView extends JList<IRoutePoint> {
             }
         };
 
-        addMouseMotionListener(listener);
-        addMouseListener(listener);
+        list.addMouseMotionListener(listener);
+        list.addMouseListener(listener);
+        listButtons.addMouseMotionListener(listener);
+        // TODO bug occurs, if point list exited by listButtons.
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(final MouseEvent e) {
+                if (isEnabled()) {
+                    hoveredIndex = -1;
+                    repaint();
+                }
+            }
+        });
 
         model.addListDataListener(new ListDataListener() {
             private int fromIndex;
@@ -134,6 +149,7 @@ public class PointListView extends JList<IRoutePoint> {
 
             @Override
             public void intervalAdded(final ListDataEvent e) {
+                listButtons.add();
                 if (!added) {
                     toIndex = e.getIndex0();
                 } else {
@@ -144,6 +160,7 @@ public class PointListView extends JList<IRoutePoint> {
 
             @Override
             public void intervalRemoved(final ListDataEvent e) {
+                listButtons.remove();
                 fromIndex = e.getIndex0();
                 if (toIndex == -1) { // Item at fromIndex was removed
                     // If item was removed by IPointList, event has not to be
@@ -213,12 +230,15 @@ public class PointListView extends JList<IRoutePoint> {
     private void add(final IRoutePoint point) {
         added = true;
         model.addElement(point);
+        listButtons.add();
+
     }
 
     private void remove(final IRoutePoint point) {
         if (model.contains(point)) {
             removed = true;
             model.removeElement(point);
+            listButtons.remove();
         }
     }
 
@@ -240,15 +260,90 @@ public class PointListView extends JList<IRoutePoint> {
         }
     }
 
+    private class ButtonPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+
+        private final List<JPanel> buttonPanels;
+
+        public ButtonPanel() {
+            buttonPanels = new ArrayList<JPanel>();
+            setOpaque(false);
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        }
+
+        public void setHovered(final int index) {
+            if (index < model.size()) {
+                buttonPanels.get(index).setBackground(HOVERED_COLOR);
+                buttonPanels.get(index).getComponent(0).setVisible(true);
+                hoveredIndex = index;
+            }
+        }
+
+        public void setSelected(final int index) {
+            if (index < model.size()) {
+                buttonPanels.get(index).setBackground(SELECTED_COLOR);
+                buttonPanels.get(index).getComponent(0).setVisible(true);
+            }
+        }
+
+        public void setHidden(final int index) {
+            if (index < model.size()) {
+                buttonPanels.get(index).setBackground(NEUTRAL_COLOR);
+                buttonPanels.get(index).getComponent(0).setVisible(false);
+            }
+        }
+
+        public void add() {
+            if (buttonPanels.size() < model.getSize()) {
+                final JPanel panel = new JPanel();
+                panel.setPreferredSize(new Dimension(20, 20));
+                panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2));
+                final JButton button = new JButton("x");
+                button.setMargin(new Insets(0, 0, 0, 0));
+                button.setPreferredSize(new Dimension(16, 16));
+                button.setOpaque(false);
+                button.setFocusable(false);
+                add(button);
+
+                final int index = model.size() - 1;
+                button.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(final ActionEvent e) {
+                        model.remove(index);
+                    }
+
+                });
+
+                panel.setOpaque(true);
+                panel.add(button);
+                panel.setBackground(NEUTRAL_COLOR);
+                add(panel);
+
+                buttonPanels.add(panel);
+            }
+        }
+
+        public void remove() {
+            if (buttonPanels.size() > model.getSize()) {
+                remove(buttonPanels.remove(buttonPanels.size() - 1));
+            }
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(20, buttonPanels.size() * 20);
+        }
+    }
+
     private class RoutePointRenderer extends JPanel implements ListCellRenderer<IRoutePoint> {
         private static final long serialVersionUID = 1L;
 
         private final JLabel indexLabel;
         private final JLabel addressLabel;
-        private final JButton button;
 
         public RoutePointRenderer() {
-            setPreferredSize(new Dimension(158, CELL_SIZE));
+            setPreferredSize(new Dimension(142, 20));
             setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2));
             indexLabel = new JLabel() {
                 private static final long serialVersionUID = 1L;
@@ -256,7 +351,7 @@ public class PointListView extends JList<IRoutePoint> {
 
                 @Override
                 public Dimension getPreferredSize() {
-                    return new Dimension((int) (Math.log10(model.size()) + 2) * charWidth + 2, 16);
+                    return new Dimension((int) (Math.log10(model.size()) + 2) * charWidth, 16);
                 }
             };
             indexLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -266,19 +361,12 @@ public class PointListView extends JList<IRoutePoint> {
 
                 @Override
                 public Dimension getPreferredSize() {
-                    return new Dimension(RoutePointRenderer.this.getWidth() - indexLabel.getWidth() - 16 - 10, 16);
+                    return new Dimension(138 - indexLabel.getPreferredSize().width, 16);
                 }
             };
 
-            button = new JButton("x");
-            button.setMargin(new Insets(0, 0, 0, 0));
-            button.setPreferredSize(new Dimension(16, 16));
-            button.setOpaque(false);
-            button.setFocusable(false);
-
             add(indexLabel);
             add(addressLabel);
-            add(button);
         }
 
         @Override
@@ -291,22 +379,21 @@ public class PointListView extends JList<IRoutePoint> {
         @Override
         public JPanel getListCellRendererComponent(final JList<? extends IRoutePoint> list, final IRoutePoint value,
                 final int index, final boolean isSelected, final boolean cellHasFocus) {
-            // TODO getTargetIndex
-            indexLabel.setText((value.getListIndex() + 1) + ". ");
+            indexLabel.setText((value.getTargetIndex() + 1) + ". ");
             addressLabel.setText(value.getAddress());
             switch (value.getState()) {
                 case added:
                     if (hoveredIndex == index) {
                         setBackground(HOVERED_COLOR);
-                        button.setVisible(true);
+                        listButtons.setHovered(index);
                     } else {
                         setBackground(NEUTRAL_COLOR);
-                        button.setVisible(false);
+                        listButtons.setHidden(index);
                     }
                     break;
                 case editing:
                     setBackground(SELECTED_COLOR);
-                    button.setVisible(true);
+                    listButtons.setSelected(index);
                     break;
                 default:
                     break;

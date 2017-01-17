@@ -6,26 +6,19 @@ import java.util.List;
 
 import model.AbstractModel;
 import model.elements.AccessPoint;
-import model.elements.dereferencers.IStreetDereferencer;
-import model.map.IMapManager;
 
 public class RoutePoint extends AbstractModel implements IRoutePoint {
-    private final IMapManager manager;
     private final List<IPointListener> listener;
-    private final IStreetDereferencer street;
-    private final Point accessPointLocation;
     private String address;
-    private AccessPoint accessPoint;
+    private AccessPoint point;
     private int listIndex;
     private int targetIndex;
     private PointState state;
-    private Point location;
+    private final Point location;
 
-    public RoutePoint(final IMapManager manager) {
-        this.manager = manager;
-        this.street = manager.createTileDereferencer().getStreetDereferencer();
+    public RoutePoint() {
+        location = new Point();
         state = PointState.unadded;
-        accessPointLocation = new Point();
         listener = new ArrayList<IPointListener>();
     }
 
@@ -63,11 +56,6 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public void removePointListener(final IPointListener listener) {
-        this.listener.remove(listener);
-    }
-
-    @Override
     public void setAddress(final String address) {
         this.address = address;
         fireAddressEvent();
@@ -75,9 +63,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
 
     @Override
     public void setAccessPoint(final AccessPoint point) {
-        this.accessPoint = point;
-        this.street.setID(point.getStreet());
-        calculateLocation();
+        this.point = point;
         fireLocationEvent();
 
     }
@@ -100,8 +86,8 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public void setLocation(final Point location) {
-        this.location = location;
+    public void setLocation(final int x, final int y) {
+        location.setLocation(x, y);
         fireLocationEvent();
     }
 
@@ -111,8 +97,13 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public Point getLocation() {
-        return location != null ? location : manager.getPixel(accessPointLocation);
+    public int getX() {
+        return location.x;
+    }
+
+    @Override
+    public int getY() {
+        return location.y;
     }
 
     @Override
@@ -132,42 +123,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
 
     @Override
     public AccessPoint getAccessPoint() {
-        return accessPoint;
+        return point;
     }
 
-    private void calculateLocation() {
-
-        final int size = street.size();
-
-        if (size > 0) {
-            final float totalLength = street.getLength();
-            final float maxLength = totalLength * accessPoint.getOffset();
-
-            int lastX = street.getX(0);
-            int lastY = street.getY(0);
-            float currentOffsetLength = 0f;
-
-            for (int i = 1; i < size; i++) {
-                final int currentX = street.getX(i);
-                final int currentY = street.getY(i);
-                final double distance = Point.distance(lastX, lastY, currentX, currentY);
-
-                if (currentOffsetLength + distance > maxLength || i == size - 1) {
-                    final int xDistance = currentX - lastX;
-                    final int yDistance = currentY - lastY;
-
-                    final float partOffsetLength = maxLength - currentOffsetLength;
-                    final float partOffset = (float) (partOffsetLength / distance);
-                    accessPointLocation.setLocation((int) (lastX + xDistance * partOffset + 0.49f), (int) (lastY
-                            + yDistance * partOffset + 0.49f));
-
-                    return;
-                }
-
-                currentOffsetLength += distance;
-                lastX = currentX;
-                lastY = currentY;
-            }
-        }
-    }
 }

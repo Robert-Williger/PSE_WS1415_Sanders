@@ -22,7 +22,8 @@ class UnaddedState extends AbstractActionState {
         getSidebarView().setAddable(false);
 
         final IRoutePoint point = getStore().getPoint();
-        point.setLocation(null);
+        // TODO
+        // point.setLocation(null);
         point.setState(PointState.added);
         getSidebarView().setResettable(true);
         if (getList().size() >= 2) {
@@ -64,7 +65,8 @@ class UnaddedState extends AbstractActionState {
 
     @Override
     protected void cancelPointRelocation() {
-        getStore().getPoint().setLocation(null);
+        // TODO
+        // getStore().getPoint().setLocation(null);
     }
 
     @Override

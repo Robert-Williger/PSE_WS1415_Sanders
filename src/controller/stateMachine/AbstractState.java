@@ -1,7 +1,5 @@
 package controller.stateMachine;
 
-import java.awt.Point;
-
 import model.IApplication;
 import model.ITextProcessor;
 import model.map.IMap;
@@ -120,7 +118,7 @@ class AbstractState implements IState {
     }
 
     @Override
-    public IState locatePoint(final Point point) {
+    public IState locatePoint(final int x, final int y) {
         return this;
     }
 

@@ -14,7 +14,7 @@ public class Map extends AbstractModel implements IMap {
 
     public Map(final IMapManager manager) {
         this.manager = manager;
-        state = manager.getMapState();
+        state = manager.getState();
         converter = manager.getConverter();
     }
 
@@ -34,7 +34,6 @@ public class Map extends AbstractModel implements IMap {
         final int weightedY;
         final int trueSteps;
 
-        // TODO check this
         if (steps > 0) {
             trueSteps = Math.min(steps, state.getMaxZoomStep() - state.getZoomStep());
             weightedX = (coordLocation.x - midPoint.x) >> trueSteps;
@@ -47,8 +46,7 @@ public class Map extends AbstractModel implements IMap {
 
         if (trueSteps != 0) {
             state.setZoomStep(state.getZoomStep() + steps);
-            Point pixelLocation = manager.getPixel(new Point(coordLocation.x - weightedX, coordLocation.y - weightedY));
-            center(pixelLocation.x, pixelLocation.y);
+            center(coordLocation.x - weightedX, coordLocation.y - weightedY);
         }
     }
 
@@ -61,8 +59,9 @@ public class Map extends AbstractModel implements IMap {
     }
 
     @Override
-    public AddressNode getAddressNode(final Point location) {
-        return manager.getAddressNode(manager.getCoord(location));
+    public AddressNode getAddressNode(final int x, final int y) {
+        // TODO
+        return manager.getAddress(manager.getCoord(new Point(x, y)));
     }
 
     @Override
@@ -78,9 +77,8 @@ public class Map extends AbstractModel implements IMap {
     public Point getViewLocation() {
         final Point location = state.getLocation();
         final int zoomStep = state.getZoomStep();
-        final Dimension tileSize = manager.getTileSize();
-        final int pixelX = converter.getPixelDistance(location.x, zoomStep) % tileSize.width;
-        final int pixelY = converter.getPixelDistance(location.y, zoomStep) % tileSize.height;
+        final int pixelX = converter.getPixelDistance(location.x, zoomStep) % manager.getTileSize();
+        final int pixelY = converter.getPixelDistance(location.y, zoomStep) % manager.getTileSize();
 
         return new Point(pixelX, pixelY);
     }
@@ -98,21 +96,18 @@ public class Map extends AbstractModel implements IMap {
     @Override
     public void center(final Point point) {
         center(point.x, point.y);
+    }
 
-        final Point location = manager.getCoord(point);
+    private void center(final int x, final int y) {
         final Dimension size = state.getSize();
 
         final int zoomFactor = (1 << state.getZoomStep() - state.getMinZoomStep());
         final int coordWidth = (int) ((double) size.width / zoomFactor);
         final int coordHeight = (int) ((double) size.height / zoomFactor);
 
-        state.setLocation(location.x - coordWidth / 2, location.y - coordHeight / 2);
+        state.setLocation(x - coordWidth / 2, y - coordHeight / 2);
 
         fireChange();
-    }
-
-    private void center(final int x, final int y) {
-        center(new Point(x, y));
     }
 
     private double log2(final double value) {

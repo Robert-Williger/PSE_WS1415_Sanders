@@ -1,6 +1,5 @@
 package model.renderEngine;
 
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -55,14 +54,14 @@ public class ImageLoader implements IImageLoader {
 
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
-        lastZoomStep = mapManager.getMapState().getMinZoomStep() - 1;
-        lastGridLocation = new Point(mapManager.getCurrentGridLocation());
+        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
+        lastGridLocation = new Point(mapManager.getGridLocation());
 
         // TODO make this variable
 
         routeRenderer = new RouteRenderer(mapManager);
 
-        backgroundFetcher = new AbstractParallelImageFetcher(mapManager, new IFactory<IRenderer>() {
+        backgroundFetcher = new ParallelImageFetcher(mapManager, new IFactory<IRenderer>() {
             final ColorScheme colorScheme = new OSMColorScheme();
 
             @Override
@@ -94,8 +93,8 @@ public class ImageLoader implements IImageLoader {
 
         // set zoomStep to -1, so on first update all tiles in current view will
         // be rendered
-        lastZoomStep = mapManager.getMapState().getMinZoomStep() - 1;
-        lastGridLocation = new Point(mapManager.getCurrentGridLocation());
+        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
+        lastGridLocation = new Point(mapManager.getGridLocation());
 
         backgroundFetcher.setMapManager(manager);
         POIFetcher.setMapManager(manager);
@@ -113,7 +112,7 @@ public class ImageLoader implements IImageLoader {
 
         for (int i = lastGridLocation.y; i < lastRowCount + lastGridLocation.y; i++) {
             for (int j = lastGridLocation.x; j < lastColumnCount + lastGridLocation.x; j++) {
-                newTiles.add(mapManager.getTileID(i, j, lastZoomStep));
+                newTiles.add(mapManager.getID(i, j, lastZoomStep));
             }
         }
         return newTiles;
@@ -122,15 +121,15 @@ public class ImageLoader implements IImageLoader {
     private List<Long> getNewTiles() {
         final List<Long> newTiles = new LinkedList<Long>();
 
-        final int currentZoomStep = mapManager.getMapState().getZoomStep();
-        final Point currentGridLocation = mapManager.getCurrentGridLocation();
+        final int currentZoomStep = mapManager.getState().getZoomStep();
+        final Point currentGridLocation = mapManager.getGridLocation();
         final int currentRows = mapManager.getRows();
         final int currentColumns = mapManager.getColumns();
 
         if (currentZoomStep != lastZoomStep) {
             for (int i = currentGridLocation.y; i < currentRows + currentGridLocation.y; i++) {
                 for (int j = currentGridLocation.x; j < currentColumns + currentGridLocation.x; j++) {
-                    newTiles.add(mapManager.getTileID(i, j, currentZoomStep));
+                    newTiles.add(mapManager.getID(i, j, currentZoomStep));
                 }
             }
         } else if (!lastGridLocation.equals(currentGridLocation) || lastRowCount < currentRows
@@ -142,7 +141,7 @@ public class ImageLoader implements IImageLoader {
             for (int i = currentGridLocation.y; i < currentRows + currentGridLocation.y; i++) {
                 for (int j = currentGridLocation.x; j < currentColumns + currentGridLocation.x; j++) {
                     if (!lastView.contains(j, i)) {
-                        newTiles.add(mapManager.getTileID(i, j, currentZoomStep));
+                        newTiles.add(mapManager.getID(i, j, currentZoomStep));
                     }
                 }
             }
@@ -161,10 +160,10 @@ public class ImageLoader implements IImageLoader {
 
         final List<Long> tiles = new LinkedList<Long>();
 
-        final IMapState state = mapManager.getMapState();
+        final IMapState state = mapManager.getState();
         final int zoom = state.getZoomStep();
         final IPixelConverter converter = mapManager.getConverter();
-        final Dimension tileSize = mapManager.getTileSize();
+        final int tileSize = mapManager.getTileSize();
         final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
         final int height = (int) (state.getSize().height * zoomFactor);
         final int width = (int) (state.getSize().width * zoomFactor);
@@ -179,14 +178,14 @@ public class ImageLoader implements IImageLoader {
             final int zoomedX = Math.max(0, x - height / 2);
             final int zoomedY = Math.max(0, y - width / 2);
 
-            final int startRow = zoomedY / converter.getCoordDistance(tileSize.height, zoomedStep);
-            final int startColumn = zoomedX / converter.getCoordDistance(tileSize.width, zoomedStep);
-            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize.height, zoomedStep) + 1;
-            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize.width, zoomedStep) + 1;
+            final int startRow = zoomedY / converter.getCoordDistance(tileSize, zoomedStep);
+            final int startColumn = zoomedX / converter.getCoordDistance(tileSize, zoomedStep);
+            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
+            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    tiles.add(mapManager.getTileID(i, j, zoomedStep));
+                    tiles.add(mapManager.getID(i, j, zoomedStep));
                 }
             }
         }
@@ -199,14 +198,14 @@ public class ImageLoader implements IImageLoader {
             final int zoomedX = x + zoomedWidth / 2;
             final int zoomedY = y + zoomedHeight / 2;
 
-            final int startRow = zoomedY / converter.getCoordDistance(tileSize.height, zoomedStep);
-            final int startColumn = zoomedX / converter.getCoordDistance(tileSize.width, zoomedStep);
-            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize.height, zoomedStep) + 1;
-            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize.width, zoomedStep) + 1;
+            final int startRow = zoomedY / converter.getCoordDistance(tileSize, zoomedStep);
+            final int startColumn = zoomedX / converter.getCoordDistance(tileSize, zoomedStep);
+            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
+            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    tiles.add(mapManager.getTileID(i, j, zoomedStep));
+                    tiles.add(mapManager.getID(i, j, zoomedStep));
                 }
             }
         }
@@ -222,26 +221,26 @@ public class ImageLoader implements IImageLoader {
                 + lastColumnCount + prefetchCount; column++) {
             for (int row = Math.max(lastGridLocation.y - prefetchCount, 0); row < lastGridLocation.y; row++) {
                 // prefetch tiles which are over the current view
-                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
+                tiles.add(mapManager.getID(row, column, lastZoomStep));
 
             }
 
             for (int row = lastGridLocation.y + lastRowCount; row < lastGridLocation.y + lastRowCount + prefetchCount; row++) {
                 // prefetch tiles which are under the current view
-                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
+                tiles.add(mapManager.getID(row, column, lastZoomStep));
             }
         }
 
         for (int row = lastGridLocation.y; row < lastGridLocation.y + lastRowCount; row++) {
             for (int column = Math.max(lastGridLocation.x - prefetchCount, 0); column < lastGridLocation.x; column++) {
                 // prefetch tiles which are to the left of the current view
-                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
+                tiles.add(mapManager.getID(row, column, lastZoomStep));
             }
 
             for (int column = lastGridLocation.x + lastColumnCount; column < lastGridLocation.x + lastColumnCount
                     + prefetchCount; column++) {
                 // prefetch tiles which are to the right of the current view
-                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
+                tiles.add(mapManager.getID(row, column, lastZoomStep));
             }
         }
 

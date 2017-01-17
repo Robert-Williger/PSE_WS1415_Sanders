@@ -56,7 +56,7 @@ public class MapController extends AbstractController<IMapView> {
                     if (point.getState() != PointState.added) {
                         final int x = e.getX();
                         final int y = e.getY();
-                        point.setLocation(new Point(x, y));
+                        point.setLocation(x, y);
 
                         final int xMovement;
                         final int yMovement;
@@ -92,10 +92,13 @@ public class MapController extends AbstractController<IMapView> {
             @Override
             public void mouseClicked(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    final IRoutePointView view = (IRoutePointView) e.getSource();
-                    final IRoutePoint point = view.getRoutePoint();
+                    // final IRoutePointView view = (IRoutePointView)
+                    // e.getSource();
+                    // TODO
+                    // final IRoutePoint point = view.getRoutePoint();
                     if (e.getClickCount() == 2) {
-                        application.getMap().center(point.getLocation());
+                        // TODO
+                        // application.getMap().center(point.getAccessPoint().getLocation());
                         application.getImageLoader().update();
                     }
                 }
@@ -122,7 +125,7 @@ public class MapController extends AbstractController<IMapView> {
                     final IRoutePointView view = (IRoutePointView) e.getSource();
                     final IRoutePoint point = view.getRoutePoint();
                     if (point.getState() != PointState.added) {
-                        machine.locatePoint(point.getLocation());
+                        machine.locatePoint(point.getX(), point.getY());
                     }
                     dragMove.setPoint(null);
 
@@ -148,7 +151,7 @@ public class MapController extends AbstractController<IMapView> {
             private long startTime;
             private long elapsedTime;
             private boolean pressed;
-            private static final int SCALE_FACTOR = 10_000_000;
+            // private static final int SCALE_FACTOR = 10_000_000;
 
             {
                 startPoint = new Point();
@@ -177,7 +180,7 @@ public class MapController extends AbstractController<IMapView> {
             @Override
             public void mouseClicked(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    machine.locatePoint(e.getPoint());
+                    machine.locatePoint(e.getX(), e.getY());
                 }
             }
 
@@ -196,10 +199,9 @@ public class MapController extends AbstractController<IMapView> {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     pressed = false;
                     if (elapsedTime != 0) {
-                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * SCALE_FACTOR),
-                                (int) (movement.getY() / elapsedTime * SCALE_FACTOR));
+                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000), (int) (movement.getY()
+                                / elapsedTime * 10_000_000));
                     }
-                    movement.setLocation(0, 0);
                 }
             }
 

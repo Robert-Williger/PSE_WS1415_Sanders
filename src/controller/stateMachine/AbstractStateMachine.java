@@ -1,7 +1,5 @@
 package controller.stateMachine;
 
-import java.awt.Point;
-
 import model.IApplication;
 import model.targets.IRoutePoint;
 import view.IApplicationView;
@@ -88,8 +86,8 @@ abstract class AbstractStateMachine implements IStateMachine {
     }
 
     @Override
-    public void locatePoint(final Point point) {
-        changeState(state.locatePoint(point));
+    public void locatePoint(final int x, final int y) {
+        changeState(state.locatePoint(x, y));
     }
 
     @Override

@@ -1,7 +1,5 @@
 package controller.stateMachine;
 
-import java.awt.Point;
-
 import model.targets.IRoutePoint;
 
 public interface IStateMachine {
@@ -30,7 +28,7 @@ public interface IStateMachine {
 
     void removePoint(IRoutePoint point);
 
-    void locatePoint(Point point);
+    void locatePoint(int x, int y);
 
     void setAddressText(String address);
 

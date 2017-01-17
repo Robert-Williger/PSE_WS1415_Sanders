@@ -1,6 +1,5 @@
 package controller.stateMachine;
 
-import java.awt.Point;
 import java.util.List;
 import java.util.Set;
 
@@ -78,14 +77,15 @@ abstract class AbstractActionState extends AbstractState {
     }
 
     @Override
-    public IState locatePoint(final Point point) {
-        final AddressNode node = getMap().getAddressNode(point);
+    public IState locatePoint(final int x, final int y) {
+        final AddressNode node = getMap().getAddressNode(x, y);
         if (node != null) {
             final IRoutePoint routePoint = getPoint();
 
             routePoint.setAddress(node.getAddress());
-            routePoint.setAccessPoint(node);
-            routePoint.setLocation(null);
+            routePoint.setAccessPoint(node.getAccessPoint());
+            // TODO
+            // routePoint.setLocation(null);
             getSidebarView().setCancelable(true);
 
             return getLocatedState();

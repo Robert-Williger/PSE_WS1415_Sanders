@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import util.AddressableBinaryHeap;
+import util.IAddressablePriorityQueue;
+
 public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     private final IDirectedGraph graph;
     private final int[] distance;

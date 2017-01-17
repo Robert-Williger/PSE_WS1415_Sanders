@@ -1,18 +1,16 @@
 package model.renderEngine;
 
+import java.awt.Image;
+
 import model.AbstractModel;
-import model.elements.dereferencers.ITileDereferencer;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
+import model.map.accessors.ITileAccessor;
 
 public abstract class AbstractRenderer extends AbstractModel implements IRenderer {
 
     protected IPixelConverter converter;
-    protected ITileDereferencer tile;
-
-    protected int zoom;
-    protected int x;
-    protected int y;
+    protected ITileAccessor tileAccessor;;
 
     public AbstractRenderer(final IMapManager manager) {
         setMapManager(manager);
@@ -21,13 +19,14 @@ public abstract class AbstractRenderer extends AbstractModel implements IRendere
     @Override
     public void setMapManager(final IMapManager manager) {
         this.converter = manager.getConverter();
-        this.tile = manager.createTileDereferencer();
+        this.tileAccessor = manager.createTileAccessor();
     }
 
-    protected void setTileID(final long id) {
-        tile.setID(id);
-        this.zoom = tile.getZoomStep();
-        this.x = tile.getX();
-        this.y = tile.getY();
+    @Override
+    public final boolean render(final long tileID, final Image image) {
+        tileAccessor.setID(tileID);
+        return render(image);
     }
+
+    protected abstract boolean render(final Image image);
 }

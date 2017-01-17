@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import util.AddressableBinaryHeap;
+import util.IAddressablePriorityQueue;
 import model.IProgressListener;
 
 public class MSTTSPSolver extends AbstractRouteSolver {

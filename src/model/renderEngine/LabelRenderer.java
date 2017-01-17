@@ -13,15 +13,20 @@ import java.awt.font.TextLayout;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 
-import model.elements.dereferencers.IBuildingDereferencer;
-import model.elements.dereferencers.ILabelDereferencer;
 import model.map.IMapManager;
+import model.map.accessors.ICollectiveAccessor;
+import model.map.accessors.IPointAccessor;
+import model.map.accessors.IStringAccessor;
 
 public class LabelRenderer extends AbstractRenderer implements IRenderer {
     private Graphics2D g;
+
+    private IPointAccessor labelAccessor;
+    private ICollectiveAccessor buildingAccessor;
+    private IStringAccessor stringAccessor;
 
     private static final LabelStyle[] styles;
 
@@ -107,9 +112,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     }
 
     @Override
-    public boolean render(final long tile, final Image image) {
-        setTileID(tile);
-
+    protected boolean render(final Image image) {
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
 
@@ -123,24 +126,38 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
         return rendered;
     }
 
+    @Override
+    public void setMapManager(final IMapManager manager) {
+        super.setMapManager(manager);
+
+        labelAccessor = manager.createPointAccessor("label");
+        buildingAccessor = manager.createCollectiveAccessor("building");
+        stringAccessor = manager.createStringAccessor();
+    }
+
     private boolean drawLabels() {
-        final Iterator<Integer> iterator = tile.getLabels();
+        final int zoom = tileAccessor.getZoom();
+        final int x = tileAccessor.getX();
+        final int y = tileAccessor.getY();
+
+        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("label");
         if (!iterator.hasNext()) {
             return false;
         }
 
-        final ILabelDereferencer dereferencer = tile.getLabelDereferencer();
         while (iterator.hasNext()) {
-            final int label = iterator.next();
-            dereferencer.setID(label);
+            labelAccessor.setID(iterator.nextLong());
 
-            if (styles[dereferencer.getType()] != null && styles[dereferencer.getType()].mainStroke(g, zoom)) {
+            if (styles[labelAccessor.getType()] != null && styles[labelAccessor.getType()].mainStroke(g, zoom)) {
                 // TODO avoid object generation
-                final float angle = dereferencer.getRotation();
+                final float angle = labelAccessor.getAttribute("rotation");
                 final double sin = Math.sin(angle);
                 final double cos = Math.cos(angle);
-                if (styles[dereferencer.getType()].outlineStroke(g, zoom)) {
-                    TextLayout text = new TextLayout(dereferencer.getName(), g.getFont(), g.getFontRenderContext());
+                // TODO avoid code redundance
+                if (styles[labelAccessor.getType()].outlineStroke(g, zoom)) {
+                    stringAccessor.setID(labelAccessor.getAttribute("name"));
+                    final String name = stringAccessor.getString();
+                    TextLayout text = new TextLayout(name, g.getFont(), g.getFontRenderContext());
 
                     final Shape shape = text.getOutline(g.getTransform());
                     final Rectangle2D rect = text.getBounds();
@@ -149,31 +166,35 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
                             * text.getDescent();
                     final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2 - cos
                             * text.getDescent();
-                    double x = converter.getPixelDistancef(dereferencer.getX() - this.x, zoom) + xOffset;
-                    double y = converter.getPixelDistancef(dereferencer.getY() - this.y, zoom) + yOffset;
+                    double transX = converter.getPixelDistancef(labelAccessor.getX() - x, zoom) + xOffset;
+                    double transY = converter.getPixelDistancef(labelAccessor.getY() - y, zoom) + yOffset;
 
-                    g.translate(x, y);
+                    g.translate(transX, transY);
                     g.rotate(angle);
                     g.draw(shape);
-                    styles[dereferencer.getType()].mainStroke(g, zoom);
-                    g.drawString(dereferencer.getName(), 0, 0);
+                    styles[labelAccessor.getType()].mainStroke(g, zoom);
+                    g.drawString(name, 0, 0);
                     g.rotate(-angle);
-                    g.translate(-x, -y);
-                } else if (styles[dereferencer.getType()].mainStroke(g, zoom)) {
+                    g.translate(-transX, -transY);
+                } else if (styles[labelAccessor.getType()].mainStroke(g, zoom)) {
+                    stringAccessor.setID(labelAccessor.getAttribute("name"));
+                    final String name = stringAccessor.getString();
+                    final int rotation = labelAccessor.getAttribute("rotation");
+
                     final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
-                    final int width = fontMetrics.stringWidth(dereferencer.getName());
+                    final int width = fontMetrics.stringWidth(name);
                     final int height = fontMetrics.getHeight();
                     final int descent = fontMetrics.getDescent();
                     final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
                     final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
-                    double x = converter.getPixelDistancef(dereferencer.getX() - this.x, zoom) + xOffset;
-                    double y = converter.getPixelDistancef(dereferencer.getY() - this.y, zoom) + yOffset;
+                    double transX = converter.getPixelDistancef(labelAccessor.getX() - x, zoom) + xOffset;
+                    double transY = converter.getPixelDistancef(labelAccessor.getY() - y, zoom) + yOffset;
 
-                    g.translate(x, y);
-                    g.rotate(dereferencer.getRotation());
-                    g.drawString(dereferencer.getName(), 0, 0);
-                    g.rotate(-dereferencer.getRotation());
-                    g.translate(-x, -y);
+                    g.translate(transX, transY);
+                    g.rotate(rotation);
+                    g.drawString(name, 0, 0);
+                    g.rotate(-rotation);
+                    g.translate(-transX, -transY);
                 }
 
             }
@@ -185,34 +206,38 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     private boolean drawBuildingNumbers() {
         boolean rendered = false;
 
-        final IBuildingDereferencer dereferencer = tile.getBuildingDereferencer();
+        final int zoom = tileAccessor.getZoom();
+        final int x = tileAccessor.getX();
+        final int y = tileAccessor.getY();
+
         if (zoom >= buildingNumberMinZoomstep) {
             final FontMetrics metrics = g.getFontMetrics(buildingNumberFont);
 
             g.setFont(buildingNumberFont);
             g.setColor(buildingNumberColor);
 
-            Iterator<Integer> iterator = tile.getBuildings();
+            PrimitiveIterator.OfLong buildingIterator = tileAccessor.getElements("building");
 
-            while (iterator.hasNext()) {
-                final int building = iterator.next();
-                dereferencer.setID(building);
+            while (buildingIterator.hasNext()) {
+                final long building = buildingIterator.nextLong();
+                buildingAccessor.setID(building);
 
-                final String number = dereferencer.getHouseNumber();
+                stringAccessor.setID(buildingAccessor.getAttribute("number"));
+                final String number = stringAccessor.getString();
                 if (!number.isEmpty()) {
-
+                    final int size = buildingAccessor.size();
                     int minX = Integer.MAX_VALUE;
                     int minY = Integer.MAX_VALUE;
                     int maxX = Integer.MIN_VALUE;
                     int maxY = Integer.MIN_VALUE;
 
-                    for (int i = 0; i < dereferencer.size(); i++) {
-                        int x = dereferencer.getX(i);
-                        minX = Math.min(minX, x);
-                        maxX = Math.max(maxX, x);
-                        int y = dereferencer.getY(i);
-                        minY = Math.min(minY, y);
-                        maxY = Math.max(maxY, y);
+                    for (int i = 0; i < size; i++) {
+                        int cx = buildingAccessor.getX(i);
+                        minX = Math.min(minX, cx);
+                        maxX = Math.max(maxX, cx);
+                        int cy = buildingAccessor.getY(i);
+                        minY = Math.min(minY, cy);
+                        maxY = Math.max(maxY, cy);
                     }
 
                     int width = converter.getPixelDistance(maxX - minX, zoom);
@@ -224,7 +249,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
 
                     if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
                         rendered = true;
-                        final Point2D.Float center = calculateCenter(dereferencer);
+                        final Point2D.Float center = calculateCenter();
                         center.setLocation((center.getX() + minX + width / 2) / 2f,
                                 (center.getY() + minY + height / 2) / 2f);
                         g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f), (float) (center.y
@@ -237,27 +262,20 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
         return rendered;
     }
 
-    private Point2D.Float calculateCenter(final IBuildingDereferencer dereferencer) {
+    private Point2D.Float calculateCenter() {
+        final int size = buildingAccessor.size();
         float x = 0f;
         float y = 0f;
 
-        int totalPoints = dereferencer.size() - 1;
-        for (int i = 0; i < totalPoints; i++) {
-            x += dereferencer.getX(i);
-            y += dereferencer.getY(i);
+        for (int i = 0; i < size; i++) {
+            x += buildingAccessor.getX(i);
+            y += buildingAccessor.getY(i);
         }
 
-        if (dereferencer.getX(0) != dereferencer.getX(totalPoints)
-                || dereferencer.getY(0) != dereferencer.getY(totalPoints)) {
-            x += dereferencer.getX(totalPoints);
-            y += dereferencer.getY(totalPoints);
-            totalPoints++;
-        }
+        x = x / size;
+        y = y / size;
 
-        x = x / totalPoints;
-        y = y / totalPoints;
-
-        return new Point.Float(converter.getPixelDistancef(x - this.x, zoom), converter.getPixelDistancef(y - this.y,
-                zoom));
+        return new Point.Float(converter.getPixelDistancef(x - tileAccessor.getX(), tileAccessor.getZoom()),
+                converter.getPixelDistancef(y - tileAccessor.getY(), tileAccessor.getZoom()));
     }
 }

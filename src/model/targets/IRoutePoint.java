@@ -1,15 +1,11 @@
 package model.targets;
 
-import java.awt.Point;
-
 import model.IModel;
 import model.elements.AccessPoint;
 
 public interface IRoutePoint extends IModel {
 
     void addPointListener(IPointListener listener);
-
-    void removePointListener(IPointListener listener);
 
     void setAddress(String address);
 
@@ -21,11 +17,13 @@ public interface IRoutePoint extends IModel {
 
     void setState(PointState state);
 
-    void setLocation(Point location);
+    void setLocation(int x, int y);
 
     String getAddress();
 
-    Point getLocation();
+    int getX();
+
+    int getY();
 
     int getListIndex();
 

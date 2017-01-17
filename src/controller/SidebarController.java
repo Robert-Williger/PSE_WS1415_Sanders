@@ -43,7 +43,8 @@ public class SidebarController extends AbstractController<ISidebarView> {
                 if (e.getClickCount() == 1) {
                     machine.selectPoint(point);
                 } else {
-                    application.getMap().center(point.getLocation());
+                    // TODO
+                    // application.getMap().center(point.getAccessPoint().getLocation());
                     application.getImageLoader().update();
                 }
             }

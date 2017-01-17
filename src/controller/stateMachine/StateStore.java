@@ -12,7 +12,7 @@ class StateStore {
     private IApplication application;
 
     private IRoutePoint storedPoint;
-    private AccessPoint storedAccessPoint;
+    private AccessPoint storedNode;
     private int storedIndex;
     private String storedAddress;
     private String currentAddress;
@@ -45,13 +45,13 @@ class StateStore {
 
     void storePoint() {
         storedAddress = storedPoint.getAddress();
-        storedAccessPoint = storedPoint.getAccessPoint();
+        storedNode = storedPoint.getAccessPoint();
         storedIndex = storedPoint.getListIndex();
     }
 
     void restorePoint() {
         storedPoint.setAddress(storedAddress);
-        storedPoint.setAccessPoint(storedAccessPoint);
+        storedPoint.setAccessPoint(storedNode);
         application.getRouteManager().getPointList().changeOrder(storedPoint.getListIndex(), storedIndex);
     }
 

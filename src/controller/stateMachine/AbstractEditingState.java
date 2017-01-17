@@ -10,7 +10,8 @@ abstract class AbstractEditingState extends AbstractActionState {
     public IState cancel() {
         final IRoutePoint point = getPoint();
         getSidebarView().setPointOrderChangable(false);
-        point.setLocation(null);
+        // TODO
+        // point.setLocation(null);
         point.setState(PointState.added);
 
         return DefaultState.getInstance();
@@ -65,7 +66,8 @@ abstract class AbstractEditingState extends AbstractActionState {
     protected void endCurrentAction() {
         final IRoutePoint point = getPoint();
         getSidebarView().setPointOrderChangable(false);
-        point.setLocation(null);
+        // TODO
+        // point.setLocation(null);
         point.setState(PointState.added);
     }
 
@@ -73,7 +75,8 @@ abstract class AbstractEditingState extends AbstractActionState {
 
     @Override
     protected void cancelPointRelocation() {
-        getStore().getPoint().setLocation(null);
+        // TODO
+        // getStore().getPoint().setLocation(null);
     }
 
 }

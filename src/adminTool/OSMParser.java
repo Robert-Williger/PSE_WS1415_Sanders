@@ -1,7 +1,6 @@
 package adminTool;
 
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -27,7 +26,6 @@ import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Node;
 import adminTool.elements.POI;
-import adminTool.elements.StreetNode;
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat.DenseNodes;
 import crosby.binary.Osmformat.HeaderBlock;
@@ -335,13 +333,18 @@ public class OSMParser implements IOSMParser {
                     int type;
 
                     if (buildingTag) {
-                        buildingList.add(new RevalidateableBuilding(nodes, addrStreetTag, addrNumberTag));
+                        // TODO check behaviour
+                        if (!addrStreetTag.isEmpty() || !addrNumberTag.isEmpty()) {
+                            buildingList.add(Building.create(nodes, addrStreetTag, addrNumberTag));
+                        } else {
+                            buildingList.add(Building.create(nodes));
+                        }
                     } else {
                         if (terrainType >= 0) {
                             areaMap.put((int) w.getId(), (byte) terrainType);
                             // TODO equals instead of == ?
                             if (nodes[0] == nodes[nodes.length - 1]) {
-                                areaList.add(new RevalidateableArea(nodes, terrainType));
+                                areaList.add(new Area(nodes, terrainType));
                             }
                         }
 
@@ -388,7 +391,7 @@ public class OSMParser implements IOSMParser {
                     }
 
                     if (amenityType >= 0) {
-                        final Point center = calculateCenter(new Area(nodes, 0).getPolygon());
+                        final Point center = calculateCenter(nodes);
                         poiList.add(new POI(center.x, center.y, amenityType));
                     }
 
@@ -444,21 +447,20 @@ public class OSMParser implements IOSMParser {
                     }
 
                     for (final List<Node> list : maps.get(0).values()) {
-                        buildingList.add(new RevalidateableBuilding(list.toArray(new Node[list.size()]), address,
-                                housenumber));
+                        buildingList.add(Building.create(list.toArray(new Node[list.size()]), address, housenumber));
                     }
                     for (final List<Node> list : maps.get(1).values()) {
-                        buildingList.add(new RevalidateableBuilding(list.toArray(new Node[list.size()]), "", ""));
+                        buildingList.add(Building.create(list.toArray(new Node[list.size()])));
                     }
                 } else {
                     for (final List<Node> list : maps.get(0).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new RevalidateableArea(list.toArray(new Node[list.size()]), areaType));
+                        areaList.add(new Area(list.toArray(new Node[list.size()]), areaType));
                         // }
                     }
                     for (final List<Node> list : maps.get(1).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new RevalidateableArea(list.toArray(new Node[list.size()]), areaType));
+                        areaList.add(new Area(list.toArray(new Node[list.size()]), areaType));
                         // }
                     }
                 }
@@ -616,19 +618,11 @@ public class OSMParser implements IOSMParser {
             calculateBounds(streetList);
             calculateBounds(areaList);
             calculateBounds(buildingList);
-
             bBox.setBounds(bBox.x, bBox.y, bBox.width - bBox.x, bBox.height - bBox.y);
 
             updateNodes(nodeMap.values());
             updateNodes(poiList);
             updateNodes(labelList);
-
-            for (final Area area : areaList) {
-                ((RevalidateableArea) area).revalidate();
-            }
-            for (final Building building : buildingList) {
-                ((RevalidateableBuilding) building).revalidate();
-            }
 
             nodeMap = null;
             areaMap = null;
@@ -648,16 +642,10 @@ public class OSMParser implements IOSMParser {
                     final int nodeX = translateX(node.getX());
                     final int nodeY = translateY(node.getY());
 
-                    if (nodeX < bBox.x) {
-                        bBox.x = nodeX;
-                    } else if (nodeX > bBox.width) {
-                        bBox.width = nodeX;
-                    }
-                    if (nodeY < bBox.y) {
-                        bBox.y = nodeY;
-                    } else if (nodeY > bBox.height) {
-                        bBox.height = nodeY;
-                    }
+                    bBox.x = Math.min(bBox.x, nodeX);
+                    bBox.width = Math.max(bBox.width, nodeX);
+                    bBox.y = Math.min(bBox.y, nodeY);
+                    bBox.height = Math.max(bBox.height, nodeY);
                 }
             }
         }
@@ -960,72 +948,24 @@ public class OSMParser implements IOSMParser {
         return (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2;
     }
 
-    private Point calculateCenter(final Polygon poly) {
+    private Point calculateCenter(final Node[] nodes) {
         float x = 0f;
         float y = 0f;
-        int totalPoints = poly.npoints - 1;
+        int totalPoints = nodes.length - 1;
         for (int i = 0; i < totalPoints; i++) {
-            x += poly.xpoints[i];
-            y += poly.ypoints[i];
+            x += nodes[i].getX();
+            y += nodes[i].getY();
         }
 
-        if (poly.xpoints[0] != poly.xpoints[totalPoints] || poly.ypoints[0] != poly.ypoints[totalPoints]) {
-            x += poly.xpoints[totalPoints];
-            y += poly.ypoints[totalPoints];
-            totalPoints++;
+        if (nodes[0].getX() != nodes[totalPoints].getX() || nodes[0].getY() != nodes[totalPoints].getY()) {
+            x += nodes[totalPoints].getX();
+            y += nodes[totalPoints].getY();
+            ++totalPoints;
         }
 
         x = x / totalPoints;
         y = y / totalPoints;
 
         return new Point((int) x, (int) y);
-    }
-
-    private static class RevalidateableArea extends Area {
-
-        public RevalidateableArea(final Node[] nodes, final int type) {
-            super(nodes, type);
-        }
-
-        public void revalidate() {
-            polygon = null;
-        }
-    }
-
-    private static class RevalidateableBuilding extends Building {
-
-        private final String street;
-        private final String number;
-
-        public RevalidateableBuilding(final Node[] nodes, final String street, final String number) {
-            super(nodes);
-            this.street = street;
-            this.number = number;
-        }
-
-        @Override
-        public String getAddress() {
-            return getStreet() + " " + getHouseNumber();
-        }
-
-        @Override
-        public String getStreet() {
-            return street;
-        }
-
-        @Override
-        public String getHouseNumber() {
-            return number;
-        }
-
-        @Override
-        public StreetNode getStreetNode() {
-            return null;
-        }
-
-        public void revalidate() {
-            polygon = null;
-        }
-
     }
 }

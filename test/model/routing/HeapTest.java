@@ -10,6 +10,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import util.AddressableBinaryHeap;
+
 public class HeapTest {
     private AddressableBinaryHeap<Integer> queue;
 
