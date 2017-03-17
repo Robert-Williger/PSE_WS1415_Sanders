@@ -9,16 +9,16 @@ import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
 
 public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolver {
-    private final IDirectedGraph graph;
-    private final int[] distance;
-    private final int[] parent;
+    private final IDirectedGraph               graph;
+    private final int[]                        distance;
+    private final int[]                        parent;
     // TODO
     // private final Set<Integer> endNodeSet;
-    private int[] endNodes;
+    private int[]                              endNodes;
     private IAddressablePriorityQueue<Integer> queue;
-    private boolean canceled;
+    private boolean                            canceled;
 
-    private InterNode start;
+    private InterNode                          start;
 
     public ReusableDijkstra(final IDirectedGraph graph) {
         this.graph = graph;
@@ -29,7 +29,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     public IAddressablePriorityQueue<Integer> createQueue() {
-        return new AddressableBinaryHeap<Integer>();
+        return new AddressableBinaryHeap<>();
     }
 
     @Override
@@ -131,7 +131,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     private List<Integer> createListOfEdges(final int endNode) {
-        final List<Integer> edges = new ArrayList<Integer>();
+        final List<Integer> edges = new ArrayList<>();
 
         int node = endNode;
         int edge = parent[node];

@@ -13,7 +13,7 @@ public class SequentialImageFetcher extends AbstractImageFetcher {
         super(manager);
 
         this.renderer = renderer;
-        this.queue = new AddressableBinaryHeap<Long>();
+        this.queue = new AddressableBinaryHeap<>();
         new Worker().start();
     }
 
@@ -52,6 +52,7 @@ public class SequentialImageFetcher extends AbstractImageFetcher {
     }
 
     private class Worker extends Thread {
+        @Override
         public void run() {
             while (!interrupted()) {
                 synchronized (queue) {

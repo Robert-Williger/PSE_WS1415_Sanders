@@ -1,7 +1,6 @@
 package model.renderEngine;
 
 import java.awt.Image;
-import java.awt.Point;
 
 import javax.swing.event.ChangeListener;
 
@@ -49,19 +48,18 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     @Override
     public int getRows() {
-        return mapManager.getRows();
+        return mapManager.getVisibleRows();
     }
 
     @Override
     public int getColumns() {
-        return mapManager.getColumns();
+        return mapManager.getVisibleColumns();
     }
 
     @Override
     public Image getImage(final int row, final int column) {
-        final Point gridLocation = mapManager.getGridLocation();
         final int zoom = mapManager.getState().getZoomStep();
-        final long tileID = mapManager.getID(row + gridLocation.y, column + gridLocation.x, zoom);
+        final long tileID = mapManager.getID(row + mapManager.getRow(), column + mapManager.getColumn(), zoom);
         return imageFetcher.getImage(tileID);
     }
 

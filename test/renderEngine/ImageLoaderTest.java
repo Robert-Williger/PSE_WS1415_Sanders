@@ -82,7 +82,7 @@ public class ImageLoaderTest {
 
         mapManager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(1), new MapState(2048, 2048, 0,
                 2), new Dimension(256, 256));
-        mapManager.getState().setSize(10, 10);
+        mapManager.getState().setSectionSize(10, 10);
         loader = new ImageLoader(mapManager);
     }
 
@@ -135,8 +135,8 @@ public class ImageLoaderTest {
                 (BufferedImage) loader
                         .getImageAccessors()
                         .get(0)
-                        .getImage(mapManager.getGridLocation().y + mapManager.getRows() + 1,
-                                mapManager.getGridLocation().x + mapManager.getColumns() + 1), defaultImage));
+                        .getImage(mapManager.getGridLocation().y + mapManager.getVisibleRows() + 1,
+                                mapManager.getGridLocation().x + mapManager.getVisibleColumns() + 1), defaultImage));
     }
 
     @Test
@@ -150,8 +150,8 @@ public class ImageLoaderTest {
             }
         }
 
-        final int row = mapManager.getGridLocation().y + mapManager.getRows() + 1;
-        final int column = mapManager.getGridLocation().x + mapManager.getColumns() + 1;
+        final int row = mapManager.getGridLocation().y + mapManager.getVisibleRows() + 1;
+        final int column = mapManager.getGridLocation().x + mapManager.getVisibleColumns() + 1;
 
         assertTrue(imagesEqual((BufferedImage) loader.getImageAccessors().get(0).getImage(row, column), defaultImage));
 

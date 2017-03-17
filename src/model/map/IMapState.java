@@ -1,22 +1,14 @@
 package model.map;
 
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
-
 public interface IMapState {
 
     void setZoomStep(int zoomStep);
 
-    void setSize(int width, int height);
+    void setSectionSize(int width, int height);
 
-    void setSize(Dimension size);
+    void setLocation(double x, double y);
 
-    void setLocation(int x, int y);
-
-    void setLocation(Point location);
-
-    void move(int deltaX, int deltaY);
+    // void move(double deltaX, double deltaY);
 
     int getZoomStep();
 
@@ -24,10 +16,19 @@ public interface IMapState {
 
     int getMinZoomStep();
 
-    Rectangle getBounds();
+    int getPixelSectionWidth();
 
-    Point getLocation();
+    int getPixelSectionHeight();
 
-    Dimension getSize();
+    int getCoordSectionWidth();
 
+    int getCoordSectionHeight();
+
+    int getTotalWidth();
+
+    int getTotalHeight();
+
+    double getX();
+
+    double getY();
 }

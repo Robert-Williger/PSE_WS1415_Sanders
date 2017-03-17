@@ -118,12 +118,14 @@ public class AddressableBinaryBlockingHeap<T> extends AddressableBinaryHeap<T> i
         return 0;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public synchronized boolean remove(final Object o) {
         return super.remove((T) o);
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public synchronized boolean contains(final Object o) {
         return super.contains((T) o);
     }

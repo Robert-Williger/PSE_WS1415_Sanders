@@ -90,7 +90,7 @@ public class JPMSTTest {
 
         for (int i = 0; i < mst.getNodes(); i++) {
             final Iterator<Integer> it = mst.getAdjacentNodes(i);
-            final List<Integer> temp = new ArrayList<Integer>();
+            final List<Integer> temp = new ArrayList<>();
 
             while (it.hasNext()) {
                 temp.add(it.next());

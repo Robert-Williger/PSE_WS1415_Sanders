@@ -15,6 +15,7 @@ public class POI extends Node implements Typeable {
         this.type = type;
     }
 
+    @Override
     public int getType() {
         return type;
     }

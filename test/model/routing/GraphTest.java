@@ -113,8 +113,8 @@ public class GraphTest {
 
     @Test
     public void testAdjacentNodes() {
-        final List<Integer> ret = new ArrayList<Integer>();
-        final List<Integer> nodes = new ArrayList<Integer>();
+        final List<Integer> ret = new ArrayList<>();
+        final List<Integer> nodes = new ArrayList<>();
         nodes.add(9);
         nodes.add(12);
         nodes.add(17);

@@ -27,6 +27,7 @@ public class Area extends MultiElement implements Typeable {
         return new Polygon(xpoints, ypoints, nodes.length);
     }
 
+    @Override
     public int getType() {
         return type;
     }

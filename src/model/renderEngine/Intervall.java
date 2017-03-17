@@ -19,21 +19,33 @@ public class Intervall {
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Float.floatToIntBits(end);
+        result = prime * result + Float.floatToIntBits(start);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
-
         if (obj == null) {
             return false;
         }
         if (!(obj instanceof Intervall)) {
             return false;
         }
-
-        final Intervall interObj = (Intervall) obj;
-
-        return start == interObj.start && end == interObj.end;
+        Intervall other = (Intervall) obj;
+        if (Float.floatToIntBits(end) != Float.floatToIntBits(other.end)) {
+            return false;
+        }
+        if (Float.floatToIntBits(start) != Float.floatToIntBits(other.start)) {
+            return false;
+        }
+        return true;
     }
 
 }

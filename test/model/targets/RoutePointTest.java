@@ -103,7 +103,6 @@ public class RoutePointTest {
         final int index = 2;
 
         routePoint.setListIndex(index);
-        ;
         assertEquals(index, routePoint.getListIndex());
     }
 

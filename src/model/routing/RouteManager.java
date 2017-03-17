@@ -45,7 +45,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     }
 
     private List<InterNode> createInterNodeList() {
-        final List<InterNode> interNodeList = new ArrayList<InterNode>(pointList.size());
+        final List<InterNode> interNodeList = new ArrayList<>(pointList.size());
 
         for (int i = 0; i < pointList.size(); i++) {
             final AccessPoint accessPoint = pointList.get(i).getAccessPoint();

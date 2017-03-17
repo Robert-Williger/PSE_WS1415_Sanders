@@ -44,7 +44,7 @@ public class Reader implements IReader {
     private long progress;
 
     public Reader() {
-        list = new LinkedList<IProgressListener>();
+        list = new LinkedList<>();
     }
 
     @Override
@@ -264,8 +264,8 @@ public class Reader implements IReader {
 
             final String[] strings = readStrings(path);
             final int[][] nodes = readNodes(path);
-            final Map<String, IQuadtree> quadtreeMap = new HashMap<String, IQuadtree>();
-            final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<String, IFactory<ICollectiveAccessor>>();
+            final Map<String, IQuadtree> quadtreeMap = new HashMap<>();
+            final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
             readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoomStep());
             final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
                 @Override

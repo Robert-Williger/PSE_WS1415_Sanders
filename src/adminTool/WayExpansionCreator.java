@@ -15,7 +15,8 @@ public class WayExpansionCreator extends AbstractMapCreator {
 
     // private Way[] ways;
 
-    public WayExpansionCreator(final File file, final Collection<UnprocessedStreet> streets, final Collection<Way> ways) {
+    public WayExpansionCreator(final File file, final Collection<UnprocessedStreet> streets,
+            final Collection<Way> ways) {
         super(file);
         this.streets = streets.toArray(new UnprocessedStreet[streets.size()]);
         // this.ways = ways.toArray(new Way[ways.size()]);
@@ -23,7 +24,7 @@ public class WayExpansionCreator extends AbstractMapCreator {
 
     @Override
     public void create() {
-        HashMap<Node, Collection<Integer>> nodeMap = new HashMap<Node, Collection<Integer>>();
+        HashMap<Node, Collection<Integer>> nodeMap = new HashMap<>();
 
         for (int i = 0; i < streets.length; i++) {
             final Node[] nodes = streets[i].getNodes();
@@ -136,7 +137,7 @@ public class WayExpansionCreator extends AbstractMapCreator {
     private void fillNodeMap(final HashMap<Node, Collection<Integer>> nodeMap, final Node node, final int index) {
         Collection<Integer> streets = nodeMap.get(node);
         if (streets == null) {
-            streets = new LinkedList<Integer>();
+            streets = new LinkedList<>();
             nodeMap.put(node, streets);
         }
         streets.add(index);

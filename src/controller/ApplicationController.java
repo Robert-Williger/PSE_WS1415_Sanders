@@ -103,18 +103,18 @@ public class ApplicationController extends AbstractController<IApplicationView> 
             @Override
             public void actionPerformed(final ActionEvent e) {
                 switch (e.getActionCommand()) {
-                    case "export":
-                        controlExport();
-                        break;
-                    case "import":
-                        controllImport();
-                        break;
-                    case "exit":
-                        controllExit();
-                        break;
-                    case "help":
-                        controllHelp();
-                        break;
+                case "export":
+                    controlExport();
+                    break;
+                case "import":
+                    controllImport();
+                    break;
+                case "exit":
+                    controllExit();
+                    break;
+                case "help":
+                    controllHelp();
+                    break;
                 }
             }
 
@@ -198,7 +198,7 @@ public class ApplicationController extends AbstractController<IApplicationView> 
                 });
 
                 if (model.setMapData(file)) {
-                    model.getMap().setViewSize(view.getMap().getSize());
+                    model.getMap().setSize(view.getMap().getWidth(), view.getMap().getHeight());
                     model.getImageLoader().update();
                 }
 

@@ -16,7 +16,7 @@ import org.junit.Test;
 public class ViaRouteSolverTest {
 
     private ViaRouteSolver routing;
-    private boolean error;
+    private boolean        error;
 
     public static long getEdge(final int node1, final int node2) {
         long ret;
@@ -85,7 +85,7 @@ public class ViaRouteSolverTest {
 
     @Test
     public void testDistance() {
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(12, 18), 1F));
@@ -110,7 +110,7 @@ public class ViaRouteSolverTest {
         nodes[1] = new InterNode(getEdge(16, 15), 0.8F);
         nodes[2] = new InterNode(getEdge(12, 18), 1F);
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(nodes[0]);
         edges.add(nodes[1]);
         edges.add(nodes[2]);
@@ -152,7 +152,7 @@ public class ViaRouteSolverTest {
     @Test
     public void testNotAccessible() {
         error = false;
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(19, 20), 1F));
@@ -182,7 +182,7 @@ public class ViaRouteSolverTest {
     public void testProgress() {
         error = true;
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(12, 18), 1F));

@@ -33,7 +33,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
     private static final long serialVersionUID = 1L;
 
     private final SidebarView sidebar;
-    private final MapView map;
+    private final SmoothMapView map;
     private final ApplicationMenuBar menuBar;
     private final HelpView help;
 
@@ -60,10 +60,10 @@ public class ApplicationView extends JFrame implements IApplicationView {
         final IRouteManager manager = application.getRouteManager();
         final IPointList list = manager.getPointList();
 
-        initialize(application);
+        initialize();
 
         sidebar = new SidebarView(manager);
-        map = new MapView(application.getImageLoader(), list, application.getMap());
+        map = new SmoothMapView(application.getImageLoader(), list, application.getMap());
         menuBar = new ApplicationMenuBar();
         help = new HelpView();
 
@@ -106,7 +106,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
         });
     }
 
-    private void initialize(final IApplication application) {
+    private void initialize() {
         setSize(800, 640);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(800, 500));
@@ -147,10 +147,11 @@ public class ApplicationView extends JFrame implements IApplicationView {
 
         @Override
         public void paintComponent(final Graphics g) {
-            final float[] FRACTIONS = {0.0f, 1.0f};
-            final Color[] FILL_COLORS = {Color.white, new Color(230, 230, 230)};
-            final Paint paint = new LinearGradientPaint(0, 0, getWidth(), (int) Math.sqrt(getHeight() * getHeight()
-                    + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS, MultipleGradientPaint.CycleMethod.REFLECT);
+            final float[] FRACTIONS = { 0.0f, 1.0f };
+            final Color[] FILL_COLORS = { Color.white, new Color(230, 230, 230) };
+            final Paint paint = new LinearGradientPaint(0, 0, getWidth(),
+                    (int) Math.sqrt(getHeight() * getHeight() + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS,
+                    MultipleGradientPaint.CycleMethod.REFLECT);
             ((Graphics2D) g).setPaint(paint);
             g.fillRect(0, 0, getWidth(), getHeight());
         }
@@ -169,12 +170,12 @@ public class ApplicationView extends JFrame implements IApplicationView {
 
             final JMenu file = new JMenu("Datei");
             file.setMnemonic('D');
-            importItem = new JMenuItem("Kartenpfad ändern", new ImageIcon(
-                    ApplicationView.class.getResource("import.png")));
+            importItem = new JMenuItem("Kartenpfad ändern",
+                    new ImageIcon(ApplicationView.class.getResource("import.png")));
             importItem.setActionCommand("import");
 
-            exportItem = new JMenuItem("Karte exportieren", new ImageIcon(
-                    ApplicationView.class.getResource("export.png")));
+            exportItem = new JMenuItem("Karte exportieren",
+                    new ImageIcon(ApplicationView.class.getResource("export.png")));
             exportItem.setActionCommand("export");
 
             exitItem = new JMenuItem("Beenden", new ImageIcon(ApplicationView.class.getResource("exit.png")));

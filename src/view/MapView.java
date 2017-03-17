@@ -28,7 +28,7 @@ public class MapView extends JPanel implements IMapView {
     private final MapLayer mapLayer;
     private final PointLayer pointLayer;
 
-    private final ChangeListener mapListener;
+    private final ChangeListener mapChangeListener;
     private final IPointListListener pointListListener;
 
     private IMap map;
@@ -38,7 +38,7 @@ public class MapView extends JPanel implements IMapView {
         pointLayer = new PointLayer();
         mapLayer = new MapLayer();
 
-        mapListener = new ChangeListener() {
+        mapChangeListener = new ChangeListener() {
 
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -71,7 +71,7 @@ public class MapView extends JPanel implements IMapView {
         mapLayer.setLoader(loader);
         pointLayer.reset();
         list.addPointListListener(pointListListener);
-        map.addChangeListener(mapListener);
+        map.addChangeListener(mapChangeListener);
 
         viewport.setViewPosition(map.getViewLocation());
     }
@@ -192,7 +192,7 @@ public class MapView extends JPanel implements IMapView {
         private final HashMap<IRoutePoint, RoutePointView> routePoints;
 
         public PointLayer() {
-            routePoints = new HashMap<IRoutePoint, RoutePointView>();
+            routePoints = new HashMap<>();
             setOpaque(false);
             setLayout(null);
         }

@@ -4,6 +4,7 @@ import java.awt.Point;
 
 public class CollectiveUtil {
 
+    //TODO
     public static int getLength(final ICollectiveAccessor accessor) {
         return 0;
     }

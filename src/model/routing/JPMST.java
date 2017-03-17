@@ -84,6 +84,6 @@ public class JPMST {
     }
 
     public IAddressablePriorityQueue<Integer> createQueue() {
-        return new AddressableBinaryHeap<Integer>();
+        return new AddressableBinaryHeap<>();
     }
 }

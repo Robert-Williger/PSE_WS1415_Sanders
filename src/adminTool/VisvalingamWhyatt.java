@@ -55,10 +55,10 @@ public class VisvalingamWhyatt {
     }
 
     private IAddressablePriorityQueue<Item> setupQueue(final Item from, final int nodes, final int zoom) {
-        final IAddressablePriorityQueue<Item> queue = new AddressableBinaryHeap<Item>();
+        final IAddressablePriorityQueue<Item> queue = new AddressableBinaryHeap<>();
 
-        List<Item> items = new ArrayList<Item>(nodes);
-        List<Integer> priorities = new ArrayList<Integer>(nodes);
+        List<Item> items = new ArrayList<>(nodes);
+        List<Integer> priorities = new ArrayList<>(nodes);
 
         Item current = from;
 

@@ -128,7 +128,7 @@ public class RoutePointView extends JPanel implements IRoutePointView {
     static {
         final float[] fractions = {0f, 1f};
 
-        map = new HashMap<PointState, Paint>();
+        map = new HashMap<>();
         map.put(PointState.added, new RadialGradientPaint(new Rectangle(0, 0, DIAMETER, DIAMETER), fractions,
                 new Color[]{Color.green, Color.green.darker()}, CycleMethod.NO_CYCLE));
         map.put(PointState.editing, new RadialGradientPaint(new Rectangle(0, 0, DIAMETER, DIAMETER), fractions,

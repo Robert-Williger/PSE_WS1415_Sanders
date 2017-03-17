@@ -11,7 +11,7 @@ public abstract class AbstractProgressable implements Progressable {
     private double progress;
 
     public AbstractProgressable() {
-        listeners = new ArrayList<IProgressListener>();
+        listeners = new ArrayList<>();
         progress = 0;
     }
 

@@ -2,6 +2,7 @@ package model.map.accessors;
 
 import java.util.Arrays;
 import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import model.map.IPixelConverter;
 import model.map.IQuadtree;
@@ -15,7 +16,8 @@ public class TileAccessor implements ITileAccessor {
     private int column;
     private int zoom;
 
-    public TileAccessor(final java.util.Map<String, IQuadtree> map, final IPixelConverter converter, final int tileSize) {
+    public TileAccessor(final java.util.Map<String, IQuadtree> map, final IPixelConverter converter,
+            final int tileSize) {
         this.map = map;
         this.converter = converter;
         this.tileSize = tileSize;
@@ -44,6 +46,14 @@ public class TileAccessor implements ITileAccessor {
         }
 
         return Arrays.stream(new long[0]).iterator();
+    }
+
+    @Override
+    public void forEach(String identifier, LongConsumer consumer) {
+        final IQuadtree tree = map.get(identifier);
+        if (tree != null) {
+            tree.forEach(row, column, zoom, consumer);
+        }
     }
 
     @Override

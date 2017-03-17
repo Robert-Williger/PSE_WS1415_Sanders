@@ -11,7 +11,7 @@ public class AbstractModel implements IModel {
     private final List<ChangeListener> listeners;
 
     public AbstractModel() {
-        listeners = new LinkedList<ChangeListener>();
+        listeners = new LinkedList<>();
     }
 
     @Override

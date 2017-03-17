@@ -20,27 +20,27 @@ import adminTool.elements.Way;
 public class MapManagerCreator extends CompressedWriter {
 
     // number of tiles in lowest zoom step
-    private static final int MIN_TILES = 1;
+    private static final int     MIN_TILES             = 1;
 
-    private static final int TILE_LENGTH_BITS = 8;
-    private static final int TILE_LENGTH = 1 << TILE_LENGTH_BITS;
+    private static final int     TILE_LENGTH_BITS      = 8;
+    private static final int     TILE_LENGTH           = 1 << TILE_LENGTH_BITS;
 
-    private static final int MAX_ELEMENTS_PER_TILE = 16;
+    private static final int     MAX_ELEMENTS_PER_TILE = 4;
 
-    private static final int MAX_ZOOM_STEP = 19;
-    private static final int MIN_ZOOM_STEP = 0;
-    private static final int MAX_ZOOM_STEPS = 13;
+    private static final int     MAX_ZOOM_STEP         = 19;
+    private static final int     MIN_ZOOM_STEP         = 0;
+    private static final int     MAX_ZOOM_STEPS        = 13;
 
-    private static final int SCALE_FACTOR_BITS = 21;
-    private static final int SCALE_FACTOR = 1 << SCALE_FACTOR_BITS;
+    private static final int     SCALE_FACTOR_BITS     = 21;
+    private static final int     SCALE_FACTOR          = 1 << SCALE_FACTOR_BITS;
 
-    private Rectangle bounds;
+    private Rectangle            bounds;
 
-    private String path;
+    private String               path;
 
-    private Collection<Street> streets;
-    private Collection<Area> areas;
-    private Collection<Way> ways;
+    private Collection<Street>   streets;
+    private Collection<Area>     areas;
+    private Collection<Way>      ways;
     private Collection<Building> buildings;
 
     public MapManagerCreator(final Collection<Building> buildings, final Collection<Street> streets,
@@ -66,22 +66,22 @@ public class MapManagerCreator extends CompressedWriter {
 
         writeHeader(headerOutput, minZoomStep, maxZoomStep, conversionFactor);
 
-        TypeSorter<Area> areaSorter = new TypeSorter<Area>(areas, new Area[areas.size()]);
+        TypeSorter<Area> areaSorter = new TypeSorter<>(areas, new Area[areas.size()]);
         Sorting<Area> areaSorting = areaSorter.sort();
         areaSorter = null;
         areas = null;
 
-        TypeSorter<Way> waySorter = new TypeSorter<Way>(ways, new Way[ways.size()]);
+        TypeSorter<Way> waySorter = new TypeSorter<>(ways, new Way[ways.size()]);
         Sorting<Way> waySorting = waySorter.sort();
         waySorter = null;
         ways = null;
 
-        TypeSorter<Street> streetSorter = new TypeSorter<Street>(streets, new Street[streets.size()]);
+        TypeSorter<Street> streetSorter = new TypeSorter<>(streets, new Street[streets.size()]);
         Sorting<Street> streetSorting = streetSorter.sort();
         streetSorter = null;
         streets = null;
 
-        TypeSorter<Building> buildingSorter = new TypeSorter<Building>(buildings, new Building[buildings.size()]);
+        TypeSorter<Building> buildingSorter = new TypeSorter<>(buildings, new Building[buildings.size()]);
         Sorting<Building> buildingSorting = buildingSorter.sort();
         buildingSorter = null;
         buildings = null;
@@ -160,11 +160,11 @@ public class MapManagerCreator extends CompressedWriter {
     private static class TypeSorter<T extends Typeable> {
 
         private final Collection<T> source;
-        private final Sorting<T> sorting;
+        private final Sorting<T>    sorting;
 
         public TypeSorter(final Collection<T> source, final T[] destination) {
             this.source = source;
-            sorting = new Sorting<T>(destination, new int[getMaximumType(source) + 1]);
+            sorting = new Sorting<>(destination, new int[getMaximumType(source) + 1]);
         }
 
         public Sorting<T> sort() {

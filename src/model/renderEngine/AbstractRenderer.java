@@ -10,7 +10,7 @@ import model.map.accessors.ITileAccessor;
 public abstract class AbstractRenderer extends AbstractModel implements IRenderer {
 
     protected IPixelConverter converter;
-    protected ITileAccessor tileAccessor;;
+    protected ITileAccessor tileAccessor;
 
     public AbstractRenderer(final IMapManager manager) {
         setMapManager(manager);

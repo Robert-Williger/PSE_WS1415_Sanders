@@ -117,12 +117,12 @@ public class ImageAccessorTest {
 
     @Test
     public void testRows() {
-        assertEquals(manager.getRows(), accessor.getRows());
+        assertEquals(manager.getVisibleRows(), accessor.getRows());
     }
 
     @Test
     public void testColumns() {
-        assertEquals(manager.getColumns(), accessor.getColumns());
+        assertEquals(manager.getVisibleColumns(), accessor.getColumns());
     }
 
     @Test

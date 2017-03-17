@@ -27,23 +27,27 @@ public class InterNode {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (int) (edge ^ (edge >>> 32));
+        result = prime * result + correspondingEdge;
+        result = prime * result + edge;
         result = prime * result + Float.floatToIntBits(offset);
         return result;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof InterNode)) {
             return false;
         }
-        final InterNode other = (InterNode) obj;
+        InterNode other = (InterNode) obj;
+        if (correspondingEdge != other.correspondingEdge) {
+            return false;
+        }
         if (edge != other.edge) {
             return false;
         }
@@ -52,5 +56,4 @@ public class InterNode {
         }
         return true;
     }
-
 }

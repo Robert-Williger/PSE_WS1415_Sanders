@@ -9,11 +9,11 @@ import java.util.Set;
 
 import model.IProgressListener;
 
-public class ChristofidesTSPSolver extends AbstractRouteSolver implements IRouteSolver {
+public class ChristofidesTSPSolver extends AbstractRouteSolver {
 
-    private boolean canceled;
-    private ISPSPSolver solver;
-    private Path[] completeMapping;
+    private boolean       canceled;
+    private ISPSPSolver   solver;
+    private Path[]        completeMapping;
     private List<Integer> matchingMapping;
 
     public ChristofidesTSPSolver(final IDirectedGraph undirectedGraph) {
@@ -112,8 +112,9 @@ public class ChristofidesTSPSolver extends AbstractRouteSolver implements IRoute
         return (nodes * (nodes - 1) - (nodes - min) * (nodes - min - 1)) / 2 + max - min - 1;
     }
 
-    private IUndirectedGraph createMatchingGraph(final IUndirectedGraph mstGraph, final IUndirectedGraph completeGraph) {
-        matchingMapping = new ArrayList<Integer>();
+    private IUndirectedGraph createMatchingGraph(final IUndirectedGraph mstGraph,
+            final IUndirectedGraph completeGraph) {
+        matchingMapping = new ArrayList<>();
 
         for (int node = 0; node < mstGraph.getNodes(); node++) {
             int count = 0;
@@ -135,8 +136,8 @@ public class ChristofidesTSPSolver extends AbstractRouteSolver implements IRoute
             for (int j = i + 1; j < size; j++) {
                 firstNodes[count] = i;
                 secondNodes[count] = j;
-                weights[count] = completeGraph.getWeight(completeGraph.getEdge(matchingMapping.get(i),
-                        matchingMapping.get(j)));
+                weights[count] = completeGraph
+                        .getWeight(completeGraph.getEdge(matchingMapping.get(i), matchingMapping.get(j)));
                 ++count;
             }
         }
@@ -194,7 +195,7 @@ public class ChristofidesTSPSolver extends AbstractRouteSolver implements IRoute
             // final List<Path> currentRoute = new ArrayList<Path>();
             int currentRouteLength = 0;
 
-            final Set<Integer> usedNodes = new HashSet<Integer>();
+            final Set<Integer> usedNodes = new HashSet<>();
 
             final Iterator<Integer> iterator = eulerianPath.iterator();
             int last = iterator.next();

@@ -26,7 +26,7 @@ public class PathTest {
 
     @Before
     public void setUp() {
-        edges = new ArrayList<Long>();
+        edges = new ArrayList<>();
         iNode1 = new InterNode(getEdge(0, 16), 1F);
         iNode2 = new InterNode(getEdge(2, 6), 1F);
 

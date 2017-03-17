@@ -1,14 +1,14 @@
 package model.routing;
 
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
 
 public class UndirectedGraph implements IUndirectedGraph {
     private final int[] nodes;
     private final int[] edges;
     private final HashMap<Long, Integer> weights;
 
-    private class NodeIterator implements Iterator<Integer> {
+    private class NodeIterator implements OfInt {
         private int currentElement;
         private final int limit;
 
@@ -24,13 +24,8 @@ public class UndirectedGraph implements IUndirectedGraph {
         }
 
         @Override
-        public Integer next() {
+        public int nextInt() {
             return edges[currentElement++];
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
 
     }
@@ -38,7 +33,7 @@ public class UndirectedGraph implements IUndirectedGraph {
     public UndirectedGraph(final int nodes, final int[] firstNodes, final int[] secondNodes, final int[] weights) {
         this.nodes = new int[nodes + 1];
         this.edges = new int[firstNodes.length * 2];
-        this.weights = new HashMap<Long, Integer>();
+        this.weights = new HashMap<>();
 
         for (int i = 0; i < firstNodes.length; i++) {
             final long edge = getEdge(firstNodes[i], secondNodes[i]);
@@ -86,7 +81,7 @@ public class UndirectedGraph implements IUndirectedGraph {
     }
 
     @Override
-    public Iterator<Integer> getAdjacentNodes(final int node) {
+    public OfInt getAdjacentNodes(final int node) {
         return new NodeIterator(node);
     }
 

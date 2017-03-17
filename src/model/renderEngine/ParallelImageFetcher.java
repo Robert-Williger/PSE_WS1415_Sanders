@@ -5,7 +5,7 @@ import java.awt.Image;
 import model.IFactory;
 import model.map.IMapManager;
 
-public class ParallelImageFetcher extends AbstractImageFetcher implements IImageFetcher {
+public class ParallelImageFetcher extends AbstractImageFetcher {
 
     private RenderPool threadPool;
     private IRenderer[] renderers;
@@ -27,6 +27,7 @@ public class ParallelImageFetcher extends AbstractImageFetcher implements IImage
         return 20;
     }
 
+    @Override
     protected int getCacheSize() {
         return 1024;
     }

@@ -1,5 +1,7 @@
 package controller.stateMachine;
 
+import java.awt.Rectangle;
+
 import model.renderEngine.IRenderRoute;
 import view.ISidebarView;
 
@@ -46,7 +48,8 @@ public class CalculatingState extends AbstractState {
         if (route != null) {
             sidebar.setRouteLength(route.getLength());
             getImageLoader().setRenderRoute(route);
-            getMap().center(route.getBounds());
+            final Rectangle bounds = route.getBounds();
+            getMap().center(bounds.getX(), bounds.getY(), bounds.getHeight(), bounds.getWidth());
             getImageLoader().update();
             route = null;
         }

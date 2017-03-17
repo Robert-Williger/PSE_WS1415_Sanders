@@ -74,7 +74,7 @@ public class LongList {
     public int indexOf(long o) {
 
         for (int i = 0; i < size; i++) {
-            if (data[i] == i) {
+            if (data[i] == o) {
                 return i;
             }
         }
@@ -182,6 +182,7 @@ public class LongList {
     private class Itr implements PrimitiveIterator.OfLong {
         int cursor; // index of next element to return
 
+        @Override
         public boolean hasNext() {
             return cursor != size;
         }

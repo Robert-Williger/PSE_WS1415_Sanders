@@ -22,4 +22,14 @@ public class PixelConverter implements IPixelConverter {
     public float getPixelDistancef(final float coordDistance, final int zoomStep) {
         return (float) (coordDistance / conversionFactor * (1 << zoomStep));
     }
+
+    @Override
+    public double getCoordDistanced(double pixelDistance, int zoomStep) {
+        return pixelDistance * conversionFactor / (1 << zoomStep);
+    }
+
+    @Override
+    public double getPixelDistanced(double coordDistance, int zoomStep) {
+        return (int) (coordDistance / conversionFactor * (1 << zoomStep));
+    }
 }

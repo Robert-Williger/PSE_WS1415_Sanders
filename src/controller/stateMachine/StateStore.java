@@ -19,7 +19,7 @@ class StateStore {
     private Set<String> suggestions;
 
     StateStore() {
-        suggestions = new HashSet<String>();
+        suggestions = new HashSet<>();
         suggestions.add("");
     }
 

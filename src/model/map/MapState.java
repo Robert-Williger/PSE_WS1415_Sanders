@@ -2,83 +2,82 @@ package model.map;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 
 public class MapState implements IMapState {
 
     private int zoomStep;
-    private final Rectangle bounds;
     private final int minZoomStep;
     private final int maxZoomStep;
-    private final int height;
-    private final int width;
+
+    // current section's location in coordinates
+    private final Point2D location;
+
+    // current section's size in pixels
+    private final Dimension pixelSectionSize;
+
+    // current section's size in coordinates
+    private final Dimension coordSectionSize;
+
+    // total map size in coordinates
+    private final Dimension totalSize;
 
     public MapState(final int width, final int height, final int minZoomStep, final int maxZoomStep) {
         this.minZoomStep = minZoomStep;
         this.maxZoomStep = maxZoomStep;
-        this.height = height;
-        this.width = width;
 
-        bounds = new Rectangle();
+        pixelSectionSize = new Dimension();
+        coordSectionSize = new Dimension();
+        location = new Point();
+        totalSize = new Dimension(width, height);
         zoomStep = minZoomStep;
     }
 
     @Override
     public void setZoomStep(final int zoomStep) {
         this.zoomStep = Math.min(maxZoomStep, Math.max(zoomStep, minZoomStep));
+        updateCoordSectionSize();
     }
 
     @Override
-    public void setSize(final int width, final int height) {
-        bounds.setSize(width, height);
-        setLocation(getLocation());
+    public void setSectionSize(final int width, final int height) {
+        pixelSectionSize.setSize(width, height);
+        updateCoordSectionSize();
+        setLocation(location.getX(), location.getY());
     }
 
     @Override
-    public void setSize(final Dimension size) {
-        setSize(size.width, size.height);
-    }
+    public void setLocation(final double x, final double y) {
+        double xCoord = x;
+        double yCoord = y;
 
-    @Override
-    public void setLocation(final int x, final int y) {
-        int xCoord = x;
-        int yCoord = y;
-
-        final double zoomFactor = 1.0 / (1 << (zoomStep - minZoomStep));
-        final int coordWidth = (int) (bounds.width * zoomFactor);
-        final int coordHeight = (int) (bounds.height * zoomFactor);
-        if (coordWidth <= width) {
+        if (coordSectionSize.width <= totalSize.width) {
             if (x < 0) {
                 xCoord = 0;
-            } else if (x + coordWidth > width) {
-                xCoord = width - coordWidth;
+            } else if (x + coordSectionSize.width > totalSize.width) {
+                xCoord = totalSize.width - coordSectionSize.width;
             }
         } else {
-            xCoord = (width - coordWidth) / 2;
+            xCoord = (totalSize.width - coordSectionSize.width) / 2;
         }
 
-        if (coordHeight <= height) {
+        if (coordSectionSize.height <= totalSize.height) {
             if (y < 0) {
                 yCoord = 0;
-            } else if (y + coordHeight > height) {
-                yCoord = height - coordHeight;
+            } else if (y + coordSectionSize.height > totalSize.height) {
+                yCoord = totalSize.height - coordSectionSize.height;
             }
         } else {
-            yCoord = (height - coordHeight) / 2;
+            yCoord = (totalSize.height - coordSectionSize.height) / 2;
         }
 
-        bounds.setLocation(xCoord, yCoord);
+        location.setLocation(xCoord, yCoord);
     }
 
-    @Override
-    public void setLocation(final Point location) {
-        setLocation(location.x, location.y);
-    }
-
-    @Override
-    public void move(final int deltaX, final int deltaY) {
-        setLocation(bounds.x + deltaX, bounds.y + deltaY);
-    }
+    // @Override
+    // public void move(final double deltaX, final double deltaY) {
+    // setLocation(location.getX() + deltaX, location.getY() + deltaY);
+    // }
 
     @Override
     public int getZoomStep() {
@@ -95,18 +94,50 @@ public class MapState implements IMapState {
         return minZoomStep;
     }
 
-    @Override
-    public Rectangle getBounds() {
-        return bounds;
+    private void updateCoordSectionSize() {
+        final double zoomFactor = 1.0 / (1 << (zoomStep - minZoomStep));
+        final int coordWidth = (int) (pixelSectionSize.width * zoomFactor);
+        final int coordHeight = (int) (pixelSectionSize.height * zoomFactor);
+        coordSectionSize.setSize(coordWidth, coordHeight);
     }
 
     @Override
-    public Point getLocation() {
-        return bounds.getLocation();
+    public int getPixelSectionWidth() {
+        return pixelSectionSize.width;
     }
 
     @Override
-    public Dimension getSize() {
-        return bounds.getSize();
+    public int getPixelSectionHeight() {
+        return pixelSectionSize.height;
+    }
+
+    @Override
+    public int getTotalWidth() {
+        return totalSize.width;
+    }
+
+    @Override
+    public int getTotalHeight() {
+        return totalSize.height;
+    }
+
+    @Override
+    public double getX() {
+        return location.getX();
+    }
+
+    @Override
+    public double getY() {
+        return location.getY();
+    }
+
+    @Override
+    public int getCoordSectionWidth() {
+        return coordSectionSize.width;
+    }
+
+    @Override
+    public int getCoordSectionHeight() {
+        return coordSectionSize.height;
     }
 }

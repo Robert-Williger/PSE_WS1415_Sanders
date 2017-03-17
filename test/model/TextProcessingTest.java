@@ -45,7 +45,7 @@ public class TextProcessingTest {
 
         final List<String> list = tp.suggest("Teststrasse");
 
-        final List<String> comList = new ArrayList<String>();
+        final List<String> comList = new ArrayList<>();
         comList.add("Teststrasse");
         comList.add("Teststrahse");
         comList.add("Te4tst2agse");

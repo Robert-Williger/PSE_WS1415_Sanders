@@ -27,6 +27,8 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
     protected abstract boolean intersects(final int index, final int zoom, final int x, final int y, final int size);
 
     public void write() throws IOException {
+        long start = System.currentTimeMillis();
+
         final boolean[] duplicates = new boolean[addresses.length];
 
         final int[][] xPos = new int[maxZoomSteps][4];
@@ -74,6 +76,8 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         }
 
         writeIntList(treeList, treeOutput);
+
+        System.out.println(System.currentTimeMillis() - start);
     }
 
     private boolean[][] createChildren() {
@@ -167,7 +171,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
     }
 
     private void setLists(final IntList dataList, final IntList duplicateList, final IntList indices,
-            final boolean[] duplicates) throws IOException {
+            final boolean[] duplicates) {
         dataList.clear();
         duplicateList.clear();
         for (final PrimitiveIterator.OfInt iterator = indices.iterator(); iterator.hasNext();) {
@@ -176,8 +180,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         }
     }
 
-    private void setDuplicateList(final IntList duplicateList, final boolean[] duplicates, final IntList indices)
-            throws IOException {
+    private void setDuplicateList(final IntList duplicateList, final boolean[] duplicates, final IntList indices) {
         duplicateList.clear();
 
         for (final PrimitiveIterator.OfInt iterator = indices.iterator(); iterator.hasNext();) {

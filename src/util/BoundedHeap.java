@@ -7,7 +7,7 @@ public class BoundedHeap<T extends Comparable<T>> {
     private final int capacity;
 
     public BoundedHeap(final int capacity) {
-        this.heap = new ArrayList<T>();
+        this.heap = new ArrayList<>();
         this.capacity = capacity;
     }
 
@@ -69,9 +69,7 @@ public class BoundedHeap<T extends Comparable<T>> {
     }
 
     private void siftUp(final int index) {
-        if (index == 0 || heap.get(getParent(index)).compareTo(heap.get(index)) >= 0) {
-            return;
-        } else {
+        if (index != 0 && heap.get(getParent(index)).compareTo(heap.get(index)) < 0) {
             swap(getParent(index), index);
             siftUp(getParent(index));
         }

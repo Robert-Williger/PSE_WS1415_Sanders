@@ -8,7 +8,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
 import model.map.accessors.CollectiveUtil;
@@ -62,38 +62,34 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
     }
 
     private boolean drawRoute() {
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("street");
-
         final Path2D.Float path = new Path2D.Float();
 
-        while (iterator.hasNext()) {
-            final long street = iterator.nextLong();
+        final LongConsumer consumer = (street) -> {
             streetAccessor.setID(street);
 
             final int id = streetAccessor.getAttribute("graphID");
 
             // TODO optimize this --> no switch case needed
             switch (route.getStreetUse(id)) {
-                case full:
-                    path.append(drawLines().getPathIterator(null), false);
-                    break;
-                case part:
-                    path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
-                    break;
-                case multiPart:
-                    for (final Intervall streetPart : route.getStreetMultiPart(id)) {
-                        path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
-                    }
-                    break;
-                default:
-                    break;
+            case full:
+                path.append(drawLines().getPathIterator(null), false);
+                break;
+            case part:
+                path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
+                break;
+            case multiPart:
+                for (final Intervall streetPart : route.getStreetMultiPart(id)) {
+                    path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
+                }
+                break;
+            default:
+                break;
             }
-        }
+        };
+        tileAccessor.forEach("street", consumer);
 
-        final float thickness = Math.min(
-                MAX_STROKE_WIDTH_PIXEL,
-                Math.max(MIN_STROKE_WIDTH_PIXEL,
-                        converter.getPixelDistancef(NORMAL_STROKE_WIDTH, tileAccessor.getZoom())));
+        final float thickness = Math.min(MAX_STROKE_WIDTH_PIXEL, Math.max(MIN_STROKE_WIDTH_PIXEL,
+                converter.getPixelDistancef(NORMAL_STROKE_WIDTH, tileAccessor.getZoom())));
 
         final int cr = routeColor.getRed();
         final int cg = routeColor.getGreen();
@@ -101,10 +97,12 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
         for (int i = 1; i <= 5; i++) {
             g.setStroke(new BasicStroke((10 - i) * thickness / 10f, BasicStroke.CAP_ROUND, BasicStroke.CAP_ROUND));
-            g.setColor(new Color((int) (cr / 2f + i * cr / 10f), (int) (cg / 2f + i * cg / 10f), (int) (cb / 2 + i * cb
-                    / 10f)));
+            g.setColor(new Color((int) (cr / 2f + i * cr / 10f), (int) (cg / 2f + i * cg / 10f),
+                    (int) (cb / 2 + i * cb / 10f)));
             g.draw(path);
         }
+
+        // TODO return false...
         return true;
     }
 

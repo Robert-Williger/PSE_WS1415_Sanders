@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 
 public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
-    private final List<Entry<T>> heap;
+    private final List<Entry<T>>       heap;
     private final HashMap<T, Entry<T>> mapping;
 
     public AddressableBinaryHeap() {
-        this.heap = new ArrayList<Entry<T>>();
-        this.mapping = new HashMap<T, Entry<T>>();
+        this.heap = new ArrayList<>();
+        this.mapping = new HashMap<>();
     }
 
     @Override
@@ -22,7 +22,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
             } else {
                 key = priority.get(i);
             }
-            final Entry<T> entry = new Entry<T>(elements.get(i), Integer.MAX_VALUE, key);
+            final Entry<T> entry = new Entry<>(elements.get(i), Integer.MAX_VALUE, key);
             add(entry);
         }
 
@@ -46,7 +46,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
 
     @Override
     public void insert(final T element, final int key) {
-        final Entry<T> entry = new Entry<T>(element, Integer.MAX_VALUE, key);
+        final Entry<T> entry = new Entry<>(element, Integer.MAX_VALUE, key);
         add(entry);
         siftUp(getLastIndex());
     }
@@ -79,16 +79,17 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     @Override
     public boolean remove(final T element) {
         final Entry<T> entry = mapping.get(element);
-        final boolean ret = entry != null;
 
-        if (ret) {
+        if (entry != null) {
             final int index = entry.index;
             moveLastElementTo(index);
             siftDown(index);
             mapping.remove(element);
+
+            return true;
         }
 
-        return ret;
+        return false;
     }
 
     @Override
@@ -138,9 +139,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     }
 
     private void siftUp(final int index) {
-        if (index == 0 || heap.get(getParent(index)).priority <= heap.get(index).priority) {
-            return;
-        } else {
+        if (index != 0 && heap.get(getParent(index)).priority > heap.get(index).priority) {
             swap(getParent(index), index);
             siftUp(getParent(index));
         }
@@ -190,8 +189,8 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
 
     private static class Entry<T> {
         private final T content;
-        private int index;
-        private int priority;
+        private int     index;
+        private int     priority;
 
         private Entry(final T content, final int index, final int priority) {
             this.content = content;

@@ -13,12 +13,12 @@ import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
 
 public class AdvancedTextProcessor implements ITextProcessor {
-    private final int maxDistance;
-    private final int suggestions;
+    private final int                maxDistance;
+    private final int                suggestions;
     private final BoundedHeap<Tuple> heap;
-    private final int[][] distance;
-    private final SortedTree indexRoot;
-    private int maxStringLength;
+    private final int[][]            distance;
+    private final SortedTree         indexRoot;
+    private int                      maxStringLength;
 
     public AdvancedTextProcessor() {
         this(new Entry[0][], new MapManager());
@@ -32,7 +32,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             final int maxDistance) {
 
         this.suggestions = suggestions;
-        this.heap = new BoundedHeap<Tuple>(suggestions);
+        this.heap = new BoundedHeap<>(suggestions);
         this.maxDistance = maxDistance;
 
         final Tree unsortedRoot = setupIndex(entries, manager);
@@ -93,15 +93,16 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return distance;
     }
 
-    private void add(final String normalizedName, final String realName, final Tree tree, final AccessPoint accessPoint) {
+    private void add(final String normalizedName, final String realName, final Tree tree,
+            final AccessPoint accessPoint) {
         if (normalizedName.length() > maxStringLength) {
             maxStringLength = normalizedName.length();
         }
         add(normalizedName, realName, accessPoint, tree, 0);
     }
 
-    private void add(final String normalizedName, final String realName, final AccessPoint accessPoint,
-            final Tree root, int index) {
+    private void add(final String normalizedName, final String realName, final AccessPoint accessPoint, final Tree root,
+            int index) {
 
         if (normalizedName.length() > 1) {
             for (final Iterator<Tree> iterator = root.getChildren().iterator(); iterator.hasNext();) {
@@ -295,7 +296,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
                         distance[i + 1][j + 1] = Math.min( //
                                 distance[i - 1][j - 1] + cost, // transposition
                                 distance[i + 1][j + 1] // current minimum
-                                );
+                        );
                     }
                 }
 
@@ -344,14 +345,14 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private static class Tuple implements Comparable<Tuple> {
 
         private final String s;
-        private final int d;
+        private final int    d;
 
         public Tuple(final String s, final int distance) {
             this.s = s;
             d = distance;
         }
 
-        public Integer getDistance() {
+        public int getDistance() {
             return d;
         }
 
@@ -373,16 +374,16 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private static class Tree {
         private static final SortedTree[] emptyChildren = new SortedTree[0];
 
-        private String name;
-        private final String indexName;
-        private final List<Tree> children;
-        private AccessPoint accessPoint;
+        private String                    name;
+        private final String              indexName;
+        private final List<Tree>          children;
+        private AccessPoint               accessPoint;
 
         public Tree(final String indexName, final String name, final AccessPoint accessPoint) {
             this.indexName = indexName;
             this.name = name;
             this.accessPoint = accessPoint;
-            children = new LinkedList<Tree>();
+            children = new LinkedList<>();
         }
 
         public void addChild(final Tree node) {
@@ -432,10 +433,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     private static class SortedTree implements Comparable<SortedTree> {
-        private final String name;
-        private final String indexName;
+        private final String       name;
+        private final String       indexName;
         private final SortedTree[] children;
-        private final AccessPoint accessPoint;
+        private final AccessPoint  accessPoint;
 
         public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
                 final SortedTree[] children) {

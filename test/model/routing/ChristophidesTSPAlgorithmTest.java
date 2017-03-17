@@ -84,7 +84,7 @@ public class ChristophidesTSPAlgorithmTest {
 
     @Test
     public void testDistance() {
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(0, 16), 0F));
         edges.add(new InterNode(getEdge(12, 18), 0F));
         edges.add(new InterNode(getEdge(9, 14), 0F));
@@ -113,7 +113,7 @@ public class ChristophidesTSPAlgorithmTest {
         nodes[1] = new InterNode(getEdge(16, 15), 0.8F);
         nodes[2] = new InterNode(getEdge(12, 18), 1F);
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(nodes[0]);
         edges.add(nodes[1]);
         edges.add(nodes[2]);
@@ -148,7 +148,7 @@ public class ChristophidesTSPAlgorithmTest {
     @Test
     public void testNotAccessible() {
         error = false;
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(19, 20), 1F));
@@ -178,7 +178,7 @@ public class ChristophidesTSPAlgorithmTest {
     public void testProgress() {
         error = true;
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(12, 18), 1F));

@@ -19,7 +19,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     public RoutePoint() {
         location = new Point();
         state = PointState.unadded;
-        listener = new ArrayList<IPointListener>();
+        listener = new ArrayList<>();
     }
 
     private void fireAddressEvent() {

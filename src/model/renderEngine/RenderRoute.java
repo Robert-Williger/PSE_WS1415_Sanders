@@ -7,10 +7,10 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class RenderRoute implements IRenderRoute {
-    private final int length;
-    private final Map<Integer, StreetPart> map;
+    private final int                                 length;
+    private final Map<Integer, StreetPart>            map;
     private final Map<Integer, Collection<Intervall>> multiPartMap;
-    private final Rectangle bounds;
+    private final Rectangle                           bounds;
 
     private class StreetPart {
         StreetUse useage;
@@ -26,8 +26,8 @@ public class RenderRoute implements IRenderRoute {
         this.length = length;
         this.bounds = bounds;
 
-        map = new HashMap<Integer, StreetPart>(64);
-        multiPartMap = new HashMap<Integer, Collection<Intervall>>();
+        map = new HashMap<>(64);
+        multiPartMap = new HashMap<>();
     }
 
     public void addStreet(final int edge) {
@@ -91,7 +91,7 @@ public class RenderRoute implements IRenderRoute {
             // }
 
             // create multiPart
-            final Collection<Intervall> multiMapEntry = new LinkedList<Intervall>();
+            final Collection<Intervall> multiMapEntry = new LinkedList<>();
             multiMapEntry.add(mapEntry.intervall);
             multiMapEntry.add(intervall);
             multiPartMap.put(edgeID, multiMapEntry);

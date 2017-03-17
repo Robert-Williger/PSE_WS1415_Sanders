@@ -38,10 +38,10 @@ public abstract class ThreadPool<T, J extends ThreadJob<T>> {
         condVar = lock.newCondition();
 
         this.poolSize = threadCount;
-        queue = new AddressableBinaryHeap<J>();
+        queue = new AddressableBinaryHeap<>();
         final ExecutorService workerPool = new ThreadPoolExecutor(poolSize, poolSize + 1, 1000L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<Runnable>(poolSize, true));
-        poolService = new ExecutorCompletionService<ResultWrapper>(workerPool);
+        poolService = new ExecutorCompletionService<>(workerPool);
         executor = new Executor();
         receiver = new Receiver();
         executor.start();
@@ -92,7 +92,7 @@ public abstract class ThreadPool<T, J extends ThreadJob<T>> {
 
     public void flush() {
         synchronized (queue) {
-            queue = new AddressableBinaryHeap<J>();
+            queue = new AddressableBinaryHeap<>();
             jobs = Collections.synchronizedSet(new HashSet<J>());
         }
     }

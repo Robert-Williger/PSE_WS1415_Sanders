@@ -32,14 +32,17 @@ public abstract class Building extends Area {
             super(nodes);
         }
 
+        @Override
         public String getStreet() {
             return "";
         }
 
+        @Override
         public String getHouseNumber() {
             return "";
         }
 
+        @Override
         public StreetNode getStreetNode() {
             return null;
         }

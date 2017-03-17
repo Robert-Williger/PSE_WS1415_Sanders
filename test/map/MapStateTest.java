@@ -81,7 +81,7 @@ public class MapStateTest {
     @Test
     public void testBounds() {
         state.setLocation(10, 10);
-        state.setSize(20, 20);
+        state.setSectionSize(20, 20);
         assertEquals(new Rectangle(10, 10, 20, 20), state.getBounds());
     }
 }

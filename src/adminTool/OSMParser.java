@@ -37,25 +37,25 @@ import crosby.binary.file.BlockReaderAdapter;
 public class OSMParser implements IOSMParser {
 
     private final Collection<adminTool.elements.Way> wayList;
-    private final Collection<UnprocessedStreet> streetList;
-    private final Collection<Area> areaList;
-    private final Collection<POI> poiList;
-    private final Collection<Building> buildingList;
-    private final Collection<Label> labelList;
-    private final List<List<Boundary>> boundaries;
-    private final Rectangle bBox;
+    private final Collection<UnprocessedStreet>      streetList;
+    private final Collection<Area>                   areaList;
+    private final Collection<POI>                    poiList;
+    private final Collection<Building>               buildingList;
+    private final Collection<Label>                  labelList;
+    private final List<List<Boundary>>               boundaries;
+    private final Rectangle                          bBox;
 
     public OSMParser() {
         // TODO lists instead of sets!
-        labelList = new HashSet<Label>();
-        wayList = new HashSet<adminTool.elements.Way>();
-        streetList = new HashSet<UnprocessedStreet>();
-        areaList = new HashSet<Area>();
-        poiList = new HashSet<POI>();
-        buildingList = new HashSet<Building>();
+        labelList = new HashSet<>();
+        wayList = new HashSet<>();
+        streetList = new HashSet<>();
+        areaList = new HashSet<>();
+        poiList = new HashSet<>();
+        buildingList = new HashSet<>();
         bBox = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 
-        boundaries = new ArrayList<List<Boundary>>(12);
+        boundaries = new ArrayList<>(12);
         for (int i = 0; i < 12; i++) {
             boundaries.add(new ArrayList<Boundary>());
         }
@@ -109,16 +109,16 @@ public class OSMParser implements IOSMParser {
     }
 
     private class Parser extends BinaryParser {
-        private Map<Integer, Node> nodeMap;
-        private Map<Integer, Byte> areaMap;
+        private Map<Integer, Node>   nodeMap;
+        private Map<Integer, Byte>   areaMap;
         private Map<Integer, Node[]> wayMap;
 
-        private final int SHIFT = 1 << 29;
+        private final int            SHIFT = 1 << 29;
 
         public Parser() {
-            nodeMap = new HashMap<Integer, Node>();
-            wayMap = new HashMap<Integer, Node[]>();
-            areaMap = new HashMap<Integer, Byte>();
+            nodeMap = new HashMap<>();
+            wayMap = new HashMap<>();
+            areaMap = new HashMap<>();
         }
 
         @Override
@@ -513,7 +513,7 @@ public class OSMParser implements IOSMParser {
         private List<HashMap<Node, List<Node>>> createMultipolygonMaps(final Relation relation) {
             long id = 0;
 
-            final List<HashMap<Node, List<Node>>> maps = new ArrayList<HashMap<Node, List<Node>>>(2);
+            final List<HashMap<Node, List<Node>>> maps = new ArrayList<>(2);
             maps.add(new HashMap<Node, List<Node>>());
             maps.add(new HashMap<Node, List<Node>>());
 
@@ -525,7 +525,7 @@ public class OSMParser implements IOSMParser {
                     if (wayMap.containsKey((int) id)) {
                         // TODO save as small parts of ways may
                         // reduce disc space
-                        List<Node> my = new ArrayList<Node>(wayMap.get((int) id).length);
+                        List<Node> my = new ArrayList<>(wayMap.get((int) id).length);
                         for (final Node node : wayMap.get((int) id)) {
                             my.add(node);
                         }
@@ -545,7 +545,8 @@ public class OSMParser implements IOSMParser {
                                     my.add(it.next());
                                 }
                             } else {
-                                for (final ListIterator<Node> it = other.listIterator(other.size()); it.hasPrevious();) {
+                                for (final ListIterator<Node> it = other.listIterator(other.size()); it
+                                        .hasPrevious();) {
                                     my.add(it.previous());
                                 }
                             }
@@ -891,14 +892,14 @@ public class OSMParser implements IOSMParser {
 
     private int getPlaceType(final String place) {
         switch (place) {
-        // case "continent":
-        // return 0;
-        // case "country":
-        // return 1;
+            // case "continent":
+            // return 0;
+            // case "country":
+            // return 1;
             case "state":
                 return 2;
-                // case "county":
-                // return 3;
+            // case "county":
+            // return 3;
             case "city":
                 return 4;
             case "town":
@@ -910,27 +911,27 @@ public class OSMParser implements IOSMParser {
             case "suburb":
                 return 8;
 
-                // case "hamlet":
-                // return 9;
-                //
-                // case "region":
-                // return 10;
-                // case "province":
-                // return 11;
-                // case "district":
-                // return 12;
-                // case "municipality":
-                // return 13;
-                // case "borough":
-                // return 14;
-                // case "quarter":
-                // return 15;
-                // case "city_block":
-                // return 16;
-                // case "plot":
-                // return 17;
-                // case "isolated_dwelling":
-                // return 18;
+            // case "hamlet":
+            // return 9;
+            //
+            // case "region":
+            // return 10;
+            // case "province":
+            // return 11;
+            // case "district":
+            // return 12;
+            // case "municipality":
+            // return 13;
+            // case "borough":
+            // return 14;
+            // case "quarter":
+            // return 15;
+            // case "city_block":
+            // return 16;
+            // case "plot":
+            // return 17;
+            // case "isolated_dwelling":
+            // return 18;
 
         }
 

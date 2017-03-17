@@ -29,7 +29,7 @@ public class LRUCacheTest {
 
     @Before
     public void setUp() {
-        final Queue<Image> freeList = new LinkedList<Image>();
+        final Queue<Image> freeList = new LinkedList<>();
         capacity = 10;
         for (int i = 0; i < capacity; i++) {
             freeList.add(new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB));

@@ -1,8 +1,8 @@
 package model.map;
 
-import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Rectangle;
+import java.util.LinkedList;
+import java.util.List;
 
 import model.AbstractModel;
 
@@ -11,101 +11,100 @@ public class Map extends AbstractModel implements IMap {
     private final IMapManager manager;
     private final IMapState state;
     private final IPixelConverter converter;
+    private final List<IMapListener> listeners;
+
+    private int width;
+    private int height;
 
     public Map(final IMapManager manager) {
         this.manager = manager;
         state = manager.getState();
         converter = manager.getConverter();
+        listeners = new LinkedList<>();
     }
 
     @Override
-    public void zoom(final int steps, final Point location) {
-        final Dimension size = state.getSize();
-        int zoom = state.getZoomStep() - state.getMinZoomStep();
-        final int width = (int) (size.width * (1.0 / (1 << zoom)));
-        final int height = (int) (size.height * (1.0 / (1 << zoom)));
-
-        final Point midPoint = state.getLocation();
-        midPoint.translate(width / 2, height / 2);
-
-        final Point coordLocation = manager.getCoord(location);
-
-        final int weightedX;
-        final int weightedY;
-        final int trueSteps;
-
-        if (steps > 0) {
-            trueSteps = Math.min(steps, state.getMaxZoomStep() - state.getZoomStep());
-            weightedX = (coordLocation.x - midPoint.x) >> trueSteps;
-            weightedY = (coordLocation.y - midPoint.y) >> trueSteps;
-        } else {
-            trueSteps = Math.max(steps, state.getMinZoomStep() - state.getZoomStep());
-            weightedX = (coordLocation.x - midPoint.x) << -steps;
-            weightedY = (coordLocation.y - midPoint.y) << -steps;
-        }
+    public void zoom(final int steps, final double xOffset, final double yOffset) {
+        final int trueSteps = steps > 0 ? Math.min(steps, state.getMaxZoomStep() - state.getZoomStep())
+                : Math.max(steps, state.getMinZoomStep() - state.getZoomStep());
 
         if (trueSteps != 0) {
-            state.setZoomStep(state.getZoomStep() + steps);
-            center(coordLocation.x - weightedX, coordLocation.y - weightedY);
+            //TODO improve this.
+            fireZoomInitiatedEvent(trueSteps, state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : xOffset,
+                    state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : yOffset);
+
+            final double midX = state.getX() + state.getCoordSectionWidth() * 0.5;
+            final double midY = state.getY() + state.getCoordSectionHeight() * 0.5;
+            final double coordX = state.getX() + state.getCoordSectionWidth() * xOffset;
+            final double coordY = state.getY() + state.getCoordSectionHeight() * yOffset;
+
+            final double scaling = Math.pow(2, -trueSteps);
+            final double xDistance = coordX - midX;
+            final double yDistance = coordY - midY;
+
+            state.setZoomStep(state.getZoomStep() + trueSteps);
+            center(coordX - scaling * xDistance, coordY - scaling * yDistance);
+
+            final double newMidX = state.getX() + state.getCoordSectionWidth() * 0.5;
+            final double newMidY = state.getY() + state.getCoordSectionHeight() * 0.5;
+
+            // TODO is this correct?
+            final double realXOffset = (newMidX - midX) / state.getCoordSectionWidth() + 0.5;
+            final double realYOffset = (newMidY - midY) / state.getCoordSectionHeight() + 0.5;
+
+            fireZoomEvent(trueSteps, realXOffset, realYOffset);
         }
     }
 
     @Override
-    public void moveView(final int deltaX, final int deltaY) {
+    public void moveView(final double deltaX, final double deltaY) {
         final int zoomStep = state.getZoomStep();
-        state.move(converter.getCoordDistance(deltaX, zoomStep), converter.getCoordDistance(deltaY, zoomStep));
+        state.setLocation(state.getX() + converter.getCoordDistanced(deltaX, zoomStep),
+                state.getY() + converter.getCoordDistanced(deltaY, zoomStep));
 
-        fireChange();
+        fireMoveEvent(deltaX, deltaY);
     }
 
     @Override
     public AddressNode getAddressNode(final int x, final int y) {
         // TODO
-        return manager.getAddress(manager.getCoord(new Point(x, y)));
+        return manager.getAddress(x, y);
     }
 
     @Override
-    public void setViewSize(final Dimension size) {
+    public void setSize(final int width, final int height) {
         final int minZoomStep = state.getMinZoomStep();
-        state.setSize(converter.getCoordDistance(size.width, minZoomStep),
-                converter.getCoordDistance(size.height, minZoomStep));
 
-        fireChange();
+        this.width = width;
+        this.height = height;
+
+        state.setSectionSize(converter.getCoordDistance(width, minZoomStep),
+                converter.getCoordDistance(height, minZoomStep));
+
+        fireResizeEvent(width, height);
     }
 
     @Override
     public Point getViewLocation() {
-        final Point location = state.getLocation();
         final int zoomStep = state.getZoomStep();
-        final int pixelX = converter.getPixelDistance(location.x, zoomStep) % manager.getTileSize();
-        final int pixelY = converter.getPixelDistance(location.y, zoomStep) % manager.getTileSize();
+        final int pixelX = (int) converter.getPixelDistanced(state.getX(), zoomStep) % manager.getTileSize();
+        final int pixelY = (int) converter.getPixelDistanced(state.getY(), zoomStep) % manager.getTileSize();
 
         return new Point(pixelX, pixelY);
     }
 
     @Override
-    public void center(final Rectangle bounds) {
-        final Dimension size = state.getSize();
-        final int steps = (int) Math.ceil(Math.max(log2(bounds.width / size.getWidth()),
-                log2(bounds.height / size.getHeight())));
+    public void center(final double x, final double y, final double width, final double height) {
+        final int steps = (int) Math.ceil(
+                Math.max(log2(width / state.getCoordSectionWidth()), log2(height / state.getCoordSectionHeight())));
 
         state.setZoomStep(state.getMinZoomStep() - steps);
-        center(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+        center(x + width / 2, y + height / 2);
     }
 
     @Override
-    public void center(final Point point) {
-        center(point.x, point.y);
-    }
-
-    private void center(final int x, final int y) {
-        final Dimension size = state.getSize();
-
-        final int zoomFactor = (1 << state.getZoomStep() - state.getMinZoomStep());
-        final int coordWidth = (int) ((double) size.width / zoomFactor);
-        final int coordHeight = (int) ((double) size.height / zoomFactor);
-
-        state.setLocation(x - coordWidth / 2, y - coordHeight / 2);
+    public void center(final double x, final double y) {
+        state.setLocation(x - state.getCoordSectionWidth() / 2.0, y - state.getCoordSectionHeight() / 2.0);
 
         fireChange();
     }
@@ -114,4 +113,50 @@ public class Map extends AbstractModel implements IMap {
         return Math.log(value) / Math.log(2);
     }
 
+    @Override
+    public void addMapListener(final IMapListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeMapListener(final IMapListener listener) {
+        listeners.remove(listener);
+    }
+
+    protected void fireMoveEvent(final double deltaX, final double deltaY) {
+        for (final IMapListener listener : listeners) {
+            listener.mapMoved(deltaX, deltaY);
+        }
+        fireChange();
+    }
+
+    protected void fireZoomEvent(final int steps, final double xOffset, final double yOffset) {
+        for (final IMapListener listener : listeners) {
+            listener.mapZoomed(steps, xOffset, yOffset);
+        }
+        fireChange();
+    }
+
+    protected void fireZoomInitiatedEvent(final int steps, final double xOffset, final double yOffset) {
+        for (final IMapListener listener : listeners) {
+            listener.mapZoomInitiated(steps, xOffset, yOffset);
+        }
+    }
+
+    protected void fireResizeEvent(final int width, final int height) {
+        for (final IMapListener listener : listeners) {
+            listener.mapResized(width, height);
+        }
+        fireChange();
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
 }

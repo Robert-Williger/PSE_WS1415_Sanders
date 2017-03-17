@@ -14,14 +14,14 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
 
-public class LabelRenderer extends AbstractRenderer implements IRenderer {
+public class LabelRenderer extends AbstractRenderer {
     private Graphics2D g;
 
     private IPointAccessor labelAccessor;
@@ -39,24 +39,25 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     static {
         styles = new LabelStyle[31];
 
-        styles[2] = new LabelStyle(8, 14, new int[]{12, 12, 12, 14, 14, 16, 16}, Color.DARK_GRAY, true);
-        styles[4] = new LabelStyle(8, 14, new int[]{11, 12, 14, 16, 16, 16, 16}, Color.DARK_GRAY, true);
-        styles[5] = new LabelStyle(10, 15, new int[]{10, 11, 12, 13, 14, 16}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
-        styles[6] = new LabelStyle(12, 16, new int[]{10, 11, 12, 13, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
-        styles[8] = new LabelStyle(13, 16, new int[]{11, 12, 13, 14, 14}, new Color[]{Color.GRAY, Color.GRAY,
-                Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY}, true);
+        styles[2] = new LabelStyle(8, 14, new int[] { 12, 12, 12, 14, 14, 16, 16 }, Color.DARK_GRAY, true);
+        styles[4] = new LabelStyle(8, 14, new int[] { 11, 12, 14, 16, 16, 16, 16 }, Color.DARK_GRAY, true);
+        styles[5] = new LabelStyle(10, 15, new int[] { 10, 11, 12, 13, 14, 16 }, new Color[] { Color.GRAY, Color.GRAY,
+                Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
+        styles[6] = new LabelStyle(12, 16, new int[] { 10, 11, 12, 13, 14 },
+                new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
+        styles[8] = new LabelStyle(13, 16, new int[] { 11, 12, 13, 14, 14 },
+                new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
 
-        styles[30] = new LabelStyle(10, 20, new int[]{10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, Color.black, false);
+        styles[30] = new LabelStyle(10, 20, new int[] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 }, Color.black,
+                false);
 
         final Toolkit tk = Toolkit.getDefaultToolkit();
         final Map<?, ?> map = (Map<?, ?>) (tk.getDesktopProperty("awt.font.desktophints"));
 
         if (map != null) {
-            hints = new HashMap<Object, Object>(map);
+            hints = new HashMap<>(map);
         } else {
-            hints = new HashMap<Object, Object>();
+            hints = new HashMap<>();
         }
 
         hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -140,13 +141,8 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
 
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("label");
-        if (!iterator.hasNext()) {
-            return false;
-        }
-
-        while (iterator.hasNext()) {
-            labelAccessor.setID(iterator.nextLong());
+        final LongConsumer consumer = (label) -> {
+            labelAccessor.setID(label);
 
             if (styles[labelAccessor.getType()] != null && styles[labelAccessor.getType()].mainStroke(g, zoom)) {
                 // TODO avoid object generation
@@ -162,10 +158,10 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
                     final Shape shape = text.getOutline(g.getTransform());
                     final Rectangle2D rect = text.getBounds();
 
-                    final double xOffset = -cos * rect.getWidth() / 2 - sin * rect.getHeight() / 2 + sin
-                            * text.getDescent();
-                    final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2 - cos
-                            * text.getDescent();
+                    final double xOffset = -cos * rect.getWidth() / 2 - sin * rect.getHeight() / 2
+                            + sin * text.getDescent();
+                    final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2
+                            - cos * text.getDescent();
                     double transX = converter.getPixelDistancef(labelAccessor.getX() - x, zoom) + xOffset;
                     double transY = converter.getPixelDistancef(labelAccessor.getY() - y, zoom) + yOffset;
 
@@ -196,11 +192,13 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
                     g.rotate(-rotation);
                     g.translate(-transX, -transY);
                 }
-
             }
-        }
+        };
+        tileAccessor.forEach("label", consumer);
 
+        // TODO return false if not rendered.
         return true;
+
     }
 
     private boolean drawBuildingNumbers() {
@@ -216,10 +214,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
             g.setFont(buildingNumberFont);
             g.setColor(buildingNumberColor);
 
-            PrimitiveIterator.OfLong buildingIterator = tileAccessor.getElements("building");
-
-            while (buildingIterator.hasNext()) {
-                final long building = buildingIterator.nextLong();
+            final LongConsumer consumer = (building) -> {
                 buildingAccessor.setID(building);
 
                 stringAccessor.setID(buildingAccessor.getAttribute("number"));
@@ -248,17 +243,18 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
                     final Rectangle2D fontRect = metrics.getStringBounds(number, g);
 
                     if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
-                        rendered = true;
                         final Point2D.Float center = calculateCenter();
                         center.setLocation((center.getX() + minX + width / 2) / 2f,
                                 (center.getY() + minY + height / 2) / 2f);
-                        g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f), (float) (center.y
-                                - fontRect.getHeight() / 2f + metrics.getAscent()));
+                        g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f),
+                                (float) (center.y - fontRect.getHeight() / 2f + metrics.getAscent()));
                     }
                 }
-            }
+            };
+            tileAccessor.forEach("building", consumer);
         }
 
+        // TODO return false...
         return rendered;
     }
 

@@ -18,12 +18,12 @@ public class ReferencedTile {
     private final Collection<ReferencedRectangle> labels;
 
     public ReferencedTile() {
-        streets = new TreeSet<Integer>();
-        ways = new TreeSet<Integer>();
-        buildings = new TreeSet<Integer>();
-        terrain = new TreeSet<Integer>();
-        pois = new LinkedList<ReferencedPoint>();
-        labels = new LinkedList<ReferencedRectangle>();
+        streets = new TreeSet<>();
+        ways = new TreeSet<>();
+        buildings = new TreeSet<>();
+        terrain = new TreeSet<>();
+        pois = new LinkedList<>();
+        labels = new LinkedList<>();
     }
 
     public Set<Integer> getStreets() {

@@ -19,20 +19,20 @@ import adminTool.elements.Street;
 
 public class IndexCreator extends AbstractMapCreator {
 
-    private Collection<Street> streets;
-    private List<List<Boundary>> boundaries;
-    private Map<String, Integer> cityMap;
+    private Collection<Street>                 streets;
+    private List<List<Boundary>>               boundaries;
+    private Map<String, Integer>               cityMap;
     private Map<String, Set<AssociatedStreet>> streetMap;
-    private int streetNames;
-    private int id;
+    private int                                streetNames;
+    private int                                id;
 
     // TODO speedup
     public IndexCreator(final List<List<Boundary>> boundaries, final Collection<Street> streets, final File file) {
         super(file);
         this.streets = streets;
         this.boundaries = boundaries;
-        this.cityMap = new LinkedHashMap<String, Integer>();
-        this.streetMap = new HashMap<String, Set<AssociatedStreet>>();
+        this.cityMap = new LinkedHashMap<>();
+        this.streetMap = new HashMap<>();
         this.id = -1;
     }
 
@@ -142,7 +142,7 @@ public class IndexCreator extends AbstractMapCreator {
 
                 Set<AssociatedStreet> streetSet = streetMap.get(street.getName());
                 if (streetSet == null) {
-                    streetSet = new HashSet<AssociatedStreet>();
+                    streetSet = new HashSet<>();
                     streetMap.put(street.getName(), streetSet);
                 }
                 streetSet.add(new AssociatedStreet(streetId, cityId));

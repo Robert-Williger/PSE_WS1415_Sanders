@@ -84,7 +84,7 @@ public class MSTTSPSolverTest {
 
     @Test
     public void testDistance() {
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(6, 10), 0F));
         edges.add(new InterNode(getEdge(16, 15), 1F));
         edges.add(new InterNode(getEdge(12, 18), 0F));
@@ -112,7 +112,7 @@ public class MSTTSPSolverTest {
         nodes[1] = new InterNode(getEdge(16, 15), 0.8F);
         nodes[2] = new InterNode(getEdge(12, 18), 1F);
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(nodes[0]);
         edges.add(nodes[1]);
         edges.add(nodes[2]);
@@ -147,7 +147,7 @@ public class MSTTSPSolverTest {
     @Test
     public void testNotAccessible() {
         error = false;
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(19, 20), 1F));
@@ -177,7 +177,7 @@ public class MSTTSPSolverTest {
     public void testProgress() {
         error = true;
 
-        final List<InterNode> edges = new ArrayList<InterNode>();
+        final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(getEdge(1, 2), 0F));
         edges.add(new InterNode(getEdge(16, 15), 0.8F));
         edges.add(new InterNode(getEdge(12, 18), 1F));

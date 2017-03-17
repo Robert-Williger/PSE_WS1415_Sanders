@@ -13,7 +13,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
     private final Set<Long> jobs;
 
     public ThreadPoolTest(final int workerCount) {
-        queue = new AddressableBinaryHeap<J>();
+        queue = new AddressableBinaryHeap<>();
         jobs = Collections.synchronizedSet(new HashSet<Long>());
         this.threads = new Thread[workerCount];
         for (int i = 0; i < threads.length; i++) {
@@ -73,6 +73,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 
         protected abstract void work(final J job);
 
+        @Override
         public void run() {
             while (!interrupted()) {
                 J job;

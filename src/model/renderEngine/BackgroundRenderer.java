@@ -6,12 +6,12 @@ import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
 import model.map.accessors.ICollectiveAccessor;
 
-public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
+public class BackgroundRenderer extends AbstractRenderer {
     private static final Map<RenderingHints.Key, Object> hints;
 
     private Graphics2D g;
@@ -21,6 +21,9 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     private ICollectiveAccessor buildingAccessor;
     private ICollectiveAccessor wayAccessor;
     private ICollectiveAccessor streetAccessor;
+
+    public long nonGraphicsTime;
+    public long graphicsTime;
 
     public BackgroundRenderer(final IMapManager manager, final ColorScheme colorScheme) {
         super(manager);
@@ -37,7 +40,7 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     }
 
     static {
-        hints = new HashMap<RenderingHints.Key, Object>();
+        hints = new HashMap<>();
         hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -47,12 +50,16 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
 
     @Override
     protected boolean render(final Image image) {
+        long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
+        graphicsTime += (System.currentTimeMillis() - start);
 
         final boolean rendered = drawAreas() | drawBuildings() | drawWays();
 
+        start = System.currentTimeMillis();
         g.dispose();
+        graphicsTime += (System.currentTimeMillis() - start);
 
         if (rendered) {
             fireChange();
@@ -77,83 +84,98 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
     }
 
     private boolean drawAreas() {
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("area");
-        if (!iterator.hasNext()) {
-            return false;
-        }
+        long start = System.currentTimeMillis();
+
+        // final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("area");
+        // if (!iterator.hasNext()) {
+        // return false;
+        // }
 
         final int zoom = tileAccessor.getZoom();
         final ShapeStyle[] areaStyles = colorScheme.getAreaStyles();
-        boolean rendered = false;
-
         clearPaths(paths, areaStyles.length);
 
-        while (iterator.hasNext()) {
-            final long area = iterator.nextLong();
-            areaAccessor.setID(area);
-            final int type = areaAccessor.getType();
+        tileAccessor.forEach("area", createConsumer(zoom, areaAccessor, areaStyles));
 
-            if (areaStyles[type].isVisible(zoom)) {
-                final Path2D path = paths[type];
-                appendPath(path, areaAccessor);
-                rendered = true;
-                // TODO polygons sometimes do not have same start and endpoint!
-                // ... improve this
-                path.closePath();
-            }
-        }
+        // while (iterator.hasNext()) {
+        // final long area = iterator.nextLong();
+        // areaAccessor.setID(area);
+        // final int type = areaAccessor.getType();
+        //
+        // if (areaStyles[type].isVisible(zoom)) {
+        // final Path2D path = paths[type];
+        // appendPath(path, areaAccessor);
+        // rendered = true;
+        // // TODO polygons sometimes do not have same start and endpoint!
+        // // ... improve this
+        // path.closePath();
+        // }
+        // }
 
+        nonGraphicsTime += (System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
+
+        boolean rendered = false;
         for (final int i : colorScheme.getAreaOrder()) {
             if (areaStyles[i].mainStroke(g, zoom)) {
                 g.fill(paths[i]);
+                rendered = true;
             }
 
             if (areaStyles[i].outlineStroke(g, zoom)) {
                 g.draw(paths[i]);
+                rendered = true;
             }
         }
 
+        graphicsTime += (System.currentTimeMillis() - start);
         return rendered;
     }
 
     private boolean drawWays() {
-        PrimitiveIterator.OfLong streets = tileAccessor.getElements("street");
-        PrimitiveIterator.OfLong ways = tileAccessor.getElements("way");
+        long start = System.currentTimeMillis();
 
         final int zoom = tileAccessor.getZoom();
         final WayStyle[] wayStyles = colorScheme.getWayStyles();
         clearPaths(paths, wayStyles.length);
 
-        if (!appendWays(streets, streetAccessor) & !appendWays(ways, wayAccessor)) {
-            return false;
-        }
-        // if (!appendWays(ways, wayAccessor)) {
-        // return false;
-        // }
+        // TODO improve this!
 
+        tileAccessor.forEach("street", createConsumer(zoom, streetAccessor, wayStyles));
+        tileAccessor.forEach("way", createConsumer(zoom, wayAccessor, wayStyles));
+
+        nonGraphicsTime += (System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
+
+        boolean rendered = false;
         for (final int[] layer : colorScheme.getWayOrder()) {
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].outlineStroke(g, zoom)) {
                     g.draw(paths[way]);
+                    rendered = true;
                 }
             }
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].mainStroke(g, zoom)) {
                     g.draw(paths[way]);
+                    rendered = true;
                 }
             }
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].middleLineStroke(g, zoom)) {
                     g.draw(paths[way]);
+                    rendered = true;
                 }
             }
         }
 
-        return true;
+        graphicsTime += (System.currentTimeMillis() - start);
+
+        return rendered;
     }
 
     private boolean drawBuildings() {
-        clearPaths(paths, 1);
+        long start = System.currentTimeMillis();
 
         final ShapeStyle[] buildingStyles = colorScheme.getBuildingStyles();
         final int zoom = tileAccessor.getZoom();
@@ -162,45 +184,31 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
             return false;
         }
 
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("building");
-        if (!iterator.hasNext()) {
-            return false;
-        }
-
-        while (iterator.hasNext()) {
-            final long buildingID = iterator.nextLong();
-            buildingAccessor.setID(buildingID);
+        clearPaths(paths, 1);
+        final LongConsumer consumer = (building) -> {
+            buildingAccessor.setID(building);
 
             appendPath(paths[0], buildingAccessor);
-        }
+        };
+        tileAccessor.forEach("building", consumer);
+
+        nonGraphicsTime += (System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
+        boolean rendered = false;
 
         if (buildingStyles[0].mainStroke(g, zoom)) {
             g.fill(paths[0]);
+            rendered = true;
         }
 
         if (buildingStyles[0].outlineStroke(g, zoom)) {
             g.draw(paths[0]);
+            rendered = true;
         }
 
-        return true;
-    }
+        graphicsTime += (System.currentTimeMillis() - start);
 
-    private boolean appendWays(final PrimitiveIterator.OfLong iterator, final ICollectiveAccessor accessor) {
-        boolean appended = false;
-        final int zoom = tileAccessor.getZoom();
-
-        while (iterator.hasNext()) {
-            final long wayID = iterator.nextLong();
-            accessor.setID(wayID);
-
-            final int type = accessor.getType();
-
-            if (colorScheme.getWayStyles()[type].isVisible(zoom)) {
-                appended = true;
-                appendPath(paths[type], accessor);
-            }
-        }
-        return appended;
+        return rendered;
     }
 
     private void appendPath(final Path2D path, final ICollectiveAccessor accessor) {
@@ -216,5 +224,20 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
             path.lineTo(converter.getPixelDistancef(accessor.getX(i) - x, zoom),
                     converter.getPixelDistancef(accessor.getY(i) - y, zoom));
         }
+    }
+
+    private LongConsumer createConsumer(final int zoom, final ICollectiveAccessor accessor, final ShapeStyle[] styles) {
+        return (area) -> {
+            accessor.setID(area);
+            final int type = accessor.getType();
+
+            if (styles[type].isVisible(zoom)) {
+                final Path2D path = paths[type];
+                appendPath(path, accessor);
+                // TODO polygons sometimes do not have same start and endpoint!
+                // ... improve this
+                // path.closePath();
+            }
+        };
     }
 }

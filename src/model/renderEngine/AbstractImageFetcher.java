@@ -3,10 +3,8 @@ package model.renderEngine;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.Image;
-import java.awt.Transparency;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import model.AbstractModel;
@@ -16,16 +14,17 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
 
     private final LRUCache cache;
     private final ConcurrentLinkedQueue<Image> freeList;
-    private final GraphicsConfiguration config;
+    // private final GraphicsConfiguration config;
 
     private Image defaultImage;
     private int imageSize;
 
     public AbstractImageFetcher(final IMapManager manager) {
-        freeList = new ConcurrentLinkedQueue<Image>();
+        freeList = new ConcurrentLinkedQueue<>();
         cache = new LRUCache(getCacheSize(), true, freeList);
 
-        config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+        // config =
+        // GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
         updateTileSize(manager.getTileSize());
     }
@@ -85,12 +84,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     }
 
     protected Image getNewImage() {
-        Image ret;
-        if (!freeList.isEmpty()) {
-            ret = freeList.poll();
-        } else {
-            ret = createImage();
-        }
+        final Image ret = freeList.isEmpty() ? createImage() : freeList.poll();
 
         final Graphics2D g = (Graphics2D) ret.getGraphics();
         g.setComposite(AlphaComposite.Src);
@@ -102,6 +96,8 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     }
 
     protected Image createImage() {
-        return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
+        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
+        // return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
+        // return new SpecialImage(imageSize, imageSize);
     }
 }

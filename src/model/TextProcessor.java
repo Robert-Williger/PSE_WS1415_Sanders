@@ -14,7 +14,7 @@ import model.elements.AccessPoint;
 public class TextProcessor implements ITextProcessor {
 
     private final HashMap<String, AccessPoint> hm;
-    private final int numberOfSuggestions;
+    private final int                          numberOfSuggestions;
 
     /**
      * TextProcessing-Constructor.
@@ -32,7 +32,7 @@ public class TextProcessor implements ITextProcessor {
     @Override
     public List<String> suggest(final String address) {
 
-        List<Tuple> distanceList = new ArrayList<Tuple>();
+        List<Tuple> distanceList = new ArrayList<>();
 
         for (final String b : hm.keySet()) {
 
@@ -60,7 +60,7 @@ public class TextProcessor implements ITextProcessor {
 
         distanceList = distanceList.subList(0, length);
 
-        final List<String> stringList = new ArrayList<String>();
+        final List<String> stringList = new ArrayList<>();
 
         for (final Tuple t : distanceList) {
             stringList.add(t.getName());
@@ -76,10 +76,8 @@ public class TextProcessor implements ITextProcessor {
     }
 
     /*
-     * Implementation of edit Distance with swap-cost 1 instead of 2 using
-     * Damerau-Levensthein.
-     * http://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-     * includes pseudocode.
+     * Implementation of edit Distance with swap-cost 1 instead of 2 using Damerau-Levensthein.
+     * http://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance includes pseudocode.
      */
     private static int weightedEditDistance(final String a, final String b) {
         final int[][] distance = new int[a.length() + 1][b.length() + 1];
@@ -126,14 +124,14 @@ public class TextProcessor implements ITextProcessor {
     private static class Tuple implements Comparable<Tuple> {
 
         private final String s;
-        private final int d;
+        private final int    d;
 
         public Tuple(final String s, final int distance) {
             this.s = s;
             d = distance;
         }
 
-        public Integer getDistance() {
+        public int getDistance() {
             return d;
         }
 
@@ -143,8 +141,7 @@ public class TextProcessor implements ITextProcessor {
 
         @Override
         public int compareTo(final Tuple o) {
-            final Tuple t = (Tuple) o;
-            return java.lang.Integer.compare(d, t.getDistance());
+            return java.lang.Integer.compare(d, o.getDistance());
         }
 
     }

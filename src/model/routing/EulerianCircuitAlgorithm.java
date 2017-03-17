@@ -10,8 +10,8 @@ import java.util.Map;
 public class EulerianCircuitAlgorithm {
 
     private List<Map<Integer, Integer>> availableNodes;
-    private int availableEdges;
-    private IUndirectedGraph undirectedGraph;
+    private int                         availableEdges;
+    private IUndirectedGraph            undirectedGraph;
 
     public List<Integer> getEulerianCurcuit(final IUndirectedGraph undirectedGraph) {
         return getEulerianCurcuit(undirectedGraph, 0);
@@ -37,9 +37,9 @@ public class EulerianCircuitAlgorithm {
     }
 
     private void initialize() {
-        availableNodes = new ArrayList<Map<Integer, Integer>>(undirectedGraph.getNodes());
+        availableNodes = new ArrayList<>(undirectedGraph.getNodes());
         for (int node = 0; node < undirectedGraph.getNodes(); node++) {
-            final Map<Integer, Integer> adjacentNodes = new HashMap<Integer, Integer>();
+            final Map<Integer, Integer> adjacentNodes = new HashMap<>();
             for (final Iterator<Integer> iterator = undirectedGraph.getAdjacentNodes(node); iterator.hasNext();) {
 
                 final int other = iterator.next();
@@ -75,7 +75,7 @@ public class EulerianCircuitAlgorithm {
     }
 
     private List<Integer> createFinalPath(final LinkedNode head) {
-        final List<Integer> ret = new LinkedList<Integer>();
+        final List<Integer> ret = new LinkedList<>();
         LinkedNode current = head;
 
         do {
@@ -115,7 +115,7 @@ public class EulerianCircuitAlgorithm {
     private class LinkedNode {
 
         private LinkedNode next;
-        private int node;
+        private int        node;
 
         public LinkedNode(final int node) {
             this.node = node;

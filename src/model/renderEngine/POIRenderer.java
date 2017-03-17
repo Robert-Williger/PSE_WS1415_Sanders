@@ -7,14 +7,14 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import javax.imageio.ImageIO;
 
 import model.map.IMapManager;
 import model.map.accessors.IPointAccessor;
 
-public class POIRenderer extends AbstractRenderer implements IRenderer {
+public class POIRenderer extends AbstractRenderer {
     private IPointAccessor poiAccessor;
 
     private Graphics2D g;
@@ -26,9 +26,9 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
         imageSize = new Dimension(20, 20);
 
         final BufferedImage defaultImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        final String[] amenities = {"viewpoint", "school", "library", "hospital", "bank", "cinema", "museum",
-                "theatre", "courthouse", "playground", "restaurant", "cafe", "bar", "parking", "fuel"};
-        poiMinZoomStep = new int[]{16, 17, 16, 16, 17, 16, 16, 16, 16, 17, 17, 17, 17, 16, 17};
+        final String[] amenities = { "viewpoint", "school", "library", "hospital", "bank", "cinema", "museum",
+                "theatre", "courthouse", "playground", "restaurant", "cafe", "bar", "parking", "fuel" };
+        poiMinZoomStep = new int[] { 16, 17, 16, 16, 17, 16, 16, 16, 16, 17, 17, 17, 17, 16, 17 };
         poiImage = new Image[amenities.length];
 
         for (int i = 0; i < amenities.length; i++) {
@@ -78,22 +78,20 @@ public class POIRenderer extends AbstractRenderer implements IRenderer {
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
 
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("poi");
-
-        boolean ret = false;
-
-        while (iterator.hasNext()) {
-            poiAccessor.setID(iterator.nextLong());
+        final LongConsumer consumer = (poi) -> {
+            poiAccessor.setID(poi);
 
             final int type = poiAccessor.getType();
             if (zoom >= poiMinZoomStep[type]) {
-                ret = true;
-                g.drawImage(poiImage[type], converter.getPixelDistance(poiAccessor.getX() - x, zoom) - imageSize.width
-                        / 2, converter.getPixelDistance(poiAccessor.getY() - y, zoom) - imageSize.height / 2, null);
+                g.drawImage(poiImage[type],
+                        converter.getPixelDistance(poiAccessor.getX() - x, zoom) - imageSize.width / 2,
+                        converter.getPixelDistance(poiAccessor.getY() - y, zoom) - imageSize.height / 2, null);
             }
 
-        }
+        };
+        tileAccessor.forEach("poi", consumer);
 
-        return ret;
+        // TODO return false if not rendered.
+        return true;
     }
 }

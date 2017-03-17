@@ -1,7 +1,7 @@
 package model.map;
 
-import java.util.Arrays;
 import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 import util.LongList;
 
@@ -20,14 +20,13 @@ public class Quadtree implements IQuadtree {
     }
 
     @Override
-    public PrimitiveIterator.OfLong iterator(int row, int column, int zoom) {
+    public void forEach(int row, int column, int zoom, LongConsumer consumer) {
         zoom -= zoomOffset;
         int maxValue = (1 << zoom) - 1;
         if (row > maxValue || column > maxValue || row < 0 || column < 0) {
-            return Arrays.stream(new long[0]).iterator();
+            return;
         }
 
-        final LongList elements = new LongList();
         final long treeAddress = getAddress(row, column, zoom);
 
         int treeData = getTreeData(treeAddress);
@@ -35,11 +34,18 @@ public class Quadtree implements IQuadtree {
         int sizeInformation = getElement(elementIndex);
         int size = (sizeInformation & LOWER_BITS) + (sizeInformation >>> SIZE_BITS);
         ++elementIndex;
-        enumerate(elements, elementIndex, elementIndex + size);
+        consume(consumer, elementIndex, elementIndex + size);
 
         if (isInnerNode(getTreeData(treeAddress))) {
-            enumerateRecursive(treeAddress, elements);
+            consumeRecursive(treeAddress, consumer);
         }
+    }
+
+    @Override
+    public PrimitiveIterator.OfLong iterator(int row, int column, int zoom) {
+        final LongList elements = new LongList();
+        final LongConsumer consumer = (l) -> elements.add(l);
+        forEach(row, column, zoom, consumer);
 
         return elements.iterator();
     }
@@ -67,17 +73,17 @@ public class Quadtree implements IQuadtree {
         return address;
     }
 
-    private void enumerateRecursive(long treeAddress, final LongList elements) {
+    private void consumeRecursive(long treeAddress, final LongConsumer consumer) {
         treeAddress = getTreeData(treeAddress + 1);
         for (int i = 0; i < 4; i++) {
             int treeData = getTreeData(treeAddress);
             int elementIndex = getIndex(treeData);
             int size = getElement(elementIndex) & LOWER_BITS;
             ++elementIndex;
-            enumerate(elements, elementIndex, elementIndex + size);
+            consume(consumer, elementIndex, elementIndex + size);
 
             if (isInnerNode(treeData)) {
-                enumerateRecursive(treeAddress, elements);
+                consumeRecursive(treeAddress, consumer);
                 ++treeAddress;
             }
 
@@ -85,9 +91,9 @@ public class Quadtree implements IQuadtree {
         }
     }
 
-    private void enumerate(final LongList elements, int index, final int lastIndex) {
+    private void consume(final LongConsumer consumer, int index, final int lastIndex) {
         while (index < lastIndex) {
-            elements.add(getElement(index));
+            consumer.accept(getElement(index));
             ++index;
         }
     }

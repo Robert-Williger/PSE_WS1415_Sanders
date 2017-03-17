@@ -43,28 +43,28 @@ import model.targets.PointState;
 
 public class SidebarView extends JPanel implements ISidebarView {
 
-    private static final long serialVersionUID = 1L;
+    private static final long            serialVersionUID = 1L;
 
     private final DefaultTextedTextField textField;
-    private final MultiFunctionButton multiFuncButton;
-    private final JButton upButton;
-    private final JButton downButton;
-    private final JButton cancelButton;
-    private final JButton startButton;
-    private final JButton resetButton;
-    private final JButton cancelCalcButton;
-    private final JCheckBox poiBox;
-    private final JCheckBox labelBox;
-    private final JComboBox<String> routeSolverBox;
-    private final SuggestionView suggestionView;
-    private final PointListView listView;
-    private final JProgressBar progressBar;
-    private final RouteLabel routeLabel;
-    private final JPanel content;
-    private final JPanel gap;
+    private final MultiFunctionButton    multiFuncButton;
+    private final JButton                upButton;
+    private final JButton                downButton;
+    private final JButton                cancelButton;
+    private final JButton                startButton;
+    private final JButton                resetButton;
+    private final JButton                cancelCalcButton;
+    private final JCheckBox              poiBox;
+    private final JCheckBox              labelBox;
+    private final JComboBox<String>      routeSolverBox;
+    private final SuggestionView         suggestionView;
+    private final PointListView          listView;
+    private final JProgressBar           progressBar;
+    private final RouteLabel             routeLabel;
+    private final JPanel                 content;
+    private final JPanel                 gap;
 
-    private final IPointListListener pointListener;
-    private final IProgressListener progressListener;
+    private final IPointListListener     pointListener;
+    private final IProgressListener      progressListener;
 
     public SidebarView(final IRouteManager manager) {
         super(new BorderLayout());
@@ -205,10 +205,12 @@ public class SidebarView extends JPanel implements ISidebarView {
         // TODO improve this?
         textField.addFocusListener(new FocusAdapter() {
 
+            @Override
             public void focusGained(FocusEvent e) {
 
             }
 
+            @Override
             public void focusLost(FocusEvent e) {
                 if (getRootPane() != null && e.getOppositeComponent() == getRootPane()) {
                     textField.requestFocus();
@@ -405,7 +407,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     }
 
     private class PointListScroller extends JScrollPane {
-        private static final long serialVersionUID = 1L;
+        private static final long   serialVersionUID = 1L;
 
         private final PointListView listView;
 
@@ -463,10 +465,10 @@ public class SidebarView extends JPanel implements ISidebarView {
 
     private class SuggestionView extends JPopupMenu {
         private static final long serialVersionUID = 1L;
-        private static final int MAX_SUGGESTIONS = 5;
+        private static final int  MAX_SUGGESTIONS  = 5;
 
         private final JMenuItem[] menuItems;
-        private final JMenuItem defaultItem;
+        private final JMenuItem   defaultItem;
 
         public SuggestionView() {
             setBackground(Color.white);
@@ -560,7 +562,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private class HideButton extends JButton {
         private static final long serialVersionUID = 1L;
 
-        private boolean hidden;
+        private boolean           hidden;
 
         public HideButton() {
             super("<");
@@ -593,7 +595,7 @@ public class SidebarView extends JPanel implements ISidebarView {
 
     private class RouteLabel extends JLabel {
         private static final long serialVersionUID = 1L;
-        private static final int MAX_METERS = 1_000;
+        private static final int  MAX_METERS       = 1_000;
 
         public void setLength(final int length) {
 
@@ -610,7 +612,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private class CustomizedCheckBox extends JCheckBox {
         private static final long serialVersionUID = 1L;
 
-        private final String command;
+        private final String      command;
 
         public CustomizedCheckBox(final String text, final String command) {
             super(text);

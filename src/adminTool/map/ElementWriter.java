@@ -95,7 +95,7 @@ public class ElementWriter extends CompressedWriter {
     }
 
     private void createNodeMap() {
-        nodeMap = new LinkedHashMap<Node, Integer>();
+        nodeMap = new LinkedHashMap<>();
 
         int id = -1;
         id = putNodes(streets.elements, id);
@@ -105,7 +105,7 @@ public class ElementWriter extends CompressedWriter {
     }
 
     private void createStreetMap() {
-        streetMap = new HashMap<Street, Integer>();
+        streetMap = new HashMap<>();
         int id = -1;
         for (final Street street : streets.elements) {
             streetMap.put(street, ++id);
@@ -113,7 +113,7 @@ public class ElementWriter extends CompressedWriter {
     }
 
     private void createNameAndNumberMap() {
-        stringMap = new LinkedHashMap<String, Integer>();
+        stringMap = new LinkedHashMap<>();
 
         int id = -1;
         stringMap.put("", ++id);

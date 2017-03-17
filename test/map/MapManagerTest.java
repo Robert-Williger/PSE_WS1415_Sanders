@@ -100,14 +100,14 @@ public class MapManagerTest {
 
     @Test
     public void testRows() {
-        manager.getState().setSize(0, 1025);
-        assertEquals(3, manager.getRows());
+        manager.getState().setSectionSize(0, 1025);
+        assertEquals(3, manager.getVisibleRows());
     }
 
     @Test
     public void testColumns() {
-        manager.getState().setSize(1025, 0);
-        assertEquals(3, manager.getColumns());
+        manager.getState().setSectionSize(1025, 0);
+        assertEquals(3, manager.getVisibleColumns());
     }
 
     @Test

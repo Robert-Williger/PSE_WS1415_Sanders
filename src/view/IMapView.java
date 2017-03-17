@@ -1,6 +1,5 @@
 package view;
 
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ComponentListener;
 
@@ -16,6 +15,8 @@ public interface IMapView extends IView {
 
     void addComponentListener(ComponentListener listener);
 
-    Dimension getSize();
+    int getWidth();
+
+    int getHeight();
 
 }

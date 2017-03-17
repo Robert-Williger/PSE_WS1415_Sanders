@@ -1,7 +1,6 @@
 package model.map;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.PrimitiveIterator;
 
@@ -67,11 +66,11 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public AddressNode getAddress(final Point coordinate) {
+    public AddressNode getAddress(final int x, final int y) {
 
         final int maxZoom = state.getMaxZoomStep();
 
-        tileAccessor.setRCZ(getRow(coordinate.y, maxZoom), getColumn(coordinate.x, maxZoom), maxZoom);
+        tileAccessor.setRCZ(getRow(y, maxZoom), getColumn(x, maxZoom), maxZoom);
         // final boolean buildingHit = getBuilding(coordinate);
 
         // if (buildingHit) {
@@ -82,10 +81,10 @@ public class MapManager implements IMapManager {
         // TODO find better abort criterion .. + define consistent max
         // distance for search
         while (zoom >= state.getZoomStep()) {
-            final int row = getRow(coordinate.y, zoom);
-            final int column = getColumn(coordinate.x, zoom);
+            final int row = getRow(y, zoom);
+            final int column = getColumn(x, zoom);
 
-            AddressNode node = locateAddressNode(coordinate, row, column, zoom);
+            AddressNode node = locateAddressNode(x, y, row, column, zoom);
             if (node != null) {
                 return node;
             }
@@ -103,7 +102,7 @@ public class MapManager implements IMapManager {
         return converter.getPixelDistance(xCoord, zoom) / tileSize;
     }
 
-    private AddressNode locateAddressNode(final Point coordinate, final int row, final int column, final int zoom) {
+    private AddressNode locateAddressNode(final int x, final int y, final int row, final int column, final int zoom) {
         final AddressNode ret = new AddressNode();
 
         final int coordTileSize = converter.getCoordDistance(tileSize, zoom);
@@ -111,11 +110,11 @@ public class MapManager implements IMapManager {
         final int tileY = row * coordTileSize;
         final int midX = tileX + coordTileSize / 2;
         final int midY = tileY + coordTileSize / 2;
-        final int nColumn = coordinate.x - midX < 0 ? -1 : 1; // neighbor column
-        final int nRow = coordinate.y - midY < 0 ? -1 : 1; // neighbor row
+        final int nColumn = x - midX < 0 ? -1 : 1; // neighbor column
+        final int nRow = y - midY < 0 ? -1 : 1; // neighbor row
 
         final long[] ids = calculateIDs(row, column, zoom, nRow, nColumn);
-        final int[] distances = calculateDistances(coordinate, midX, midY, tileX, tileY, nColumn, nRow, coordTileSize);
+        final int[] distances = calculateDistances(x, y, tileX, tileY, nColumn, nRow, coordTileSize);
 
         int nodeDistance = Integer.MAX_VALUE;
 
@@ -123,7 +122,7 @@ public class MapManager implements IMapManager {
             final int tileDistance = distances[i];
             if (tileDistance < nodeDistance) {
                 tileAccessor.setID(ids[i]);
-                nodeDistance = locateStreetNode(coordinate, nodeDistance, ret);
+                nodeDistance = locateStreetNode(x, y, nodeDistance, ret);
             }
         }
 
@@ -154,15 +153,15 @@ public class MapManager implements IMapManager {
         return ids;
     }
 
-    private int[] calculateDistances(final Point coordinate, final int midX, final int midY, final int tileX,
-            final int tileY, final int neighbourColumn, final int neighbourRow, final int coordTileSize) {
-        final int hDistance = Math.abs((neighbourColumn + 1) / 2 * coordTileSize + tileX - coordinate.x);
-        final int vDistance = Math.abs((neighbourRow + 1) / 2 * coordTileSize + tileY - coordinate.y);
+    private int[] calculateDistances(final int x, final int y, final int tileX, final int tileY,
+            final int neighbourColumn, final int neighbourRow, final int coordTileSize) {
+        final int hDistance = Math.abs((neighbourColumn + 1) / 2 * coordTileSize + tileX - x);
+        final int vDistance = Math.abs((neighbourRow + 1) / 2 * coordTileSize + tileY - y);
         final int dDistance = (int) Math.sqrt(hDistance * hDistance + vDistance * vDistance);
-        return new int[]{0, hDistance, vDistance, dDistance};
+        return new int[] { 0, hDistance, vDistance, dDistance };
     }
 
-    private int locateStreetNode(final Point coordinate, final int maxDistance, final AddressNode node) {
+    private int locateStreetNode(final int x, final int y, final int maxDistance, final AddressNode node) {
         // final int distance = (int) Point.distance(node.getX(), node.getY(),
         // coordinate.getX(),
         // coordinate.getY());
@@ -181,6 +180,8 @@ public class MapManager implements IMapManager {
         // TODO
         streetAccessor.setID(street);
         final Point location = CollectiveUtil.getLocation(streetAccessor, accessPoint.getOffset());
+
+        // TODO use lambda expression (tileAccessor.forEach).
         final PrimitiveIterator.OfLong buildings = tileAccessor.getElements("building");
         while (buildings.hasNext()) {
             final long buildingID = buildings.nextLong();
@@ -219,56 +220,39 @@ public class MapManager implements IMapManager {
     // }
 
     @Override
-    public int getRows() {
-        final Rectangle bounds = state.getBounds();
-        return getGridSize(bounds.height, bounds.y);
+    public int getVisibleRows() {
+        return getGridSize(state.getCoordSectionHeight(), (int) state.getY());
     }
 
     @Override
-    public int getColumns() {
-        final Rectangle bounds = state.getBounds();
-        return getGridSize(bounds.width, bounds.x);
+    public int getVisibleColumns() {
+        return getGridSize(state.getCoordSectionWidth(), (int) state.getX());
     }
 
-    private int getGridSize(final int size, final int location) {
-
-        final int zoom = state.getZoomStep();
-        final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
-        final int coordWidth = (int) (size * zoomFactor);
-        final int coordTileSize = converter.getCoordDistance(tileSize, zoom);
-
-        return (location + coordWidth) / coordTileSize - location / coordTileSize + 1;
-    }
-
-    @Override
-    public Point getGridLocation() {
-        final Point location = state.getLocation();
+    private int getGridSize(final int coordSectionSize, final int location) {
         final int zoom = state.getZoomStep();
         final int coordTileSize = converter.getCoordDistance(tileSize, zoom);
-        final int column = location.x / coordTileSize;
-        final int row = location.y / coordTileSize;
-        return new Point(column, row);
+
+        return (location + coordSectionSize) / coordTileSize - location / coordTileSize + 1;
     }
 
-    @Override
-    public Point getCoord(final Point pixelPoint) {
-        final Point location = state.getLocation();
-        final int zoom = state.getZoomStep();
-        final int coordX = converter.getCoordDistance(pixelPoint.x, zoom) + location.x;
-        final int coordY = converter.getCoordDistance(pixelPoint.y, zoom) + location.y;
+    // @Override
+    // public Point getCoord(final int x, final int y) {
+    // final int zoom = state.getZoomStep();
+    // final int coordX = converter.getCoordDistance(x, zoom) + (int) state.getX();
+    // final int coordY = converter.getCoordDistance(y, zoom) + (int) state.getY();
+    //
+    // return new Point(coordX, coordY);
+    // }
 
-        return new Point(coordX, coordY);
-    }
-
-    @Override
-    public Point getPixel(final Point coordinate) {
-        final Point location = state.getLocation();
-        final int zoom = state.getZoomStep();
-        final int pixelX = converter.getPixelDistance(coordinate.x - location.x, zoom);
-        final int pixelY = converter.getPixelDistance(coordinate.y - location.y, zoom);
-
-        return new Point(pixelX, pixelY);
-    }
+    // @Override
+    // public Point getPixel(final double x, final double y) {
+    // final int zoom = state.getZoomStep();
+    // final int pixelX = (int) converter.getPixelDistanced(x - state.getX(), zoom);
+    // final int pixelY = (int) converter.getPixelDistanced(y - state.getY(), zoom);
+    //
+    // return new Point(pixelX, pixelY);
+    // }
 
     @Override
     public IMapState getState() {
@@ -310,6 +294,16 @@ public class MapManager implements IMapManager {
     public IPointAccessor createPointAccessor(String identifier) {
         final IFactory<IPointAccessor> ret = pointMap.get(identifier);
         return ret != null ? ret.create() : null;
+    }
+
+    @Override
+    public int getRow() {
+        return (int) state.getY() / converter.getCoordDistance(tileSize, state.getZoomStep());
+    }
+
+    @Override
+    public int getColumn() {
+        return (int) state.getX() / converter.getCoordDistance(tileSize, state.getZoomStep());
     }
 
 }

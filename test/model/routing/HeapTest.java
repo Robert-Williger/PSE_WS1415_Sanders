@@ -17,8 +17,7 @@ public class HeapTest {
 
     @Before
     public void setUp() {
-        queue = new AddressableBinaryHeap<Integer>();
-        new ArrayList<Integer>();
+        queue = new AddressableBinaryHeap<>();
     }
 
     @Test
@@ -102,7 +101,7 @@ public class HeapTest {
     @Test
     public void testAddAll() {
         boolean failed = false;
-        final List<Integer> list = new ArrayList<Integer>();
+        final List<Integer> list = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             list.add(i);
         }
@@ -120,7 +119,7 @@ public class HeapTest {
     @Test
     public void testMerge() {
         boolean failed = false;
-        final AddressableBinaryHeap<Integer> queue2 = new AddressableBinaryHeap<Integer>();
+        final AddressableBinaryHeap<Integer> queue2 = new AddressableBinaryHeap<>();
 
         for (int i = 0; i < 50; i++) {
             queue.insert(i, i);

@@ -11,8 +11,8 @@ public class PointList extends AbstractModel implements IPointList {
     private final List<IRoutePoint> pointList;
 
     public PointList() {
-        listener = new ArrayList<IPointListListener>();
-        pointList = new ArrayList<IRoutePoint>();
+        listener = new ArrayList<>();
+        pointList = new ArrayList<>();
     }
 
     private void fireRemoveEvent(final IRoutePoint point) {
@@ -83,7 +83,7 @@ public class PointList extends AbstractModel implements IPointList {
 
     @Override
     public void reset() {
-        final List<IRoutePoint> temp = new ArrayList<IRoutePoint>(pointList);
+        final List<IRoutePoint> temp = new ArrayList<>(pointList);
 
         pointList.clear();
 

@@ -9,23 +9,23 @@ public final class Arrays {
     }
 
     public static <T> Iterator<T> iterator() {
-        return new EmptyIterator<T>();
+        return new EmptyIterator<>();
     }
 
     public static <T> Iterator<T> iterator(final T[] array) {
-        return new ArrayIterator<T>(array);
+        return new ArrayIterator<>(array);
     }
 
     public static <T> Iterator<T> descendingIterator(final T[] array) {
-        return new ReversedIterator<T>(array);
+        return new ReversedIterator<>(array);
     }
 
     public static <T> Iterator<T> iterator(final T[] array, final int limit) {
-        return new LimitIterator<T>(array, limit);
+        return new LimitIterator<>(array, limit);
     }
 
     public static <T> Iterator<T> iterator(final T[] array, final int[] subarray) {
-        return new SubarrayIterator<T>(array, subarray);
+        return new SubarrayIterator<>(array, subarray);
     }
 
     public static <T> void reverse(final T[] array) {
@@ -39,7 +39,7 @@ public final class Arrays {
     private static class ArrayIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int count;
+        private int       count;
 
         public ArrayIterator(final T[] array) {
             this.array = array;
@@ -60,7 +60,7 @@ public final class Arrays {
     private static class ReversedIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int count;
+        private int       count;
 
         public ReversedIterator(final T[] array) {
             this.array = array;
@@ -81,9 +81,9 @@ public final class Arrays {
 
     private static class SubarrayIterator<T> implements Iterator<T> {
 
-        private final T[] array;
+        private final T[]   array;
         private final int[] subArray;
-        private int count;
+        private int         count;
 
         public SubarrayIterator(final T[] array, final int[] subArray) {
             this.array = array;
@@ -118,7 +118,7 @@ public final class Arrays {
     private static class LimitIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int count;
+        private int       count;
         private final int limit;
 
         public LimitIterator(final T[] array, final int limit) {

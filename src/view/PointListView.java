@@ -46,9 +46,9 @@ public class PointListView extends JPanel {
     private boolean removed;
 
     public PointListView(final IPointList pointList) {
-        model = new DefaultListModel<IRoutePoint>();
+        model = new DefaultListModel<>();
         listButtons = new ButtonPanel();
-        list = new JList<IRoutePoint>(model);
+        list = new JList<>(model);
         renderer = new RoutePointRenderer();
 
         setPointList(pointList);
@@ -85,8 +85,8 @@ public class PointListView extends JPanel {
     }
 
     private void initialize() {
-        list.setTransferHandler(new ListTransferHandler<IRoutePoint>(list));
-        setTransferHandler(new ListTransferHandler<IRoutePoint>(list));
+        list.setTransferHandler(new ListTransferHandler<>(list));
+        setTransferHandler(new ListTransferHandler<>(list));
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setDropMode(DropMode.INSERT);
         list.setCellRenderer(renderer);
@@ -266,7 +266,7 @@ public class PointListView extends JPanel {
         private final List<JPanel> buttonPanels;
 
         public ButtonPanel() {
-            buttonPanels = new ArrayList<JPanel>();
+            buttonPanels = new ArrayList<>();
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
         }

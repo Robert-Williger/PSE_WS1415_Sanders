@@ -1,6 +1,5 @@
 package model.renderEngine;
 
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,9 +32,10 @@ public class ImageLoader implements IImageLoader {
     private boolean routeSet;
 
     private int lastZoomStep;
-    private Point lastGridLocation;
-    private int lastRowCount;
-    private int lastColumnCount;
+    private int lastRow;
+    private int lastColumn;
+    private int lastVisibleRows;
+    private int lastVisibleColumns;
     private final int prefetchCount = 1;
 
     private int priority;
@@ -55,7 +55,8 @@ public class ImageLoader implements IImageLoader {
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
         lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastGridLocation = new Point(mapManager.getGridLocation());
+        lastRow = mapManager.getRow();
+        lastColumn = mapManager.getColumn();
 
         // TODO make this variable
 
@@ -79,7 +80,7 @@ public class ImageLoader implements IImageLoader {
         routeAccessor = new ImageAccessor(mapManager, routeFetcher);
         labelAccessor = new ImageAccessor(mapManager, labelFetcher);
 
-        imageAccessors = new ArrayList<IImageAccessor>(4);
+        imageAccessors = new ArrayList<>(4);
 
         imageAccessors.add(labelAccessor);
         imageAccessors.add(routeAccessor);
@@ -94,7 +95,8 @@ public class ImageLoader implements IImageLoader {
         // set zoomStep to -1, so on first update all tiles in current view will
         // be rendered
         lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastGridLocation = new Point(mapManager.getGridLocation());
+        lastRow = mapManager.getRow();
+        lastColumn = mapManager.getColumn();
 
         backgroundFetcher.setMapManager(manager);
         POIFetcher.setMapManager(manager);
@@ -108,10 +110,10 @@ public class ImageLoader implements IImageLoader {
     }
 
     private List<Long> getLastViewTiles() {
-        final List<Long> newTiles = new LinkedList<Long>();
+        final List<Long> newTiles = new LinkedList<>();
 
-        for (int i = lastGridLocation.y; i < lastRowCount + lastGridLocation.y; i++) {
-            for (int j = lastGridLocation.x; j < lastColumnCount + lastGridLocation.x; j++) {
+        for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
+            for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
                 newTiles.add(mapManager.getID(i, j, lastZoomStep));
             }
         }
@@ -119,27 +121,28 @@ public class ImageLoader implements IImageLoader {
     }
 
     private List<Long> getNewTiles() {
-        final List<Long> newTiles = new LinkedList<Long>();
+        final List<Long> newTiles = new LinkedList<>();
 
         final int currentZoomStep = mapManager.getState().getZoomStep();
-        final Point currentGridLocation = mapManager.getGridLocation();
-        final int currentRows = mapManager.getRows();
-        final int currentColumns = mapManager.getColumns();
+        final int row = mapManager.getRow();
+        final int column = mapManager.getColumn();
+        final int visibleRows = mapManager.getVisibleRows();
+        final int visibleColumns = mapManager.getVisibleColumns();
 
         if (currentZoomStep != lastZoomStep) {
-            for (int i = currentGridLocation.y; i < currentRows + currentGridLocation.y; i++) {
-                for (int j = currentGridLocation.x; j < currentColumns + currentGridLocation.x; j++) {
+            for (int i = row; i < visibleRows + row; i++) {
+                for (int j = column; j < visibleColumns + column; j++) {
                     newTiles.add(mapManager.getID(i, j, currentZoomStep));
                 }
             }
-        } else if (!lastGridLocation.equals(currentGridLocation) || lastRowCount < currentRows
-                || lastColumnCount < currentColumns) {
-            final Rectangle lastView = new Rectangle(lastGridLocation);
-            lastView.height = lastRowCount;
-            lastView.width = lastColumnCount;
+        } else if (lastRow != row || lastColumn != column || lastVisibleRows < visibleRows
+                || lastVisibleColumns < visibleColumns) {
+            final Rectangle lastView = new Rectangle(lastColumn, lastRow);
+            lastView.height = lastVisibleRows;
+            lastView.width = lastVisibleColumns;
 
-            for (int i = currentGridLocation.y; i < currentRows + currentGridLocation.y; i++) {
-                for (int j = currentGridLocation.x; j < currentColumns + currentGridLocation.x; j++) {
+            for (int i = row; i < visibleRows + row; i++) {
+                for (int j = column; j < visibleColumns + column; j++) {
                     if (!lastView.contains(j, i)) {
                         newTiles.add(mapManager.getID(i, j, currentZoomStep));
                     }
@@ -148,9 +151,10 @@ public class ImageLoader implements IImageLoader {
         }
 
         lastZoomStep = currentZoomStep;
-        lastGridLocation = currentGridLocation;
-        lastRowCount = currentRows;
-        lastColumnCount = currentColumns;
+        lastRow = row;
+        lastColumn = column;
+        lastVisibleRows = visibleRows;
+        lastVisibleColumns = visibleColumns;
 
         return newTiles;
     }
@@ -158,17 +162,16 @@ public class ImageLoader implements IImageLoader {
     // make sure this gets called after getNewTiles
     private Collection<Long> prefetchZoomTiles() {
 
-        final List<Long> tiles = new LinkedList<Long>();
+        final List<Long> tiles = new LinkedList<>();
 
         final IMapState state = mapManager.getState();
         final int zoom = state.getZoomStep();
         final IPixelConverter converter = mapManager.getConverter();
         final int tileSize = mapManager.getTileSize();
-        final double zoomFactor = 1.0 / (1 << zoom - state.getMinZoomStep());
-        final int height = (int) (state.getSize().height * zoomFactor);
-        final int width = (int) (state.getSize().width * zoomFactor);
-        final int x = state.getLocation().x;
-        final int y = state.getLocation().y;
+        final int height = state.getCoordSectionHeight();
+        final int width = state.getCoordSectionWidth();
+        final int x = (int) state.getX();
+        final int y = (int) state.getY();
 
         // prefetch tiles in higher layer
         if (zoom > state.getMinZoomStep()) {
@@ -215,29 +218,29 @@ public class ImageLoader implements IImageLoader {
 
     // make sure this gets called after getNewTiles
     private List<Long> prefetchTiles() {
-        final List<Long> tiles = new LinkedList<Long>();
+        final List<Long> tiles = new LinkedList<>();
 
-        for (int column = Math.max(lastGridLocation.x - prefetchCount, 0); column < lastGridLocation.x
-                + lastColumnCount + prefetchCount; column++) {
-            for (int row = Math.max(lastGridLocation.y - prefetchCount, 0); row < lastGridLocation.y; row++) {
+        for (int column = Math.max(lastColumn - prefetchCount, 0); column < lastColumn + lastVisibleColumns
+                + prefetchCount; column++) {
+            for (int row = Math.max(lastRow - prefetchCount, 0); row < lastRow; row++) {
                 // prefetch tiles which are over the current view
                 tiles.add(mapManager.getID(row, column, lastZoomStep));
 
             }
 
-            for (int row = lastGridLocation.y + lastRowCount; row < lastGridLocation.y + lastRowCount + prefetchCount; row++) {
+            for (int row = lastRow + lastVisibleRows; row < lastRow + lastVisibleRows + prefetchCount; row++) {
                 // prefetch tiles which are under the current view
                 tiles.add(mapManager.getID(row, column, lastZoomStep));
             }
         }
 
-        for (int row = lastGridLocation.y; row < lastGridLocation.y + lastRowCount; row++) {
-            for (int column = Math.max(lastGridLocation.x - prefetchCount, 0); column < lastGridLocation.x; column++) {
+        for (int row = lastRow; row < lastRow + lastVisibleRows; row++) {
+            for (int column = Math.max(lastColumn - prefetchCount, 0); column < lastColumn; column++) {
                 // prefetch tiles which are to the left of the current view
                 tiles.add(mapManager.getID(row, column, lastZoomStep));
             }
 
-            for (int column = lastGridLocation.x + lastColumnCount; column < lastGridLocation.x + lastColumnCount
+            for (int column = lastColumn + lastVisibleColumns; column < lastColumn + lastVisibleColumns
                     + prefetchCount; column++) {
                 // prefetch tiles which are to the right of the current view
                 tiles.add(mapManager.getID(row, column, lastZoomStep));

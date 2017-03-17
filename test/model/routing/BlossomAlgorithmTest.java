@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,8 +14,8 @@ import org.junit.rules.Timeout;
 public class BlossomAlgorithmTest {
 
     @Rule
-    public Timeout globalTimeout = new Timeout(500); // 1/2 second max per
-                                                     // method tested
+    public Timeout globalTimeout = new Timeout(500, TimeUnit.MILLISECONDS); // 1/2 second max per
+    // method tested
 
     @Test
     public void testVerySmallAugmention() {
@@ -115,9 +116,9 @@ public class BlossomAlgorithmTest {
         final int nodes = 16;
         final int[] weights = new int[]{62, 22, 2, 80, 36, 6, 30, 64, 50, 28, 40, 72, 46, 48, 20, 28, 18, 64, 48, 48,
                 10, 30, 80, 10, 8, 50, 60, 50, 78, 72, 10, 76, 4, 8, 46, 6, 74, 20, 18, 14, 62, 2, 10, 16, 70, 24, 52,
-                56, 2, 72, 24, 28, 60, 70, 32, 66, 74, 30, 38, 14, 36, 54, 66, 12, 72, 78, 44, 10, 58, 6, 26, 14, 32,
-                2, 24, 42, 30, 42, 50, 18, 72, 16, 18, 52, 40, 36, 34, 30, 18, 40, 38, 12, 20, 20, 42, 62, 64, 54, 14,
-                52, 62, 78, 58, 58, 64, 54, 18, 50, 80, 58, 78, 76, 34, 30, 50, 6, 76, 32, 30, 24};
+                56, 2, 72, 24, 28, 60, 70, 32, 66, 74, 30, 38, 14, 36, 54, 66, 12, 72, 78, 44, 10, 58, 6, 26, 14, 32, 2,
+                24, 42, 30, 42, 50, 18, 72, 16, 18, 52, 40, 36, 34, 30, 18, 40, 38, 12, 20, 20, 42, 62, 64, 54, 14, 52,
+                62, 78, 58, 58, 64, 54, 18, 50, 80, 58, 78, 76, 34, 30, 50, 6, 76, 32, 30, 24};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -129,9 +130,9 @@ public class BlossomAlgorithmTest {
         final int nodes = 16;
         final int[] weights = new int[]{80, 66, 22, 42, 44, 30, 52, 38, 38, 74, 62, 50, 36, 48, 72, 72, 46, 76, 34, 4,
                 76, 30, 66, 6, 10, 24, 16, 22, 14, 52, 36, 50, 44, 62, 66, 36, 14, 32, 50, 46, 28, 74, 34, 70, 12, 10,
-                70, 72, 8, 64, 4, 60, 60, 12, 8, 32, 16, 42, 32, 18, 58, 28, 26, 32, 56, 42, 56, 22, 74, 66, 56, 42,
-                26, 52, 56, 52, 8, 76, 28, 44, 36, 78, 60, 74, 24, 72, 42, 52, 40, 50, 52, 50, 80, 68, 44, 28, 48, 42,
-                26, 24, 8, 48, 12, 26, 8, 26, 78, 14, 16, 42, 56, 28, 54, 54, 68, 66, 16, 56, 72, 58};
+                70, 72, 8, 64, 4, 60, 60, 12, 8, 32, 16, 42, 32, 18, 58, 28, 26, 32, 56, 42, 56, 22, 74, 66, 56, 42, 26,
+                52, 56, 52, 8, 76, 28, 44, 36, 78, 60, 74, 24, 72, 42, 52, 40, 50, 52, 50, 80, 68, 44, 28, 48, 42, 26,
+                24, 8, 48, 12, 26, 8, 26, 78, 14, 16, 42, 56, 28, 54, 54, 68, 66, 16, 56, 72, 58};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -143,9 +144,9 @@ public class BlossomAlgorithmTest {
         final int nodes = 16;
         final int[] weights = new int[]{30, 38, 36, 2, 58, 4, 28, 28, 80, 68, 40, 14, 18, 70, 36, 72, 12, 38, 30, 44,
                 38, 12, 58, 50, 42, 28, 78, 22, 74, 62, 32, 36, 6, 52, 2, 66, 60, 64, 58, 10, 42, 52, 12, 46, 68, 42,
-                70, 6, 16, 40, 16, 42, 22, 14, 56, 20, 50, 24, 44, 18, 42, 46, 8, 80, 16, 2, 72, 10, 70, 64, 10, 48,
-                50, 74, 46, 44, 78, 50, 60, 80, 6, 44, 62, 2, 46, 36, 50, 60, 30, 54, 18, 48, 14, 62, 24, 58, 20, 72,
-                24, 72, 58, 40, 4, 60, 2, 70, 64, 30, 24, 56, 30, 36, 20, 64, 46, 4, 28, 34, 48, 32};
+                70, 6, 16, 40, 16, 42, 22, 14, 56, 20, 50, 24, 44, 18, 42, 46, 8, 80, 16, 2, 72, 10, 70, 64, 10, 48, 50,
+                74, 46, 44, 78, 50, 60, 80, 6, 44, 62, 2, 46, 36, 50, 60, 30, 54, 18, 48, 14, 62, 24, 58, 20, 72, 24,
+                72, 58, 40, 4, 60, 2, 70, 64, 30, 24, 56, 30, 36, 20, 64, 46, 4, 28, 34, 48, 32};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -203,8 +204,8 @@ public class BlossomAlgorithmTest {
     @Test
     public void computerGeneratedTest4() {
         final int nodes = 8;
-        final int[] weights = new int[]{31, 52, 70, 65, 70, 26, 39, 28, 86, 75, 8, 55, 5, 83, 25, 63, 8, 74, 62, 36,
-                87, 14, 59, 61, 26, 93, 9, 86};
+        final int[] weights = new int[]{31, 52, 70, 65, 70, 26, 39, 28, 86, 75, 8, 55, 5, 83, 25, 63, 8, 74, 62, 36, 87,
+                14, 59, 61, 26, 93, 9, 86};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -227,8 +228,8 @@ public class BlossomAlgorithmTest {
     @Test
     public void computerGeneratedTest6() {
         final int nodes = 8;
-        final int[] weights = new int[]{4, 55, 8, 91, 47, 3, 67, 9, 65, 5, 96, 76, 8, 94, 27, 94, 22, 28, 81, 95, 4,
-                36, 61, 38, 31, 34, 53, 88};
+        final int[] weights = new int[]{4, 55, 8, 91, 47, 3, 67, 9, 65, 5, 96, 76, 8, 94, 27, 94, 22, 28, 81, 95, 4, 36,
+                61, 38, 31, 34, 53, 88};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -240,8 +241,8 @@ public class BlossomAlgorithmTest {
     @Test
     public void computerGeneratedTest7() {
         final int nodes = 8;
-        final int[] weights = new int[]{23, 25, 74, 57, 34, 9, 8, 96, 60, 20, 83, 87, 2, 89, 99, 76, 34, 94, 83, 12,
-                27, 46, 89, 66, 78, 79, 34, 32};
+        final int[] weights = new int[]{23, 25, 74, 57, 34, 9, 8, 96, 60, 20, 83, 87, 2, 89, 99, 76, 34, 94, 83, 12, 27,
+                46, 89, 66, 78, 79, 34, 32};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -264,8 +265,8 @@ public class BlossomAlgorithmTest {
     @Test
     public void computerGeneratedTest9() {
         final int nodes = 8;
-        final int[] weights = new int[]{40, 46, 67, 41, 45, 38, 95, 91, 36, 90, 16, 11, 46, 6, 75, 0, 7, 70, 65, 92,
-                77, 84, 53, 96, 26, 60, 91, 38};
+        final int[] weights = new int[]{40, 46, 67, 41, 45, 38, 95, 91, 36, 90, 16, 11, 46, 6, 75, 0, 7, 70, 65, 92, 77,
+                84, 53, 96, 26, 60, 91, 38};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -279,8 +280,8 @@ public class BlossomAlgorithmTest {
         final int[] weights = new int[]{54, 11, 22, 42, 62, 29, 97, 70, 44, 73, 3, 20, 29, 71, 20, 27, 24, 77, 40, 60,
                 8, 20, 37, 82, 75, 57, 4, 79, 95, 73, 52, 40, 97, 80, 96, 0, 64, 38, 69, 45, 3, 29, 71, 33, 24, 84, 69,
                 64, 40, 76, 34, 76, 90, 97, 31, 67, 63, 96, 30, 62, 91, 33, 59, 98, 86, 18, 86, 79, 57, 31, 48, 1, 86,
-                91, 51, 16, 85, 25, 76, 68, 40, 20, 49, 34, 52, 82, 47, 10, 8, 2, 54, 68, 24, 37, 84, 61, 5, 54, 31,
-                78, 10, 18, 55, 83, 17, 40, 11, 41, 14, 71, 9, 25, 60, 10, 9, 29, 21, 37, 15, 41};
+                91, 51, 16, 85, 25, 76, 68, 40, 20, 49, 34, 52, 82, 47, 10, 8, 2, 54, 68, 24, 37, 84, 61, 5, 54, 31, 78,
+                10, 18, 55, 83, 17, 40, 11, 41, 14, 71, 9, 25, 60, 10, 9, 29, 21, 37, 15, 41};
         final UndirectedGraph undirectedGraph = new UndirectedGraph(nodes, createEdges(nodes), weights);
         final Set<Long> matching = new BlossomAlgorithm().calculatePerfectMatching(undirectedGraph);
 
@@ -288,7 +289,8 @@ public class BlossomAlgorithmTest {
         checkMatching(matching, undirectedGraph, 102);
     }
 
-    private void checkMatching(final Set<Long> matching, final IUndirectedGraph undirectedGraph, final int expectedWeight) {
+    private void checkMatching(final Set<Long> matching, final IUndirectedGraph undirectedGraph,
+            final int expectedWeight) {
         int actualWeight = 0;
         final int[] actualOccurances = new int[undirectedGraph.getNodes()];
         final int[] expectedOccurances = new int[undirectedGraph.getNodes()];

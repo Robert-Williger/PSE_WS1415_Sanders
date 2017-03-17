@@ -1,1 +1,10 @@
 /bin
+
+/quadtree
+*.pbf
+*.data
+*.tst
+*.txt
+*.log
+*.png
+*.map

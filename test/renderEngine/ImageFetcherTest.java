@@ -106,12 +106,12 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public int getRows() {
+        public int getVisibleRows() {
             return 0;
         }
 
         @Override
-        public int getColumns() {
+        public int getVisibleColumns() {
             return 0;
         }
 

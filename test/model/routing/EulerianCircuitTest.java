@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,8 +16,8 @@ import org.junit.rules.Timeout;
 public class EulerianCircuitTest {
 
     @Rule
-    public Timeout globalTimeout = new Timeout(500); // 1/2 second max per
-                                                     // method tested
+    public Timeout globalTimeout = new Timeout(500, TimeUnit.MILLISECONDS); // 1/2 second max per
+    // method tested
 
     @Test
     public void testCircle() {
@@ -140,7 +141,7 @@ public class EulerianCircuitTest {
     }
 
     private void checkTour(final IUndirectedGraph undirectedGraph, final List<Integer> tour) {
-        final Map<Long, Integer> availableEdges = new HashMap<Long, Integer>();
+        final Map<Long, Integer> availableEdges = new HashMap<>();
         int edges = 0;
 
         for (int node = 0; node < undirectedGraph.getNodes(); node++) {

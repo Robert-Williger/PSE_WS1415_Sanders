@@ -4,7 +4,7 @@ import java.util.List;
 
 import model.IProgressListener;
 
-public class BruteForceTSP extends AbstractRouteSolver implements IRouteSolver {
+public class BruteForceTSP extends AbstractRouteSolver {
 
     private boolean canceled;
     private ISPSPSolver solver;

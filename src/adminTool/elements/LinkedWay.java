@@ -10,7 +10,7 @@ public class LinkedWay implements IWay {
     private LinkedList<IWay> ways;
 
     public LinkedWay() {
-        ways = new LinkedList<IWay>();
+        ways = new LinkedList<>();
     }
 
     @Override
@@ -104,6 +104,7 @@ public class LinkedWay implements IWay {
             this.way = way;
         }
 
+        @Override
         public Iterator<Node> iterator() {
             return way.descendingIterator();
         }

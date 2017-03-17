@@ -16,24 +16,24 @@ import adminTool.elements.UnprocessedStreet;
 public class GraphCreator extends AbstractMapCreator {
 
     // Maps Node to the amount of streets its part of
-    private HashMap<Node, Integer> nodeCount;
+    private HashMap<Node, Integer>        nodeCount;
 
     // ID's
-    private int nodeIdCount;
-    private int edgeIdCount;
+    private int                           nodeIdCount;
+    private int                           edgeIdCount;
 
-    private HashMap<Node, Integer> nodeIdMap;
+    private HashMap<Node, Integer>        nodeIdMap;
 
-    private List<WeightedEdge> edges;
-    private final List<Street> processedStreets;
-    private List<Integer> oneways;
+    private List<WeightedEdge>            edges;
+    private final List<Street>            processedStreets;
+    private List<Integer>                 oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
     public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final File file) {
         super(file);
         this.unprocessedStreets = unprocessedStreets;
 
-        processedStreets = new ArrayList<Street>();
+        processedStreets = new ArrayList<>();
     }
 
     public Collection<Street> getStreets() {
@@ -44,10 +44,10 @@ public class GraphCreator extends AbstractMapCreator {
     public void create() {
 
         nodeIdCount = 0;
-        nodeIdMap = new HashMap<Node, Integer>();
-        nodeCount = new HashMap<Node, Integer>();
+        nodeIdMap = new HashMap<>();
+        nodeCount = new HashMap<>();
 
-        edges = new ArrayList<WeightedEdge>();
+        edges = new ArrayList<>();
 
         // Step one: count the appearance of every node in the given streets and
         for (final UnprocessedStreet s : unprocessedStreets) {
@@ -68,7 +68,7 @@ public class GraphCreator extends AbstractMapCreator {
         // Step two: get the cuttings of the street at intersections (and dead
         // ends)
 
-        oneways = new LinkedList<Integer>();
+        oneways = new LinkedList<>();
         for (final UnprocessedStreet street : unprocessedStreets) {
 
             final List<Integer> intersections = getStreetCuts(street);
@@ -153,7 +153,7 @@ public class GraphCreator extends AbstractMapCreator {
      * Cuts the given street in a list of streets.
      */
     private List<Integer> getStreetCuts(final UnprocessedStreet s) {
-        final List<Integer> intersections = new ArrayList<Integer>();
+        final List<Integer> intersections = new ArrayList<>();
 
         // calculating the indexes of the intersections
         final Node[] nodes = s.getNodes();
@@ -179,8 +179,7 @@ public class GraphCreator extends AbstractMapCreator {
     }
 
     /*
-     * Generates and returns the unique id for the given node. If the id is
-     * already created, its id is returned.
+     * Generates and returns the unique id for the given node. If the id is already created, its id is returned.
      */
     private int generateID(final Node parsedNode) {
 

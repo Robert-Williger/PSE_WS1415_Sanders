@@ -1,25 +1,38 @@
 package model.map;
 
-import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Rectangle;
 
 import model.IModel;
 
 public interface IMap extends IModel {
 
-    void zoom(int steps, Point location);
+    void zoom(int steps, double offsetX, double offsetY);
 
-    void moveView(int deltaX, int deltaY);
+    void moveView(double deltaX, double deltaY);
 
     AddressNode getAddressNode(int x, int y);
 
-    void setViewSize(Dimension size);
+    void setSize(int width, int height);
+
+    int getWidth();
+
+    int getHeight();
 
     Point getViewLocation();
 
-    void center(Rectangle bounds);
+    void center(final double x, final double y, final double width, final double height);
 
-    void center(Point point);
+    void center(final double x, final double y);
 
+    void addMapListener(IMapListener listener);
+
+    void removeMapListener(IMapListener listener);
+
+    default void center(final Point point) {
+        center(point.x, point.y);
+    }
+
+    default void zoom(int steps) {
+        zoom(steps, 0.5, 0.5);
+    }
 }

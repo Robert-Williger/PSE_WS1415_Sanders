@@ -10,6 +10,7 @@ import java.awt.event.MouseWheelEvent;
 import javax.swing.SwingUtilities;
 
 import model.IApplication;
+import model.map.IMap;
 import model.targets.IRoutePoint;
 import model.targets.PointState;
 import view.IDragListener;
@@ -63,16 +64,16 @@ public class MapController extends AbstractController<IMapView> {
 
                         if (x < DRAG_MOVE_AREA) {
                             xMovement = Math.max(-MAX_DRAG_MOVEMENT, (x - DRAG_MOVE_AREA) / 3);
-                        } else if (x > view.getSize().width - DRAG_MOVE_AREA) {
-                            xMovement = Math.min(MAX_DRAG_MOVEMENT, (x + DRAG_MOVE_AREA - view.getSize().width) / 3);
+                        } else if (x > view.getWidth() - DRAG_MOVE_AREA) {
+                            xMovement = Math.min(MAX_DRAG_MOVEMENT, (x + DRAG_MOVE_AREA - view.getWidth()) / 3);
                         } else {
                             xMovement = 0;
                         }
 
                         if (y < DRAG_MOVE_AREA) {
                             yMovement = Math.max(-MAX_DRAG_MOVEMENT, (y - DRAG_MOVE_AREA) / 3);
-                        } else if (y > view.getSize().height - DRAG_MOVE_AREA) {
-                            yMovement = Math.min(MAX_DRAG_MOVEMENT, (y + DRAG_MOVE_AREA - view.getSize().height) / 3);
+                        } else if (y > view.getHeight() - DRAG_MOVE_AREA) {
+                            yMovement = Math.min(MAX_DRAG_MOVEMENT, (y + DRAG_MOVE_AREA - view.getHeight()) / 3);
                         } else {
                             yMovement = 0;
                         }
@@ -188,6 +189,7 @@ public class MapController extends AbstractController<IMapView> {
             public void mousePressed(final MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     pressed = true;
+                    movement.setLocation(0, 0);
                     startTime = System.nanoTime();
                     startPoint.setLocation(e.getX(), e.getY());
                     smoothDrag.haltSpeed();
@@ -199,8 +201,8 @@ public class MapController extends AbstractController<IMapView> {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     pressed = false;
                     if (elapsedTime != 0) {
-                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000), (int) (movement.getY()
-                                / elapsedTime * 10_000_000));
+                        smoothDrag.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000),
+                                (int) (movement.getY() / elapsedTime * 10_000_000));
                     }
                 }
             }
@@ -215,7 +217,8 @@ public class MapController extends AbstractController<IMapView> {
 
             @Override
             public void mouseWheelMoved(final MouseWheelEvent e) {
-                application.getMap().zoom(-e.getWheelRotation(), e.getPoint());
+                application.getMap().zoom(-e.getWheelRotation(), (double) e.getX() / view.getWidth(),
+                        (double) e.getY() / view.getHeight());
                 application.getImageLoader().update();
             }
 
@@ -234,10 +237,32 @@ public class MapController extends AbstractController<IMapView> {
         });
 
         view.addComponentListener(new ComponentAdapter() {
+            private int width;
+            private int height;
+            private int moveX;
+            private int moveY;
+
+            {
+                width = view.getWidth();
+                height = view.getHeight();
+            }
 
             @Override
             public void componentResized(final ComponentEvent e) {
-                application.getMap().setViewSize(view.getSize());
+                final IMap map = application.getMap();
+                final int newWidth = view.getWidth();
+                final int newHeight = view.getHeight();
+
+                final int xDif = this.width - newWidth + moveX;
+                final int yDif = this.height - newHeight + moveY;
+
+                moveX = xDif % 2;
+                moveY = yDif % 2;
+                width = newWidth;
+                height = newHeight;
+
+                map.setSize(newWidth, newHeight);
+                map.moveView(xDif / 2, yDif / 2);
                 application.getImageLoader().update();
             }
 

@@ -1,18 +1,18 @@
 package model.routing;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator.OfInt;
 
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
+import util.IntList;
 import model.IProgressListener;
 
 public class MSTTSPSolver extends AbstractRouteSolver {
-    private IUndirectedGraph mst;
-    private Path[] completeMapping;
-    private List<Integer> tspNodes;
-    private boolean canceled;
+    private IUndirectedGraph  mst;
+    private Path[]            completeMapping;
+    private IntList           tspNodes;
+    private boolean           canceled;
     private final ISPSPSolver solver;
 
     public MSTTSPSolver(final IDirectedGraph graph) {
@@ -39,7 +39,7 @@ public class MSTTSPSolver extends AbstractRouteSolver {
     }
 
     public IAddressablePriorityQueue<Integer> createQueue() {
-        return new AddressableBinaryHeap<Integer>();
+        return new AddressableBinaryHeap<>();
     }
 
     @Override
@@ -54,18 +54,18 @@ public class MSTTSPSolver extends AbstractRouteSolver {
             mst = new JPMST(completeGraph).calculateMST();
             final int num = mst.getNodes();
 
-            List<Integer> minRoute = null;
+            IntList minRoute = null;
             int minRouteLength = Integer.MAX_VALUE;
 
             for (int i = 0; i < completeGraph.getNodes(); i++) {
-                tspNodes = new ArrayList<Integer>();
+                tspNodes = new IntList();
                 tspNodes.add(i);
                 dfs(i, i);
 
                 int weightSum = 0;
                 for (int j = 0; j < num; j++) {
-                    weightSum += completeMapping[getPathIndex(tspNodes.get(j), tspNodes.get((j + 1) % num), edges.size())]
-                            .getLength();
+                    weightSum += completeMapping[getPathIndex(tspNodes.get(j), tspNodes.get((j + 1) % num),
+                            edges.size())].getLength();
                 }
 
                 if (weightSum < minRouteLength) {
@@ -89,9 +89,9 @@ public class MSTTSPSolver extends AbstractRouteSolver {
 
     private void dfs(final int u, final int v) {
 
-        final Iterator<Integer> it = mst.getAdjacentNodes(v);
+        final OfInt it = mst.getAdjacentNodes(v);
         while (it.hasNext()) {
-            final int w = it.next();
+            final int w = it.nextInt();
             if (w != u) {
                 tspNodes.add(w);
                 dfs(v, w);

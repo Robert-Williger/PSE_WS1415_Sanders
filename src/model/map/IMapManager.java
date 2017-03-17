@@ -1,7 +1,5 @@
 package model.map;
 
-import java.awt.Point;
-
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
@@ -13,17 +11,21 @@ public interface IMapManager {
 
     int getTileSize();
 
-    AddressNode getAddress(Point coordinate);
+    AddressNode getAddress(int x, int y);
 
-    int getRows();
+    int getVisibleRows();
 
-    int getColumns();
+    int getVisibleColumns();
 
-    Point getGridLocation();
+    int getRow();
 
-    Point getCoord(Point pixelPoint);
+    int getColumn();
 
-    Point getPixel(Point coordinate);
+    // Point getGridLocation();
+
+    // Point getCoord(int x, int y);
+
+    // Point getPixel(double x, double y);
 
     IMapState getState();
 

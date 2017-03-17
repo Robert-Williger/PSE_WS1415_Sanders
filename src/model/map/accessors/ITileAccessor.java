@@ -1,6 +1,7 @@
 package model.map.accessors;
 
 import java.util.PrimitiveIterator;
+import java.util.function.LongConsumer;
 
 public interface ITileAccessor extends IAccessor {
 
@@ -13,5 +14,7 @@ public interface ITileAccessor extends IAccessor {
     int getY();
 
     PrimitiveIterator.OfLong getElements(String identifier);
+
+    void forEach(String identifier, LongConsumer consumer);
 
 }

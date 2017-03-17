@@ -1,6 +1,6 @@
 package model.routing;
 
-import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
 
 public interface IUndirectedGraph {
 
@@ -8,7 +8,7 @@ public interface IUndirectedGraph {
 
     int getEdges();
 
-    Iterator<Integer> getAdjacentNodes(int node);
+    OfInt getAdjacentNodes(int node);
 
     long getEdge(int firstNode, int secondNode);
 
