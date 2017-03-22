@@ -8,8 +8,8 @@ import model.map.IMap;
 import model.map.IMapManager;
 import model.map.Map;
 import model.map.MapManager;
+import model.renderEngine.DefaultImageLoader;
 import model.renderEngine.IImageLoader;
-import model.renderEngine.SmartImageLoader;
 import model.routing.DirectedGraph;
 import model.routing.IRouteManager;
 import model.routing.RouteManager;
@@ -26,7 +26,7 @@ public class Application extends AbstractModel implements IApplication {
         reader = new Reader();
 
         final IMapManager manager = new MapManager();
-        loader = new SmartImageLoader(manager);
+        loader = new DefaultImageLoader(manager);
         routing = new RouteManager(new DirectedGraph(), manager);
         processor = new AdvancedTextProcessor();
         map = new Map(manager);

@@ -14,7 +14,6 @@ import model.renderEngine.RenderRoute;
 import model.targets.IPointList;
 import model.targets.IRoutePoint;
 import model.targets.PointList;
-import model.targets.RoutePoint;
 
 public class RouteManager extends AbstractModel implements IRouteManager {
     private final ICollectiveAccessor streetAccessor;
@@ -48,7 +47,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         final List<InterNode> interNodeList = new ArrayList<>(pointList.size());
 
         for (int i = 0; i < pointList.size(); i++) {
-            final AccessPoint accessPoint = pointList.get(i).getAccessPoint();
+            final AccessPoint accessPoint = pointList.get(i).getAddressPoint();
             final int street = accessPoint.getStreet();
             streetAccessor.setID(street);
             int edge = streetAccessor.getAttribute("graphId");
@@ -121,8 +120,8 @@ public class RouteManager extends AbstractModel implements IRouteManager {
                 if (start.getEdge() == end.getEdge()) {
                     renderRoute.addStreetPart(start.getEdge(), start.getOffset(), end.getOffset());
                 } else {
-                    final int[] startNodes = {graph.getStartNode(start.getEdge()), graph.getEndNode(start.getEdge())};
-                    final int[] endNodes = {graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge())};
+                    final int[] startNodes = { graph.getStartNode(start.getEdge()), graph.getEndNode(start.getEdge()) };
+                    final int[] endNodes = { graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge()) };
 
                     for (int i = 0; i < 2; i++) {
                         for (int j = 0; j < 2; j++) {
@@ -158,13 +157,13 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     }
 
     protected IRouteSolver[] createRouteSolvers(final IDirectedGraph graph) {
-        return new IRouteSolver[]{new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph), new MSTTSPSolver(graph),
-                new BruteForceTSP(graph)};
+        return new IRouteSolver[] { new ViaRouteSolver(graph), new ChristofidesTSPSolver(graph),
+                new MSTTSPSolver(graph), new BruteForceTSP(graph) };
     }
 
     protected String[] createNames() {
-        return new String[]{"Via-Route", "TSP-Route (1.5 Approximation)", "TSP-Route (2.0 Approxation)",
-                "TSP-Route (Brute-Force)"};
+        return new String[] { "Via-Route", "TSP-Route (1.5 Approximation)", "TSP-Route (2.0 Approxation)",
+                "TSP-Route (Brute-Force)" };
     }
 
     @Override
@@ -197,11 +196,6 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         fireChange();
 
         return route;
-    }
-
-    @Override
-    public IRoutePoint createPoint() {
-        return new RoutePoint();
     }
 
     @Override

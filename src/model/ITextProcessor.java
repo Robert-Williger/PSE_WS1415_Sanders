@@ -2,13 +2,13 @@ package model;
 
 import java.util.List;
 
-import model.elements.AccessPoint;
+import model.map.AddressPoint;
 
 public interface ITextProcessor {
 
     List<String> suggest(String address);
 
-    AccessPoint parse(String address);
+    AddressPoint parse(String address);
 
     public static class Entry {
         private final int street;

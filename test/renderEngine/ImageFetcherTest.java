@@ -21,7 +21,7 @@ import model.elements.POI;
 import model.elements.IStreet;
 import model.elements.StreetNode;
 import model.elements.IWay;
-import model.map.AddressNode;
+import model.map.AddressPoint;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
@@ -101,7 +101,7 @@ public class ImageFetcherTest {
         }
 
         @Override
-        public AddressNode getAddress(final Point coordinate) {
+        public AddressPoint getAddress(final Point coordinate) {
             return null;
         }
 

@@ -151,8 +151,7 @@ public class LabelRenderer extends AbstractRenderer {
                 final double cos = Math.cos(angle);
                 // TODO avoid code redundance
                 if (styles[labelAccessor.getType()].outlineStroke(g, zoom)) {
-                    stringAccessor.setID(labelAccessor.getAttribute("name"));
-                    final String name = stringAccessor.getString();
+                    final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
                     TextLayout text = new TextLayout(name, g.getFont(), g.getFontRenderContext());
 
                     final Shape shape = text.getOutline(g.getTransform());
@@ -173,8 +172,7 @@ public class LabelRenderer extends AbstractRenderer {
                     g.rotate(-angle);
                     g.translate(-transX, -transY);
                 } else if (styles[labelAccessor.getType()].mainStroke(g, zoom)) {
-                    stringAccessor.setID(labelAccessor.getAttribute("name"));
-                    final String name = stringAccessor.getString();
+                    final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
                     final int rotation = labelAccessor.getAttribute("rotation");
 
                     final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
@@ -217,8 +215,7 @@ public class LabelRenderer extends AbstractRenderer {
             final LongConsumer consumer = (building) -> {
                 buildingAccessor.setID(building);
 
-                stringAccessor.setID(buildingAccessor.getAttribute("number"));
-                final String number = stringAccessor.getString();
+                final String number = stringAccessor.getString(buildingAccessor.getAttribute("number"));
                 if (!number.isEmpty()) {
                     final int size = buildingAccessor.size();
                     int minX = Integer.MAX_VALUE;

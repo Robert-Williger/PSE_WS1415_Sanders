@@ -29,7 +29,7 @@ public class Map extends AbstractModel implements IMap {
                 : Math.max(steps, state.getMinZoomStep() - state.getZoomStep());
 
         if (trueSteps != 0) {
-            //TODO improve this.
+            // TODO improve this.
             fireZoomInitiatedEvent(trueSteps, state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : xOffset,
                     state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : yOffset);
 
@@ -66,9 +66,10 @@ public class Map extends AbstractModel implements IMap {
     }
 
     @Override
-    public AddressNode getAddressNode(final int x, final int y) {
+    public AddressPoint getAddressNode(final int x, final int y) {
         // TODO
-        return manager.getAddress(x, y);
+        return manager.getAddress((int) state.getX() + converter.getCoordDistance(x, state.getZoomStep()),
+                (int) state.getY() + converter.getCoordDistance(y, state.getZoomStep()));
     }
 
     @Override

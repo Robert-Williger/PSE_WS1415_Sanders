@@ -2,7 +2,7 @@ package controller.stateMachine;
 
 import java.util.List;
 
-import model.elements.AccessPoint;
+import model.map.AddressPoint;
 import model.targets.IRoutePoint;
 
 abstract class AbstractEditingTextedState extends AbstractEditingState {
@@ -10,11 +10,10 @@ abstract class AbstractEditingTextedState extends AbstractEditingState {
     @Override
     public IState searchPoint() {
         final String address = getStore().getCurrentAddress();
-        final AccessPoint accessPoint = getTextProcessor().parse(address);
-        if (accessPoint != null) {
+        final AddressPoint addressPoint = getTextProcessor().parse(address);
+        if (addressPoint != null) {
             final IRoutePoint point = getPoint();
-            point.setAddress(address);
-            point.setAccessPoint(accessPoint);
+            point.setAddressPoint(addressPoint);
 
             return EditingChangedState.getInstance();
         }

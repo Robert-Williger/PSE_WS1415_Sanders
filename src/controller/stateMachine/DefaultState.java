@@ -1,6 +1,7 @@
 package controller.stateMachine;
 
 import model.targets.IRoutePoint;
+import model.targets.RoutePoint;
 
 class DefaultState extends AbstractActionState {
 
@@ -16,7 +17,7 @@ class DefaultState extends AbstractActionState {
 
     @Override
     protected IRoutePoint getPoint() {
-        final IRoutePoint point = getRouteManager().createPoint();
+        final IRoutePoint point = new RoutePoint();
         getStore().setPoint(point);
         getList().add(point);
 

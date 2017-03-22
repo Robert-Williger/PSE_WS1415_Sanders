@@ -14,7 +14,7 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
-import model.map.AddressNode;
+import model.map.AddressPoint;
 import model.map.DefaultTileSource;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
@@ -155,13 +155,13 @@ public class MapManagerTest {
 
     @Test
     public void testNormalSearch() {
-        assertEquals(new AddressNode("Gaußstraße 21", new StreetNode(0.5f, street)),
+        assertEquals(new AddressPoint("Gaußstraße 21", new StreetNode(0.5f, street)),
                 manager.getAddress(new Point(900, 1250)));
     }
 
     @Test
     public void testSearchWithBuilding() {
-        assertEquals(new AddressNode(iBuilding.getAddress(), iBuilding.getStreetNode()),
+        assertEquals(new AddressPoint(iBuilding.getAddress(), iBuilding.getStreetNode()),
                 manager.getAddress(new Point(380, 1000)));
     }
 

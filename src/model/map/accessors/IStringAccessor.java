@@ -1,7 +1,7 @@
 package model.map.accessors;
 
-public interface IStringAccessor extends IAccessor {
+public interface IStringAccessor {
 
-    public String getString();
+    public String getString(long id);
 
 }

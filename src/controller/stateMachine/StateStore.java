@@ -4,17 +4,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import model.IApplication;
-import model.elements.AccessPoint;
+import model.map.AddressPoint;
 import model.targets.IRoutePoint;
 
 class StateStore {
 
     private IApplication application;
 
-    private IRoutePoint storedPoint;
-    private AccessPoint storedNode;
+    private IRoutePoint storedRoutePoint;
+    private AddressPoint storedAddressPoint;
     private int storedIndex;
-    private String storedAddress;
     private String currentAddress;
     private Set<String> suggestions;
 
@@ -28,11 +27,11 @@ class StateStore {
     }
 
     void setPoint(final IRoutePoint point) {
-        storedPoint = point;
+        storedRoutePoint = point;
     }
 
     IRoutePoint getPoint() {
-        return storedPoint;
+        return storedRoutePoint;
     }
 
     void setCurrentAddress(final String address) {
@@ -44,15 +43,13 @@ class StateStore {
     }
 
     void storePoint() {
-        storedAddress = storedPoint.getAddress();
-        storedNode = storedPoint.getAccessPoint();
-        storedIndex = storedPoint.getListIndex();
+        storedAddressPoint = storedRoutePoint.getAddressPoint();
+        storedIndex = storedRoutePoint.getListIndex();
     }
 
     void restorePoint() {
-        storedPoint.setAddress(storedAddress);
-        storedPoint.setAccessPoint(storedNode);
-        application.getRouteManager().getPointList().changeOrder(storedPoint.getListIndex(), storedIndex);
+        storedRoutePoint.setAddressPoint(storedAddressPoint);
+        application.getRouteManager().getPointList().changeOrder(storedRoutePoint.getListIndex(), storedIndex);
     }
 
     Set<String> getSuggestions() {

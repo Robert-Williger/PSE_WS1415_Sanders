@@ -10,7 +10,7 @@ public interface IMap extends IModel {
 
     void moveView(double deltaX, double deltaY);
 
-    AddressNode getAddressNode(int x, int y);
+    AddressPoint getAddressNode(int x, int y);
 
     void setSize(int width, int height);
 

@@ -5,20 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.AbstractModel;
-import model.elements.AccessPoint;
+import model.map.AddressPoint;
 
 public class RoutePoint extends AbstractModel implements IRoutePoint {
     private final List<IPointListener> listener;
-    private String address;
-    private AccessPoint point;
     private int listIndex;
     private int targetIndex;
-    private PointState state;
+    private PointState pointState;
     private final Point location;
+    private AddressPoint addressPoint;
 
     public RoutePoint() {
         location = new Point();
-        state = PointState.unadded;
+        pointState = PointState.unadded;
         listener = new ArrayList<>();
     }
 
@@ -56,16 +55,35 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public void setAddress(final String address) {
-        this.address = address;
-        fireAddressEvent();
-    }
+    public void setAddressPoint(final AddressPoint point) {
+        if (point == addressPoint) {
+            return;
+        }
 
-    @Override
-    public void setAccessPoint(final AccessPoint point) {
-        this.point = point;
-        fireLocationEvent();
+        final String address = getAddress();
+        final int x = getX();
+        final int y = getY();
 
+        this.addressPoint = point;
+
+        // TODO improve this
+        if (point == null) {
+            fireLocationEvent();
+            fireAddressEvent();
+            return;
+        }
+
+        if (point.getX() != x || point.getY() != y) {
+            fireLocationEvent();
+        }
+
+        // TODO null values in address?
+        if (point.getAddress() == address)
+            return;
+
+        if (point.getAddress() != null && !point.getAddress().equals(address)) {
+            fireAddressEvent();
+        }
     }
 
     @Override
@@ -81,29 +99,29 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
 
     @Override
     public void setState(final PointState state) {
-        this.state = state;
+        this.pointState = state;
         fireStateEvent();
     }
 
     @Override
     public void setLocation(final int x, final int y) {
+        final int oldX = location.x;
+        final int oldY = location.y;
         location.setLocation(x, y);
-        fireLocationEvent();
-    }
 
-    @Override
-    public String getAddress() {
-        return address;
+        if (addressPoint == null && (x != oldX || y != oldY)) {
+            fireLocationEvent();
+        }
     }
 
     @Override
     public int getX() {
-        return location.x;
+        return addressPoint != null ? addressPoint.getX() : location.x;
     }
 
     @Override
     public int getY() {
-        return location.y;
+        return addressPoint != null ? addressPoint.getY() : location.y;
     }
 
     @Override
@@ -118,12 +136,17 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
 
     @Override
     public PointState getState() {
-        return state;
+        return pointState;
     }
 
     @Override
-    public AccessPoint getAccessPoint() {
-        return point;
+    public String getAddress() {
+        return addressPoint != null ? addressPoint.getAddress() : null;
+    }
+
+    @Override
+    public AddressPoint getAddressPoint() {
+        return addressPoint;
     }
 
 }

@@ -1,19 +1,22 @@
 package view;
 
 import java.awt.Image;
-import java.awt.event.ComponentListener;
+
+import model.targets.IRoutePoint;
 
 public interface IMapView extends IView {
 
     void addMapListener(IMapListener listener);
 
-    void addRoutePointListener(IDragListener listener);
+    // void addRoutePointListener(IDragListener listener);
+
+    IRoutePoint getRoutePoint(int x, int y);
 
     void setEnabled(boolean enabled);
 
     Image createScreenshot();
 
-    void addComponentListener(ComponentListener listener);
+    // void addComponentListener(ComponentListener listener);
 
     int getWidth();
 

@@ -33,7 +33,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
     private static final long serialVersionUID = 1L;
 
     private final SidebarView sidebar;
-    private final SmoothMapView map;
+    private final MapView map;
     private final ApplicationMenuBar menuBar;
     private final HelpView help;
 
@@ -63,7 +63,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
         initialize();
 
         sidebar = new SidebarView(manager);
-        map = new SmoothMapView(application.getImageLoader(), list, application.getMap());
+        map = new MapView(application.getImageLoader(), list, application.getMap());
         menuBar = new ApplicationMenuBar();
         help = new HelpView();
 

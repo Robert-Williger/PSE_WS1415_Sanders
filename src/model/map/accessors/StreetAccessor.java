@@ -19,12 +19,14 @@ public class StreetAccessor extends CollectiveAccessor {
                 return data[getIntID()] & 0x7FFFFFFF;
             case "oneway":
                 return data[(int) getID()] >>> 7;
+            case "length":
+                return getLength();
             default:
                 return super.getAttribute(identifier);
         }
     }
 
-    public int getLength() {
+    private int getLength() {
         float totalLength = 0f;
 
         int lastX = getX(0);

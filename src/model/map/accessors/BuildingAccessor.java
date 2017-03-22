@@ -18,6 +18,7 @@ public class BuildingAccessor extends CollectiveAccessor {
                 return data[getIntID()];
             case "number":
                 return data[getIntID() + 1];
+            // TODO case "name" for public buildings...
             default:
                 return super.getAttribute(identifier);
         }

@@ -1,6 +1,7 @@
 package controller.stateMachine;
 
 import model.targets.IRoutePoint;
+import model.targets.RoutePoint;
 
 class TextedState extends AbstractTextedState {
 
@@ -27,7 +28,7 @@ class TextedState extends AbstractTextedState {
 
     @Override
     protected IRoutePoint getPoint() {
-        final IRoutePoint point = getRouteManager().createPoint();
+        final IRoutePoint point = new RoutePoint();
         getStore().setPoint(point);
         getList().add(point);
 

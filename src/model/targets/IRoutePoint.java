@@ -1,15 +1,13 @@
 package model.targets;
 
 import model.IModel;
-import model.elements.AccessPoint;
+import model.map.AddressPoint;
 
 public interface IRoutePoint extends IModel {
 
     void addPointListener(IPointListener listener);
 
-    void setAddress(String address);
-
-    void setAccessPoint(AccessPoint point);
+    void setAddressPoint(AddressPoint point);
 
     void setListIndex(int index);
 
@@ -19,7 +17,7 @@ public interface IRoutePoint extends IModel {
 
     void setLocation(int x, int y);
 
-    String getAddress();
+    AddressPoint getAddressPoint();
 
     int getX();
 
@@ -31,6 +29,8 @@ public interface IRoutePoint extends IModel {
 
     PointState getState();
 
-    AccessPoint getAccessPoint();
-
+    default String getAddress() {
+        final AddressPoint point = getAddressPoint();
+        return point != null ? point.getAddress() : null;
+    }
 }

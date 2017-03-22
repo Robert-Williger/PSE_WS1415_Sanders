@@ -7,18 +7,19 @@ import java.util.List;
 
 import util.BoundedHeap;
 import model.elements.AccessPoint;
+import model.map.AddressPoint;
 import model.map.IMapManager;
 import model.map.MapManager;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
 
 public class AdvancedTextProcessor implements ITextProcessor {
-    private final int                maxDistance;
-    private final int                suggestions;
+    private final int maxDistance;
+    private final int suggestions;
     private final BoundedHeap<Tuple> heap;
-    private final int[][]            distance;
-    private final SortedTree         indexRoot;
-    private int                      maxStringLength;
+    private final int[][] distance;
+    private final SortedTree indexRoot;
+    private int maxStringLength;
 
     public AdvancedTextProcessor() {
         this(new Entry[0][], new MapManager());
@@ -53,8 +54,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
         for (final Entry[] entry : entries) {
             for (int i = 0; i < entry.length; i++) {
                 streetAccessor.setID(entry[i].getStreet());
-                stringAccessor.setID(streetAccessor.getAttribute("name"));
-                final String streetName = stringAccessor.getString();
+                final String streetName = stringAccessor.getString(streetAccessor.getAttribute("name"));
                 final String cityName = entry[i].getCity();
                 final String realName = streetName + " " + cityName;
                 final AccessPoint node = new AccessPoint(0.5f, entry[i].getStreet());
@@ -217,11 +217,11 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     @Override
-    public AccessPoint parse(final String address) {
+    public AddressPoint parse(final String address) {
         return parse(indexRoot, normalize(address), 0);
     }
 
-    private AccessPoint parse(final SortedTree root, final String input, int index) {
+    private AddressPoint parse(final SortedTree root, final String input, int index) {
         final SortedTree child = binarySearch(root, input, index);
         int childLength;
         if (child == null || (childLength = child.getIndexName().length()) > input.length()) {
@@ -235,7 +235,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             ++index;
         }
 
-        return index == input.length() ? child.getAccessPoint() : parse(child, input, index);
+        return index == input.length() ? child.getAddressNode() : parse(child, input, index);
     }
 
     // TODO fit edit costs --> nearby keys lower costs than far away ones
@@ -345,7 +345,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private static class Tuple implements Comparable<Tuple> {
 
         private final String s;
-        private final int    d;
+        private final int d;
 
         public Tuple(final String s, final int distance) {
             this.s = s;
@@ -374,10 +374,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private static class Tree {
         private static final SortedTree[] emptyChildren = new SortedTree[0];
 
-        private String                    name;
-        private final String              indexName;
-        private final List<Tree>          children;
-        private AccessPoint               accessPoint;
+        private String name;
+        private final String indexName;
+        private final List<Tree> children;
+        private AccessPoint accessPoint;
 
         public Tree(final String indexName, final String name, final AccessPoint accessPoint) {
             this.indexName = indexName;
@@ -433,10 +433,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     private static class SortedTree implements Comparable<SortedTree> {
-        private final String       name;
-        private final String       indexName;
+        private final String name;
+        private final String indexName;
         private final SortedTree[] children;
-        private final AccessPoint  accessPoint;
+        private final AccessPoint accessPoint;
 
         public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
                 final SortedTree[] children) {
@@ -450,7 +450,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return indexName;
         }
 
-        public AccessPoint getAccessPoint() {
+        public AccessPoint getAddressNode() {
             return accessPoint;
         }
 

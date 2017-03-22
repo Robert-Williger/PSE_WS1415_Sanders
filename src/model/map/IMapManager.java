@@ -11,7 +11,7 @@ public interface IMapManager {
 
     int getTileSize();
 
-    AddressNode getAddress(int x, int y);
+    AddressPoint getAddress(int x, int y);
 
     int getVisibleRows();
 
@@ -20,12 +20,6 @@ public interface IMapManager {
     int getRow();
 
     int getColumn();
-
-    // Point getGridLocation();
-
-    // Point getCoord(int x, int y);
-
-    // Point getPixel(double x, double y);
 
     IMapState getState();
 
