@@ -1,8 +1,6 @@
 package controller;
 
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.RenderedImage;
@@ -38,21 +36,8 @@ public class ApplicationController extends AbstractController<IApplicationView> 
         this.view = view;
         machine = new StateMachine(model, view);
         importView = new ImportView();
-
-        Image image = null;
-        try {
-            image = ImageIO.read(getClass().getResource("import.png"));
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        importer = new FileChooserView(".", image);
-
-        try {
-            image = ImageIO.read(getClass().getResource("export.png"));
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        exporter = new FileChooserView(image);
+        importer = new FileChooserView(".", loadImage("import.png"));
+        exporter = new FileChooserView(loadImage("export.png"));
 
         initialize(view, model);
     }
@@ -65,44 +50,28 @@ public class ApplicationController extends AbstractController<IApplicationView> 
 
             @Override
             public void progressDone(final int progress) {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        importView.setProgress(progress);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    importView.setProgress(progress);
                 });
             }
 
             @Override
             public void errorOccured(final String message) {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        JOptionPane.showMessageDialog(null, message, "Fehler beim Import", JOptionPane.ERROR_MESSAGE);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, message, "Fehler beim Import", JOptionPane.ERROR_MESSAGE);
                 });
             }
 
             @Override
             public void stepCommenced(final String step) {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        importView.setStep(step);
-                    }
-
+                SwingUtilities.invokeLater(() -> {
+                    importView.setStep(step);
                 });
             }
         });
 
-        view.addMenuBarListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                switch (e.getActionCommand()) {
+        view.addMenuBarListener((e) -> {
+            switch (e.getActionCommand()) {
                 case "export":
                     controlExport();
                     break;
@@ -115,9 +84,7 @@ public class ApplicationController extends AbstractController<IApplicationView> 
                 case "help":
                     controllHelp();
                     break;
-                }
             }
-
         });
 
         view.addWindowListener(new WindowAdapter() {
@@ -152,6 +119,16 @@ public class ApplicationController extends AbstractController<IApplicationView> 
         }
     }
 
+    private Image loadImage(final String name) {
+        Image image = null;
+        try {
+            image = ImageIO.read(getClass().getResource(name));
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
+
     protected void controlExport() {
         final int returnVal = exporter.showSaveDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -182,36 +159,26 @@ public class ApplicationController extends AbstractController<IApplicationView> 
     }
 
     private void importMap(final File file) {
-        new Thread() {
-            @Override
-            public void run() {
-                setPriority(Thread.MIN_PRIORITY);
-                SwingUtilities.invokeLater(new Runnable() {
+        new Thread(() -> {
+            // setPriority(Thread.MIN_PRIORITY);
+            SwingUtilities.invokeLater(() -> {
+                importView.setProgress(0);
+                importView.setLocationRelativeTo(null);
+                importView.setVisible(true);
+            });
 
-                    @Override
-                    public void run() {
-                        importView.setProgress(0);
-                        importView.setLocationRelativeTo(null);
-                        importView.setVisible(true);
-                    }
+            final boolean loaded = model.setMapData(file);
 
-                });
+            SwingUtilities.invokeLater(() -> {
+                importView.setVisible(false);
 
-                if (model.setMapData(file)) {
+                if (loaded) {
                     model.getMap().setSize(view.getMap().getWidth(), view.getMap().getHeight());
                     model.getImageLoader().update();
                 }
+            });
+        }).start();
 
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        importView.setVisible(false);
-                    }
-
-                });
-            }
-        }.start();
     }
 
     protected void controllExit() {

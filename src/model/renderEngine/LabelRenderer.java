@@ -161,8 +161,8 @@ public class LabelRenderer extends AbstractRenderer {
                             + sin * text.getDescent();
                     final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2
                             - cos * text.getDescent();
-                    double transX = converter.getPixelDistancef(labelAccessor.getX() - x, zoom) + xOffset;
-                    double transY = converter.getPixelDistancef(labelAccessor.getY() - y, zoom) + yOffset;
+                    double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
+                    double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
 
                     g.translate(transX, transY);
                     g.rotate(angle);
@@ -181,8 +181,8 @@ public class LabelRenderer extends AbstractRenderer {
                     final int descent = fontMetrics.getDescent();
                     final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
                     final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
-                    double transX = converter.getPixelDistancef(labelAccessor.getX() - x, zoom) + xOffset;
-                    double transY = converter.getPixelDistancef(labelAccessor.getY() - y, zoom) + yOffset;
+                    double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
+                    double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
 
                     g.translate(transX, transY);
                     g.rotate(rotation);
@@ -268,7 +268,7 @@ public class LabelRenderer extends AbstractRenderer {
         x = x / size;
         y = y / size;
 
-        return new Point.Float(converter.getPixelDistancef(x - tileAccessor.getX(), tileAccessor.getZoom()),
-                converter.getPixelDistancef(y - tileAccessor.getY(), tileAccessor.getZoom()));
+        return new Point.Float(converter.getPixelDistance(x - tileAccessor.getX(), tileAccessor.getZoom()),
+                converter.getPixelDistance(y - tileAccessor.getY(), tileAccessor.getZoom()));
     }
 }

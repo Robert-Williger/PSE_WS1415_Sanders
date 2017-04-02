@@ -3,14 +3,17 @@ package model.map;
 import java.awt.Point;
 
 import model.IModel;
+import model.targets.AddressPoint;
 
 public interface IMap extends IModel {
 
+    int getZoom();
+
     void zoom(int steps, double offsetX, double offsetY);
 
-    void moveView(double deltaX, double deltaY);
+    void move(double deltaX, double deltaY);
 
-    AddressPoint getAddressNode(int x, int y);
+    AddressPoint getAddress(int x, int y);
 
     void setSize(int width, int height);
 
@@ -18,7 +21,10 @@ public interface IMap extends IModel {
 
     int getHeight();
 
-    Point getViewLocation();
+    // midpoint of current section in pixels
+    int getX();
+
+    int getY();
 
     void center(final double x, final double y, final double width, final double height);
 

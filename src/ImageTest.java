@@ -65,7 +65,7 @@ public class ImageTest {
         final int[][] nodes = readNodes(path);
         final Map<String, IQuadtree> quadtreeMap = new HashMap<>();
         final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
-        readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoomStep());
+        readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoom());
         final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
             @Override
             public ITileAccessor create() {
@@ -189,8 +189,8 @@ public class ImageTest {
 
         final BackgroundRenderer renderer = new BackgroundRenderer(manager, new OSMColorScheme());
 
-        final int min = manager.getState().getMinZoomStep();
-        final int max = Math.min(min + 8, manager.getState().getMaxZoomStep());
+        final int min = manager.getState().getMinZoom();
+        final int max = Math.min(min + 8, manager.getState().getMaxZoom());
         for (int zoom = min; zoom < max; zoom++) {
             int size = 1 << (zoom - min);
             for (int row = 0; row < size; row++) {

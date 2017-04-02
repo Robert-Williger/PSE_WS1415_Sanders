@@ -9,11 +9,11 @@ import java.util.List;
 import model.IFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
-import model.map.IPixelConverter;
 
 public class ImageLoader implements IImageLoader {
 
     private IMapManager mapManager;
+    private IMapState state;
 
     private final IImageFetcher backgroundFetcher;
     private final IImageFetcher POIFetcher;
@@ -54,9 +54,10 @@ public class ImageLoader implements IImageLoader {
 
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
-        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastRow = mapManager.getRow();
-        lastColumn = mapManager.getColumn();
+        state = mapManager.getState();
+        lastZoomStep = state.getMinZoom() - 1;
+        lastRow = mapManager.getRow(state.getZoom());
+        lastColumn = mapManager.getColumn(state.getZoom());
 
         // TODO make this variable
 
@@ -89,14 +90,20 @@ public class ImageLoader implements IImageLoader {
     }
 
     @Override
+    public int getTileSize() {
+        return state.getPixelTileSize();
+    }
+
+    @Override
     public void setMapManager(final IMapManager manager) {
         mapManager = manager;
+        state = mapManager.getState();
 
         // set zoomStep to -1, so on first update all tiles in current view will
         // be rendered
-        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastRow = mapManager.getRow();
-        lastColumn = mapManager.getColumn();
+        lastZoomStep = state.getMinZoom() - 1;
+        lastRow = mapManager.getRow(state.getZoom());
+        lastColumn = mapManager.getColumn(state.getZoom());
 
         backgroundFetcher.setMapManager(manager);
         POIFetcher.setMapManager(manager);
@@ -123,16 +130,16 @@ public class ImageLoader implements IImageLoader {
     private List<Long> getNewTiles() {
         final List<Long> newTiles = new LinkedList<>();
 
-        final int currentZoomStep = mapManager.getState().getZoomStep();
-        final int row = mapManager.getRow();
-        final int column = mapManager.getColumn();
-        final int visibleRows = mapManager.getVisibleRows();
-        final int visibleColumns = mapManager.getVisibleColumns();
+        final int zoom = state.getZoom();
+        final int row = mapManager.getRow(zoom);
+        final int column = mapManager.getColumn(zoom);
+        final int visibleRows = mapManager.getVisibleRows(zoom);
+        final int visibleColumns = mapManager.getVisibleColumns(zoom);
 
-        if (currentZoomStep != lastZoomStep) {
+        if (zoom != lastZoomStep) {
             for (int i = row; i < visibleRows + row; i++) {
                 for (int j = column; j < visibleColumns + column; j++) {
-                    newTiles.add(mapManager.getID(i, j, currentZoomStep));
+                    newTiles.add(mapManager.getID(i, j, zoom));
                 }
             }
         } else if (lastRow != row || lastColumn != column || lastVisibleRows < visibleRows
@@ -144,13 +151,13 @@ public class ImageLoader implements IImageLoader {
             for (int i = row; i < visibleRows + row; i++) {
                 for (int j = column; j < visibleColumns + column; j++) {
                     if (!lastView.contains(j, i)) {
-                        newTiles.add(mapManager.getID(i, j, currentZoomStep));
+                        newTiles.add(mapManager.getID(i, j, zoom));
                     }
                 }
             }
         }
 
-        lastZoomStep = currentZoomStep;
+        lastZoomStep = zoom;
         lastRow = row;
         lastColumn = column;
         lastVisibleRows = visibleRows;
@@ -165,26 +172,24 @@ public class ImageLoader implements IImageLoader {
         final List<Long> tiles = new LinkedList<>();
 
         final IMapState state = mapManager.getState();
-        final int zoom = state.getZoomStep();
-        final IPixelConverter converter = mapManager.getConverter();
-        final int tileSize = mapManager.getTileSize();
-        final int height = state.getCoordSectionHeight();
-        final int width = state.getCoordSectionWidth();
+        final int zoom = state.getZoom();
+        final int height = state.getCoordSectionHeight(zoom);
+        final int width = state.getCoordSectionWidth(zoom);
         final int x = (int) state.getX();
         final int y = (int) state.getY();
 
         // prefetch tiles in higher layer
-        if (zoom > state.getMinZoomStep()) {
+        if (zoom > state.getMinZoom()) {
             final int zoomedStep = zoom - 1;
             final int zoomedHeight = height * 2;
             final int zoomedWidth = width * 2;
             final int zoomedX = Math.max(0, x - height / 2);
             final int zoomedY = Math.max(0, y - width / 2);
 
-            final int startRow = zoomedY / converter.getCoordDistance(tileSize, zoomedStep);
-            final int startColumn = zoomedX / converter.getCoordDistance(tileSize, zoomedStep);
-            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
-            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
+            final int startRow = zoomedY / state.getCoordTileSize(zoomedStep);
+            final int startColumn = zoomedX / state.getCoordTileSize(zoomedStep);
+            final int endRow = (zoomedY + zoomedHeight) / state.getCoordTileSize(zoomedStep) + 1;
+            final int endColumn = (zoomedX + zoomedWidth) / state.getCoordTileSize(zoomedStep) + 1;
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
@@ -194,17 +199,17 @@ public class ImageLoader implements IImageLoader {
         }
 
         // prefetch tiles in deeper layer
-        if (zoom < state.getMaxZoomStep()) {
+        if (zoom < state.getMaxZoom()) {
             final int zoomedStep = zoom + 1;
             final int zoomedHeight = height / 2;
             final int zoomedWidth = width / 2;
             final int zoomedX = x + zoomedWidth / 2;
             final int zoomedY = y + zoomedHeight / 2;
 
-            final int startRow = zoomedY / converter.getCoordDistance(tileSize, zoomedStep);
-            final int startColumn = zoomedX / converter.getCoordDistance(tileSize, zoomedStep);
-            final int endRow = (zoomedY + zoomedHeight) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
-            final int endColumn = (zoomedX + zoomedWidth) / converter.getCoordDistance(tileSize, zoomedStep) + 1;
+            final int startRow = zoomedY / state.getCoordTileSize(zoomedStep);
+            final int startColumn = zoomedX / state.getCoordTileSize(zoomedStep);
+            final int endRow = (zoomedY + zoomedHeight) / state.getCoordTileSize(zoomedStep) + 1;
+            final int endColumn = (zoomedX + zoomedWidth) / state.getCoordTileSize(zoomedStep) + 1;
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {

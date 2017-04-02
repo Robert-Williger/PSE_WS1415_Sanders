@@ -6,7 +6,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import model.IApplication;
-import model.map.IMap;
 import model.targets.IRoutePoint;
 import view.IDragListener;
 import view.IMapListener;
@@ -21,24 +20,12 @@ public class MapController extends AbstractController<IMapView> implements IMapL
     private final IDragListener mapListener;
 
     private IDragListener currentListener;
-    private int width;
-    private int height;
-    private int moveX;
-    private int moveY;
 
     public MapController(final IMapView view, final IApplication application, final IStateMachine machine) {
         this.application = application;
         this.view = view;
         this.pointListener = new PointListener(application, machine, view);
         this.mapListener = new MapListener(application, machine);
-
-        initialize(view);
-    }
-
-    private void initialize(final IMapView view) {
-
-        width = view.getWidth();
-        height = view.getHeight();
 
         view.addMapListener(this);
     }
@@ -51,7 +38,7 @@ public class MapController extends AbstractController<IMapView> implements IMapL
     @Override
     public void mouseMoved(final MouseEvent e) {
     }
-
+    
     @Override
     public void mouseClicked(final MouseEvent e) {
         currentListener.mouseClicked(e);
@@ -85,20 +72,7 @@ public class MapController extends AbstractController<IMapView> implements IMapL
 
     @Override
     public void componentResized(final ComponentEvent e) {
-        final IMap map = application.getMap();
-        final int newWidth = view.getWidth();
-        final int newHeight = view.getHeight();
-
-        final int xDif = this.width - newWidth + moveX;
-        final int yDif = this.height - newHeight + moveY;
-
-        moveX = xDif % 2;
-        moveY = yDif % 2;
-        width = newWidth;
-        height = newHeight;
-
-        map.setSize(newWidth, newHeight);
-        map.moveView(xDif / 2, yDif / 2);
+        application.getMap().setSize(view.getWidth(), view.getHeight());
         application.getImageLoader().update();
     }
 
@@ -116,8 +90,8 @@ public class MapController extends AbstractController<IMapView> implements IMapL
 
     @Override
     public void mouseWheelMoved(final MouseWheelEvent e) {
-        application.getMap().zoom(-e.getWheelRotation(), (double) e.getX() / view.getWidth(),
-                (double) e.getY() / view.getHeight());
+        application.getMap().zoom(-e.getWheelRotation(), (double) e.getX() / view.getWidth() - 0.5,
+                (double) e.getY() / view.getHeight() - 0.5);
         application.getImageLoader().update();
     }
 

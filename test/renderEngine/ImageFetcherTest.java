@@ -21,7 +21,6 @@ import model.elements.POI;
 import model.elements.IStreet;
 import model.elements.StreetNode;
 import model.elements.IWay;
-import model.map.AddressPoint;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
@@ -30,6 +29,7 @@ import model.map.Tile;
 import model.renderEngine.AbstractImageFetcher;
 import model.renderEngine.HighlyCachedImageFetcher;
 import model.renderEngine.IRenderer;
+import model.targets.AddressPoint;
 
 import org.junit.Before;
 import org.junit.BeforeClass;

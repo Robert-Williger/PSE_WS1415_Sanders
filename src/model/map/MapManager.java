@@ -14,8 +14,14 @@ import model.map.accessors.IStringAccessor;
 import model.map.accessors.ITileAccessor;
 import model.map.accessors.StringAccessor;
 import model.map.accessors.TileAccessor;
+import model.targets.AddressPoint;
 
 public class MapManager implements IMapManager {
+    private static final int COORD_BITS = 29;
+    private static final int ZOOM_BITS = Long.SIZE - 2 * COORD_BITS - 1;
+    private static final int MAX_COORD = (1 << COORD_BITS) - 1;
+    private static final int MAX_ZOOM = (1 << ZOOM_BITS) - 1;
+
     private final java.util.Map<String, IFactory<IPointAccessor>> pointMap;
     private final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap;
     private final IFactory<ITileAccessor> tileFactory;
@@ -25,34 +31,25 @@ public class MapManager implements IMapManager {
     private final ICollectiveAccessor buildingAccessor;
     private final ICollectiveAccessor streetAccessor;
     private final IStringAccessor stringAccessor;
-    private final IPixelConverter converter;
     private final IMapState state;
-    private final int tileSize;
 
     private static IFactory<ITileAccessor> emptyFactory() {
-        return new IFactory<ITileAccessor>() {
-
-            @Override
-            public ITileAccessor create() {
-                return new TileAccessor(new HashMap<String, IQuadtree>(), new PixelConverter(1), 256);
-            }
-
+        return () -> {
+            return new TileAccessor(new HashMap<String, IQuadtree>(),
+                    new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
         };
     }
 
     public MapManager() {
         // TODO
         this(new HashMap<String, IFactory<IPointAccessor>>(), new HashMap<String, IFactory<ICollectiveAccessor>>(),
-                emptyFactory(), new String[0], new PixelConverter(1), new MapState(0, 0, 0, 0), 256);
+                emptyFactory(), new String[0], new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
     }
 
     // TODO
     public MapManager(final java.util.Map<String, IFactory<IPointAccessor>> pointMap,
             final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap,
-            final IFactory<ITileAccessor> tileFactory, final String[] strings, final IPixelConverter converter,
-            final IMapState state, final int tileSize) {
-        this.converter = converter;
-        this.tileSize = tileSize;
+            final IFactory<ITileAccessor> tileFactory, final String[] strings, final IMapState state) {
         this.state = state;
 
         this.pointMap = pointMap;
@@ -68,9 +65,9 @@ public class MapManager implements IMapManager {
 
     @Override
     public AddressPoint getAddress(final int x, final int y) {
-        final AddressPoint node = new AddressPoint(state, converter);
+        final AddressPoint node = new AddressPoint(state);
 
-        long building = getBuildingAt(x, y, state.getMaxZoomStep());
+        long building = getBuildingAt(x, y, state.getMaxZoom());
         final LongPredicate pred;
         if (building != -1) {
             buildingAccessor.setID(building);
@@ -92,7 +89,7 @@ public class MapManager implements IMapManager {
         final long[] ids = new long[4];
         final double[] distanceSquares = new double[4];
 
-        for (int zoom = state.getMaxZoomStep(); zoom >= state.getZoomStep(); zoom--) {
+        for (int zoom = state.getMaxZoom(); zoom >= state.getZoom(); zoom--) {
             fillArrays(x, y, getRow(y, zoom), getColumn(x, zoom), zoom, distanceSquares, ids);
 
             if (applyAccessPoint(x, y, ids, distanceSquares, node, pred)) {
@@ -108,16 +105,16 @@ public class MapManager implements IMapManager {
     }
 
     private int getRow(final int yCoord, final int zoom) {
-        return converter.getPixelDistance(yCoord, zoom) / tileSize;
+        return yCoord / state.getCoordTileSize(zoom);
     }
 
     private int getColumn(final int xCoord, final int zoom) {
-        return converter.getPixelDistance(xCoord, zoom) / tileSize;
+        return xCoord / state.getCoordTileSize(zoom);
     }
 
     private void fillArrays(final int x, final int y, final int row, final int column, final int zoom,
             final double[] distanceSq, final long[] ids) {
-        final int coordTileSize = converter.getCoordDistance(tileSize, zoom);
+        final int coordTileSize = state.getCoordTileSize(zoom);
         final int tileX = column * coordTileSize;
         final int tileY = row * coordTileSize;
         final int midX = tileX + coordTileSize / 2;
@@ -243,7 +240,8 @@ public class MapManager implements IMapManager {
                     final int distance = (int) Point.distance(x, y, buildingAccessor.getX(i), buildingAccessor.getY(i));
                     if (distance < minDistanceSq) {
                         minDistanceSq = distance;
-                        node.setAddress(street + " " + stringAccessor.getString(buildingAccessor.getAttribute("number")));
+                        node.setAddress(
+                                street + " " + stringAccessor.getString(buildingAccessor.getAttribute("number")));
                     }
                 }
             }
@@ -269,21 +267,10 @@ public class MapManager implements IMapManager {
         return -1;
     }
 
-    @Override
-    public int getVisibleRows() {
-        return getGridSize(state.getCoordSectionHeight(), (int) state.getY());
-    }
+    private int getGridSize(final int sectionSize, final int location, final int zoom) {
+        final int cTileSize = state.getCoordTileSize(zoom);
 
-    @Override
-    public int getVisibleColumns() {
-        return getGridSize(state.getCoordSectionWidth(), (int) state.getX());
-    }
-
-    private int getGridSize(final int coordSectionSize, final int location) {
-        final int zoom = state.getZoomStep();
-        final int coordTileSize = converter.getCoordDistance(tileSize, zoom);
-
-        return (location + coordSectionSize) / coordTileSize - location / coordTileSize + 1;
+        return (location + sectionSize / 2) / cTileSize - (location - sectionSize / 2) / cTileSize + 1;
     }
 
     @Override
@@ -292,18 +279,8 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public IPixelConverter getConverter() {
-        return converter;
-    }
-
-    @Override
-    public long getID(int row, int column, int zoom) {
-        return ((((long) zoom << 29) | row) << 29) | column;
-    }
-
-    @Override
-    public int getTileSize() {
-        return tileSize;
+    public long getID(final int row, final int column, final int zoom) {
+        return isValid(row, column, zoom) ? ((((long) zoom << COORD_BITS) | row) << COORD_BITS) | column : -1;
     }
 
     @Override
@@ -329,12 +306,27 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public int getRow() {
-        return (int) state.getY() / converter.getCoordDistance(tileSize, state.getZoomStep());
+    public int getVisibleRows(final int zoom) {
+        return getGridSize(state.getCoordSectionHeight(zoom), (int) state.getY(), zoom);
     }
 
     @Override
-    public int getColumn() {
-        return (int) state.getX() / converter.getCoordDistance(tileSize, state.getZoomStep());
+    public int getVisibleColumns(final int zoom) {
+        return getGridSize(state.getCoordSectionWidth(zoom), (int) state.getX(), zoom);
+    }
+
+    @Override
+    public int getRow(final int zoom) {
+        return (int) (state.getY() - state.getCoordSectionHeight(zoom) / 2) / state.getCoordTileSize(zoom);
+    }
+
+    @Override
+    public int getColumn(final int zoom) {
+        return (int) (state.getX() - state.getCoordSectionWidth(zoom) / 2) / state.getCoordTileSize(zoom);
+    }
+
+    private boolean isValid(final int row, final int column, final int zoom) {
+        // return row > 0 && row < MAX_COORD && ...
+        return ((MAX_COORD - row) | (MAX_COORD - column) | (MAX_ZOOM - zoom) | row | column | zoom) >= 0;
     }
 }

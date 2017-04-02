@@ -14,7 +14,6 @@ import model.elements.POI;
 import model.elements.Street;
 import model.elements.StreetNode;
 import model.elements.IWay;
-import model.map.AddressPoint;
 import model.map.DefaultTileSource;
 import model.map.IMapManager;
 import model.map.IPixelConverter;
@@ -23,6 +22,7 @@ import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Tile;
+import model.targets.AddressPoint;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -100,13 +100,13 @@ public class MapManagerTest {
 
     @Test
     public void testRows() {
-        manager.getState().setSectionSize(0, 1025);
+        manager.getState().setPixelSectionSize(0, 1025);
         assertEquals(3, manager.getVisibleRows());
     }
 
     @Test
     public void testColumns() {
-        manager.getState().setSectionSize(1025, 0);
+        manager.getState().setPixelSectionSize(1025, 0);
         assertEquals(3, manager.getVisibleColumns());
     }
 

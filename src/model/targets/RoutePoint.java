@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.AbstractModel;
-import model.map.AddressPoint;
 
 public class RoutePoint extends AbstractModel implements IRoutePoint {
     private final List<IPointListener> listener;

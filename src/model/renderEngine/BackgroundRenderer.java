@@ -212,17 +212,18 @@ public class BackgroundRenderer extends AbstractRenderer {
     }
 
     private void appendPath(final Path2D path, final ICollectiveAccessor accessor) {
-        final int x = tileAccessor.getX();
-        final int y = tileAccessor.getY();
+        // use float for pixel distance with float precission
+        final float x = tileAccessor.getX();
+        final float y = tileAccessor.getY();
         final int zoom = tileAccessor.getZoom();
         final int size = accessor.size();
 
-        path.moveTo(converter.getPixelDistancef(accessor.getX(0) - x, zoom),
-                converter.getPixelDistancef(accessor.getY(0) - y, zoom));
+        path.moveTo(converter.getPixelDistance(accessor.getX(0) - x, zoom),
+                converter.getPixelDistance(accessor.getY(0) - y, zoom));
 
         for (int i = 1; i < size; i++) {
-            path.lineTo(converter.getPixelDistancef(accessor.getX(i) - x, zoom),
-                    converter.getPixelDistancef(accessor.getY(i) - y, zoom));
+            path.lineTo(converter.getPixelDistance(accessor.getX(i) - x, zoom),
+                    converter.getPixelDistance(accessor.getY(i) - y, zoom));
         }
     }
 

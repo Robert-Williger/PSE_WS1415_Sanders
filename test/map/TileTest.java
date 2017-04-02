@@ -76,7 +76,7 @@ public class TileTest {
 
     @Test
     public void testZoomStep() {
-        assertEquals(1, tile.getZoomStep());
+        assertEquals(1, tile.getZoom());
     }
 
     // @Test

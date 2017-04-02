@@ -256,9 +256,8 @@ public class Reader implements IReader {
         public IMapManager readMapManager(final String path) throws IOException {
             fireStepCommenced("Lade Header...");
             final CompressedInputStream reader = createInputStream(path + "/header");
-            final IMapState state = readMapState(reader);
             final IPixelConverter converter = readConverter(reader);
-            final int tileSize = reader.readInt();
+            final IMapState state = readMapState(reader, converter);
             final int[][] distributions = readDistributions(reader);
             reader.close();
 
@@ -266,28 +265,30 @@ public class Reader implements IReader {
             final int[][] nodes = readNodes(path);
             final Map<String, IQuadtree> quadtreeMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
-            readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoomStep());
+            readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoom());
             final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
                 @Override
                 public ITileAccessor create() {
-                    return new TileAccessor(quadtreeMap, converter, tileSize);
+                    return new TileAccessor(quadtreeMap, state);
                 }
             };
             return new MapManager(new HashMap<String, IFactory<IPointAccessor>>(), collectiveMap, tileFactory, strings,
-                    converter, state, tileSize);
+                    state);
         }
 
-        private IMapState readMapState(final CompressedInputStream reader) throws IOException {
+        private IMapState readMapState(final CompressedInputStream reader, final IPixelConverter converter)
+                throws IOException {
             final int width = reader.readInt();
             final int height = reader.readInt();
             final int minZoomStep = reader.readInt();
             final int maxZoomStep = reader.readInt();
-            return new MapState(width, height, minZoomStep, maxZoomStep);
+            final int tileSize = reader.readInt();
+            return new MapState(width, height, minZoomStep, maxZoomStep, tileSize, converter);
         }
 
         private IPixelConverter readConverter(final CompressedInputStream reader) throws IOException {
-            final double conversionFactor = reader.readDouble();
-            return new PixelConverter(conversionFactor);
+            final int conversionBits = reader.readInt();
+            return new PixelConverter(conversionBits);
         }
 
         private int[][] readDistributions(final CompressedInputStream reader) throws IOException {
@@ -313,7 +314,7 @@ public class Reader implements IReader {
             }
             reader.close();
 
-            return new int[][]{xPoints, yPoints};
+            return new int[][] { xPoints, yPoints };
         }
 
         private String[] readStrings(final String path) throws IOException {
@@ -335,8 +336,8 @@ public class Reader implements IReader {
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
 
-            final String[] names = {"street", "way", "area", "building"};
-            final String[] outputNames = {"Straßen", "Wege", "Gelände", "Gebäude"};
+            final String[] names = { "street", "way", "area", "building" };
+            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude" };
 
             final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[names.length];
             accessors[0] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[0])

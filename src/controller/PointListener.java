@@ -5,6 +5,7 @@ import java.awt.event.MouseEvent;
 
 import controller.stateMachine.IStateMachine;
 import model.IApplication;
+import model.map.IMap;
 import model.targets.IRoutePoint;
 import model.targets.PointState;
 import view.IDragListener;
@@ -44,8 +45,9 @@ public class PointListener implements IDragListener {
                 final int x = e.getX();
                 final int y = e.getY();
 
+                final IMap map = application.getMap();
                 point.setAddressPoint(null);
-                point.setLocation(x, y);
+                point.setLocation(x + map.getX() - map.getWidth() / 2, y + map.getY() - map.getHeight() / 2);
 
                 final int xMovement;
                 final int yMovement;
@@ -84,7 +86,7 @@ public class PointListener implements IDragListener {
             machine.selectPoint(point);
             if (e.getClickCount() == 2) {
                 // TODO
-                application.getMap().center(point.getAddressPoint().getX(), point.getAddressPoint().getX());
+                application.getMap().center(point.getAddressPoint().getX(), point.getAddressPoint().getY());
                 application.getImageLoader().update();
             }
         }
@@ -133,7 +135,7 @@ public class PointListener implements IDragListener {
             while (!isInterrupted()) {
                 if ((x != 0 || y != 0)
                         && (point.getState() == PointState.editing || point.getState() == PointState.unadded)) {
-                    application.getMap().moveView(x, y);
+                    application.getMap().move(x, y);
                     application.getImageLoader().update();
                     try {
                         Thread.sleep(10);

@@ -11,11 +11,26 @@ public interface IImageAccessor extends IModel {
 
     boolean isVisible();
 
-    int getRows();
+    int getX(int zoom);
 
-    int getColumns();
+    int getY(int zoom);
 
-    Image getImage(int row, int column);
+    int getWidth();
+
+    int getHeight();
+    // int getRows(int zoom);
+    //
+    // int getColumns(int zoom);
+    //
+    // int getRow(int zoom);
+    //
+    // int getColumn(int zoom);
+    //
+    // int getXOffset(int zoom);
+    //
+    // int getYOffset(int zoom);
+
+    Image getImage(int row, int column, int zoom);
 
     void setMapManager(IMapManager manager);
 

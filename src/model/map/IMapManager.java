@@ -4,33 +4,30 @@ import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
 import model.map.accessors.ITileAccessor;
+import model.targets.AddressPoint;
 
 public interface IMapManager {
 
     long getID(int row, int column, int zoom);
 
-    int getTileSize();
-
     AddressPoint getAddress(int x, int y);
 
-    int getVisibleRows();
+    int getVisibleRows(int zoom);
 
-    int getVisibleColumns();
+    int getVisibleColumns(int zoom);
 
-    int getRow();
+    int getRow(int zoom);
 
-    int getColumn();
+    int getColumn(int zoom);
 
     IMapState getState();
-
-    IPixelConverter getConverter();
 
     ITileAccessor createTileAccessor();
 
     IStringAccessor createStringAccessor();
 
-    ICollectiveAccessor createCollectiveAccessor(String identifier);
-
     IPointAccessor createPointAccessor(String identifier);
+
+    ICollectiveAccessor createCollectiveAccessor(String identifier);
 
 }

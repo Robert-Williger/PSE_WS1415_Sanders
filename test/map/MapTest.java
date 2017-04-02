@@ -62,13 +62,13 @@ public class MapTest {
     @Test
     public void testMove() {
         map.zoom(3, new Point(1, 1));
-        map.moveView(257, 257);
+        map.move(257, 257);
         assertEquals(new Point(4, 4), map.getViewLocation());
     }
 
     @Test
     public void testZoom() {
         map.zoom(2, new Point(50, 50));
-        assertEquals(2, manager.getState().getZoomStep());
+        assertEquals(2, manager.getState().getZoom());
     }
 }

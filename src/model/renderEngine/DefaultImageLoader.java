@@ -5,10 +5,12 @@ import java.util.List;
 
 import model.IFactory;
 import model.map.IMapManager;
+import model.map.IMapState;
 
 public class DefaultImageLoader implements IImageLoader {
 
     private IMapManager mapManager;
+    private IMapState state;
 
     private final IImageFetcher backgroundFetcher;
     private final IImageFetcher POIFetcher;
@@ -44,6 +46,7 @@ public class DefaultImageLoader implements IImageLoader {
     public DefaultImageLoader(final IMapManager manager) {
         priority = Integer.MAX_VALUE - 16;
         mapManager = manager;
+        state = mapManager.getState();
 
         lastPOIVisibility = true;
         lastRouteVisibility = true;
@@ -51,9 +54,9 @@ public class DefaultImageLoader implements IImageLoader {
 
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
-        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastRow = mapManager.getRow();
-        lastColumn = mapManager.getColumn();
+        lastZoomStep = state.getMinZoom() - 1;
+        lastRow = mapManager.getRow(state.getZoom());
+        lastColumn = mapManager.getColumn(state.getZoom());
 
         routeRenderer = new RouteRenderer(mapManager);
 
@@ -83,18 +86,20 @@ public class DefaultImageLoader implements IImageLoader {
         imageAccessors.add(backgroundAccessor);
 
         delayedLoader = new DelayedLoader();
-        delayedLoader.start();
+        // TODO reactivate me
+        // delayedLoader.start();
     }
 
     @Override
     public void setMapManager(final IMapManager manager) {
         mapManager = manager;
+        state = mapManager.getState();
 
-        // set zoomStep to -1, so on first update all tiles in current view will
+        // set zoomStep to minZoomStep -1, so on first update all tiles in current view will
         // be rendered
-        lastZoomStep = mapManager.getState().getMinZoomStep() - 1;
-        lastRow = mapManager.getRow();
-        lastColumn = mapManager.getColumn();
+        lastZoomStep = state.getMinZoom() - 1;
+        lastRow = 0;
+        lastColumn = 0;
 
         backgroundFetcher.setMapManager(manager);
         POIFetcher.setMapManager(manager);
@@ -105,6 +110,11 @@ public class DefaultImageLoader implements IImageLoader {
         POIAccessor.setMapManager(manager);
         routeAccessor.setMapManager(manager);
         labelAccessor.setMapManager(manager);
+    }
+
+    @Override
+    public int getTileSize() {
+        return state.getPixelTileSize();
     }
 
     @Override
@@ -164,6 +174,7 @@ public class DefaultImageLoader implements IImageLoader {
     private void loadCurrentTiles(final IImageFetcher imageFetcher) {
         for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
             for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
+                System.out.println(lastZoomStep);
                 imageFetcher.loadImage(mapManager.getID(i, j, lastZoomStep), priority);
             }
         }
@@ -172,11 +183,12 @@ public class DefaultImageLoader implements IImageLoader {
     private boolean loadNewTiles() {
         boolean ret = false;
 
-        final int zoom = mapManager.getState().getZoomStep();
-        final int row = mapManager.getRow();
-        final int column = mapManager.getColumn();
-        final int visibleRows = mapManager.getVisibleRows();
-        final int visibleColumns = mapManager.getVisibleColumns();
+        final int zoom = mapManager.getState().getZoom();
+
+        final int row = mapManager.getRow(zoom);
+        final int column = mapManager.getColumn(zoom);
+        final int visibleRows = mapManager.getVisibleRows(zoom);
+        final int visibleColumns = mapManager.getVisibleColumns(zoom);
 
         if (zoom != lastZoomStep) {
             loadTiles(row, row + visibleRows, column, column + visibleColumns, zoom);

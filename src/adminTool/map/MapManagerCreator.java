@@ -20,27 +20,26 @@ import adminTool.elements.Way;
 public class MapManagerCreator extends CompressedWriter {
 
     // number of tiles in lowest zoom step
-    private static final int     MIN_TILES             = 1;
+    private static final int MIN_TILES = 1;
 
-    private static final int     TILE_LENGTH_BITS      = 8;
-    private static final int     TILE_LENGTH           = 1 << TILE_LENGTH_BITS;
+    private static final int TILE_LENGTH_BITS = 8;
+    private static final int TILE_LENGTH = 1 << TILE_LENGTH_BITS;
 
-    private static final int     MAX_ELEMENTS_PER_TILE = 4;
+    private static final int MAX_ELEMENTS_PER_TILE = 4;
 
-    private static final int     MAX_ZOOM_STEP         = 19;
-    private static final int     MIN_ZOOM_STEP         = 0;
-    private static final int     MAX_ZOOM_STEPS        = 13;
+    private static final int MAX_ZOOM_STEP = 19;
+    private static final int MIN_ZOOM_STEP = 0;
+    private static final int MAX_ZOOM_STEPS = 13;
 
-    private static final int     SCALE_FACTOR_BITS     = 21;
-    private static final int     SCALE_FACTOR          = 1 << SCALE_FACTOR_BITS;
+    private static final int SCALE_FACTOR_BITS = 21;
 
-    private Rectangle            bounds;
+    private Rectangle bounds;
 
-    private String               path;
+    private String path;
 
-    private Collection<Street>   streets;
-    private Collection<Area>     areas;
-    private Collection<Way>      ways;
+    private Collection<Street> streets;
+    private Collection<Area> areas;
+    private Collection<Way> ways;
     private Collection<Building> buildings;
 
     public MapManagerCreator(final Collection<Building> buildings, final Collection<Street> streets,
@@ -60,11 +59,11 @@ public class MapManagerCreator extends CompressedWriter {
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
         final int maxZoomStep = Math.min(MAX_ZOOM_STEP, minZoomStep + MAX_ZOOM_STEPS - 1);
-        final int conversionFactor = SCALE_FACTOR;
+        final int conversionBits = SCALE_FACTOR_BITS;
 
         final DataOutputStream headerOutput = createOutputStream("header");
 
-        writeHeader(headerOutput, minZoomStep, maxZoomStep, conversionFactor);
+        writeHeader(headerOutput, minZoomStep, maxZoomStep, conversionBits);
 
         TypeSorter<Area> areaSorter = new TypeSorter<>(areas, new Area[areas.size()]);
         Sorting<Area> areaSorting = areaSorter.sort();
@@ -148,19 +147,19 @@ public class MapManagerCreator extends CompressedWriter {
     }
 
     private void writeHeader(final DataOutput output, final int minZoomStep, final int maxZoomStep,
-            final double conversionFactor) throws IOException {
+            final int conversionBits) throws IOException {
+        output.writeInt(conversionBits);
         output.writeInt(bounds.width);
         output.writeInt(bounds.height);
         output.writeInt(minZoomStep);
         output.writeInt(maxZoomStep);
-        output.writeDouble(conversionFactor);
         output.writeInt(TILE_LENGTH);
     }
 
     private static class TypeSorter<T extends Typeable> {
 
         private final Collection<T> source;
-        private final Sorting<T>    sorting;
+        private final Sorting<T> sorting;
 
         public TypeSorter(final Collection<T> source, final T[] destination) {
             this.source = source;

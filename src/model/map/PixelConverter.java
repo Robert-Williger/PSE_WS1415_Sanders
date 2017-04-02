@@ -2,34 +2,39 @@ package model.map;
 
 public class PixelConverter implements IPixelConverter {
 
-    private final double conversionFactor;
+    private final int conversionBits;
 
-    public PixelConverter(final double conversionFactor) {
-        this.conversionFactor = conversionFactor;
+    public PixelConverter(final int conversionBits) {
+        this.conversionBits = conversionBits;
     }
 
     @Override
     public int getCoordDistance(final int pixelDistance, final int zoomStep) {
-        return (int) (pixelDistance * conversionFactor / (1 << zoomStep));
+        return pixelDistance << (conversionBits - zoomStep);
     }
 
     @Override
     public int getPixelDistance(final int coordDistance, final int zoomStep) {
-        return (int) (coordDistance / conversionFactor * (1 << zoomStep));
+        return coordDistance >> (conversionBits - zoomStep);
     }
 
     @Override
-    public float getPixelDistancef(final float coordDistance, final int zoomStep) {
-        return (float) (coordDistance / conversionFactor * (1 << zoomStep));
+    public float getCoordDistance(float pixelDistance, int zoomStep) {
+        return pixelDistance * (1 << (conversionBits - zoomStep));
     }
 
     @Override
-    public double getCoordDistanced(double pixelDistance, int zoomStep) {
-        return pixelDistance * conversionFactor / (1 << zoomStep);
+    public float getPixelDistance(final float coordDistance, final int zoomStep) {
+        return coordDistance / (1 << (conversionBits - zoomStep));
     }
 
     @Override
-    public double getPixelDistanced(double coordDistance, int zoomStep) {
-        return (int) (coordDistance / conversionFactor * (1 << zoomStep));
+    public double getCoordDistance(double pixelDistance, int zoomStep) {
+        return pixelDistance * (1 << (conversionBits - zoomStep));
+    }
+
+    @Override
+    public double getPixelDistance(double coordDistance, int zoomStep) {
+        return coordDistance / (1 << (conversionBits - zoomStep));
     }
 }

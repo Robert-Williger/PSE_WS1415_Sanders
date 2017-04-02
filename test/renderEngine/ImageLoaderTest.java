@@ -82,7 +82,7 @@ public class ImageLoaderTest {
 
         mapManager = new MapManager(new DefaultTileSource(tiles, 0), new PixelConverter(1), new MapState(2048, 2048, 0,
                 2), new Dimension(256, 256));
-        mapManager.getState().setSectionSize(10, 10);
+        mapManager.getState().setPixelSectionSize(10, 10);
         loader = new ImageLoader(mapManager);
     }
 

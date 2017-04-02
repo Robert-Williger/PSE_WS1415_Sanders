@@ -26,7 +26,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
         // config =
         // GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
-        updateTileSize(manager.getTileSize());
+        updateTileSize(manager.getState().getPixelTileSize());
     }
 
     protected abstract int getCacheSize();
@@ -59,8 +59,8 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     public void setMapManager(final IMapManager manager) {
         flush();
 
-        if (manager.getTileSize() != imageSize) {
-            updateTileSize(manager.getTileSize());
+        if (manager.getState().getPixelTileSize() != imageSize) {
+            updateTileSize(manager.getState().getPixelTileSize());
         }
     }
 

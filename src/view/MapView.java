@@ -1,7 +1,6 @@
 package view;
 
 import java.awt.AlphaComposite;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -15,17 +14,17 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import model.map.IMap;
+import model.map.IMapListener;
 import model.renderEngine.IImageAccessor;
 import model.renderEngine.IImageLoader;
 import model.targets.IPointList;
 import model.targets.IPointListListener;
 import model.targets.IRoutePoint;
-import model.map.IMapListener;
 
 public class MapView extends JPanel implements IMapView {
     private static final long serialVersionUID = 1L;
 
-    private final ScalableViewport viewport;
+    // private final ScalableViewport viewport;
     private final MapLayer mapLayer;
     private final PointLayer pointLayer;
 
@@ -33,13 +32,16 @@ public class MapView extends JPanel implements IMapView {
     private final ChangeListener mapChangeListener;
     private final IPointListListener pointListListener;
 
+    private final SmoothChangeInformation smoothChangeInfo;
+
     private final SmoothMapMover smoothMapMover;
 
     private IMap map;
     private IPointList list;
 
     public MapView(final IImageLoader loader, final IPointList list, final IMap map) {
-        viewport = new ScalableViewport(1);
+        // viewport = new ScalableViewport(1);
+        smoothChangeInfo = new SmoothChangeInformation();
         pointLayer = new PointLayer();
         mapLayer = new MapLayer();
 
@@ -48,7 +50,6 @@ public class MapView extends JPanel implements IMapView {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 pointLayer.repaint();
-                viewport.setViewPosition(MapView.this.map.getViewLocation());
             }
 
         };
@@ -57,12 +58,15 @@ public class MapView extends JPanel implements IMapView {
 
             @Override
             public void pointAdded(final IRoutePoint point) {
-                pointLayer.add(point);
+                point.addChangeListener((e) -> {
+                    pointLayer.repaint();
+                });
+                pointLayer.repaint();
             }
 
             @Override
             public void pointRemoved(final IRoutePoint point) {
-                pointLayer.remove(point);
+                pointLayer.repaint();
             }
 
         };
@@ -70,24 +74,22 @@ public class MapView extends JPanel implements IMapView {
         mapListener = new IMapListener() {
 
             @Override
-            public void mapZoomed(final int steps, final double xOffset, final double yOffset) {
-                viewport.setOffsets(xOffset, yOffset);
+            public void mapZoomed(final int steps, final double deltaX, final double deltaY) {
+                smoothChangeInfo.isZooming = true;
+                smoothChangeInfo.scale = 1;
+                smoothChangeInfo.zoomOffset = steps > 0 ? -1 : 1;
+                smoothChangeInfo.deltaX = deltaX;
+                smoothChangeInfo.deltaY = deltaY;
                 smoothMapMover.zoom(steps);
             }
 
             @Override
             public void mapResized(final int width, final int height) {
-                viewport.updateSize(width, height);
+                // viewport.updateSize(width, height);
             }
 
             @Override
             public void mapMoved(final double deltaX, final double deltaY) {
-            }
-
-            @Override
-            public void mapZoomInitiated(final int steps, final double xOffset, final double yOffset) {
-                viewport.setZoomEnabled(true);
-                viewport.setScale(1);
             }
         };
 
@@ -106,20 +108,15 @@ public class MapView extends JPanel implements IMapView {
         map.addChangeListener(mapChangeListener);
         map.addMapListener(mapListener);
 
-        viewport.setViewPosition(map.getViewLocation());
+        repaint();
     }
 
     private void initialize() {
         setLayout(new FullLayout());
         setOpaque(false);
 
-        viewport.setView(mapLayer);
-
-        viewport.setOpaque(false);
-
         add(pointLayer);
-        add(viewport);
-
+        add(mapLayer);
     }
 
     @Override
@@ -246,44 +243,19 @@ public class MapView extends JPanel implements IMapView {
     private class MapLayer extends JPanel {
         private static final long serialVersionUID = 1L;
 
-        private IImageLoader loader;
-
-        private int tileWidth;
-        private int tileHeight;
-
         public MapLayer() {
             super(new FullLayout());
             setOpaque(false);
         }
 
         public void setLoader(final IImageLoader loader) {
-            this.loader = loader;
-
-            final Image image = loader.getImageAccessors().get(0).getImage(0, 0);
-            tileWidth = image.getWidth(null);
-            tileHeight = image.getHeight(null);
-
             removeAll();
 
-            final ChangeListener listener = new ChangeListener() {
-
-                @Override
-                public void stateChanged(final ChangeEvent e) {
-                    MapView.this.repaint();
-                }
-
-            };
+            final int tileSize = loader.getTileSize();
             for (final IImageAccessor accessor : loader.getImageAccessors()) {
-                final PaintingLayer layer = new PaintingLayer(accessor);
-                accessor.addChangeListener(listener);
-                add(layer);
+                accessor.addChangeListener((e) -> repaint());
+                add(new PaintingLayer(accessor, tileSize));
             }
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            return new Dimension(loader.getImageAccessors().get(0).getColumns() * tileWidth,
-                    loader.getImageAccessors().get(0).getRows() * tileHeight);
         }
     }
 
@@ -293,25 +265,81 @@ public class MapView extends JPanel implements IMapView {
         private IImageAccessor accessor;
         private int tileSize;
 
-        public PaintingLayer(final IImageAccessor accessor) {
+        public PaintingLayer(final IImageAccessor accessor, final int tileSize) {
             this.accessor = accessor;
-            final Image image = accessor.getImage(0, 0);
-            tileSize = image.getWidth(null);
-
+            this.tileSize = tileSize;
             setOpaque(false);
         }
 
         @Override
         public void paint(final Graphics g) {
             if (accessor.isVisible()) {
-                for (int row = 0; row < accessor.getRows(); row++) {
-                    for (int column = 0; column < accessor.getColumns(); column++) {
-                        final Image image = accessor.getImage(row, column);
-                        g.drawImage(image, column * tileSize, row * tileSize, this);
-                        // g.drawRect(column * tileSize, row * tileSize, tileSize, tileSize);
-                    }
+                final int zoom = map.getZoom();
+                final Graphics2D g2 = (Graphics2D) g;
+                if (smoothChangeInfo.isZooming) {
+                    paint(g2, zoom + smoothChangeInfo.zoomOffset);
+                } else if (smoothChangeInfo.isBlending) {
+
+                } else {
+                    paint(g, map.getX(), map.getY(), zoom);
                 }
             }
+        }
+
+        private void paint(final Graphics2D g, final int zoom) {
+            final double scale = smoothChangeInfo.scale;
+
+            double x = accessor.getX(zoom) - smoothChangeInfo.deltaX;
+            double y = accessor.getY(zoom) - smoothChangeInfo.deltaY;
+            final int width = (int) (map.getWidth() / scale);
+            final int height = (int) (map.getHeight() / scale);
+
+            if (scale >= 1) {
+                x += smoothChangeInfo.deltaX * (scale - 1) / scale * 2;
+                y += smoothChangeInfo.deltaY * (scale - 1) / scale * 2;
+            } else {
+                x += (-smoothChangeInfo.deltaX) * (scale - 1) / scale;
+                y += (-smoothChangeInfo.deltaY) * (scale - 1) / scale;
+            }
+
+            g.scale(scale, scale);
+            paint(g, (int) x, (int) y, width, height, zoom);
+            g.scale(1 / scale, 1 / scale);
+        }
+
+        private void paint(final Graphics g, final int x, final int y, final int zoom) {
+            paint(g, x, y, map.getWidth(), map.getHeight(), zoom);
+        }
+
+        private void paint(final Graphics g, final int x, final int y, final int width, final int height,
+                final int zoom) {
+            final int xOffset = (x - width / 2) % tileSize;
+            final int yOffset = (y - height / 2) % tileSize;
+            final int startColumn = (x - width / 2) / tileSize;
+            final int startRow = (y - height / 2) / tileSize;
+            final int endColumn = (x + width / 2) / tileSize;
+            final int endRow = (y + height / 2) / tileSize;
+
+            paint(g, zoom, xOffset, yOffset, startRow, endRow, startColumn, endColumn);
+        }
+
+        private void paint(final Graphics g, final int zoom, final int xOffset, final int yOffset, final int startRow,
+                final int endRow, final int startColumn, final int endColumn) {
+            g.translate(-xOffset, -yOffset);
+            int x;
+            int y = 0;
+            for (int row = startRow; row <= endRow; row++) {
+                x = 0;
+                for (int column = startColumn; column <= endColumn; column++) {
+                    g.drawImage(accessor.getImage(row, column, zoom), x, y, this);
+                    g.drawRect(x, y, tileSize, tileSize);
+
+                    x += tileSize;
+                }
+                y += tileSize;
+            }
+
+            g.translate(xOffset, yOffset);
         }
     }
 
@@ -332,7 +360,8 @@ public class MapView extends JPanel implements IMapView {
             super.paint(g);
             for (final IRoutePoint point : list) {
                 routePointView.paint(g, point.getState(), Integer.toString(point.getTargetIndex() + 1),
-                        point.getX() - POINT_DIAMETER / 2, point.getY() - POINT_DIAMETER / 2);
+                        point.getX() - map.getX() + map.getWidth() / 2 - POINT_DIAMETER / 2,
+                        point.getY() - map.getY() + map.getHeight() / 2 - POINT_DIAMETER / 2);
             }
         }
 
@@ -346,37 +375,6 @@ public class MapView extends JPanel implements IMapView {
             }
 
             return null;
-        }
-
-        public void add(final IRoutePoint point) {
-            // final RoutePointView view = new RoutePointView(point);
-            // view.addMouseWheelListener(new MouseWheelListener() {
-            //
-            // @Override
-            // public void mouseWheelMoved(final MouseWheelEvent e) {
-            // // TODO improve this?
-            // SmoothMapView.this.processMouseWheelEvent(
-            // new MouseWheelEvent(SmoothMapView.this, e.getID(), e.getWhen(), e.getModifiers(),
-            // e.getX() - viewport.getX(), e.getY() - viewport.getY(), e.getClickCount(),
-            // e.isPopupTrigger(), e.getScrollType(), e.getScrollAmount(), e.getWheelRotation()));
-            // }
-            // });
-            // add(view);
-            // routePoints.put(point, view);
-            // for (final IDragListener listener : listenerList.getListeners(IDragListener.class)) {
-            // view.addRoutePointListener(listener);
-            // }
-            point.addChangeListener((e) -> {
-                repaint();
-            });
-            repaint();
-        }
-
-        public void remove(final IRoutePoint point) {
-            // final RoutePointView view = routePoints.get(point);
-            // remove(view);
-            // routePoints.remove(point);
-            repaint();
         }
     }
 
@@ -404,8 +402,9 @@ public class MapView extends JPanel implements IMapView {
                         e.printStackTrace();
                     }
                 } else {
-                    viewport.setZoomEnabled(false);
-                    viewport.setBlendingEnabled(false);
+                    smoothChangeInfo.isZooming = false;
+                    smoothChangeInfo.isBlending = false;
+                    SwingUtilities.invokeLater(() -> repaint());
                     synchronized (this) {
                         try {
                             wait();
@@ -420,11 +419,8 @@ public class MapView extends JPanel implements IMapView {
         public void zoom(final int steps) {
             synchronized (this) {
                 currentStep = 0;
-                if (steps > 0) {
-                    scalePerStep = 1.0 / MAX_STEPS;
-                } else {
-                    scalePerStep = -0.5 / MAX_STEPS;
-                }
+                // TODO resprect multiple steps
+                scalePerStep = steps > 0 ? 1.0 / MAX_STEPS : -0.5 / MAX_STEPS;
                 notify();
             }
         }
@@ -433,16 +429,32 @@ public class MapView extends JPanel implements IMapView {
             final Runnable[] ret = new Runnable[2 * MAX_STEPS];
             for (int i = 0; i < MAX_STEPS; i++) {
                 final int step = i + 1;
-                ret[i] = () -> viewport.setScale(1 + scalePerStep * step);
-                ret[i + MAX_STEPS] = () -> viewport.setAlpha(1 - 1.0f / MAX_STEPS * step);
+                ret[i] = () -> {
+                    smoothChangeInfo.scale = 1 + scalePerStep * step;
+                    repaint();
+                };
+                ret[i + MAX_STEPS] = () -> {
+                    smoothChangeInfo.alpha = 1 - 1.0f / MAX_STEPS * step;
+                    repaint();
+                };
             }
             ret[MAX_STEPS] = () -> {
-                viewport.setZoomEnabled(false);
-                viewport.setBlendingEnabled(true);
-                viewport.setAlpha(1 - 1.0f / MAX_STEPS);
+                smoothChangeInfo.isZooming = false;
+                smoothChangeInfo.isBlending = true;
+                smoothChangeInfo.alpha = 1 - 1.0f / MAX_STEPS;
+                repaint();
             };
             return ret;
         }
     }
 
+    private class SmoothChangeInformation {
+        private int zoomOffset;
+        private double scale;
+        private double deltaX;
+        private double deltaY;
+        private float alpha;
+        private boolean isZooming;
+        private boolean isBlending;
+    }
 }

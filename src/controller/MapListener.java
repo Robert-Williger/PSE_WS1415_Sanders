@@ -7,6 +7,7 @@ import javax.swing.SwingUtilities;
 
 import controller.stateMachine.IStateMachine;
 import model.IApplication;
+import model.map.IMap;
 import view.IDragListener;
 
 public class MapListener implements IDragListener {
@@ -34,7 +35,7 @@ public class MapListener implements IDragListener {
     public void mouseDragged(final MouseEvent e) {
         if (pressed) {
             movement.setLocation(startPoint.x - e.getX(), startPoint.y - e.getY());
-            application.getMap().moveView(movement.x, movement.y);
+            application.getMap().move(movement.x, movement.y);
             long time = System.nanoTime();
             elapsedTime = time - startTime;
             startTime = time;
@@ -52,7 +53,9 @@ public class MapListener implements IDragListener {
     @Override
     public void mouseClicked(final MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            machine.locatePoint(e.getX(), e.getY());
+            final IMap map = application.getMap();
+            machine.locatePoint(e.getX() + map.getX() - map.getWidth() / 2,
+                    e.getY() + map.getY() - map.getHeight() / 2);
         }
     }
 
@@ -102,7 +105,7 @@ public class MapListener implements IDragListener {
 
                     SwingUtilities.invokeLater(() -> {
                         vector.scale(0.95);
-                        application.getMap().moveView(vector.getX(), vector.getY());
+                        application.getMap().move(vector.getX(), vector.getY());
                         application.getImageLoader().update();
                     });
 

@@ -4,23 +4,20 @@ import java.util.Arrays;
 import java.util.PrimitiveIterator;
 import java.util.function.LongConsumer;
 
-import model.map.IPixelConverter;
+import model.map.IMapState;
 import model.map.IQuadtree;
 
 public class TileAccessor implements ITileAccessor {
 
     private final java.util.Map<String, IQuadtree> map;
-    private final IPixelConverter converter;
-    private final int tileSize;
+    private final IMapState state;
     private int row;
     private int column;
     private int zoom;
 
-    public TileAccessor(final java.util.Map<String, IQuadtree> map, final IPixelConverter converter,
-            final int tileSize) {
+    public TileAccessor(final java.util.Map<String, IQuadtree> map, final IMapState state) {
         this.map = map;
-        this.converter = converter;
-        this.tileSize = tileSize;
+        this.state = state;
     }
 
     @Override
@@ -63,12 +60,12 @@ public class TileAccessor implements ITileAccessor {
 
     @Override
     public int getX() {
-        return column * converter.getCoordDistance(tileSize, zoom);
+        return column * state.getCoordTileSize(zoom);
     }
 
     @Override
     public int getY() {
-        return row * converter.getCoordDistance(tileSize, zoom);
+        return row * state.getCoordTileSize(zoom);
     }
 
 }

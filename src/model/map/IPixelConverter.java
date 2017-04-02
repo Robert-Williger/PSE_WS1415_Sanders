@@ -6,9 +6,11 @@ public interface IPixelConverter {
 
     int getPixelDistance(int coordDistance, int zoomStep);
 
-    float getPixelDistancef(float coordDistance, int zoomStep);
+    float getCoordDistance(float pixelDistance, int zoomStep);
 
-    double getCoordDistanced(double pixelDistance, int zoomStep);
+    float getPixelDistance(float coordDistance, int zoomStep);
 
-    double getPixelDistanced(double coordDistance, int zoomStep);
+    double getCoordDistance(double pixelDistance, int zoomStep);
+
+    double getPixelDistance(double coordDistance, int zoomStep);
 }

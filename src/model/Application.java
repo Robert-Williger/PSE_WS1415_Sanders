@@ -59,16 +59,9 @@ public class Application extends AbstractModel implements IApplication {
             processor = reader.getTextProcessor();
             map = new Map(reader.getMapManager());
             loader.setMapManager(reader.getMapManager());
-
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    fireChange();
-                }
-
+            SwingUtilities.invokeLater(() -> {
+                fireChange();
             });
-
             return true;
         }
 

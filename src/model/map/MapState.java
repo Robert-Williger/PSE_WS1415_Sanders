@@ -6,41 +6,61 @@ import java.awt.geom.Point2D;
 
 public class MapState implements IMapState {
 
-    private int zoomStep;
+    private int zoom;
     private final int minZoomStep;
     private final int maxZoomStep;
 
-    // current section's location in coordinates
+    // current section's midpoint in coordinates
     private final Point2D location;
 
     // current section's size in pixels
     private final Dimension pixelSectionSize;
 
-    // current section's size in coordinates
-    private final Dimension coordSectionSize;
+    // current section's sizes in coordinates per zoom
+    private final Dimension[] coordSectionSize;
 
     // total map size in coordinates
     private final Dimension totalSize;
 
-    public MapState(final int width, final int height, final int minZoomStep, final int maxZoomStep) {
+    // size of a tile in pixels
+    private final int pixelTileSize;
+
+    // sizes of a tile in coords per zoom step
+    private final int[] coordTileSize;
+
+    private final IPixelConverter converter;
+
+    public MapState(final int width, final int height, final int minZoomStep, final int maxZoomStep,
+            final int pixelTileSize, final IPixelConverter converter) {
         this.minZoomStep = minZoomStep;
         this.maxZoomStep = maxZoomStep;
+        this.converter = converter;
+
+        this.pixelTileSize = pixelTileSize;
 
         pixelSectionSize = new Dimension();
-        coordSectionSize = new Dimension();
+        coordSectionSize = new Dimension[maxZoomStep - minZoomStep + 1];
+        for (int i = 0; i < coordSectionSize.length; i++) {
+            coordSectionSize[i] = new Dimension();
+        }
+
+        coordTileSize = new int[maxZoomStep - minZoomStep + 1];
+        for (int i = 0; i < coordTileSize.length; i++) {
+            coordTileSize[i] = converter.getCoordDistance(pixelTileSize, i + minZoomStep);
+        }
         location = new Point();
         totalSize = new Dimension(width, height);
-        zoomStep = minZoomStep;
+        zoom = minZoomStep;
     }
 
     @Override
-    public void setZoomStep(final int zoomStep) {
-        this.zoomStep = Math.min(maxZoomStep, Math.max(zoomStep, minZoomStep));
+    public void setZoom(final int zoomStep) {
+        this.zoom = Math.min(maxZoomStep, Math.max(zoomStep, minZoomStep));
         updateCoordSectionSize();
     }
 
     @Override
-    public void setSectionSize(final int width, final int height) {
+    public void setPixelSectionSize(final int width, final int height) {
         pixelSectionSize.setSize(width, height);
         updateCoordSectionSize();
         setLocation(location.getX(), location.getY());
@@ -48,57 +68,49 @@ public class MapState implements IMapState {
 
     @Override
     public void setLocation(final double x, final double y) {
-        double xCoord = x;
-        double yCoord = y;
+        final int coordSectionWidth = getCoordSectionWidth(zoom);
+        final int coordSectionHeight = getCoordSectionHeight(zoom);
 
-        if (coordSectionSize.width <= totalSize.width) {
-            if (x < 0) {
-                xCoord = 0;
-            } else if (x + coordSectionSize.width > totalSize.width) {
-                xCoord = totalSize.width - coordSectionSize.width;
-            }
-        } else {
-            xCoord = (totalSize.width - coordSectionSize.width) / 2;
-        }
+        double xCoord = coordSectionWidth <= totalSize.width
+                ? Math.max(coordSectionWidth / 2, Math.min(totalSize.width - coordSectionWidth / 2, x))
+                : totalSize.width / 2;
 
-        if (coordSectionSize.height <= totalSize.height) {
-            if (y < 0) {
-                yCoord = 0;
-            } else if (y + coordSectionSize.height > totalSize.height) {
-                yCoord = totalSize.height - coordSectionSize.height;
-            }
-        } else {
-            yCoord = (totalSize.height - coordSectionSize.height) / 2;
-        }
+        double yCoord = coordSectionHeight <= totalSize.height
+                ? Math.max(coordSectionHeight / 2, Math.min(totalSize.height - coordSectionHeight / 2, y))
+                : totalSize.height / 2;
 
         location.setLocation(xCoord, yCoord);
     }
 
-    // @Override
-    // public void move(final double deltaX, final double deltaY) {
-    // setLocation(location.getX() + deltaX, location.getY() + deltaY);
-    // }
-
     @Override
-    public int getZoomStep() {
-        return zoomStep;
+    public int getZoom() {
+        return zoom;
     }
 
     @Override
-    public int getMaxZoomStep() {
+    public int getMaxZoom() {
         return maxZoomStep;
     }
 
     @Override
-    public int getMinZoomStep() {
+    public int getMinZoom() {
         return minZoomStep;
     }
 
     private void updateCoordSectionSize() {
-        final double zoomFactor = 1.0 / (1 << (zoomStep - minZoomStep));
-        final int coordWidth = (int) (pixelSectionSize.width * zoomFactor);
-        final int coordHeight = (int) (pixelSectionSize.height * zoomFactor);
-        coordSectionSize.setSize(coordWidth, coordHeight);
+        // TODO convert with converter?
+        for (int zoom = 0; zoom < coordSectionSize.length; zoom++) {
+            // final double zoomFactor = 1.0 / (1 << zoom);
+            final int coordWidth = converter.getCoordDistance(pixelSectionSize.width, zoom + minZoomStep); // (int)
+                                                                                                           // (pixelSectionSize.width
+                                                                                                           // *
+                                                                                                           // zoomFactor);
+            final int coordHeight = converter.getCoordDistance(pixelSectionSize.height, zoom + minZoomStep); // (int)
+                                                                                                             // (pixelSectionSize.height
+                                                                                                             // *
+                                                                                                             // zoomFactor);
+            coordSectionSize[zoom].setSize(coordWidth, coordHeight);
+        }
     }
 
     @Override
@@ -112,12 +124,12 @@ public class MapState implements IMapState {
     }
 
     @Override
-    public int getTotalWidth() {
+    public int getCoordMapWidth() {
         return totalSize.width;
     }
 
     @Override
-    public int getTotalHeight() {
+    public int getCoordMapHeight() {
         return totalSize.height;
     }
 
@@ -132,12 +144,27 @@ public class MapState implements IMapState {
     }
 
     @Override
-    public int getCoordSectionWidth() {
-        return coordSectionSize.width;
+    public int getCoordSectionWidth(final int zoom) {
+        return coordSectionSize[zoom - minZoomStep].width;
     }
 
     @Override
-    public int getCoordSectionHeight() {
-        return coordSectionSize.height;
+    public int getCoordSectionHeight(final int zoom) {
+        return coordSectionSize[zoom - minZoomStep].height;
+    }
+
+    @Override
+    public int getPixelTileSize() {
+        return pixelTileSize;
+    }
+
+    @Override
+    public int getCoordTileSize(final int zoom) {
+        return coordTileSize[zoom - minZoomStep];
+    }
+
+    @Override
+    public IPixelConverter getConverter() {
+        return converter;
     }
 }

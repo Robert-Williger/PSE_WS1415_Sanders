@@ -3,7 +3,7 @@ package controller.stateMachine;
 import java.util.List;
 import java.util.Set;
 
-import model.map.AddressPoint;
+import model.targets.AddressPoint;
 import model.targets.IRoutePoint;
 import model.targets.PointState;
 
@@ -78,7 +78,7 @@ abstract class AbstractActionState extends AbstractState {
 
     @Override
     public IState locatePoint(final int x, final int y) {
-        final AddressPoint node = getMap().getAddressNode(x, y);
+        final AddressPoint node = getMap().getAddress(x, y);
         if (node != null) {
             final IRoutePoint routePoint = getPoint();
 

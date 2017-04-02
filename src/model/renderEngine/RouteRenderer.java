@@ -89,7 +89,7 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         tileAccessor.forEach("street", consumer);
 
         final float thickness = Math.min(MAX_STROKE_WIDTH_PIXEL, Math.max(MIN_STROKE_WIDTH_PIXEL,
-                converter.getPixelDistancef(NORMAL_STROKE_WIDTH, tileAccessor.getZoom())));
+                converter.getPixelDistance(NORMAL_STROKE_WIDTH, tileAccessor.getZoom())));
 
         final int cr = routeColor.getRed();
         final int cg = routeColor.getGreen();

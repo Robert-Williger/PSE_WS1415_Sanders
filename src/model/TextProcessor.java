@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import model.elements.AccessPoint;
+import model.targets.AccessPoint;
 
 /*
  * First Implementation of TextProcessing.

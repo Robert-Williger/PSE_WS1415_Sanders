@@ -2,7 +2,7 @@ package model;
 
 import java.util.List;
 
-import model.map.AddressPoint;
+import model.targets.AddressPoint;
 
 public interface ITextProcessor {
 

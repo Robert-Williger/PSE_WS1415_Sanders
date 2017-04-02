@@ -1,10 +1,9 @@
-package model.map;
+package model.targets;
 
 import java.awt.Point;
 
-import model.elements.AccessPoint;
-import model.map.accessors.CollectiveUtil;
-import model.map.accessors.ICollectiveAccessor;
+import model.map.IMapState;
+import model.map.IPixelConverter;
 
 public class AddressPoint extends AccessPoint {
 
@@ -13,29 +12,19 @@ public class AddressPoint extends AccessPoint {
     private final IMapState state;
     private final IPixelConverter converter;
 
-    public AddressPoint(final IMapState state, final IPixelConverter converter) {
-        this(null, state, converter);
+    public AddressPoint(final IMapState state) {
+        this(null, state);
     }
 
-    public AddressPoint(final String address, final IMapState state, final IPixelConverter converter) {
-        this(address, 0, 0, state, converter);
+    public AddressPoint(final String address, final IMapState state) {
+        this(address, 0, 0, state);
     }
 
-    public AddressPoint(final String address, final int x, final int y, final IMapState state,
-            final IPixelConverter converter) {
+    public AddressPoint(final String address, final int x, final int y, final IMapState state) {
         location = new Point(x, y);
         this.address = address;
-        this.converter = converter;
         this.state = state;
-    }
-
-    @Deprecated
-    public AddressPoint(final String address, final float offset, final ICollectiveAccessor accessor,
-            final IMapState state, final IPixelConverter converter) {
-        location = CollectiveUtil.getLocation(accessor, offset);
-        this.address = address;
-        this.state = state;
-        this.converter = converter;
+        this.converter = state.getConverter();
     }
 
     public void setLocation(final int x, final int y) {
@@ -43,11 +32,11 @@ public class AddressPoint extends AccessPoint {
     }
 
     public int getX() {
-        return converter.getPixelDistance((int) (location.getX() - state.getX()), state.getZoomStep());
+        return converter.getPixelDistance(location.x, state.getZoom());
     }
 
     public int getY() {
-        return converter.getPixelDistance((int) (location.getY() - state.getY()), state.getZoomStep());
+        return converter.getPixelDistance(location.y, state.getZoom());
     }
 
     public String getAddress() {

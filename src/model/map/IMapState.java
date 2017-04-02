@@ -2,33 +2,38 @@ package model.map;
 
 public interface IMapState {
 
-    void setZoomStep(int zoomStep);
+    int getCoordMapWidth();
 
-    void setSectionSize(int width, int height);
+    int getCoordMapHeight();
+
+    int getPixelTileSize();
+
+    int getCoordTileSize(int zoom);
+
+    void setZoom(int zoom);
+
+    int getZoom();
+
+    int getMaxZoom();
+
+    int getMinZoom();
 
     void setLocation(double x, double y);
 
-    // void move(double deltaX, double deltaY);
+    double getX();
 
-    int getZoomStep();
+    double getY();
 
-    int getMaxZoomStep();
-
-    int getMinZoomStep();
+    void setPixelSectionSize(int width, int height);
 
     int getPixelSectionWidth();
 
     int getPixelSectionHeight();
 
-    int getCoordSectionWidth();
+    int getCoordSectionWidth(int zoom);
 
-    int getCoordSectionHeight();
+    int getCoordSectionHeight(int zoom);
 
-    int getTotalWidth();
+    IPixelConverter getConverter();
 
-    int getTotalHeight();
-
-    double getX();
-
-    double getY();
 }

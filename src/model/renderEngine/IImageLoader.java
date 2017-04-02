@@ -15,4 +15,6 @@ public interface IImageLoader {
 
     void setMapManager(IMapManager manager);
 
+    int getTileSize();
+
 }

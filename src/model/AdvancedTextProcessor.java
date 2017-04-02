@@ -6,12 +6,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import util.BoundedHeap;
-import model.elements.AccessPoint;
-import model.map.AddressPoint;
 import model.map.IMapManager;
 import model.map.MapManager;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
+import model.targets.AccessPoint;
+import model.targets.AddressPoint;
 
 public class AdvancedTextProcessor implements ITextProcessor {
     private final int maxDistance;

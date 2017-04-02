@@ -2,7 +2,7 @@ package controller.stateMachine;
 
 import java.util.List;
 
-import model.map.AddressPoint;
+import model.targets.AddressPoint;
 import model.targets.IRoutePoint;
 
 abstract class AbstractTextedState extends AbstractActionState {

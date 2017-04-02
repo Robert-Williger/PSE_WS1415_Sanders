@@ -6,16 +6,21 @@ import javax.swing.event.ChangeListener;
 
 import model.AbstractModel;
 import model.map.IMapManager;
+import model.map.IMapState;
+import model.map.IPixelConverter;
 
 public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     private IMapManager mapManager;
+    private IPixelConverter converter;
+    private IMapState state;
+
     private final IImageFetcher imageFetcher;
 
     private boolean isVisible;
 
     public ImageAccessor(final IMapManager manager, final IImageFetcher fetcher) {
-        mapManager = manager;
+        setMapManager(manager);
         imageFetcher = fetcher;
 
         isVisible = true;
@@ -47,25 +52,37 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
     }
 
     @Override
-    public int getRows() {
-        return mapManager.getVisibleRows();
-    }
-
-    @Override
-    public int getColumns() {
-        return mapManager.getVisibleColumns();
-    }
-
-    @Override
-    public Image getImage(final int row, final int column) {
-        final int zoom = mapManager.getState().getZoomStep();
-        final long tileID = mapManager.getID(row + mapManager.getRow(), column + mapManager.getColumn(), zoom);
+    public Image getImage(final int row, final int column, final int zoom) {
+        final long tileID = mapManager.getID(row, column, zoom);
         return imageFetcher.getImage(tileID);
     }
 
     @Override
     public void setMapManager(final IMapManager manager) {
         mapManager = manager;
+        state = manager.getState();
+        converter = state.getConverter();
     }
 
+    @Override
+    public int getWidth() {
+        return state.getPixelSectionWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return state.getPixelSectionHeight();
+    }
+
+    @Override
+    public int getX(final int zoom) {
+        // TODO Auto-generated method stub
+        return (int) converter.getPixelDistance(state.getX(), zoom);
+    }
+
+    @Override
+    public int getY(final int zoom) {
+        // TODO Auto-generated method stub
+        return (int) converter.getPixelDistance(state.getY(), zoom);
+    }
 }

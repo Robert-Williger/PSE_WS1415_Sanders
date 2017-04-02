@@ -1,10 +1,10 @@
 package model.map;
 
-import java.awt.Point;
 import java.util.LinkedList;
 import java.util.List;
 
 import model.AbstractModel;
+import model.targets.AddressPoint;
 
 public class Map extends AbstractModel implements IMap {
 
@@ -13,99 +13,74 @@ public class Map extends AbstractModel implements IMap {
     private final IPixelConverter converter;
     private final List<IMapListener> listeners;
 
-    private int width;
-    private int height;
-
     public Map(final IMapManager manager) {
         this.manager = manager;
         state = manager.getState();
-        converter = manager.getConverter();
+        converter = state.getConverter();
         listeners = new LinkedList<>();
     }
 
     @Override
     public void zoom(final int steps, final double xOffset, final double yOffset) {
-        final int trueSteps = steps > 0 ? Math.min(steps, state.getMaxZoomStep() - state.getZoomStep())
-                : Math.max(steps, state.getMinZoomStep() - state.getZoomStep());
+        final int sourceZoom = state.getZoom();
+        final int targetZoom = Math.min(state.getMaxZoom(), Math.max(state.getMinZoom(), sourceZoom + steps));
 
-        if (trueSteps != 0) {
-            // TODO improve this.
-            fireZoomInitiatedEvent(trueSteps, state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : xOffset,
-                    state.getZoomStep() < state.getMinZoomStep() + 3 ? 0.5 : yOffset);
+        if (sourceZoom != targetZoom) {
+            final double midX = state.getX();
+            final double midY = state.getY();
+            final double coordX = state.getX() + state.getCoordSectionWidth(sourceZoom) * xOffset;
+            final double coordY = state.getY() + state.getCoordSectionHeight(sourceZoom) * yOffset;
 
-            final double midX = state.getX() + state.getCoordSectionWidth() * 0.5;
-            final double midY = state.getY() + state.getCoordSectionHeight() * 0.5;
-            final double coordX = state.getX() + state.getCoordSectionWidth() * xOffset;
-            final double coordY = state.getY() + state.getCoordSectionHeight() * yOffset;
+            final int trueSteps = targetZoom - sourceZoom;
 
             final double scaling = Math.pow(2, -trueSteps);
-            final double xDistance = coordX - midX;
-            final double yDistance = coordY - midY;
 
-            state.setZoomStep(state.getZoomStep() + trueSteps);
-            center(coordX - scaling * xDistance, coordY - scaling * yDistance);
-
-            final double newMidX = state.getX() + state.getCoordSectionWidth() * 0.5;
-            final double newMidY = state.getY() + state.getCoordSectionHeight() * 0.5;
+            state.setZoom(targetZoom);
+            center(coordX - scaling * (coordX - midX), coordY - scaling * (coordY - midY));
 
             // TODO is this correct?
-            final double realXOffset = (newMidX - midX) / state.getCoordSectionWidth() + 0.5;
-            final double realYOffset = (newMidY - midY) / state.getCoordSectionHeight() + 0.5;
+            final double deltaX = converter.getPixelDistance(state.getX() - midX, sourceZoom);
+            final double deltaY = converter.getPixelDistance(state.getY() - midY, sourceZoom);
 
-            fireZoomEvent(trueSteps, realXOffset, realYOffset);
+            fireZoomEvent(trueSteps, deltaX, deltaY);
         }
     }
 
     @Override
-    public void moveView(final double deltaX, final double deltaY) {
-        final int zoomStep = state.getZoomStep();
-        state.setLocation(state.getX() + converter.getCoordDistanced(deltaX, zoomStep),
-                state.getY() + converter.getCoordDistanced(deltaY, zoomStep));
+    public void move(final double deltaX, final double deltaY) {
+        final int zoomStep = state.getZoom();
+        state.setLocation(state.getX() + converter.getCoordDistance(deltaX, zoomStep),
+                state.getY() + converter.getCoordDistance(deltaY, zoomStep));
 
         fireMoveEvent(deltaX, deltaY);
     }
 
     @Override
-    public AddressPoint getAddressNode(final int x, final int y) {
-        // TODO
-        return manager.getAddress((int) state.getX() + converter.getCoordDistance(x, state.getZoomStep()),
-                (int) state.getY() + converter.getCoordDistance(y, state.getZoomStep()));
+    public AddressPoint getAddress(final int x, final int y) {
+        final int zoom = state.getZoom();
+        return manager.getAddress(converter.getCoordDistance(x, zoom), converter.getCoordDistance(y, zoom));
     }
 
     @Override
     public void setSize(final int width, final int height) {
-        final int minZoomStep = state.getMinZoomStep();
-
-        this.width = width;
-        this.height = height;
-
-        state.setSectionSize(converter.getCoordDistance(width, minZoomStep),
-                converter.getCoordDistance(height, minZoomStep));
+        state.setPixelSectionSize(width, height);
 
         fireResizeEvent(width, height);
     }
 
     @Override
-    public Point getViewLocation() {
-        final int zoomStep = state.getZoomStep();
-        final int pixelX = (int) converter.getPixelDistanced(state.getX(), zoomStep) % manager.getTileSize();
-        final int pixelY = (int) converter.getPixelDistanced(state.getY(), zoomStep) % manager.getTileSize();
-
-        return new Point(pixelX, pixelY);
-    }
-
-    @Override
     public void center(final double x, final double y, final double width, final double height) {
-        final int steps = (int) Math.ceil(
-                Math.max(log2(width / state.getCoordSectionWidth()), log2(height / state.getCoordSectionHeight())));
+        final int zoom = state.getZoom();
+        final int steps = (int) Math.ceil(Math.max(log2(width / state.getCoordSectionWidth(zoom)),
+                log2(height / state.getCoordSectionHeight(zoom))));
 
-        state.setZoomStep(state.getMinZoomStep() - steps);
+        state.setZoom(state.getMinZoom() - steps);
         center(x + width / 2, y + height / 2);
     }
 
     @Override
     public void center(final double x, final double y) {
-        state.setLocation(x - state.getCoordSectionWidth() / 2.0, y - state.getCoordSectionHeight() / 2.0);
+        state.setLocation(x, y);
 
         fireChange();
     }
@@ -131,17 +106,11 @@ public class Map extends AbstractModel implements IMap {
         fireChange();
     }
 
-    protected void fireZoomEvent(final int steps, final double xOffset, final double yOffset) {
+    protected void fireZoomEvent(final int steps, final double deltaX, final double deltaY) {
         for (final IMapListener listener : listeners) {
-            listener.mapZoomed(steps, xOffset, yOffset);
+            listener.mapZoomed(steps, deltaX, deltaY);
         }
         fireChange();
-    }
-
-    protected void fireZoomInitiatedEvent(final int steps, final double xOffset, final double yOffset) {
-        for (final IMapListener listener : listeners) {
-            listener.mapZoomInitiated(steps, xOffset, yOffset);
-        }
     }
 
     protected void fireResizeEvent(final int width, final int height) {
@@ -153,11 +122,28 @@ public class Map extends AbstractModel implements IMap {
 
     @Override
     public int getWidth() {
-        return width;
+        return state.getPixelSectionWidth();
     }
 
     @Override
     public int getHeight() {
-        return height;
+        return state.getPixelSectionHeight();
+    }
+
+    @Override
+    public int getZoom() {
+        return state.getZoom();
+    }
+
+    @Override
+    public int getX() {
+        // TODO Auto-generated method stub
+        return (int) converter.getPixelDistance(state.getX(), state.getZoom());
+    }
+
+    @Override
+    public int getY() {
+        // TODO Auto-generated method stub
+        return (int) converter.getPixelDistance(state.getY(), state.getZoom());
     }
 }

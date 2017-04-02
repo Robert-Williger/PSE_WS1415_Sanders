@@ -1,6 +1,6 @@
 package model.routing;
 
-import model.elements.AccessPoint;
+import model.targets.AccessPoint;
 
 public interface IAccessPointConverter {
 

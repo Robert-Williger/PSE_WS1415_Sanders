@@ -18,7 +18,7 @@ public abstract class AbstractRenderer extends AbstractModel implements IRendere
 
     @Override
     public void setMapManager(final IMapManager manager) {
-        this.converter = manager.getConverter();
+        this.converter = manager.getState().getConverter();
         this.tileAccessor = manager.createTileAccessor();
     }
 

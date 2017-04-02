@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import model.IApplication;
-import model.map.AddressPoint;
+import model.targets.AddressPoint;
 import model.targets.IRoutePoint;
 
 class StateStore {

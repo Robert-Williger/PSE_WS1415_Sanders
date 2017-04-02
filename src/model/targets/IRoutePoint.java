@@ -1,7 +1,6 @@
 package model.targets;
 
 import model.IModel;
-import model.map.AddressPoint;
 
 public interface IRoutePoint extends IModel {
 

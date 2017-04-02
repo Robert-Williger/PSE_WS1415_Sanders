@@ -23,7 +23,7 @@ public class MapStateTest {
 
     @Test
     public void testMaxZoomStep() {
-        assertEquals(15, state.getMaxZoomStep());
+        assertEquals(15, state.getMaxZoom());
     }
 
     @Test
@@ -35,20 +35,20 @@ public class MapStateTest {
 
     @Test
     public void testLowZoomStep() {
-        state.setZoomStep(-1);
-        assertEquals(0, state.getZoomStep());
+        state.setZoom(-1);
+        assertEquals(0, state.getZoom());
     }
 
     @Test
     public void testHighZoomStep() {
-        state.setZoomStep(18);
-        assertEquals(15, state.getZoomStep());
+        state.setZoom(18);
+        assertEquals(15, state.getZoom());
     }
 
     @Test
     public void testNormalZoomStep() {
-        state.setZoomStep(12);
-        assertEquals(12, state.getZoomStep());
+        state.setZoom(12);
+        assertEquals(12, state.getZoom());
     }
 
     @Test
@@ -81,7 +81,7 @@ public class MapStateTest {
     @Test
     public void testBounds() {
         state.setLocation(10, 10);
-        state.setSectionSize(20, 20);
+        state.setPixelSectionSize(20, 20);
         assertEquals(new Rectangle(10, 10, 20, 20), state.getBounds());
     }
 }

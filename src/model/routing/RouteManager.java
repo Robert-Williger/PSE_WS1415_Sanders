@@ -6,11 +6,11 @@ import java.util.List;
 
 import model.AbstractModel;
 import model.IProgressListener;
-import model.elements.AccessPoint;
 import model.map.IMapManager;
 import model.map.accessors.ICollectiveAccessor;
 import model.renderEngine.IRenderRoute;
 import model.renderEngine.RenderRoute;
+import model.targets.AccessPoint;
 import model.targets.IPointList;
 import model.targets.IRoutePoint;
 import model.targets.PointList;
