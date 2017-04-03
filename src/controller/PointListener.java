@@ -86,7 +86,8 @@ public class PointListener implements IDragListener {
             machine.selectPoint(point);
             if (e.getClickCount() == 2) {
                 // TODO
-                application.getMap().center(point.getAddressPoint().getX(), point.getAddressPoint().getY());
+                final int zoom = application.getMap().getZoom();
+                application.getMap().center(point.getX(zoom), point.getY(zoom));
                 application.getImageLoader().update();
             }
         }
@@ -108,7 +109,8 @@ public class PointListener implements IDragListener {
     public void mouseReleased(final MouseEvent e) {
         if (dragged) { // Check whether dragged before
             if (point.getState() != PointState.added) {
-                machine.locatePoint(point.getX(), point.getY());
+                final int zoom = application.getMap().getZoom();
+                machine.locatePoint(point.getX(zoom), point.getY(zoom));
             }
             thread.setPoint(null);
 

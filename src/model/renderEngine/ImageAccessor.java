@@ -6,14 +6,10 @@ import javax.swing.event.ChangeListener;
 
 import model.AbstractModel;
 import model.map.IMapManager;
-import model.map.IMapState;
-import model.map.IPixelConverter;
 
 public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     private IMapManager mapManager;
-    private IPixelConverter converter;
-    private IMapState state;
 
     private final IImageFetcher imageFetcher;
 
@@ -60,29 +56,6 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
     @Override
     public void setMapManager(final IMapManager manager) {
         mapManager = manager;
-        state = manager.getState();
-        converter = state.getConverter();
     }
 
-    @Override
-    public int getWidth() {
-        return state.getPixelSectionWidth();
-    }
-
-    @Override
-    public int getHeight() {
-        return state.getPixelSectionHeight();
-    }
-
-    @Override
-    public int getX(final int zoom) {
-        // TODO Auto-generated method stub
-        return (int) converter.getPixelDistance(state.getX(), zoom);
-    }
-
-    @Override
-    public int getY(final int zoom) {
-        // TODO Auto-generated method stub
-        return (int) converter.getPixelDistance(state.getY(), zoom);
-    }
 }

@@ -36,7 +36,7 @@ abstract class AbstractActionState extends AbstractState {
         getSidebarView().setRouteLength(0);
         getSidebarView().setStartable(false);
         getSidebarView().setResettable(false);
-        getList().reset();
+        getList().clear();
 
         return DefaultState.getInstance();
     }

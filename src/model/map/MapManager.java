@@ -65,7 +65,7 @@ public class MapManager implements IMapManager {
 
     @Override
     public AddressPoint getAddress(final int x, final int y) {
-        final AddressPoint node = new AddressPoint(state);
+        final AddressPoint node = new AddressPoint(state.getConverter());
 
         long building = getBuildingAt(x, y, state.getMaxZoom());
         final LongPredicate pred;
@@ -220,8 +220,8 @@ public class MapManager implements IMapManager {
     }
 
     private double applyBuildingAddress(final AddressPoint node, double minDistanceSq, final long id) {
-        final int x = node.getX();
-        final int y = node.getY();
+        final int x = node.getX(state.getZoom());
+        final int y = node.getY(state.getZoom());
 
         tileAccessor.setID(id);
 

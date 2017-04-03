@@ -22,9 +22,9 @@ public interface IMap extends IModel {
     int getHeight();
 
     // midpoint of current section in pixels
-    int getX();
+    int getX(int zoom);
 
-    int getY();
+    int getY(int zoom);
 
     void center(final double x, final double y, final double width, final double height);
 
@@ -40,5 +40,13 @@ public interface IMap extends IModel {
 
     default void zoom(int steps) {
         zoom(steps, 0.5, 0.5);
+    }
+
+    default int getX() {
+        return getX(getZoom());
+    }
+
+    default int getY() {
+        return getY(getZoom());
     }
 }

@@ -51,7 +51,7 @@ public class PointListTest {
         pointList.add(new RoutePoint(null));
         pointList.add(new RoutePoint(null));
 
-        pointList.reset();
+        pointList.clear();
 
         assertEquals(0, pointList.size());
     }
@@ -182,7 +182,7 @@ public class PointListTest {
             }
         });
 
-        pointList.reset();
+        pointList.clear();
 
         assertFalse(error);
 

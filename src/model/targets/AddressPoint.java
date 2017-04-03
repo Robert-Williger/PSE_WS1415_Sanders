@@ -2,41 +2,38 @@ package model.targets;
 
 import java.awt.Point;
 
-import model.map.IMapState;
 import model.map.IPixelConverter;
 
 public class AddressPoint extends AccessPoint {
 
     private String address;
     private final Point location;
-    private final IMapState state;
     private final IPixelConverter converter;
 
-    public AddressPoint(final IMapState state) {
-        this(null, state);
+    public AddressPoint(final IPixelConverter converter) {
+        this(null, converter);
     }
 
-    public AddressPoint(final String address, final IMapState state) {
-        this(address, 0, 0, state);
+    public AddressPoint(final String address, final IPixelConverter converter) {
+        this(address, 0, 0, converter);
     }
 
-    public AddressPoint(final String address, final int x, final int y, final IMapState state) {
+    public AddressPoint(final String address, final int x, final int y, final IPixelConverter converter) {
         location = new Point(x, y);
         this.address = address;
-        this.state = state;
-        this.converter = state.getConverter();
+        this.converter = converter;
     }
 
     public void setLocation(final int x, final int y) {
         location.setLocation(x, y);
     }
 
-    public int getX() {
-        return converter.getPixelDistance(location.x, state.getZoom());
+    public int getX(final int zoom) {
+        return converter.getPixelDistance(location.x, zoom);
     }
 
-    public int getY() {
-        return converter.getPixelDistance(location.y, state.getZoom());
+    public int getY(final int zoom) {
+        return converter.getPixelDistance(location.y, zoom);
     }
 
     public String getAddress() {

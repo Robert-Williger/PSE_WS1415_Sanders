@@ -18,9 +18,9 @@ public interface IRoutePoint extends IModel {
 
     AddressPoint getAddressPoint();
 
-    int getX();
+    int getX(int zoom);
 
-    int getY();
+    int getY(int zoom);
 
     int getListIndex();
 

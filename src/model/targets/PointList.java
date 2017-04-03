@@ -82,7 +82,7 @@ public class PointList extends AbstractModel implements IPointList {
     }
 
     @Override
-    public void reset() {
+    public void clear() {
         final List<IRoutePoint> temp = new ArrayList<>(pointList);
 
         pointList.clear();

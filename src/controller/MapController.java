@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import model.IApplication;
+import model.map.IMap;
 import model.targets.IRoutePoint;
 import view.IDragListener;
 import view.IMapListener;
@@ -38,7 +39,7 @@ public class MapController extends AbstractController<IMapView> implements IMapL
     @Override
     public void mouseMoved(final MouseEvent e) {
     }
-    
+
     @Override
     public void mouseClicked(final MouseEvent e) {
         currentListener.mouseClicked(e);
@@ -46,7 +47,9 @@ public class MapController extends AbstractController<IMapView> implements IMapL
 
     @Override
     public void mousePressed(final MouseEvent e) {
-        final IRoutePoint point = view.getRoutePoint(e.getX(), e.getY());
+        final IMap map = application.getMap();
+        final IRoutePoint point = view.getRoutePoint(e.getX() + map.getX() - map.getWidth() / 2,
+                e.getY() + map.getY() - map.getHeight() / 2);
         if (point == null) {
             currentListener = mapListener;
         } else {

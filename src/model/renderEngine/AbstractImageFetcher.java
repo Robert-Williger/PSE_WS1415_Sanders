@@ -96,6 +96,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     }
 
     protected Image createImage() {
+        // TODO improve this
         return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
         // return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
         // return new SpecialImage(imageSize, imageSize);

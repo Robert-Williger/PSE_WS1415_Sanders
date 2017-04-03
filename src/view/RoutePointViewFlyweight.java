@@ -60,15 +60,21 @@ public class RoutePointViewFlyweight {
         this.diameter = diameter;
     }
 
-    public void paint(final Graphics g, final PointState state, final int x, final int y) {
-        g.drawImage(images[state.getIndex()], x, y, null);
+    public void paint(final Graphics2D g, final PointState state, final double x, final double y) {
+        g.translate(x, y);
+        g.drawImage(images[state.getIndex()], 0, 0, null);
+        g.translate(-x, -y);
     }
 
-    public void paint(final Graphics g, final PointState state, final String index, final int x, final int y) {
-        paint(g, state, x, y);
+    public void paint(final Graphics2D g, final PointState state, final String index, final double x, final double y) {
+        g.translate(x, y);
+        g.drawImage(images[state.getIndex()], 0, 0, null);
+
         g.setColor(Color.BLACK);
 
         g.setFont(font);
-        g.drawString(index, (diameter - fontMetrics.stringWidth(index)) / 2 + x, 14 + y);
+        g.drawString(index, (diameter - fontMetrics.stringWidth(index)) / 2, 14);
+
+        g.translate(-x, -y);
     }
 }

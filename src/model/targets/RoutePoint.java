@@ -59,30 +59,11 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
             return;
         }
 
-        final String address = getAddress();
-        final int x = getX();
-        final int y = getY();
-
         this.addressPoint = point;
 
-        // TODO improve this
-        if (point == null) {
-            fireLocationEvent();
-            fireAddressEvent();
-            return;
-        }
-
-        if (point.getX() != x || point.getY() != y) {
-            fireLocationEvent();
-        }
-
-        // TODO null values in address?
-        if (point.getAddress() == address)
-            return;
-
-        if (point.getAddress() != null && !point.getAddress().equals(address)) {
-            fireAddressEvent();
-        }
+        // TODO only fire if changed?
+        fireLocationEvent();
+        fireAddressEvent();
     }
 
     @Override
@@ -114,13 +95,13 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public int getX() {
-        return addressPoint != null ? addressPoint.getX() : location.x;
+    public int getX(final int zoom) {
+        return addressPoint != null ? addressPoint.getX(zoom) : location.x;
     }
 
     @Override
-    public int getY() {
-        return addressPoint != null ? addressPoint.getY() : location.y;
+    public int getY(final int zoom) {
+        return addressPoint != null ? addressPoint.getY(zoom) : location.y;
     }
 
     @Override

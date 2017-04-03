@@ -16,7 +16,7 @@ public interface IPointList extends Iterable<IRoutePoint>, IModel {
 
     void changeOrder(int fromIndex, int toIndex);
 
-    void reset();
+    void clear();
 
     void addPointListListener(IPointListListener listener);
 
