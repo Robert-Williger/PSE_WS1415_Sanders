@@ -112,19 +112,19 @@ public class MapManagerTest {
 
     @Test
     public void testGridLocation() {
-        manager.getState().setLocation(512, 512);
+        manager.getState().setCoordLocation(512, 512);
         assertEquals(new Point(1, 1), manager.getGridLocation());
     }
 
     @Test
     public void testCoordConversion() {
-        manager.getState().setLocation(280, 230);
+        manager.getState().setCoordLocation(280, 230);
         assertEquals(new Point(360, 310), manager.getCoord(new Point(40, 40)));
     }
 
     @Test
     public void testPixelConversion() {
-        manager.getState().setLocation(280, 230);
+        manager.getState().setCoordLocation(280, 230);
         assertEquals(new Point(40, 40), manager.getPixel(new Point(360, 310)));
     }
 

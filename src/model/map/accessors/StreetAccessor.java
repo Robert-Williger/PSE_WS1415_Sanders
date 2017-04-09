@@ -6,8 +6,8 @@ import model.map.accessors.CollectiveAccessor;
 
 public class StreetAccessor extends CollectiveAccessor {
 
-    public StreetAccessor(final int[] x, final int[] y, final int[] distribution, final int[] data) {
-        super(x, y, distribution, data);
+    public StreetAccessor(final int[] data, final int[] x, final int[] y, final int[] distribution) {
+        super(data, x, y, distribution);
     }
 
     @Override
@@ -18,12 +18,16 @@ public class StreetAccessor extends CollectiveAccessor {
             case "graphId":
                 return data[getIntID()] & 0x7FFFFFFF;
             case "oneway":
-                return data[(int) getID()] >>> 7;
+                return data[getIntID()] >>> 7;
             case "length":
                 return getLength();
             default:
                 return super.getAttribute(identifier);
         }
+    }
+
+    protected int getOffset() {
+        return 2;
     }
 
     private int getLength() {

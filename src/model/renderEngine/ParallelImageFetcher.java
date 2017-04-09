@@ -1,6 +1,7 @@
 package model.renderEngine;
 
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 
 import model.IFactory;
 import model.map.IMapManager;
@@ -60,7 +61,12 @@ public class ParallelImageFetcher extends AbstractImageFetcher {
         }
     }
 
-    private class RenderJob extends ThreadJobTest<Boolean> {
+    // protected Image createImage() {
+    // // TODO improve this
+    // return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
+    // }
+
+    private static class RenderJob extends ThreadJobTest<Boolean> {
 
         private final Image image;
         private boolean result;

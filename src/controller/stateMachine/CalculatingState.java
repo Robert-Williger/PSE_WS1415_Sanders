@@ -49,7 +49,7 @@ public class CalculatingState extends AbstractState {
             sidebar.setRouteLength(route.getLength());
             getImageLoader().setRenderRoute(route);
             final Rectangle bounds = route.getBounds();
-            getMap().center(bounds.getX(), bounds.getY(), bounds.getHeight(), bounds.getWidth());
+            getMap().center(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
             getImageLoader().update();
             route = null;
         }

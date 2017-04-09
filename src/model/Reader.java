@@ -19,9 +19,11 @@ import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Quadtree;
+import model.map.accessors.BuildingAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.ITileAccessor;
+import model.map.accessors.StreetAccessor;
 import model.map.accessors.TileAccessor;
 import model.routing.DirectedGraph;
 import model.routing.IDirectedGraph;
@@ -340,24 +342,20 @@ public class Reader implements IReader {
             final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude" };
 
             final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[names.length];
-            accessors[0] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[0])
-            // {
-            // @Override
-            // public ICollectiveAccessor create() {
-            // return new StreetAccessor(x, y, data, distribution);
-            // }
-            // }
-            ;
+            accessors[0] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[0]) {
+                @Override
+                public ICollectiveAccessor create() {
+                    return new StreetAccessor(data, x, y, distribution);
+                }
+            };
             accessors[1] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[1]);
             accessors[2] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[2]);
-            accessors[3] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[3])
-            // {
-            // @Override
-            // public ICollectiveAccessor create() {
-            // return new BuildingAccessor(x, y, data, distribution);
-            // }
-            // }
-            ;
+            accessors[3] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[3]) {
+                @Override
+                public ICollectiveAccessor create() {
+                    return new BuildingAccessor(data, x, y, distribution);
+                }
+            };
             for (int i = 0; i < names.length; i++) {
                 fireStepCommenced("Lade " + outputNames[i] + "...");
                 accessors[i].setData(readIntArray(path + "/" + names[i] + "s"));

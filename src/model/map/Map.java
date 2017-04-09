@@ -26,21 +26,21 @@ public class Map extends AbstractModel implements IMap {
         final int targetZoom = Math.min(state.getMaxZoom(), Math.max(state.getMinZoom(), sourceZoom + steps));
 
         if (sourceZoom != targetZoom) {
-            final double midX = state.getX();
-            final double midY = state.getY();
-            final double coordX = state.getX() + state.getCoordSectionWidth(sourceZoom) * xOffset;
-            final double coordY = state.getY() + state.getCoordSectionHeight(sourceZoom) * yOffset;
+            final double midX = state.getCoordX();
+            final double midY = state.getCoordY();
+            final double coordX = state.getCoordX() + state.getCoordSectionWidth(sourceZoom) * xOffset;
+            final double coordY = state.getCoordY() + state.getCoordSectionHeight(sourceZoom) * yOffset;
 
             final int trueSteps = targetZoom - sourceZoom;
 
             final double scaling = Math.pow(2, -trueSteps);
 
             state.setZoom(targetZoom);
-            center(coordX - scaling * (coordX - midX), coordY - scaling * (coordY - midY));
+            state.setCoordLocation(coordX - scaling * (coordX - midX), coordY - scaling * (coordY - midY));
 
             // TODO is this correct?
-            final double deltaX = converter.getPixelDistance(state.getX() - midX, sourceZoom);
-            final double deltaY = converter.getPixelDistance(state.getY() - midY, sourceZoom);
+            final double deltaX = converter.getPixelDistance(state.getCoordX() - midX, sourceZoom);
+            final double deltaY = converter.getPixelDistance(state.getCoordY() - midY, sourceZoom);
 
             fireZoomEvent(trueSteps, deltaX, deltaY);
         }
@@ -49,8 +49,8 @@ public class Map extends AbstractModel implements IMap {
     @Override
     public void move(final double deltaX, final double deltaY) {
         final int zoomStep = state.getZoom();
-        state.setLocation(state.getX() + converter.getCoordDistance(deltaX, zoomStep),
-                state.getY() + converter.getCoordDistance(deltaY, zoomStep));
+        state.setCoordLocation(state.getCoordX() + converter.getCoordDistance(deltaX, zoomStep),
+                state.getCoordY() + converter.getCoordDistance(deltaY, zoomStep));
 
         fireMoveEvent(deltaX, deltaY);
     }
@@ -71,16 +71,19 @@ public class Map extends AbstractModel implements IMap {
     @Override
     public void center(final double x, final double y, final double width, final double height) {
         final int zoom = state.getZoom();
-        final int steps = (int) Math.ceil(Math.max(log2(width / state.getCoordSectionWidth(zoom)),
-                log2(height / state.getCoordSectionHeight(zoom))));
+        final int steps = (int) Math.ceil(
+                Math.max(log2(width / state.getPixelSectionWidth()), log2(height / state.getPixelSectionHeight())));
 
-        state.setZoom(state.getMinZoom() - steps);
-        center(x + width / 2, y + height / 2);
+        state.setZoom(zoom - steps);
+        state.setCoordLocation(converter.getCoordDistance(x + width / 2, zoom),
+                converter.getCoordDistance(y + height / 2, zoom));
+
+        fireChange();
     }
 
     @Override
     public void center(final double x, final double y) {
-        state.setLocation(x, y);
+        state.setPixelLocation(x, y);
 
         fireChange();
     }
@@ -138,12 +141,12 @@ public class Map extends AbstractModel implements IMap {
     @Override
     public int getX(final int zoom) {
         // TODO Auto-generated method stub
-        return (int) converter.getPixelDistance(state.getX(), zoom);
+        return (int) converter.getPixelDistance(state.getCoordX(), zoom);
     }
 
     @Override
     public int getY(final int zoom) {
         // TODO Auto-generated method stub
-        return (int) converter.getPixelDistance(state.getY(), zoom);
+        return (int) converter.getPixelDistance(state.getCoordY(), zoom);
     }
 }

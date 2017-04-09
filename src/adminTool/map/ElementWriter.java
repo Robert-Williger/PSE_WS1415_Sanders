@@ -2,7 +2,6 @@ package adminTool.map;
 
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
@@ -17,7 +16,6 @@ import adminTool.elements.Way;
 public class ElementWriter extends CompressedWriter {
     private LinkedHashMap<Node, Integer> nodeMap;
     private LinkedHashMap<String, Integer> stringMap;
-    private HashMap<Street, Integer> streetMap;
 
     private Sorting<Area> areas;
     private Sorting<Street> streets;
@@ -39,7 +37,7 @@ public class ElementWriter extends CompressedWriter {
 
     public ElementWriter(
 
-    final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
+            final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
             final Sorting<Building> buildings,
 
             final DataOutput elementHeaderOutput, final DataOutput nodeOutput, final DataOutput stringOutput,
@@ -70,27 +68,23 @@ public class ElementWriter extends CompressedWriter {
         createNodeMap();
         try {
             writeNodes();
-
-            createNameAndNumberMap();
-
-            writeStrings();
-
-            writeStreets();
-
-            writeWays();
-
-            writeAreas();
-
-            createStreetMap();
-
-            writeBuildings();
-
-            streetMap = null;
-            stringMap = null;
-            nodeMap = null;
         } catch (final IOException e) {
             e.printStackTrace();
         }
+
+        createNameAndNumberMap();
+        try {
+            writeStrings();
+            writeStreets();
+            writeWays();
+            writeAreas();
+            writeBuildings();
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+
+        stringMap = null;
+        nodeMap = null;
 
     }
 
@@ -102,14 +96,6 @@ public class ElementWriter extends CompressedWriter {
         id = putNodes(ways.elements, id);
         id = putNodes(buildings.elements, id);
         putNodes(areas.elements, id);
-    }
-
-    private void createStreetMap() {
-        streetMap = new HashMap<>();
-        int id = -1;
-        for (final Street street : streets.elements) {
-            streetMap.put(street, ++id);
-        }
     }
 
     private void createNameAndNumberMap() {
@@ -136,12 +122,12 @@ public class ElementWriter extends CompressedWriter {
                 stringMap.put(name, ++id);
             }
         }
-        for (final Way street : ways.elements) {
-            final String name = street.getName().trim();
-            if (!stringMap.containsKey(name)) {
-                stringMap.put(name, ++id);
-            }
-        }
+        // for (final Way street : ways.elements) {
+        // final String name = street.getName().trim();
+        // if (!stringMap.containsKey(name)) {
+        // stringMap.put(name, ++id);
+        // }
+        // }
     }
 
     private void writeNodes() throws IOException {
@@ -165,10 +151,13 @@ public class ElementWriter extends CompressedWriter {
         for (final Street street : streets.elements) {
             streetAddresses[++index] = address;
 
-            // streetOutput.writeInt(street.getID());
-            // ++address;
+            streetOutput.writeInt(street.getID());
+            ++address;
 
-            address += writeWay(street, streetOutput);
+            streetOutput.writeInt(stringMap.get(street.getName().trim()));
+            ++address;
+
+            address += writeMultiElement(street, streetOutput);
         }
 
         writeDistribution(streets.distribution, streetAddresses);
@@ -180,7 +169,7 @@ public class ElementWriter extends CompressedWriter {
         for (final Way way : ways.elements) {
             wayAddresses[++index] = address;
 
-            address += writeWay(way, wayOutput);
+            address += writeMultiElement(way, wayOutput);
         }
 
         writeDistribution(ways.distribution, wayAddresses);
@@ -191,6 +180,15 @@ public class ElementWriter extends CompressedWriter {
         int index = -1;
         for (final Building building : buildings.elements) {
             buildingAddresses[++index] = address;
+
+            // TODO improve this
+            Integer id = stringMap.get(building.getStreet());
+            buildingOutput.writeInt(id == null ? -1 : id);
+            ++address;
+
+            id = stringMap.get(building.getHouseNumber().trim());
+            buildingOutput.writeInt(id == null ? -1 : id);
+            ++address;
 
             address += writeMultiElement(building, buildingOutput);
         }
@@ -237,13 +235,6 @@ public class ElementWriter extends CompressedWriter {
         }
 
         return ret;
-    }
-
-    private int writeWay(final Way way, final DataOutput output) throws IOException {
-        int ret = writeMultiElement(way, output);
-        output.writeInt(stringMap.get(way.getName().trim()));
-
-        return ret + 1;
     }
 
     private void writeDistribution(final int[] distribution, final int[] addresses) throws IOException {

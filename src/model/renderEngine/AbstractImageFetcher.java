@@ -16,8 +16,8 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
     private final ConcurrentLinkedQueue<Image> freeList;
     // private final GraphicsConfiguration config;
 
-    private Image defaultImage;
-    private int imageSize;
+    protected Image defaultImage;
+    protected int imageSize;
 
     public AbstractImageFetcher(final IMapManager manager) {
         freeList = new ConcurrentLinkedQueue<>();
@@ -97,7 +97,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
 
     protected Image createImage() {
         // TODO improve this
-        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
+        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
         // return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
         // return new SpecialImage(imageSize, imageSize);
     }

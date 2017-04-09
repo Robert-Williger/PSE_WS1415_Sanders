@@ -175,8 +175,8 @@ public class ImageLoader implements IImageLoader {
         final int zoom = state.getZoom();
         final int height = state.getCoordSectionHeight(zoom);
         final int width = state.getCoordSectionWidth(zoom);
-        final int x = (int) state.getX();
-        final int y = (int) state.getY();
+        final int x = (int) state.getCoordX();
+        final int y = (int) state.getCoordY();
 
         // prefetch tiles in higher layer
         if (zoom > state.getMinZoom()) {

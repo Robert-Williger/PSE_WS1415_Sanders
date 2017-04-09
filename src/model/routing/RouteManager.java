@@ -7,6 +7,7 @@ import java.util.List;
 import model.AbstractModel;
 import model.IProgressListener;
 import model.map.IMapManager;
+import model.map.IMapState;
 import model.map.accessors.ICollectiveAccessor;
 import model.renderEngine.IRenderRoute;
 import model.renderEngine.RenderRoute;
@@ -19,6 +20,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     private final ICollectiveAccessor streetAccessor;
     private final IDirectedGraph graph;
     private final IPointList pointList;
+    private final IMapState state;
 
     private final IRouteSolver[] routeSolvers;
     private final String[] routeSolverNames;
@@ -37,6 +39,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         pointList = new PointList();
 
         streetAccessor = manager.createCollectiveAccessor("street");
+        state = manager.getState();
     }
 
     private IRouteSolver getCurrentRouteSolver() {
@@ -67,16 +70,17 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int maxY = Integer.MIN_VALUE;
 
         // TODO calculate route bounds
-        // for (final IRoutePoint routePoint : pointList) {
-        // // TODO
-        // final int x = routePoint.getStreetNode().getX();
-        // final int y = routePoint.getStreetNode().getY();
-        // minX = Math.min(minX, x);
-        // maxX = Math.max(maxX, x);
-        //
-        // minY = Math.min(minY, y);
-        // maxY = Math.max(maxY, y);
-        // }
+        for (final IRoutePoint routePoint : pointList) {
+            // TODO
+            final int x = routePoint.getX(state.getZoom());
+            final int y = routePoint.getY(state.getZoom());
+
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }

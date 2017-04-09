@@ -88,7 +88,7 @@ public class ImageLoaderTest {
 
     @Before
     public void setUp() {
-        mapManager.getState().setLocation(0, 0);
+        mapManager.getState().setCoordLocation(0, 0);
         loader.setMapManager(mapManager);
         defaultImage = (BufferedImage) loader.getImageAccessors().get(0).getImage(-1, -1);
     }

@@ -7,20 +7,10 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class RenderRoute implements IRenderRoute {
-    private final int                                 length;
-    private final Map<Integer, StreetPart>            map;
+    private final int length;
+    private final Map<Integer, StreetPart> map;
     private final Map<Integer, Collection<Intervall>> multiPartMap;
-    private final Rectangle                           bounds;
-
-    private class StreetPart {
-        StreetUse useage;
-        Intervall intervall;
-
-        public StreetPart(final StreetUse useage, final Intervall intervall) {
-            this.useage = useage;
-            this.intervall = intervall;
-        }
-    }
+    private final Rectangle bounds;
 
     public RenderRoute(final int length, final Rectangle bounds) {
         this.length = length;
@@ -140,6 +130,16 @@ public class RenderRoute implements IRenderRoute {
     @Override
     public Rectangle getBounds() {
         return bounds;
+    }
+
+    private static class StreetPart {
+        StreetUse useage;
+        Intervall intervall;
+
+        public StreetPart(final StreetUse useage, final Intervall intervall) {
+            this.useage = useage;
+            this.intervall = intervall;
+        }
     }
 
 }

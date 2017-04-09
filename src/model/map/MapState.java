@@ -63,11 +63,11 @@ public class MapState implements IMapState {
     public void setPixelSectionSize(final int width, final int height) {
         pixelSectionSize.setSize(width, height);
         updateCoordSectionSize();
-        setLocation(location.getX(), location.getY());
+        setCoordLocation(location.getX(), location.getY());
     }
 
     @Override
-    public void setLocation(final double x, final double y) {
+    public void setCoordLocation(final double x, final double y) {
         final int coordSectionWidth = getCoordSectionWidth(zoom);
         final int coordSectionHeight = getCoordSectionHeight(zoom);
 
@@ -80,6 +80,11 @@ public class MapState implements IMapState {
                 : totalSize.height / 2;
 
         location.setLocation(xCoord, yCoord);
+    }
+
+    @Override
+    public void setPixelLocation(final double x, final double y) {
+        setCoordLocation(converter.getCoordDistance(x, zoom), converter.getCoordDistance(y, zoom));
     }
 
     @Override
@@ -98,17 +103,9 @@ public class MapState implements IMapState {
     }
 
     private void updateCoordSectionSize() {
-        // TODO convert with converter?
         for (int zoom = 0; zoom < coordSectionSize.length; zoom++) {
-            // final double zoomFactor = 1.0 / (1 << zoom);
-            final int coordWidth = converter.getCoordDistance(pixelSectionSize.width, zoom + minZoomStep); // (int)
-                                                                                                           // (pixelSectionSize.width
-                                                                                                           // *
-                                                                                                           // zoomFactor);
-            final int coordHeight = converter.getCoordDistance(pixelSectionSize.height, zoom + minZoomStep); // (int)
-                                                                                                             // (pixelSectionSize.height
-                                                                                                             // *
-                                                                                                             // zoomFactor);
+            final int coordWidth = converter.getCoordDistance(pixelSectionSize.width, zoom + minZoomStep);
+            final int coordHeight = converter.getCoordDistance(pixelSectionSize.height, zoom + minZoomStep);
             coordSectionSize[zoom].setSize(coordWidth, coordHeight);
         }
     }
@@ -134,12 +131,12 @@ public class MapState implements IMapState {
     }
 
     @Override
-    public double getX() {
+    public double getCoordX() {
         return location.getX();
     }
 
     @Override
-    public double getY() {
+    public double getCoordY() {
         return location.getY();
     }
 

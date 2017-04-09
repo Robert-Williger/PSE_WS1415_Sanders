@@ -80,9 +80,9 @@ public class DefaultImageLoader implements IImageLoader {
 
         imageAccessors = new ArrayList<>(4);
 
-        // imageAccessors.add(labelAccessor);
-        // imageAccessors.add(routeAccessor);
-        // imageAccessors.add(POIAccessor);
+        imageAccessors.add(labelAccessor);
+        imageAccessors.add(routeAccessor);
+        imageAccessors.add(POIAccessor);
         imageAccessors.add(backgroundAccessor);
 
         delayedLoader = new DelayedLoader();
@@ -174,7 +174,6 @@ public class DefaultImageLoader implements IImageLoader {
     private void loadCurrentTiles(final IImageFetcher imageFetcher) {
         for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
             for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
-                System.out.println(lastZoomStep);
                 imageFetcher.loadImage(mapManager.getID(i, j, lastZoomStep), priority);
             }
         }

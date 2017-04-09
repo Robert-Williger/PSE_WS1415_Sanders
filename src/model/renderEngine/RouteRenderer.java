@@ -67,23 +67,23 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         final LongConsumer consumer = (street) -> {
             streetAccessor.setID(street);
 
-            final int id = streetAccessor.getAttribute("graphID");
+            final int id = streetAccessor.getAttribute("graphId");
 
             // TODO optimize this --> no switch case needed
             switch (route.getStreetUse(id)) {
-            case full:
-                path.append(drawLines().getPathIterator(null), false);
-                break;
-            case part:
-                path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
-                break;
-            case multiPart:
-                for (final Intervall streetPart : route.getStreetMultiPart(id)) {
-                    path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
-                }
-                break;
-            default:
-                break;
+                case full:
+                    path.append(drawLines().getPathIterator(null), false);
+                    break;
+                case part:
+                    path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
+                    break;
+                case multiPart:
+                    for (final Intervall streetPart : route.getStreetMultiPart(id)) {
+                        path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
+                    }
+                    break;
+                default:
+                    break;
             }
         };
         tileAccessor.forEach("street", consumer);
@@ -117,11 +117,11 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
         float currentLength = 0f;
 
-        int lastCoordX = streetAccessor.getX(0);
-        int lastCoordY = streetAccessor.getY(0);
+        float lastCoordX = streetAccessor.getX(0);
+        float lastCoordY = streetAccessor.getY(0);
 
-        int lastPixelX = converter.getPixelDistance(lastCoordX - x, zoom);
-        int lastPixelY = converter.getPixelDistance(lastCoordY - y, zoom);
+        float lastPixelX = converter.getPixelDistance(lastCoordX - x, zoom);
+        float lastPixelY = converter.getPixelDistance(lastCoordY - y, zoom);
 
         final Point2D startRenderPoint = new Point2D.Float();
         final Point2D endRenderPoint = new Point2D.Float();
@@ -131,8 +131,8 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
             final int currentCoordY = streetAccessor.getY(i);
             final double distance = Point.distance(lastCoordX, lastCoordY, currentCoordX, currentCoordY);
 
-            final int xDist = converter.getPixelDistance(currentCoordX - lastCoordX, zoom);
-            final int yDist = converter.getPixelDistance(currentCoordY - lastCoordY, zoom);
+            final float xDist = converter.getPixelDistance(currentCoordX - lastCoordX, zoom);
+            final float yDist = converter.getPixelDistance(currentCoordY - lastCoordY, zoom);
 
             int currentPixelX = converter.getPixelDistance(currentCoordX - x, zoom);
             int currentPixelY = converter.getPixelDistance(currentCoordY - y, zoom);

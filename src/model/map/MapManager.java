@@ -1,6 +1,5 @@
 package model.map;
 
-import java.awt.Point;
 import java.util.HashMap;
 import java.util.PrimitiveIterator;
 import java.util.PrimitiveIterator.OfLong;
@@ -234,12 +233,15 @@ public class MapManager implements IMapManager {
         while (buildings.hasNext()) {
             final long buildingID = buildings.nextLong();
             buildingAccessor.setID(buildingID);
-            if (name == buildingAccessor.getAttribute("name")) {
+            if (name == buildingAccessor.getAttribute("street")) {
                 final int size = buildingAccessor.size();
                 for (int i = 0; i < size; i++) {
-                    final int distance = (int) Point.distance(x, y, buildingAccessor.getX(i), buildingAccessor.getY(i));
-                    if (distance < minDistanceSq) {
-                        minDistanceSq = distance;
+                    final double xDist = x - buildingAccessor.getX(i);
+                    final double yDist = y - buildingAccessor.getY(i);
+                    // TODO epsilon?
+                    final double distanceSq = xDist * xDist + yDist * yDist;
+                    if (distanceSq < minDistanceSq) {
+                        minDistanceSq = distanceSq;
                         node.setAddress(
                                 street + " " + stringAccessor.getString(buildingAccessor.getAttribute("number")));
                     }
@@ -307,22 +309,22 @@ public class MapManager implements IMapManager {
 
     @Override
     public int getVisibleRows(final int zoom) {
-        return getGridSize(state.getCoordSectionHeight(zoom), (int) state.getY(), zoom);
+        return getGridSize(state.getCoordSectionHeight(zoom), (int) state.getCoordY(), zoom);
     }
 
     @Override
     public int getVisibleColumns(final int zoom) {
-        return getGridSize(state.getCoordSectionWidth(zoom), (int) state.getX(), zoom);
+        return getGridSize(state.getCoordSectionWidth(zoom), (int) state.getCoordX(), zoom);
     }
 
     @Override
     public int getRow(final int zoom) {
-        return (int) (state.getY() - state.getCoordSectionHeight(zoom) / 2) / state.getCoordTileSize(zoom);
+        return (int) (state.getCoordY() - state.getCoordSectionHeight(zoom) / 2) / state.getCoordTileSize(zoom);
     }
 
     @Override
     public int getColumn(final int zoom) {
-        return (int) (state.getX() - state.getCoordSectionWidth(zoom) / 2) / state.getCoordTileSize(zoom);
+        return (int) (state.getCoordX() - state.getCoordSectionWidth(zoom) / 2) / state.getCoordTileSize(zoom);
     }
 
     private boolean isValid(final int row, final int column, final int zoom) {

@@ -18,11 +18,13 @@ public interface IMapState {
 
     int getMinZoom();
 
-    void setLocation(double x, double y);
+    void setCoordLocation(double x, double y);
 
-    double getX();
+    void setPixelLocation(double x, double y);
 
-    double getY();
+    double getCoordX();
+
+    double getCoordY();
 
     void setPixelSectionSize(int width, int height);
 
