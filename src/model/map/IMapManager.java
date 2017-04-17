@@ -8,7 +8,7 @@ import model.targets.AddressPoint;
 
 public interface IMapManager {
 
-    long getID(int row, int column, int zoom);
+    long getTileID(int row, int column, int zoom);
 
     AddressPoint getAddress(int x, int y);
 

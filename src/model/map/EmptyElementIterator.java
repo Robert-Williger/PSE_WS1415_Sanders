@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.PrimitiveIterator;
 import java.util.function.LongConsumer;
 
-public class EmptyQuadtree implements IQuadtree {
+public class EmptyElementIterator implements IElementIterator {
 
     @Override
     public PrimitiveIterator.OfLong iterator(int row, int column, int zoom) {

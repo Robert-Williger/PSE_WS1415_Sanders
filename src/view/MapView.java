@@ -77,7 +77,6 @@ public class MapView extends JPanel implements IMapView {
 
             @Override
             public void mapResized(final int width, final int height) {
-                // viewport.updateSize(width, height);
             }
 
             @Override
@@ -169,6 +168,7 @@ public class MapView extends JPanel implements IMapView {
         public void paint(final Graphics g) {
             if (accessor.isVisible()) {
                 final int zoom = map.getZoom();
+
                 final Graphics2D g2 = (Graphics2D) g;
                 switch (zoomInfo.state) {
                     case ZoomInfo.ZOOMING:
@@ -224,6 +224,7 @@ public class MapView extends JPanel implements IMapView {
                 x = 0;
                 for (int column = startColumn; column <= endColumn; column++) {
                     g.drawImage(accessor.getImage(row, column, zoom), x, y, this);
+
                     x += tileSize;
                 }
                 y += tileSize;
@@ -331,8 +332,6 @@ public class MapView extends JPanel implements IMapView {
                     }
                 } else {
                     zoomInfo.state = ZoomInfo.DEFAULT;
-                    zoomInfo.scale = 1;
-                    zoomInfo.s = 0;
                     SwingUtilities.invokeLater(() -> repaint());
                     synchronized (this) {
                         try {
@@ -351,6 +350,8 @@ public class MapView extends JPanel implements IMapView {
                 zoomInfo.deltaX = deltaX;
                 zoomInfo.deltaY = deltaY;
                 zoomInfo.state = ZoomInfo.ZOOMING;
+                zoomInfo.scale = 1;
+                zoomInfo.s = 0;
                 // TODO respect multiple steps
                 scalePerStep = steps > 0 ? 1.0 / MAX_STEPS : -0.5 / MAX_STEPS;
                 currentStep = 0;

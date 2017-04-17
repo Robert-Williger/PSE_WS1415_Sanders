@@ -37,13 +37,13 @@ import crosby.binary.file.BlockReaderAdapter;
 public class OSMParser implements IOSMParser {
 
     private final Collection<adminTool.elements.Way> wayList;
-    private final Collection<UnprocessedStreet>      streetList;
-    private final Collection<Area>                   areaList;
-    private final Collection<POI>                    poiList;
-    private final Collection<Building>               buildingList;
-    private final Collection<Label>                  labelList;
-    private final List<List<Boundary>>               boundaries;
-    private final Rectangle                          bBox;
+    private final Collection<UnprocessedStreet> streetList;
+    private final Collection<Area> areaList;
+    private final Collection<POI> poiList;
+    private final Collection<Building> buildingList;
+    private final Collection<Label> labelList;
+    private final List<List<Boundary>> boundaries;
+    private final Rectangle bBox;
 
     public OSMParser() {
         // TODO lists instead of sets!
@@ -109,11 +109,11 @@ public class OSMParser implements IOSMParser {
     }
 
     private class Parser extends BinaryParser {
-        private Map<Integer, Node>   nodeMap;
-        private Map<Integer, Byte>   areaMap;
+        private Map<Long, Node> nodeMap;
+        private Map<Integer, Byte> areaMap;
         private Map<Integer, Node[]> wayMap;
 
-        private final int            SHIFT = 1 << 29;
+        private final int SHIFT = 1 << 29;
 
         public Parser() {
             nodeMap = new HashMap<>();
@@ -140,7 +140,7 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                nodeMap.put((int) n.getId(), new Node(x, y));
+                nodeMap.put(n.getId(), new Node(x, y));
             }
 
         }
@@ -201,7 +201,7 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                nodeMap.put((int) lastId, new Node(x, y));
+                nodeMap.put(lastId, new Node(x, y));
             }
         }
 
@@ -226,12 +226,12 @@ public class OSMParser implements IOSMParser {
 
             for (final Way w : ways) {
                 // Tags
-                nameTag = "";
+                nameTag = null;
                 buildingTag = false;
                 wayTag = "";
                 terrainType = -1;
-                addrStreetTag = "";
-                addrNumberTag = "";
+                addrStreetTag = null;
+                addrNumberTag = null;
                 amenityType = -1;
                 onewayTag = "";
                 foot = false;
@@ -325,7 +325,7 @@ public class OSMParser implements IOSMParser {
                 int count = 0;
                 for (final Long ref : w.getRefsList()) {
                     lastRef += ref;
-                    nodes[count++] = nodeMap.get((int) lastRef);
+                    nodes[count++] = nodeMap.get(lastRef);
                 }
 
                 if (nodes.length > 1) {
@@ -334,11 +334,7 @@ public class OSMParser implements IOSMParser {
 
                     if (buildingTag) {
                         // TODO check behaviour
-                        if (!addrStreetTag.isEmpty() || !addrNumberTag.isEmpty()) {
-                            buildingList.add(Building.create(nodes, addrStreetTag, addrNumberTag));
-                        } else {
-                            buildingList.add(Building.create(nodes));
-                        }
+                        buildingList.add(Building.create(nodes, addrStreetTag, addrNumberTag, nameTag));
                     } else {
                         if (terrainType >= 0) {
                             areaMap.put((int) w.getId(), (byte) terrainType);
@@ -432,8 +428,9 @@ public class OSMParser implements IOSMParser {
                 final List<HashMap<Node, List<Node>>> maps = createMultipolygonMaps(relation);
 
                 if (areaType == Integer.MAX_VALUE) {
-                    String housenumber = "";
-                    String address = "";
+                    String housenumber = null;
+                    String address = null;
+                    String name = null;
 
                     for (int k = 0; k < relation.getKeysCount(); k++) {
                         switch (getStringById(relation.getKeys(k))) {
@@ -443,11 +440,15 @@ public class OSMParser implements IOSMParser {
                             case "addr:housenumber":
                                 housenumber = getStringById(relation.getVals(k));
                                 break;
+                            case "name":
+                                name = getStringById(relation.getVals(k));
+                                break;
                         }
                     }
 
                     for (final List<Node> list : maps.get(0).values()) {
-                        buildingList.add(Building.create(list.toArray(new Node[list.size()]), address, housenumber));
+                        buildingList
+                                .add(Building.create(list.toArray(new Node[list.size()]), address, housenumber, name));
                     }
                     for (final List<Node> list : maps.get(1).values()) {
                         buildingList.add(Building.create(list.toArray(new Node[list.size()])));

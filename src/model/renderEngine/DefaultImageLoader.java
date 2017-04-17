@@ -174,7 +174,7 @@ public class DefaultImageLoader implements IImageLoader {
     private void loadCurrentTiles(final IImageFetcher imageFetcher) {
         for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
             for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
-                imageFetcher.loadImage(mapManager.getID(i, j, lastZoomStep), priority);
+                imageFetcher.loadImage(mapManager.getTileID(i, j, lastZoomStep), priority);
             }
         }
     }
@@ -229,7 +229,7 @@ public class DefaultImageLoader implements IImageLoader {
     private void loadTiles(final int r1, final int r2, final int c1, final int c2, final int zoom) {
         for (int y = r1; y < r2; y++) {
             for (int x = c1; x < c2; x++) {
-                loadVisibleTile(mapManager.getID(y, x, zoom));
+                loadVisibleTile(mapManager.getTileID(y, x, zoom));
             }
         }
     }
@@ -237,7 +237,7 @@ public class DefaultImageLoader implements IImageLoader {
     private void loadBorderTiles(final int r1, final int r2, final int c1, final int c2, final int zoom) {
         for (int y = r1; y < r2; y++) {
             for (int x = c1; x < c2; x++) {
-                loadBorderTile(mapManager.getID(y, x, zoom));
+                loadBorderTile(mapManager.getTileID(y, x, zoom));
             }
         }
     }

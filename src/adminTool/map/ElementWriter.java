@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import adminTool.elements.Area;
 import adminTool.elements.Building;
+import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Node;
 import adminTool.elements.Street;
@@ -21,11 +22,13 @@ public class ElementWriter extends CompressedWriter {
     private Sorting<Street> streets;
     private Sorting<Way> ways;
     private Sorting<Building> buildings;
+    private Sorting<Label> labels;
 
     int[] areaAddresses;
     int[] streetAddresses;
     int[] wayAddresses;
     int[] buildingAddresses;
+    int[] labelAddresses;
 
     private DataOutput headerOutput;
     private DataOutput nodeOutput;
@@ -34,21 +37,23 @@ public class ElementWriter extends CompressedWriter {
     private DataOutput streetOutput;
     private DataOutput wayOutput;
     private DataOutput buildingOutput;
+    private DataOutput labelOutput;
 
     public ElementWriter(
 
             final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
-            final Sorting<Building> buildings,
+            final Sorting<Building> buildings, final Sorting<Label> labels,
 
             final DataOutput elementHeaderOutput, final DataOutput nodeOutput, final DataOutput stringOutput,
             final DataOutput areaOutput, final DataOutput streetOutput, final DataOutput wayOutput,
-            final DataOutput buildingOutput
+            final DataOutput buildingOutput, final DataOutput labelOutput
 
     ) {
         this.areas = areas;
         this.streets = streets;
         this.ways = ways;
         this.buildings = buildings;
+        this.labels = labels;
 
         this.nodeOutput = nodeOutput;
         this.stringOutput = stringOutput;
@@ -57,11 +62,13 @@ public class ElementWriter extends CompressedWriter {
         this.wayOutput = wayOutput;
         this.headerOutput = elementHeaderOutput;
         this.buildingOutput = buildingOutput;
+        this.labelOutput = labelOutput;
 
         areaAddresses = new int[areas.elements.length];
         streetAddresses = new int[streets.elements.length];
         wayAddresses = new int[ways.elements.length];
         buildingAddresses = new int[buildings.elements.length];
+        labelAddresses = new int[labels.elements.length];
     }
 
     public void write() {
@@ -79,6 +86,7 @@ public class ElementWriter extends CompressedWriter {
             writeWays();
             writeAreas();
             writeBuildings();
+            writeLabels();
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -100,34 +108,38 @@ public class ElementWriter extends CompressedWriter {
 
     private void createNameAndNumberMap() {
         stringMap = new LinkedHashMap<>();
+        stringMap.put(null, -1);
 
         int id = -1;
-        stringMap.put("", ++id);
 
         // TODO there are some strange street names atm...
         for (final Building building : buildings.elements) {
-            final String name = building.getStreet();
+            final String street = building.getStreet();
             final String number = building.getHouseNumber();
+            final String name = building.getName();
 
-            if (!stringMap.containsKey(name)) {
-                stringMap.put(name, ++id);
+            if (!stringMap.containsKey(street)) {
+                stringMap.put(street, ++id);
             }
             if (!stringMap.containsKey(number)) {
                 stringMap.put(number, ++id);
             }
-        }
-        for (final Street street : streets.elements) {
-            final String name = street.getName().trim();
             if (!stringMap.containsKey(name)) {
                 stringMap.put(name, ++id);
             }
         }
-        // for (final Way street : ways.elements) {
-        // final String name = street.getName().trim();
-        // if (!stringMap.containsKey(name)) {
-        // stringMap.put(name, ++id);
-        // }
-        // }
+        for (final Street street : streets.elements) {
+            final String name = street.getName();
+            if (!stringMap.containsKey(name)) {
+                stringMap.put(name, ++id);
+            }
+        }
+        for (final Label label : labels.elements) {
+            final String name = label.getName();
+            if (!stringMap.containsKey(name)) {
+                stringMap.put(name, ++id);
+            }
+        }
     }
 
     private void writeNodes() throws IOException {
@@ -139,9 +151,18 @@ public class ElementWriter extends CompressedWriter {
     }
 
     private void writeStrings() throws IOException {
-        stringOutput.writeInt(stringMap.size());
+        // dont store the (null,-1) entry...
+        stringOutput.writeInt(stringMap.size() - 1);
         for (final Entry<String, Integer> entry : stringMap.entrySet()) {
-            stringOutput.writeUTF(entry.getKey());
+            // TODO improve this
+            final String name = entry.getKey();
+            if (name != null) {
+                if (entry.getKey().isEmpty()) {
+                    stringOutput.writeUTF("Unbekannte Straße");
+                } else {
+                    stringOutput.writeUTF(entry.getKey());
+                }
+            }
         }
     }
 
@@ -154,7 +175,7 @@ public class ElementWriter extends CompressedWriter {
             streetOutput.writeInt(street.getID());
             ++address;
 
-            streetOutput.writeInt(stringMap.get(street.getName().trim()));
+            streetOutput.writeInt(stringMap.get(street.getName()));
             ++address;
 
             address += writeMultiElement(street, streetOutput);
@@ -181,19 +202,36 @@ public class ElementWriter extends CompressedWriter {
         for (final Building building : buildings.elements) {
             buildingAddresses[++index] = address;
 
-            // TODO improve this
-            Integer id = stringMap.get(building.getStreet());
-            buildingOutput.writeInt(id == null ? -1 : id);
+            // TODO improve this -> not store null explicit with -1.
+            buildingOutput.writeInt(stringMap.get(building.getStreet()));
             ++address;
 
-            id = stringMap.get(building.getHouseNumber().trim());
-            buildingOutput.writeInt(id == null ? -1 : id);
+            buildingOutput.writeInt(stringMap.get(building.getHouseNumber()));
+            ++address;
+
+            buildingOutput.writeInt(stringMap.get(building.getName()));
             ++address;
 
             address += writeMultiElement(building, buildingOutput);
         }
 
         writeDistribution(buildings.distribution, buildingAddresses);
+    }
+
+    private void writeLabels() throws IOException {
+        int address = 0;
+        int index = -1;
+        for (final Label label : labels.elements) {
+            labelAddresses[++index] = address;
+
+            writePoint(label, labelOutput);
+            address += 2;
+
+            labelOutput.writeInt(stringMap.get(label.getName()));
+            ++address;
+        }
+
+        writeDistribution(labels.distribution, labelAddresses);
     }
 
     private void writeAreas() throws IOException {

@@ -61,10 +61,10 @@ public class ParallelImageFetcher extends AbstractImageFetcher {
         }
     }
 
-    // protected Image createImage() {
-    // // TODO improve this
-    // return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
-    // }
+//    protected Image createImage() {
+//        // TODO improve this
+//        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
+//    }
 
     private static class RenderJob extends ThreadJobTest<Boolean> {
 

@@ -4,9 +4,22 @@ import java.awt.Point;
 
 public class CollectiveUtil {
 
-    //TODO
+    // TODO
     public static int getLength(final ICollectiveAccessor accessor) {
-        return 0;
+        float totalLength = 0f;
+
+        int lastX = accessor.getX(0);
+        int lastY = accessor.getY(0);
+        int size = accessor.size();
+        for (int i = 1; i < size; i++) {
+            int currentX = accessor.getX(i);
+            int currentY = accessor.getY(i);
+            totalLength += Point.distance(currentX, currentY, lastX, lastY);
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        return (int) totalLength;
     }
 
     public static boolean contains(final ICollectiveAccessor accessor, final int x, final int y) {
@@ -17,9 +30,8 @@ public class CollectiveUtil {
         final int size = accessor.size();
         boolean c = false;
         for (int i = 0, j = size - 1; i < size; j = i++) {
-            if (((accessor.getY(i) > y) != (accessor.getY(j) > y))
-                    && (x < (accessor.getX(j) - accessor.getX(i)) * (y - accessor.getY(i))
-                            / (accessor.getY(j) - accessor.getY(i)) + accessor.getX(i)))
+            if (((accessor.getY(i) > y) != (accessor.getY(j) > y)) && (x < (accessor.getX(j) - accessor.getX(i))
+                    * (y - accessor.getY(i)) / (accessor.getY(j) - accessor.getY(i)) + accessor.getX(i)))
                 c = !c;
         }
         return c;

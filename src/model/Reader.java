@@ -14,7 +14,7 @@ import model.map.CollectiveAccessorFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
-import model.map.IQuadtree;
+import model.map.IElementIterator;
 import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
@@ -23,6 +23,7 @@ import model.map.accessors.BuildingAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.ITileAccessor;
+import model.map.accessors.LabelAccessor;
 import model.map.accessors.StreetAccessor;
 import model.map.accessors.TileAccessor;
 import model.routing.DirectedGraph;
@@ -59,9 +60,7 @@ public class Reader implements IReader {
         currentBytes = 0;
         progress = -1;
         try {
-            reader = createInputStream(file);
-            graph = readGraph();
-            reader.close();
+            graph = readGraph(new File(path).getAbsolutePath());
             manager = managerReader.readMapManager(new File(path).getAbsolutePath());
             tp = new AdvancedTextProcessor(new Entry[0][], manager);
         } catch (final Exception e) {
@@ -70,23 +69,13 @@ public class Reader implements IReader {
             if (!canceled) {
                 fireErrorOccured("Beim Kartenimport ist ein Fehler aufgetreten.");
             }
-
-            try {
-                reader.close();
-            } catch (final IOException e1) {
-            }
-
+            e.printStackTrace();
             return false;
         }
 
         managerReader = null;
 
         rm = new RouteManager(graph, manager);
-
-        try {
-            reader.close();
-        } catch (final IOException e) {
-        }
 
         return true;
     }
@@ -162,9 +151,10 @@ public class Reader implements IReader {
     /*
      * Reads the Graph-section of the tsk file and generates the Graph.
      */
-    private IDirectedGraph readGraph() throws IOException {
+    private IDirectedGraph readGraph(final String path) throws IOException {
         fireStepCommenced("Lade Graph...");
 
+        final CompressedInputStream reader = createInputStream(path + "/graph");
         final int nodeCount = reader.readCompressedInt();
 
         final int[] firstNodes = new int[reader.readCompressedInt()];
@@ -183,6 +173,8 @@ public class Reader implements IReader {
             id += reader.readCompressedInt();
             oneways[i] = id;
         }
+
+        reader.close();
 
         return new DirectedGraph(nodeCount, firstNodes, secondNodes, weights, oneways);
     }
@@ -265,17 +257,17 @@ public class Reader implements IReader {
 
             final String[] strings = readStrings(path);
             final int[][] nodes = readNodes(path);
-            final Map<String, IQuadtree> quadtreeMap = new HashMap<>();
+            final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
-            readElements(path, nodes, distributions, quadtreeMap, collectiveMap, state.getMinZoom());
+            final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
+            readElements(path, nodes, distributions, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
             final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
                 @Override
                 public ITileAccessor create() {
-                    return new TileAccessor(quadtreeMap, state);
+                    return new TileAccessor(elementIteratorMap, state);
                 }
             };
-            return new MapManager(new HashMap<String, IFactory<IPointAccessor>>(), collectiveMap, tileFactory, strings,
-                    state);
+            return new MapManager(pointMap, collectiveMap, tileFactory, strings, state);
         }
 
         private IMapState readMapState(final CompressedInputStream reader, final IPixelConverter converter)
@@ -294,8 +286,9 @@ public class Reader implements IReader {
         }
 
         private int[][] readDistributions(final CompressedInputStream reader) throws IOException {
-            final int[][] distributions = new int[4][];
-            for (int i = 0; i < 4; i++) {
+            // TODO improve this
+            final int[][] distributions = new int[5][];
+            for (int i = 0; i < 5; i++) {
                 distributions[i] = readIntArray(reader.readInt(), reader);
             }
 
@@ -327,14 +320,13 @@ public class Reader implements IReader {
             for (int count = 0; count < strings.length; count++) {
                 strings[count] = reader.readUTF();
             }
-            strings[0] = "Unbekannte Straße";
             reader.close();
 
             return strings;
         }
 
         private void readElements(final String path, final int[][] nodes, final int[][] distributions,
-                final Map<String, IQuadtree> quadtreeMap,
+                final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
 
@@ -363,12 +355,17 @@ public class Reader implements IReader {
 
                 int[] elementData = readIntArray(path + "/" + names[i] + "Data");
                 int[] treeData = readIntArray(path + "/" + names[i] + "Tree");
-                quadtreeMap.put(names[i], new Quadtree(treeData, elementData, minZoomStep));
+                elementIteratorMap.put(names[i], new Quadtree(treeData, elementData, minZoomStep));
             }
 
             fireStepCommenced("Lade Points of Interest...");
 
             fireStepCommenced("Lade Labels...");
+            final int[] data = readIntArray(path + "/labels");
+            final IFactory<IPointAccessor> labelAccessorFactory = () -> {
+                return new LabelAccessor(distributions[4], data);
+            };
+            pointMap.put("label", labelAccessorFactory);
         }
 
         private int[] readIntArray(final int length, final CompressedInputStream reader) throws IOException {

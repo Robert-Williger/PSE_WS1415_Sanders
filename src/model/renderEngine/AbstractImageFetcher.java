@@ -3,7 +3,10 @@ package model.renderEngine;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -14,7 +17,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
 
     private final LRUCache cache;
     private final ConcurrentLinkedQueue<Image> freeList;
-    // private final GraphicsConfiguration config;
+    private final GraphicsConfiguration config;
 
     protected Image defaultImage;
     protected int imageSize;
@@ -23,8 +26,7 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
         freeList = new ConcurrentLinkedQueue<>();
         cache = new LRUCache(getCacheSize(), true, freeList);
 
-        // config =
-        // GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+        config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
         updateTileSize(manager.getState().getPixelTileSize());
     }
@@ -97,8 +99,9 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
 
     protected Image createImage() {
         // TODO improve this
-        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
-        // return config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
+        final BufferedImage ret = config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
+        // new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
+        return ret;
         // return new SpecialImage(imageSize, imageSize);
     }
 }

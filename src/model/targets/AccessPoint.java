@@ -2,23 +2,11 @@ package model.targets;
 
 public class AccessPoint {
 
-    private float offset;
-    private int street;
-
-    public AccessPoint() {
-
-    }
+    private final float offset;
+    private final int street;
 
     public AccessPoint(final float offset, final int street) {
         this.offset = Math.max(0, Math.min(1, offset));
-        this.street = street;
-    }
-
-    public void setOffset(final float offset) {
-        this.offset = offset;
-    }
-
-    public void setStreet(final int street) {
         this.street = street;
     }
 

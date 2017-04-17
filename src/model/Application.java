@@ -54,7 +54,7 @@ public class Application extends AbstractModel implements IApplication {
 
     @Override
     public boolean setMapData(final File file) {
-        if (file != null && file.exists() && reader.read(file)) {
+        if (/* file != null && file.exists() && */ reader.read(file)) {
             routing = reader.getRouteManager();
             processor = reader.getTextProcessor();
             map = new Map(reader.getMapManager());

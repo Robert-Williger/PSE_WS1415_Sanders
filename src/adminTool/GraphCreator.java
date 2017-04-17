@@ -16,17 +16,17 @@ import adminTool.elements.UnprocessedStreet;
 public class GraphCreator extends AbstractMapCreator {
 
     // Maps Node to the amount of streets its part of
-    private HashMap<Node, Integer>        nodeCount;
+    private HashMap<Node, Integer> nodeCount;
 
     // ID's
-    private int                           nodeIdCount;
-    private int                           edgeIdCount;
+    private int nodeIdCount;
+    private int edgeIdCount;
 
-    private HashMap<Node, Integer>        nodeIdMap;
+    private HashMap<Node, Integer> nodeIdMap;
 
-    private List<WeightedEdge>            edges;
-    private final List<Street>            processedStreets;
-    private List<Integer>                 oneways;
+    private List<WeightedEdge> edges;
+    private final List<Street> processedStreets;
+    private List<Integer> oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
     public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final File file) {
@@ -130,7 +130,7 @@ public class GraphCreator extends AbstractMapCreator {
             writeCompressedInt(oneways.size());
 
             for (final WeightedEdge edge : edges) {
-                stream.writeInt(edge.node1);
+                writeCompressedInt(edge.node1);
                 writeCompressedInt(edge.node2);
                 writeCompressedInt(edge.weight);
             }

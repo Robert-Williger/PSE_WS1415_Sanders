@@ -91,6 +91,7 @@ public class MapListener implements IDragListener {
 
     private class DragThread extends Thread {
         private static final int MIN_SMOOTH_DRAG_SPEED = 5;
+        private static final int MAX_SMOOTH_DRAG_SPEED = 150;
 
         private final Vector vector;
 
@@ -133,6 +134,10 @@ public class MapListener implements IDragListener {
         public void setSpeed(final int x, final int y) {
             if (new Vector(x, y).getLength() >= MIN_SMOOTH_DRAG_SPEED) {
                 vector.setDirection(x, y);
+                final double length = vector.getLength();
+                if (length > MAX_SMOOTH_DRAG_SPEED) {
+                    vector.scale(MAX_SMOOTH_DRAG_SPEED / length);
+                }
                 synchronized (this) {
                     notify();
                 }

@@ -121,7 +121,7 @@ public class ImageLoader implements IImageLoader {
 
         for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
             for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
-                newTiles.add(mapManager.getID(i, j, lastZoomStep));
+                newTiles.add(mapManager.getTileID(i, j, lastZoomStep));
             }
         }
         return newTiles;
@@ -139,7 +139,7 @@ public class ImageLoader implements IImageLoader {
         if (zoom != lastZoomStep) {
             for (int i = row; i < visibleRows + row; i++) {
                 for (int j = column; j < visibleColumns + column; j++) {
-                    newTiles.add(mapManager.getID(i, j, zoom));
+                    newTiles.add(mapManager.getTileID(i, j, zoom));
                 }
             }
         } else if (lastRow != row || lastColumn != column || lastVisibleRows < visibleRows
@@ -151,7 +151,7 @@ public class ImageLoader implements IImageLoader {
             for (int i = row; i < visibleRows + row; i++) {
                 for (int j = column; j < visibleColumns + column; j++) {
                     if (!lastView.contains(j, i)) {
-                        newTiles.add(mapManager.getID(i, j, zoom));
+                        newTiles.add(mapManager.getTileID(i, j, zoom));
                     }
                 }
             }
@@ -193,7 +193,7 @@ public class ImageLoader implements IImageLoader {
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    tiles.add(mapManager.getID(i, j, zoomedStep));
+                    tiles.add(mapManager.getTileID(i, j, zoomedStep));
                 }
             }
         }
@@ -213,7 +213,7 @@ public class ImageLoader implements IImageLoader {
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    tiles.add(mapManager.getID(i, j, zoomedStep));
+                    tiles.add(mapManager.getTileID(i, j, zoomedStep));
                 }
             }
         }
@@ -229,26 +229,26 @@ public class ImageLoader implements IImageLoader {
                 + prefetchCount; column++) {
             for (int row = Math.max(lastRow - prefetchCount, 0); row < lastRow; row++) {
                 // prefetch tiles which are over the current view
-                tiles.add(mapManager.getID(row, column, lastZoomStep));
+                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
 
             }
 
             for (int row = lastRow + lastVisibleRows; row < lastRow + lastVisibleRows + prefetchCount; row++) {
                 // prefetch tiles which are under the current view
-                tiles.add(mapManager.getID(row, column, lastZoomStep));
+                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
             }
         }
 
         for (int row = lastRow; row < lastRow + lastVisibleRows; row++) {
             for (int column = Math.max(lastColumn - prefetchCount, 0); column < lastColumn; column++) {
                 // prefetch tiles which are to the left of the current view
-                tiles.add(mapManager.getID(row, column, lastZoomStep));
+                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
             }
 
             for (int column = lastColumn + lastVisibleColumns; column < lastColumn + lastVisibleColumns
                     + prefetchCount; column++) {
                 // prefetch tiles which are to the right of the current view
-                tiles.add(mapManager.getID(row, column, lastZoomStep));
+                tiles.add(mapManager.getTileID(row, column, lastZoomStep));
             }
         }
 

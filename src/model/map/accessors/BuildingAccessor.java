@@ -8,7 +8,7 @@ public class BuildingAccessor extends CollectiveAccessor {
 
     @Override
     protected int getOffset() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -18,7 +18,8 @@ public class BuildingAccessor extends CollectiveAccessor {
                 return data[getIntID()];
             case "number":
                 return data[getIntID() + 1];
-            // TODO case "name" for public buildings...
+            case "name":
+                return data[getIntID() + 2];
             default:
                 return super.getAttribute(identifier);
         }

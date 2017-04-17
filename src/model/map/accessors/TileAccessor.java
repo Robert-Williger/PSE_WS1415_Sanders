@@ -5,17 +5,17 @@ import java.util.PrimitiveIterator;
 import java.util.function.LongConsumer;
 
 import model.map.IMapState;
-import model.map.IQuadtree;
+import model.map.IElementIterator;
 
 public class TileAccessor implements ITileAccessor {
 
-    private final java.util.Map<String, IQuadtree> map;
+    private final java.util.Map<String, IElementIterator> map;
     private final IMapState state;
     private int row;
     private int column;
     private int zoom;
 
-    public TileAccessor(final java.util.Map<String, IQuadtree> map, final IMapState state) {
+    public TileAccessor(final java.util.Map<String, IElementIterator> map, final IMapState state) {
         this.map = map;
         this.state = state;
     }
@@ -37,7 +37,7 @@ public class TileAccessor implements ITileAccessor {
 
     @Override
     public PrimitiveIterator.OfLong getElements(final String identifier) {
-        final IQuadtree tree = map.get(identifier);
+        final IElementIterator tree = map.get(identifier);
         if (tree != null) {
             return tree.iterator(row, column, zoom);
         }
@@ -47,7 +47,7 @@ public class TileAccessor implements ITileAccessor {
 
     @Override
     public void forEach(String identifier, LongConsumer consumer) {
-        final IQuadtree tree = map.get(identifier);
+        final IElementIterator tree = map.get(identifier);
         if (tree != null) {
             tree.forEach(row, column, zoom, consumer);
         }

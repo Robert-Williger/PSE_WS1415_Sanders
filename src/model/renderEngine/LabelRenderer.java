@@ -117,7 +117,7 @@ public class LabelRenderer extends AbstractRenderer {
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
 
-        boolean rendered = drawBuildingNumbers() | drawLabels();
+        boolean rendered = drawBuildingNamesAndNumbers() | drawLabels();
 
         g.dispose();
         if (rendered) {
@@ -199,7 +199,7 @@ public class LabelRenderer extends AbstractRenderer {
 
     }
 
-    private boolean drawBuildingNumbers() {
+    private boolean drawBuildingNamesAndNumbers() {
         boolean rendered = false;
 
         final int zoom = tileAccessor.getZoom();
@@ -212,40 +212,11 @@ public class LabelRenderer extends AbstractRenderer {
             g.setFont(buildingNumberFont);
             g.setColor(buildingNumberColor);
 
-            final LongConsumer consumer = (building) -> {
+            final LongConsumer consumer = building -> {
                 buildingAccessor.setID(building);
 
-                final String number = stringAccessor.getString(buildingAccessor.getAttribute("number"));
-                if (!number.isEmpty()) {
-                    final int size = buildingAccessor.size();
-                    int minX = Integer.MAX_VALUE;
-                    int minY = Integer.MAX_VALUE;
-                    int maxX = Integer.MIN_VALUE;
-                    int maxY = Integer.MIN_VALUE;
-
-                    for (int i = 0; i < size; i++) {
-                        int cx = buildingAccessor.getX(i);
-                        minX = Math.min(minX, cx);
-                        maxX = Math.max(maxX, cx);
-                        int cy = buildingAccessor.getY(i);
-                        minY = Math.min(minY, cy);
-                        maxY = Math.max(maxY, cy);
-                    }
-
-                    int width = converter.getPixelDistance(maxX - minX, zoom);
-                    int height = converter.getPixelDistance(maxY - minY, zoom);
-                    minX = converter.getPixelDistance(minX - x, zoom);
-                    minY = converter.getPixelDistance(minY - y, zoom);
-
-                    final Rectangle2D fontRect = metrics.getStringBounds(number, g);
-
-                    if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
-                        final Point2D.Float center = calculateCenter();
-                        center.setLocation((center.getX() + minX + width / 2) / 2f,
-                                (center.getY() + minY + height / 2) / 2f);
-                        g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f),
-                                (float) (center.y - fontRect.getHeight() / 2f + metrics.getAscent()));
-                    }
+                if (!draw(buildingAccessor.getAttribute("name"), x, y, zoom, metrics)) {
+                    draw(buildingAccessor.getAttribute("number"), x, y, zoom, metrics);
                 }
             };
             tileAccessor.forEach("building", consumer);
@@ -253,6 +224,45 @@ public class LabelRenderer extends AbstractRenderer {
 
         // TODO return false...
         return rendered;
+    }
+
+    private boolean draw(final int id, final int x, final int y, final int zoom, final FontMetrics metrics) {
+        if (id != -1) {
+            final String number = stringAccessor.getString(id);
+
+            final int size = buildingAccessor.size();
+            int minX = Integer.MAX_VALUE;
+            int minY = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxY = Integer.MIN_VALUE;
+
+            for (int i = 0; i < size; i++) {
+                int cx = buildingAccessor.getX(i);
+                minX = Math.min(minX, cx);
+                maxX = Math.max(maxX, cx);
+                int cy = buildingAccessor.getY(i);
+                minY = Math.min(minY, cy);
+                maxY = Math.max(maxY, cy);
+            }
+
+            int width = converter.getPixelDistance(maxX - minX, zoom);
+            int height = converter.getPixelDistance(maxY - minY, zoom);
+            minX = converter.getPixelDistance(minX - x, zoom);
+            minY = converter.getPixelDistance(minY - y, zoom);
+
+            final Rectangle2D fontRect = metrics.getStringBounds(number, g);
+
+            if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
+                final Point2D.Float center = calculateCenter();
+                center.setLocation((center.getX() + minX + width / 2) / 2f, (center.getY() + minY + height / 2) / 2f);
+                g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f),
+                        (float) (center.y - fontRect.getHeight() / 2f + metrics.getAscent()));
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Point2D.Float calculateCenter() {

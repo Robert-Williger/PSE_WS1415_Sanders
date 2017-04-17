@@ -114,9 +114,9 @@ public class ApplicationController extends AbstractController<IApplicationView> 
         exporter.setFileFilter(new FileNameExtensionFilter("PNG (*.png)", "png"));
 
         final File file = new File("default.map");
-        if (file.exists()) {
+//        if (file.exists()) {
             importMap(file);
-        }
+//        }
     }
 
     private Image loadImage(final String name) {

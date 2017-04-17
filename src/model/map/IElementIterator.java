@@ -3,7 +3,7 @@ package model.map;
 import java.util.PrimitiveIterator.OfLong;
 import java.util.function.LongConsumer;
 
-public interface IQuadtree {
+public interface IElementIterator {
 
     OfLong iterator(int row, int column, int zoom);
 

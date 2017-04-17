@@ -6,25 +6,34 @@ public abstract class Building extends Area {
         return new EmptyBuilding(nodes);
     }
 
-    public static Building create(final Node[] nodes, final String street, final String number) {
-        return new NamedBuilding(nodes, street, number);
+    public static Building create(final Node[] nodes, final String street) {
+        return new HalfAddressedBuilding(nodes, street);
     }
 
-    public static Building create(final Node[] nodes, final StreetNode node, final String houseNumber) {
-        return new StreetNodeBuilding(nodes, node, houseNumber);
+    public static Building create(final Node[] nodes, final String street, final String number, final String name) {
+        if (name != null) {
+            return new NamedBuilding(nodes, street, number, name);
+        }
+
+        if (street != null) {
+            if (number != null) {
+                return new AddressedBuilding(nodes, street, number);
+            }
+            return new HalfAddressedBuilding(nodes, street);
+        }
+
+        return new EmptyBuilding(nodes);
     }
 
     protected Building(final Node[] nodes) {
         super(nodes, 0);
     }
 
-    public abstract String getAddress();
+    public abstract String getName();
 
     public abstract String getStreet();
 
     public abstract String getHouseNumber();
-
-    public abstract StreetNode getStreetNode();
 
     private static class EmptyBuilding extends Building {
 
@@ -34,85 +43,59 @@ public abstract class Building extends Area {
 
         @Override
         public String getStreet() {
-            return "";
-        }
-
-        @Override
-        public String getHouseNumber() {
-            return "";
-        }
-
-        @Override
-        public StreetNode getStreetNode() {
             return null;
         }
 
         @Override
-        public String getAddress() {
-            return "";
+        public String getHouseNumber() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            return null;
         }
     }
 
-    private static class NamedBuilding extends Building {
-        private final String street;
+    private static class NamedBuilding extends AddressedBuilding {
+        private final String name;
+
+        public NamedBuilding(final Node[] nodes, final String street, final String number, final String name) {
+            super(nodes, street, number);
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+
+    private static class AddressedBuilding extends HalfAddressedBuilding {
         private final String number;
 
-        public NamedBuilding(final Node[] nodes, final String street, final String number) {
-            super(nodes);
-            this.street = street;
+        public AddressedBuilding(final Node[] nodes, final String street, final String number) {
+            super(nodes, street);
             this.number = number;
-        }
-
-        @Override
-        public String getAddress() {
-            return getStreet() + " " + getHouseNumber();
-        }
-
-        @Override
-        public String getStreet() {
-            return street;
         }
 
         @Override
         public String getHouseNumber() {
             return number;
         }
-
-        @Override
-        public StreetNode getStreetNode() {
-            return null;
-        }
     }
 
-    private static class StreetNodeBuilding extends Building {
+    private static class HalfAddressedBuilding extends EmptyBuilding {
+        private final String street;
 
-        private final StreetNode node;
-        private final String houseNumber;
-
-        public StreetNodeBuilding(final Node[] nodes, final StreetNode node, final String houseNumber) {
+        public HalfAddressedBuilding(final Node[] nodes, final String street) {
             super(nodes);
-            this.node = node;
-            this.houseNumber = houseNumber;
-        }
-
-        @Override
-        public String getAddress() {
-            return getStreet() + " " + getHouseNumber();
+            this.street = street;
         }
 
         @Override
         public String getStreet() {
-            return node.getStreet().getName();
-        }
-
-        @Override
-        public String getHouseNumber() {
-            return houseNumber;
-        }
-
-        @Override
-        public StreetNode getStreetNode() {
-            return node;
+            return street;
         }
     }
 }

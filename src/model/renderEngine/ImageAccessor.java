@@ -49,7 +49,7 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     @Override
     public Image getImage(final int row, final int column, final int zoom) {
-        final long tileID = mapManager.getID(row, column, zoom);
+        final long tileID = mapManager.getTileID(row, column, zoom);
         return imageFetcher.getImage(tileID);
     }
 

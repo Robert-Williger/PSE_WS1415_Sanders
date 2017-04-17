@@ -1,5 +1,6 @@
 package model.map;
 
+import java.awt.Point;
 import java.util.HashMap;
 import java.util.PrimitiveIterator;
 import java.util.PrimitiveIterator.OfLong;
@@ -21,6 +22,10 @@ public class MapManager implements IMapManager {
     private static final int MAX_COORD = (1 << COORD_BITS) - 1;
     private static final int MAX_ZOOM = (1 << ZOOM_BITS) - 1;
 
+    private static final int MAX_STREET_BUILDING_PIXEL_DISTANCE = 75;
+    // TODO improve this
+    private static final String UNKNOWN_STREET = "Unbekannte Straße";
+
     private final java.util.Map<String, IFactory<IPointAccessor>> pointMap;
     private final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap;
     private final IFactory<ITileAccessor> tileFactory;
@@ -32,9 +37,12 @@ public class MapManager implements IMapManager {
     private final IStringAccessor stringAccessor;
     private final IMapState state;
 
+    // TODO improve this
+    private final long streetBuildingCoordDistanceSq;
+
     private static IFactory<ITileAccessor> emptyFactory() {
         return () -> {
-            return new TileAccessor(new HashMap<String, IQuadtree>(),
+            return new TileAccessor(new HashMap<String, IElementIterator>(),
                     new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
         };
     }
@@ -60,116 +68,81 @@ public class MapManager implements IMapManager {
         this.buildingAccessor = createCollectiveAccessor("building");
         this.streetAccessor = createCollectiveAccessor("street");
         this.stringAccessor = createStringAccessor();
+
+        final int coordDistance = state.getConverter().getCoordDistance(MAX_STREET_BUILDING_PIXEL_DISTANCE,
+                state.getMaxZoom());
+        streetBuildingCoordDistanceSq = coordDistance * coordDistance;
     }
 
     @Override
     public AddressPoint getAddress(final int x, final int y) {
-        final AddressPoint node = new AddressPoint(state.getConverter());
+        final Target target = new Target();
 
-        long building = getBuildingAt(x, y, state.getMaxZoom());
-        final LongPredicate pred;
+        final long building = getBuildingAt(x, y);
+
+        final long[] tileIds = new long[4];
+        final double[] tileDistanceSquares = new double[4];
+
         if (building != -1) {
             buildingAccessor.setID(building);
-            final long street = buildingAccessor.getAttribute("street");
-            pred = l -> {
+            final int street = buildingAccessor.getAttribute("street");
+            final LongPredicate pred = l -> {
                 streetAccessor.setID(l);
-                return streetAccessor.getAttribute("name") == street;
+                final int oStreet = streetAccessor.getAttribute("name");
+                return street == -1 || oStreet == -1 || oStreet == street;
             };
 
-            node.setAddress(stringAccessor.getString(street) + " "
-                    + stringAccessor.getString(buildingAccessor.getAttribute("number")));
+            if (applyLocation(x, y, tileIds, tileDistanceSquares, pred, target)
+                    || applyLocation(x, y, tileIds, tileDistanceSquares, l -> true, target)) {
+                if (street == -1) {
+                    streetAccessor.setID(target.street);
+                    target.address = getStreetName(streetAccessor.getAttribute("name"));
+                } else {
+                    target.address = getBuildingAddress(street);
+                }
+
+                return target.toAddressPoint();
+            }
         } else {
-            pred = l -> true;
+            if (applyLocation(x, y, tileIds, tileDistanceSquares, l -> true, target)) {
+                if (!applyAddressByBuilding(target, tileIds, tileDistanceSquares)) {
+                    streetAccessor.setID(target.street);
+                    target.address = getStreetName(streetAccessor.getAttribute("name"));
+                }
+                return target.toAddressPoint();
+            }
         }
 
         // TODO find better abort criterion .. + define consistent max
         // distance for search
 
-        final long[] ids = new long[4];
-        final double[] distanceSquares = new double[4];
-
-        for (int zoom = state.getMaxZoom(); zoom >= state.getZoom(); zoom--) {
-            fillArrays(x, y, getRow(y, zoom), getColumn(x, zoom), zoom, distanceSquares, ids);
-
-            if (applyAccessPoint(x, y, ids, distanceSquares, node, pred)) {
-                if (building == -1 && !applyBuildingAddress(node, ids, distanceSquares)) {
-                    streetAccessor.setID(node.getStreet());
-                    node.setAddress(stringAccessor.getString(streetAccessor.getAttribute("name")));
-                }
-                return node;
-            }
-            --zoom;
-        }
         return null;
     }
 
-    private int getRow(final int yCoord, final int zoom) {
-        return yCoord / state.getCoordTileSize(zoom);
-    }
+    private boolean applyLocation(final int x, final int y, final long[] tileIds, final double[] tileDistanceSquares,
+            final LongPredicate pred, final Target node) {
+        double minDistSq = Long.MAX_VALUE;
 
-    private int getColumn(final int xCoord, final int zoom) {
-        return xCoord / state.getCoordTileSize(zoom);
-    }
+        for (int zoom = state.getMaxZoom(); zoom >= state.getZoom(); zoom--) {
+            fillArrays(x, y, zoom, tileDistanceSquares, tileIds);
 
-    private void fillArrays(final int x, final int y, final int row, final int column, final int zoom,
-            final double[] distanceSq, final long[] ids) {
-        final int coordTileSize = state.getCoordTileSize(zoom);
-        final int tileX = column * coordTileSize;
-        final int tileY = row * coordTileSize;
-        final int midX = tileX + coordTileSize / 2;
-        final int midY = tileY + coordTileSize / 2;
-        final int nColumn = x - midX < 0 ? -1 : 1; // neighbor column
-        final int nRow = y - midY < 0 ? -1 : 1; // neighbor row
-
-        calculateIDs(row, column, zoom, nRow, nColumn, ids);
-        calculateDistanceSquares(x, y, tileX, tileY, nColumn, nRow, coordTileSize, distanceSq);
-    }
-
-    private boolean applyAccessPoint(final int x, final int y, final long[] ids, final double[] distanceSquares,
-            final AddressPoint point, final LongPredicate pred) {
-        double nodeDistanceSq = Long.MAX_VALUE;
-        for (int i = 0; i < 4; i++) {
-            if (distanceSquares[i] < nodeDistanceSq) {
-                nodeDistanceSq = applyAccessPoint(x, y, nodeDistanceSq, point, ids[i], pred);
+            for (int i = 0; i < 4; i++) {
+                if (tileDistanceSquares[i] < minDistSq) {
+                    minDistSq = applyLocation(x, y, minDistSq, node, tileIds[i], pred);
+                }
             }
-        }
 
-        return nodeDistanceSq != Long.MAX_VALUE;
-    }
-
-    private boolean applyBuildingAddress(final AddressPoint node, final long[] ids, final double[] distanceSquares) {
-        double buildingDistanceSq = Long.MAX_VALUE;
-
-        for (int i = 0; i < 4; i++) {
-            if (distanceSquares[i] < buildingDistanceSq) {
-                buildingDistanceSq = applyBuildingAddress(node, buildingDistanceSq, ids[i]);
+            if (minDistSq != Long.MAX_VALUE) {
+                return true;
             }
+            --zoom;
         }
-        return buildingDistanceSq != Long.MAX_VALUE;
+
+        return false;
     }
 
-    private void calculateIDs(int row, int column, final int zoom, int nRow, int nColumn, long[] ids) {
-        for (int i = 0; i < 4; i++) {
-            ids[i] = getID(row + (i % 2) * nRow, column + (i / 2) * nColumn, zoom);
-        }
-    }
-
-    private void calculateDistanceSquares(final int x, final int y, final int tileX, final int tileY,
-            final int neighbourColumn, final int neighbourRow, final int coordTileSize,
-            final double[] distanceSquares) {
-        distanceSquares[0] = 0;
-
-        distanceSquares[1] = Math.abs((neighbourColumn + 1) / 2 * coordTileSize + tileX - x);
-        distanceSquares[1] *= distanceSquares[0];
-
-        distanceSquares[2] = Math.abs((neighbourRow + 1) / 2 * coordTileSize + tileY - y);
-        distanceSquares[2] *= distanceSquares[0];
-
-        distanceSquares[3] = distanceSquares[1] + distanceSquares[2];
-    }
-
-    private double applyAccessPoint(final int x, final int y, double minDistanceSq, final AddressPoint point,
-            final long id, final LongPredicate pred) {
+    private double applyLocation(final int x, final int y, double minDistanceSq, final Target target, final long id,
+            final LongPredicate pred) {
         tileAccessor.setID(id);
         for (OfLong iterator = tileAccessor.getElements("street"); iterator.hasNext();) {
             long street = iterator.nextLong();
@@ -178,12 +151,13 @@ public class MapManager implements IMapManager {
                 streetAccessor.setID(street);
 
                 float totalLength = 0;
+                final int size = streetAccessor.size();
                 final int maxLength = streetAccessor.getAttribute("length");
 
                 int lastX = streetAccessor.getX(0);
                 int lastY = streetAccessor.getY(0);
 
-                for (int i = 1; i < streetAccessor.size(); i++) {
+                for (int i = 1; i < size; i++) {
                     int currentX = streetAccessor.getX(i);
                     int currentY = streetAccessor.getY(i);
 
@@ -194,16 +168,14 @@ public class MapManager implements IMapManager {
                         final float length = (float) Math.sqrt(square);
                         final double s = Math.min(1,
                                 Math.max(0, ((x - lastX) * dx + (y - lastY) * dy) / (double) square));
-
-                        final double distX = lastX + s * dx - x;
-                        final double distY = lastY + s * dy - y;
-                        final double distanceSq = (distX * distX + distY * distY);
+                        final double distanceSq = Point.distanceSq(lastX + s * dx, lastY + s * dy, x, y);
 
                         if (distanceSq < minDistanceSq) {
                             // TODO long or int for street id?
-                            point.setOffset((float) ((totalLength + s * length) / maxLength));
-                            point.setStreet((int) street);
-                            point.setLocation((int) (lastX + s * dx), (int) (lastY + s * dy));
+                            target.offset = (float) ((totalLength + s * length) / maxLength);
+                            target.street = (int) street;
+                            target.x = (int) (lastX + s * dx);
+                            target.y = (int) (lastY + s * dy);
                             minDistanceSq = distanceSq;
                         }
 
@@ -218,15 +190,26 @@ public class MapManager implements IMapManager {
         return minDistanceSq;
     }
 
-    private double applyBuildingAddress(final AddressPoint node, double minDistanceSq, final long id) {
-        final int x = node.getX(state.getZoom());
-        final int y = node.getY(state.getZoom());
+    private boolean applyAddressByBuilding(final Target target, final long[] ids, final double[] distanceSquares) {
+        double buildingDistanceSq = streetBuildingCoordDistanceSq;
+
+        for (int i = 0; i < 4; i++) {
+            if (distanceSquares[i] < buildingDistanceSq) {
+                buildingDistanceSq = applyAddressByBuilding(target, buildingDistanceSq, ids[i]);
+            }
+        }
+        return buildingDistanceSq != streetBuildingCoordDistanceSq;
+    }
+
+    private double applyAddressByBuilding(final Target target, double minDistSq, final long id) {
+        final int x = target.x;
+        final int y = target.y;
 
         tileAccessor.setID(id);
 
-        streetAccessor.setID(node.getStreet());
+        streetAccessor.setID(target.street);
         final int name = streetAccessor.getAttribute("name");
-        final String street = stringAccessor.getString(name);
+        final String street = getStreetName(name);
 
         // TODO use lambda expression (tileAccessor.forEach).
         final PrimitiveIterator.OfLong buildings = tileAccessor.getElements("building");
@@ -235,24 +218,52 @@ public class MapManager implements IMapManager {
             buildingAccessor.setID(buildingID);
             if (name == buildingAccessor.getAttribute("street")) {
                 final int size = buildingAccessor.size();
-                for (int i = 0; i < size; i++) {
-                    final double xDist = x - buildingAccessor.getX(i);
-                    final double yDist = y - buildingAccessor.getY(i);
-                    // TODO epsilon?
-                    final double distanceSq = xDist * xDist + yDist * yDist;
-                    if (distanceSq < minDistanceSq) {
-                        minDistanceSq = distanceSq;
-                        node.setAddress(
-                                street + " " + stringAccessor.getString(buildingAccessor.getAttribute("number")));
+
+                int lastX = buildingAccessor.getX(0);
+                int lastY = buildingAccessor.getY(0);
+
+                for (int i = 1; i < size; i++) {
+                    int currentX = buildingAccessor.getX(i);
+                    int currentY = buildingAccessor.getY(i);
+
+                    if (currentX != lastX || currentY != lastY) {
+                        final long dx = currentX - lastX;
+                        final long dy = currentY - lastY;
+                        final long square = (dx * dx + dy * dy);
+                        final double s = Math.min(1,
+                                Math.max(0, ((x - lastX) * dx + (y - lastY) * dy) / (double) square));
+                        final double distanceSq = Point.distanceSq(lastX + s * dx, lastY + s * dy, x, y);
+
+                        if (distanceSq < minDistSq) {
+                            minDistSq = distanceSq;
+                            target.address = getBuildingAddress(street);
+                        }
                     }
+                    lastX = currentX;
+                    lastY = currentY;
                 }
             }
         }
 
-        return minDistanceSq;
+        return minDistSq;
     }
 
-    private long getBuildingAt(final int x, final int y, final int zoom) {
+    private String getStreetName(final int streetNameStringID) {
+        return streetNameStringID != -1 ? stringAccessor.getString(streetNameStringID) : UNKNOWN_STREET;
+    }
+
+    private String getBuildingAddress(final int streetNameStringID) {
+        final String name = getStreetName(streetNameStringID);
+        return getBuildingAddress(name);
+    }
+
+    private String getBuildingAddress(final String streetName) {
+        final int number = buildingAccessor.getAttribute("number");
+        return streetName + (number != -1 ? (" " + stringAccessor.getString(number)) : "");
+    }
+
+    private long getBuildingAt(final int x, final int y) {
+        final int zoom = state.getMaxZoom();
         final int row = getRow(y, zoom);
         final int column = getColumn(x, zoom);
 
@@ -269,6 +280,48 @@ public class MapManager implements IMapManager {
         return -1;
     }
 
+    private void fillArrays(final int x, final int y, final int zoom, final double[] distanceSq, final long[] tileIDs) {
+        final int row = getRow(y, zoom);
+        final int column = getColumn(x, zoom);
+        final int coordTileSize = state.getCoordTileSize(zoom);
+        final int tileX = column * coordTileSize;
+        final int tileY = row * coordTileSize;
+        final int midX = tileX + coordTileSize / 2;
+        final int midY = tileY + coordTileSize / 2;
+        final int nColumn = x - midX < 0 ? -1 : 1; // neighbor column
+        final int nRow = y - midY < 0 ? -1 : 1; // neighbor row
+
+        calculateTileIDs(row, column, zoom, nRow, nColumn, tileIDs);
+        calculateTileDistanceSquares(x, y, tileX, tileY, nRow, nColumn, coordTileSize, distanceSq);
+    }
+
+    private void calculateTileIDs(int row, int column, final int zoom, int nRow, int nColumn, long[] tileIDs) {
+        for (int i = 0; i < 4; i++) {
+            tileIDs[i] = getTileID(row + (i % 2) * nRow, column + (i / 2) * nColumn, zoom);
+        }
+    }
+
+    private void calculateTileDistanceSquares(final int x, final int y, final int tileX, final int tileY,
+            final int nRow, final int nColumn, final int coordTileSize, final double[] distanceSquares) {
+        distanceSquares[0] = 0;
+
+        distanceSquares[1] = Math.abs((nColumn + 1) / 2 * coordTileSize + tileX - x);
+        distanceSquares[1] *= distanceSquares[0];
+
+        distanceSquares[2] = Math.abs((nRow + 1) / 2 * coordTileSize + tileY - y);
+        distanceSquares[2] *= distanceSquares[0];
+
+        distanceSquares[3] = distanceSquares[1] + distanceSquares[2];
+    }
+
+    private int getRow(final int yCoord, final int zoom) {
+        return yCoord / state.getCoordTileSize(zoom);
+    }
+
+    private int getColumn(final int xCoord, final int zoom) {
+        return xCoord / state.getCoordTileSize(zoom);
+    }
+
     private int getGridSize(final int sectionSize, final int location, final int zoom) {
         final int cTileSize = state.getCoordTileSize(zoom);
 
@@ -281,7 +334,7 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public long getID(final int row, final int column, final int zoom) {
+    public long getTileID(final int row, final int column, final int zoom) {
         return isValid(row, column, zoom) ? ((((long) zoom << COORD_BITS) | row) << COORD_BITS) | column : -1;
     }
 
@@ -330,5 +383,18 @@ public class MapManager implements IMapManager {
     private boolean isValid(final int row, final int column, final int zoom) {
         // return row > 0 && row < MAX_COORD && ...
         return ((MAX_COORD - row) | (MAX_COORD - column) | (MAX_ZOOM - zoom) | row | column | zoom) >= 0;
+    }
+
+    private class Target {
+
+        public float offset;
+        public String address;
+        public int x;
+        public int y;
+        public int street;
+
+        public AddressPoint toAddressPoint() {
+            return new AddressPoint(address, x, y, street, offset, state.getConverter());
+        }
     }
 }

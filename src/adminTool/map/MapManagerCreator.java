@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.zip.ZipFile;
 
 import adminTool.elements.Area;
 import adminTool.elements.Building;
@@ -29,9 +30,11 @@ public class MapManagerCreator extends CompressedWriter {
 
     private static final int MAX_ZOOM_STEP = 19;
     private static final int MIN_ZOOM_STEP = 0;
-    private static final int MAX_ZOOM_STEPS = 13;
+    private static final int MAX_ZOOM_STEPS = 15;
 
     private static final int SCALE_FACTOR_BITS = 21;
+
+    private static final int MAX_WAY_PIXEL_WIDTH = 17;
 
     private Rectangle bounds;
 
@@ -41,6 +44,7 @@ public class MapManagerCreator extends CompressedWriter {
     private Collection<Area> areas;
     private Collection<Way> ways;
     private Collection<Building> buildings;
+    private Collection<Label> labels;
 
     public MapManagerCreator(final Collection<Building> buildings, final Collection<Street> streets,
             final Collection<POI> pois, final Collection<Way> ways, final Collection<Area> terrain,
@@ -50,6 +54,7 @@ public class MapManagerCreator extends CompressedWriter {
         this.areas = terrain;
         this.ways = ways;
         this.buildings = buildings;
+        this.labels = labels;
         this.path = filePath;
     }
 
@@ -65,25 +70,20 @@ public class MapManagerCreator extends CompressedWriter {
 
         writeHeader(headerOutput, minZoomStep, maxZoomStep, conversionBits);
 
-        TypeSorter<Area> areaSorter = new TypeSorter<>(areas, new Area[areas.size()]);
-        Sorting<Area> areaSorting = areaSorter.sort();
-        areaSorter = null;
+        final Sorting<Area> areaSorting = sort(areas, new Area[areas.size()]);
         areas = null;
 
-        TypeSorter<Way> waySorter = new TypeSorter<>(ways, new Way[ways.size()]);
-        Sorting<Way> waySorting = waySorter.sort();
-        waySorter = null;
+        final Sorting<Way> waySorting = sort(ways, new Way[ways.size()]);
         ways = null;
 
-        TypeSorter<Street> streetSorter = new TypeSorter<>(streets, new Street[streets.size()]);
-        Sorting<Street> streetSorting = streetSorter.sort();
-        streetSorter = null;
+        final Sorting<Street> streetSorting = sort(streets, new Street[streets.size()]);
         streets = null;
 
-        TypeSorter<Building> buildingSorter = new TypeSorter<>(buildings, new Building[buildings.size()]);
-        Sorting<Building> buildingSorting = buildingSorter.sort();
-        buildingSorter = null;
+        final Sorting<Building> buildingSorting = sort(buildings, new Building[buildings.size()]);
         buildings = null;
+
+        final Sorting<Label> labelSorting = sort(labels, new Label[labels.size()]);
+        labels = null;
 
         final DataOutputStream areaOutput = createOutputStream("areas");
         final DataOutputStream streetOutput = createOutputStream("streets");
@@ -91,9 +91,11 @@ public class MapManagerCreator extends CompressedWriter {
         final DataOutputStream buildingOutput = createOutputStream("buildings");
         final DataOutputStream stringOutput = createOutputStream("strings");
         final DataOutputStream nodeOutput = createOutputStream("nodes");
+        final DataOutputStream labelOutput = createOutputStream("labels");
 
         ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, waySorting, buildingSorting,
-                headerOutput, nodeOutput, stringOutput, areaOutput, streetOutput, wayOutput, buildingOutput);
+                labelSorting, headerOutput, nodeOutput, stringOutput, areaOutput, streetOutput, wayOutput,
+                buildingOutput, labelOutput);
 
         elementWriter.write();
 
@@ -104,10 +106,17 @@ public class MapManagerCreator extends CompressedWriter {
         buildingOutput.close();
         stringOutput.close();
         nodeOutput.close();
+        labelOutput.close();
 
         //
         //
         //
+
+        // TODO improve this
+        final int[] maxWayCoordWidths = new int[MAX_ZOOM_STEPS];
+        for (int zoom = minZoomStep; zoom < maxZoomStep; ++zoom) {
+            maxWayCoordWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
+        }
 
         DataOutputStream elementData = createOutputStream("areaData");
         DataOutputStream treeData = createOutputStream("areaTree");
@@ -119,14 +128,14 @@ public class MapManagerCreator extends CompressedWriter {
         elementData = createOutputStream("wayData");
         treeData = createOutputStream("wayTree");
         new WayQuadtreeWriter(waySorting.elements, elementWriter.wayAddresses, elementData, treeData,
-                MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize).write();
+                MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize, maxWayCoordWidths).write();
         elementData.close();
         treeData.close();
 
         elementData = createOutputStream("streetData");
         treeData = createOutputStream("streetTree");
         new WayQuadtreeWriter(streetSorting.elements, elementWriter.streetAddresses, elementData, treeData,
-                MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize).write();
+                MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize, maxWayCoordWidths).write();
         elementData.close();
         treeData.close();
 
@@ -140,6 +149,11 @@ public class MapManagerCreator extends CompressedWriter {
 
     private DataOutputStream createOutputStream(final String name) throws FileNotFoundException {
         return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path + "/" + name)));
+    }
+
+    private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {
+        TypeSorter<T> sorter = new TypeSorter<>(elements, data);
+        return sorter.sort();
     }
 
     private double log2(final double value) {

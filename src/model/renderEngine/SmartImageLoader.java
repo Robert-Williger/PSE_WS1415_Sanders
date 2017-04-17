@@ -119,7 +119,7 @@ public class SmartImageLoader implements IImageLoader {
     private void loadCurrentTiles(final IImageFetcher imageFetcher) {
         for (int i = lastRow; i < lastRowCount + lastRow; i++) {
             for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
-                imageFetcher.loadImage(mapManager.getID(i, j, lastZoomStep), priority);
+                imageFetcher.loadImage(mapManager.getTileID(i, j, lastZoomStep), priority);
             }
         }
     }
@@ -136,7 +136,7 @@ public class SmartImageLoader implements IImageLoader {
         if (zoom != lastZoomStep) {
             for (int i = row; i < visibleRows + row; i++) {
                 for (int j = column; j < visibleColumns + column; j++) {
-                    loadTile(mapManager.getID(i, j, zoom));
+                    loadTile(mapManager.getTileID(i, j, zoom));
                 }
             }
 
@@ -149,12 +149,12 @@ public class SmartImageLoader implements IImageLoader {
                 fromColumn = Math.min(column + visibleColumns, lastColumn);
                 for (int x = column; x < fromColumn; x++) {
                     for (int y = row; y < row + visibleRows; y++) {
-                        loadTile(mapManager.getID(y, x, zoom));
+                        loadTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
                 for (int x = column - 1; x >= column - 2; x--) {
                     for (int y = row; y < row + visibleRows; y++) {
-                        loadBorderTile(mapManager.getID(y, x, zoom));
+                        loadBorderTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
 
@@ -163,12 +163,12 @@ public class SmartImageLoader implements IImageLoader {
                 toColumn = Math.max(lastColumn + lastVisibleColumns, column);
                 for (int x = toColumn; x < column + visibleColumns; x++) {
                     for (int y = row; y < row + visibleRows; y++) {
-                        loadTile(mapManager.getID(y, x, zoom));
+                        loadTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
                 for (int x = column + visibleColumns; x < column + visibleColumns + 2; x++) {
                     for (int y = row; y < row + visibleRows; y++) {
-                        loadBorderTile(mapManager.getID(y, x, zoom));
+                        loadBorderTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
 
@@ -177,12 +177,12 @@ public class SmartImageLoader implements IImageLoader {
             if (row < lastRow) {
                 for (int y = row; y < Math.min(row + visibleRows, lastRow); y++) {
                     for (int x = fromColumn; x < toColumn; x++) {
-                        loadTile(mapManager.getID(y, x, zoom));
+                        loadTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
                 for (int y = row - 1; y >= row - 2; y--) {
                     for (int x = fromColumn; x < toColumn; x++) {
-                        loadBorderTile(mapManager.getID(y, x, zoom));
+                        loadBorderTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
 
@@ -190,12 +190,12 @@ public class SmartImageLoader implements IImageLoader {
             } else if (row + visibleRows > lastRow + lastRowCount) {
                 for (int y = Math.max(lastRow + lastRowCount, row); y < row + visibleRows; y++) {
                     for (int x = fromColumn; x < toColumn; x++) {
-                        loadTile(mapManager.getID(y, x, zoom));
+                        loadTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
                 for (int y = row + visibleRows; y < row + visibleRows + 2; y++) {
                     for (int x = fromColumn; x < toColumn; x++) {
-                        loadBorderTile(mapManager.getID(y, x, zoom));
+                        loadBorderTile(mapManager.getTileID(y, x, zoom));
                     }
                 }
 
@@ -236,7 +236,7 @@ public class SmartImageLoader implements IImageLoader {
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    loadZoomTile(mapManager.getID(i, j, zoomedStep));
+                    loadZoomTile(mapManager.getTileID(i, j, zoomedStep));
                 }
             }
         }
@@ -257,7 +257,7 @@ public class SmartImageLoader implements IImageLoader {
 
             for (int i = startRow; i < endRow; i++) {
                 for (int j = startColumn; j < endColumn; j++) {
-                    loadZoomTile(mapManager.getID(i, j, zoomedStep));
+                    loadZoomTile(mapManager.getTileID(i, j, zoomedStep));
                 }
             }
         }
@@ -268,25 +268,25 @@ public class SmartImageLoader implements IImageLoader {
                 + prefetchCount; column++) {
             for (int row = Math.max(lastRow - prefetchCount, 0); row < lastRow; row++) {
                 // prefetch tiles which are over the current view
-                loadBorderTile(mapManager.getID(row, column, lastZoomStep));
+                loadBorderTile(mapManager.getTileID(row, column, lastZoomStep));
             }
 
             for (int row = lastRow + lastRowCount; row < lastRow + lastRowCount + prefetchCount; row++) {
                 // prefetch tiles which are under the current view
-                loadBorderTile(mapManager.getID(row, column, lastZoomStep));
+                loadBorderTile(mapManager.getTileID(row, column, lastZoomStep));
             }
         }
 
         for (int row = lastRow; row < lastRow + lastRowCount; row++) {
             for (int column = Math.max(lastColumn - prefetchCount, 0); column < lastColumn; column++) {
                 // prefetch tiles which are to the left of the current view
-                loadBorderTile(mapManager.getID(row, column, lastZoomStep));
+                loadBorderTile(mapManager.getTileID(row, column, lastZoomStep));
             }
 
             for (int column = lastColumn + lastVisibleColumns; column < lastColumn + lastVisibleColumns
                     + prefetchCount; column++) {
                 // prefetch tiles which are to the right of the current view
-                loadBorderTile(mapManager.getID(row, column, lastZoomStep));
+                loadBorderTile(mapManager.getTileID(row, column, lastZoomStep));
             }
         }
     }

@@ -5,7 +5,7 @@ import java.util.function.LongConsumer;
 
 import util.LongList;
 
-public class Quadtree implements IQuadtree {
+public class Quadtree implements IElementIterator {
     private final int[] treeData;
     private final int[] elementData;
     private final int zoomOffset;
