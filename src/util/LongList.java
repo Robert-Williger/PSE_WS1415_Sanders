@@ -7,7 +7,7 @@ public class LongList {
     private static final int DEFAULT_CAPACITY = 10;
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    private long[] data; // non-private to simplify nested class access
+    private long[] data;
     private int size;
 
     public LongList(int initialCapacity) {
@@ -18,6 +18,16 @@ public class LongList {
 
     public LongList() {
         this(DEFAULT_CAPACITY);
+    }
+
+    public boolean addAll(final LongList list) {
+        long[] a = list.data;
+        int numNew = list.size;
+        ensureCapacityInternal(size + numNew); // Increments modCount
+        System.arraycopy(a, 0, data, size, numNew);
+        size += numNew;
+
+        return numNew != 0;
     }
 
     public void trimToSize() {

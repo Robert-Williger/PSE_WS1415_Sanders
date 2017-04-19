@@ -16,6 +16,7 @@ public class ElementAccessor extends Accessor implements IElementAccessor {
     public int getType() {
         // TODO implement binary search?
         int type = 0;
+
         while (getID() > distribution[type]) {
             ++type;
         }

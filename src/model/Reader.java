@@ -1,13 +1,17 @@
 package model;
 
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import model.ITextProcessor.Entry;
 import model.map.CollectiveAccessorFactory;
@@ -35,8 +39,9 @@ public class Reader implements IReader {
 
     private final List<IProgressListener> list;
 
+    private DataInputStream stream;
+
     private IDirectedGraph graph;
-    private CompressedInputStream reader;
     private IMapManager manager;
     private IRouteManager rm;
     private ITextProcessor tp;
@@ -55,13 +60,24 @@ public class Reader implements IReader {
         canceled = false;
         MapManagerReader managerReader = new MapManagerReader();
 
-        final String path = "quadtree";
-        totalBytes = (long) Math.ceil(getTotalBytes(path) / 100.0);
+        ZipFile zipFile = null;
+        try {
+            zipFile = new ZipFile(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (file == null) {
+            return false;
+        }
+
+        totalBytes = (long) Math.ceil(getTotalBytes(zipFile) / 100.0);
+
         currentBytes = 0;
         progress = -1;
         try {
-            graph = readGraph(new File(path).getAbsolutePath());
-            manager = managerReader.readMapManager(new File(path).getAbsolutePath());
+            graph = readGraph(zipFile);
+            manager = managerReader.readMapManager(zipFile);
             tp = new AdvancedTextProcessor(new Entry[0][], manager);
         } catch (final Exception e) {
             managerReader = null;
@@ -69,7 +85,7 @@ public class Reader implements IReader {
             if (!canceled) {
                 fireErrorOccured("Beim Kartenimport ist ein Fehler aufgetreten.");
             }
-            e.printStackTrace();
+
             return false;
         }
 
@@ -98,9 +114,12 @@ public class Reader implements IReader {
     @Override
     public void cancelCalculation() {
         canceled = true;
-        try {
-            reader.close();
-        } catch (final IOException e) {
+
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (final IOException e) {
+            }
         }
     }
 
@@ -132,51 +151,52 @@ public class Reader implements IReader {
         }
     }
 
-    private CompressedInputStream createInputStream(final String path) throws IOException {
-        return createInputStream(new File(path));
+    private long getTotalBytes(final ZipFile zipFile) {
+        return zipFile.stream().mapToInt((e) -> (int) e.getSize()).sum();
     }
 
-    private CompressedInputStream createInputStream(final File file) throws IOException {
-        return new CompressedInputStream(new BufferedInputStream(new ProgressableInputStream(file)));
+    private void applyInputStream(final ZipFile zipFile, final ZipEntry entry) throws IOException {
+        stream = createInputStream(zipFile, entry);
     }
 
-    private long getTotalBytes(final String path) {
-        long ret = 0;
-        for (final File file : new File(path).listFiles()) {
-            ret += file.length();
-        }
-        return ret;
+    private DataInputStream createInputStream(final ZipFile zipFile, final ZipEntry entry) throws IOException {
+        return new DataInputStream(new BufferedInputStream(new ProgressableInputStream(zipFile.getInputStream(entry))));
     }
 
     /*
-     * Reads the Graph-section of the tsk file and generates the Graph.
+     * Reads the Graph-section of the map file and generates the Graph.
      */
-    private IDirectedGraph readGraph(final String path) throws IOException {
+    private IDirectedGraph readGraph(final ZipFile zipFile) throws IOException {
         fireStepCommenced("Lade Graph...");
 
-        final CompressedInputStream reader = createInputStream(path + "/graph");
-        final int nodeCount = reader.readCompressedInt();
+        final ZipEntry entry = zipFile.getEntry("graph");
+        if (entry != null) {
+            applyInputStream(zipFile, entry);
+            final int nodeCount = stream.readInt();
 
-        final int[] firstNodes = new int[reader.readCompressedInt()];
-        final int[] secondNodes = new int[firstNodes.length];
-        final int[] weights = new int[firstNodes.length];
-        final int[] oneways = new int[reader.readCompressedInt()];
+            final int[] firstNodes = new int[stream.readInt()];
+            final int[] secondNodes = new int[firstNodes.length];
+            final int[] weights = new int[firstNodes.length];
+            final int[] oneways = new int[stream.readInt()];
 
-        for (int i = 0; i < firstNodes.length; i++) {
-            firstNodes[i] = reader.readCompressedInt();
-            secondNodes[i] = reader.readCompressedInt();
-            weights[i] = reader.readCompressedInt();
+            for (int i = 0; i < firstNodes.length; i++) {
+                firstNodes[i] = stream.readInt();
+                secondNodes[i] = stream.readInt();
+                weights[i] = stream.readInt();
+            }
+
+            int id = 0;
+            for (int i = 0; i < oneways.length; i++) {
+                id += stream.readInt();
+                oneways[i] = id;
+            }
+
+            stream.close();
+
+            return new DirectedGraph(nodeCount, firstNodes, secondNodes, weights, oneways);
         }
 
-        int id = 0;
-        for (int i = 0; i < oneways.length; i++) {
-            id += reader.readCompressedInt();
-            oneways[i] = id;
-        }
-
-        reader.close();
-
-        return new DirectedGraph(nodeCount, firstNodes, secondNodes, weights, oneways);
+        return new DirectedGraph(0, new int[0], new int[0], new int[0], new int[0]);
     }
 
     // private void readIndex(final IStreet[] streets, final Label[] labels)
@@ -247,20 +267,19 @@ public class Reader implements IReader {
 
     private class MapManagerReader {
 
-        public IMapManager readMapManager(final String path) throws IOException {
+        public IMapManager readMapManager(final ZipFile zipFile) throws IOException {
             fireStepCommenced("Lade Header...");
-            final CompressedInputStream reader = createInputStream(path + "/header");
-            final IPixelConverter converter = readConverter(reader);
-            final IMapState state = readMapState(reader, converter);
-            final int[][] distributions = readDistributions(reader);
-            reader.close();
 
-            final String[] strings = readStrings(path);
-            final int[][] nodes = readNodes(path);
+            final IMapState state = readMapState(zipFile);
+            final int[][] distributions = readDistributions(zipFile);
+
+            final String[] strings = readStrings(zipFile);
+            final int[][] nodes = readNodes(zipFile);
             final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
             final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
-            readElements(path, nodes, distributions, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
+            readElements(zipFile, nodes, distributions, elementIteratorMap, pointMap, collectiveMap,
+                    state.getMinZoom());
             final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
                 @Override
                 public ITileAccessor create() {
@@ -270,62 +289,89 @@ public class Reader implements IReader {
             return new MapManager(pointMap, collectiveMap, tileFactory, strings, state);
         }
 
-        private IMapState readMapState(final CompressedInputStream reader, final IPixelConverter converter)
-                throws IOException {
-            final int width = reader.readInt();
-            final int height = reader.readInt();
-            final int minZoomStep = reader.readInt();
-            final int maxZoomStep = reader.readInt();
-            final int tileSize = reader.readInt();
+        private IMapState readMapState(final ZipFile zipFile) throws IOException {
+            final ZipEntry entry = zipFile.getEntry("header");
+            if (entry == null) {
+                return null;
+            }
+            applyInputStream(zipFile, entry);
+            final IPixelConverter converter = readConverter(stream);
+
+            final int width = stream.readInt();
+            final int height = stream.readInt();
+            final int minZoomStep = stream.readInt();
+            final int maxZoomStep = stream.readInt();
+            final int tileSize = stream.readInt();
+
+            stream.close();
+
             return new MapState(width, height, minZoomStep, maxZoomStep, tileSize, converter);
         }
 
-        private IPixelConverter readConverter(final CompressedInputStream reader) throws IOException {
-            final int conversionBits = reader.readInt();
+        private IPixelConverter readConverter(final DataInputStream stream) throws IOException {
+            final int conversionBits = stream.readInt();
             return new PixelConverter(conversionBits);
         }
 
-        private int[][] readDistributions(final CompressedInputStream reader) throws IOException {
+        private int[][] readDistributions(final ZipFile zipFile) throws IOException {
             // TODO improve this
+            final ZipEntry entry = zipFile.getEntry("distributions");
+            if (entry == null) {
+                return null;
+            }
+            applyInputStream(zipFile, entry);
+
             final int[][] distributions = new int[5][];
             for (int i = 0; i < 5; i++) {
-                distributions[i] = readIntArray(reader.readInt(), reader);
+                distributions[i] = readIntArray(stream, stream.readInt());
             }
+            stream.close();
 
             return distributions;
         }
 
-        private int[][] readNodes(final String path) throws IOException {
+        private int[][] readNodes(final ZipFile zipFile) throws IOException {
             fireStepCommenced("Lade Nodes...");
 
-            reader = createInputStream(path + "/nodes");
+            final ZipEntry entry = zipFile.getEntry("nodes");
+            if (entry == null) {
+                // TODO
+                return new int[0][0];
+            }
+            applyInputStream(zipFile, entry);
+
             int count = 0;
 
-            final int[] xPoints = new int[reader.readInt()];
+            final int[] xPoints = new int[stream.readInt()];
             final int[] yPoints = new int[xPoints.length];
             for (count = 0; count < xPoints.length; count++) {
-                xPoints[count] = reader.readInt();
-                yPoints[count] = reader.readInt();
+                xPoints[count] = stream.readInt();
+                yPoints[count] = stream.readInt();
             }
-            reader.close();
+            stream.close();
 
             return new int[][] { xPoints, yPoints };
         }
 
-        private String[] readStrings(final String path) throws IOException {
+        private String[] readStrings(final ZipFile zipFile) throws IOException {
             fireStepCommenced("Lade Adressen...");
 
-            reader = createInputStream(path + "/strings");
-            final String[] strings = new String[reader.readInt()];
-            for (int count = 0; count < strings.length; count++) {
-                strings[count] = reader.readUTF();
+            final ZipEntry entry = zipFile.getEntry("strings");
+            if (entry == null) {
+                return new String[0];
             }
-            reader.close();
+            applyInputStream(zipFile, entry);
+
+            final String[] strings = new String[stream.readInt()];
+            for (int count = 0; count < strings.length; count++) {
+                strings[count] = stream.readUTF();
+            }
+            stream.close();
 
             return strings;
         }
 
-        private void readElements(final String path, final int[][] nodes, final int[][] distributions,
+        private void readElements(final ZipFile zipFile, final int[][] nodes, final int[][] distributions,
                 final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
@@ -350,51 +396,67 @@ public class Reader implements IReader {
             };
             for (int i = 0; i < names.length; i++) {
                 fireStepCommenced("Lade " + outputNames[i] + "...");
-                accessors[i].setData(readIntArray(path + "/" + names[i] + "s"));
+
+                final ZipEntry entry = zipFile.getEntry(names[i] + "s");
+                if (entry == null) {
+                    // TODO
+                    continue;
+                }
+                accessors[i].setData(readIntArray(zipFile, entry));
                 collectiveMap.put(names[i], accessors[i]);
 
-                int[] elementData = readIntArray(path + "/" + names[i] + "Data");
-                int[] treeData = readIntArray(path + "/" + names[i] + "Tree");
+                // TODO handle missing entries!
+                int[] elementData = readIntArray(zipFile, names[i] + "Data");
+                int[] treeData = readIntArray(zipFile, names[i] + "Tree");
                 elementIteratorMap.put(names[i], new Quadtree(treeData, elementData, minZoomStep));
             }
 
             fireStepCommenced("Lade Points of Interest...");
 
             fireStepCommenced("Lade Labels...");
-            final int[] data = readIntArray(path + "/labels");
+            // TODO handle missing entry!
+            final int[] data = readIntArray(zipFile, "labels");
             final IFactory<IPointAccessor> labelAccessorFactory = () -> {
                 return new LabelAccessor(distributions[4], data);
             };
             pointMap.put("label", labelAccessorFactory);
         }
 
-        private int[] readIntArray(final int length, final CompressedInputStream reader) throws IOException {
-            final int[] ret = new int[length];
-            for (int i = 0; i < ret.length; i++) {
-                ret[i] = reader.readInt();
-            }
-
-            return ret;
+        private int[] readIntArray(final ZipFile zipFile, final String name) throws IOException {
+            return readIntArray(zipFile, zipFile.getEntry(name));
         }
 
-        private int[] readIntArray(final String path) throws IOException {
-            final CompressedInputStream reader = createInputStream(path);
+        private int[] readIntArray(final ZipFile zipFile, final ZipEntry entry) throws IOException {
+            assert zipFile != null;
 
-            final int[] ret = new int[reader.available() / 4];
-            for (int i = 0; i < ret.length; i++) {
-                ret[i] = reader.readInt();
+            if (entry != null) {
+                final long size = entry.getSize();
+                if (size != -1) {
+                    applyInputStream(zipFile, entry);
+                    final int[] ret = readIntArray(stream, (int) (size / 4));
+                    stream.close();
+                    return ret;
+                }
             }
 
-            reader.close();
+            // TODO what to do here?
+            return new int[0];
+        }
+
+        private int[] readIntArray(final DataInputStream stream, final int size) throws IOException {
+            final int[] ret = new int[size];
+            for (int i = 0; i < ret.length; i++) {
+                ret[i] = stream.readInt();
+            }
 
             return ret;
         }
     }
 
-    private class ProgressableInputStream extends FileInputStream {
+    private class ProgressableInputStream extends FilterInputStream {
 
-        public ProgressableInputStream(final File in) throws IOException {
-            super(in);
+        public ProgressableInputStream(final InputStream inputStream) throws IOException {
+            super(inputStream);
         }
 
         @Override

@@ -1,14 +1,12 @@
 package adminTool.map;
 
 import java.awt.Rectangle;
-import java.io.BufferedOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Area;
 import adminTool.elements.Building;
@@ -38,7 +36,7 @@ public class MapManagerCreator extends CompressedWriter {
 
     private Rectangle bounds;
 
-    private String path;
+    private final ZipOutputStream zipOutput;
 
     private Collection<Street> streets;
     private Collection<Area> areas;
@@ -48,14 +46,14 @@ public class MapManagerCreator extends CompressedWriter {
 
     public MapManagerCreator(final Collection<Building> buildings, final Collection<Street> streets,
             final Collection<POI> pois, final Collection<Way> ways, final Collection<Area> terrain,
-            final Collection<Label> labels, final Rectangle boundingBox, final String filePath) {
+            final Collection<Label> labels, final Rectangle boundingBox, final ZipOutputStream zipOutput) {
         this.bounds = boundingBox;
         this.streets = streets;
         this.areas = terrain;
         this.ways = ways;
         this.buildings = buildings;
         this.labels = labels;
-        this.path = filePath;
+        this.zipOutput = zipOutput;
     }
 
     public void create() throws IOException {
@@ -66,9 +64,9 @@ public class MapManagerCreator extends CompressedWriter {
         final int maxZoomStep = Math.min(MAX_ZOOM_STEP, minZoomStep + MAX_ZOOM_STEPS - 1);
         final int conversionBits = SCALE_FACTOR_BITS;
 
-        final DataOutputStream headerOutput = createOutputStream("header");
+        final DataOutputStream dataOutput = new DataOutputStream(zipOutput);
 
-        writeHeader(headerOutput, minZoomStep, maxZoomStep, conversionBits);
+        writeHeader(dataOutput, minZoomStep, maxZoomStep, conversionBits);
 
         final Sorting<Area> areaSorting = sort(areas, new Area[areas.size()]);
         areas = null;
@@ -85,28 +83,10 @@ public class MapManagerCreator extends CompressedWriter {
         final Sorting<Label> labelSorting = sort(labels, new Label[labels.size()]);
         labels = null;
 
-        final DataOutputStream areaOutput = createOutputStream("areas");
-        final DataOutputStream streetOutput = createOutputStream("streets");
-        final DataOutputStream wayOutput = createOutputStream("ways");
-        final DataOutputStream buildingOutput = createOutputStream("buildings");
-        final DataOutputStream stringOutput = createOutputStream("strings");
-        final DataOutputStream nodeOutput = createOutputStream("nodes");
-        final DataOutputStream labelOutput = createOutputStream("labels");
-
         ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, waySorting, buildingSorting,
-                labelSorting, headerOutput, nodeOutput, stringOutput, areaOutput, streetOutput, wayOutput,
-                buildingOutput, labelOutput);
+                labelSorting, zipOutput);
 
         elementWriter.write();
-
-        headerOutput.close();
-        areaOutput.close();
-        streetOutput.close();
-        wayOutput.close();
-        buildingOutput.close();
-        stringOutput.close();
-        nodeOutput.close();
-        labelOutput.close();
 
         //
         //
@@ -118,37 +98,17 @@ public class MapManagerCreator extends CompressedWriter {
             maxWayCoordWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
         }
 
-        DataOutputStream elementData = createOutputStream("areaData");
-        DataOutputStream treeData = createOutputStream("areaTree");
-        new AreaQuadtreeWriter(areaSorting.elements, elementWriter.areaAddresses, elementData, treeData,
+        new AreaQuadtreeWriter(areaSorting.elements, elementWriter.areaAddresses, zipOutput, "area",
                 MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize).write();
-        elementData.close();
-        treeData.close();
 
-        elementData = createOutputStream("wayData");
-        treeData = createOutputStream("wayTree");
-        new WayQuadtreeWriter(waySorting.elements, elementWriter.wayAddresses, elementData, treeData,
+        new WayQuadtreeWriter(waySorting.elements, elementWriter.wayAddresses, zipOutput, "way", MAX_ELEMENTS_PER_TILE,
+                MAX_ZOOM_STEPS, coordMapSize, maxWayCoordWidths).write();
+
+        new WayQuadtreeWriter(streetSorting.elements, elementWriter.streetAddresses, zipOutput, "street",
                 MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize, maxWayCoordWidths).write();
-        elementData.close();
-        treeData.close();
 
-        elementData = createOutputStream("streetData");
-        treeData = createOutputStream("streetTree");
-        new WayQuadtreeWriter(streetSorting.elements, elementWriter.streetAddresses, elementData, treeData,
-                MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize, maxWayCoordWidths).write();
-        elementData.close();
-        treeData.close();
-
-        elementData = createOutputStream("buildingData");
-        treeData = createOutputStream("buildingTree");
-        new AreaQuadtreeWriter(buildingSorting.elements, elementWriter.buildingAddresses, elementData, treeData,
+        new AreaQuadtreeWriter(buildingSorting.elements, elementWriter.buildingAddresses, zipOutput, "building",
                 MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, coordMapSize).write();
-        elementData.close();
-        treeData.close();
-    }
-
-    private DataOutputStream createOutputStream(final String name) throws FileNotFoundException {
-        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path + "/" + name)));
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {
@@ -162,12 +122,16 @@ public class MapManagerCreator extends CompressedWriter {
 
     private void writeHeader(final DataOutput output, final int minZoomStep, final int maxZoomStep,
             final int conversionBits) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("header"));
+
         output.writeInt(conversionBits);
         output.writeInt(bounds.width);
         output.writeInt(bounds.height);
         output.writeInt(minZoomStep);
         output.writeInt(maxZoomStep);
         output.writeInt(TILE_LENGTH);
+
+        zipOutput.closeEntry();
     }
 
     private static class TypeSorter<T extends Typeable> {

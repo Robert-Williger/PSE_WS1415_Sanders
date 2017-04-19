@@ -1,19 +1,21 @@
 package adminTool;
 
 import java.awt.geom.Point2D;
-import java.io.File;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Node;
 import adminTool.elements.Street;
 import adminTool.elements.UnprocessedStreet;
 
-public class GraphCreator extends AbstractMapCreator {
+public class GraphCreator {
 
     // Maps Node to the amount of streets its part of
     private HashMap<Node, Integer> nodeCount;
@@ -29,9 +31,11 @@ public class GraphCreator extends AbstractMapCreator {
     private List<Integer> oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
-    public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final File file) {
-        super(file);
+    private final ZipOutputStream zipOutput;
+
+    public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final ZipOutputStream zipOutput) {
         this.unprocessedStreets = unprocessedStreets;
+        this.zipOutput = zipOutput;
 
         processedStreets = new ArrayList<>();
     }
@@ -40,7 +44,6 @@ public class GraphCreator extends AbstractMapCreator {
         return processedStreets;
     }
 
-    @Override
     public void create() {
 
         nodeIdCount = 0;
@@ -123,25 +126,27 @@ public class GraphCreator extends AbstractMapCreator {
         // Collections.sort(edgesList);
 
         try {
-            createOutputStream(false);
+            zipOutput.putNextEntry(new ZipEntry("graph"));
 
-            writeCompressedInt(nodeIdCount);
-            writeCompressedInt(edges.size());
-            writeCompressedInt(oneways.size());
+            DataOutputStream dataOutput = new DataOutputStream(zipOutput);
+
+            dataOutput.writeInt(nodeIdCount);
+            dataOutput.writeInt(edges.size());
+            dataOutput.writeInt(oneways.size());
 
             for (final WeightedEdge edge : edges) {
-                writeCompressedInt(edge.node1);
-                writeCompressedInt(edge.node2);
-                writeCompressedInt(edge.weight);
+                dataOutput.writeInt(edge.node1);
+                dataOutput.writeInt(edge.node2);
+                dataOutput.writeInt(edge.weight);
             }
 
             int last = 0;
             for (final int id : oneways) {
-                writeCompressedInt(id - last);
+                dataOutput.writeInt(id - last);
                 last = id;
             }
 
-            stream.close();
+            zipOutput.closeEntry();
         } catch (final IOException e) {
         }
 

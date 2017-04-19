@@ -1,7 +1,7 @@
 package adminTool.map;
 
 import java.awt.Rectangle;
-import java.io.DataOutput;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Node;
 import adminTool.elements.Way;
@@ -12,10 +12,10 @@ public class WayQuadtreeWriter extends AbstractQuadtreeWriter {
     private final Rectangle rect;
     private final int[] maxWayCoordWidths;
 
-    public WayQuadtreeWriter(final Way[] ways, final int[] addresses, final DataOutput dataOutput,
-            final DataOutput treeOutput, final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize,
+    public WayQuadtreeWriter(final Way[] ways, final int[] addresses, final ZipOutputStream zipOutput,
+            final String name, final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize,
             final int[] maxWayCoordWidths) {
-        super(addresses, dataOutput, treeOutput, maxElementsPerTile, maxZoomSteps, coordMapSize);
+        super(addresses, zipOutput, name, maxElementsPerTile, maxZoomSteps, coordMapSize);
         this.ways = ways;
         this.maxWayCoordWidths = maxWayCoordWidths;
         rect = new Rectangle();

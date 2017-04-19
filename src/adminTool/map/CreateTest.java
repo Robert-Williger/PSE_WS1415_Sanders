@@ -1,7 +1,11 @@
 package adminTool.map;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.GraphCreator;
 import adminTool.IOSMParser;
@@ -15,34 +19,48 @@ public class CreateTest {
     public CreateTest() {
         long start = System.currentTimeMillis();
 
-        IOSMParser parser = new OSMParser();
+        ZipOutputStream zipOutput = null;
         try {
-            parser.read(new File("default.pbf"));
-        } catch (final Exception e) {
+            zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("default.map")));
+        } catch (final FileNotFoundException e) {
             e.printStackTrace();
         }
 
-        System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-        start = System.currentTimeMillis();
+        if (zipOutput != null) {
+            // zipOutput.setLevel(ZipOutputStream.STORED);
 
-        final File outputDir = new File("quadtree");
+            IOSMParser parser = new OSMParser();
+            try {
+                parser.read(new File("default.pbf"));
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
 
-        GraphCreator graph = new GraphCreator(parser.getStreets(), new File("quadtree/graph"));
-        graph.create();
+            System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
 
-        System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-        start = System.currentTimeMillis();
+            GraphCreator graphCreator = new GraphCreator(parser.getStreets(), zipOutput);
+            graphCreator.create();
 
-        MapManagerCreator creator = new MapManagerCreator(parser.getBuildings(), graph.getStreets(), parser.getPOIs(),
-                parser.getWays(), parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(),
-                outputDir.getAbsolutePath());
+            System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
 
-        try {
-            creator.create();
-        } catch (IOException e) {
-            e.printStackTrace();
+            MapManagerCreator mapCreator = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
+                    parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(),
+                    parser.getBoundingBox(), zipOutput);
+
+            try {
+                mapCreator.create();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            try {
+                zipOutput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-        System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
     }
 }

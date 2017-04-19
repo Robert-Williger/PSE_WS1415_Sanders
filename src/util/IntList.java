@@ -7,7 +7,7 @@ public class IntList {
     private static final int DEFAULT_CAPACITY = 10;
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    private int[] data; // non-private to simplify nested class access
+    private int[] data;
     private int size;
 
     public IntList(int initialCapacity) {
@@ -24,6 +24,16 @@ public class IntList {
         if (size < data.length) {
             data = java.util.Arrays.copyOf(data, size);
         }
+    }
+
+    public boolean addAll(final IntList list) {
+        int[] a = list.data;
+        int numNew = list.size;
+        ensureCapacityInternal(size + numNew); // Increments modCount
+        System.arraycopy(a, 0, data, size, numNew);
+        size += numNew;
+
+        return numNew != 0;
     }
 
     public void ensureCapacity(int minCapacity) {

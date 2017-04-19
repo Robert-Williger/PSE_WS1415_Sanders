@@ -1,27 +1,30 @@
 package adminTool.map;
 
 import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.PrimitiveIterator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import util.IntList;
 
 public abstract class AbstractQuadtreeWriter extends CompressedWriter {
-    private final DataOutput treeOutput;
-    private final DataOutput elementOutput;
+    private final ZipOutputStream zipOutput;
     private final int mapSize;
     private final int maxElementsPerTile;
     private final int maxZoomSteps;
+    private final String name;
     private final int[] addresses;
 
-    public AbstractQuadtreeWriter(final int[] addresses, final DataOutput elementOutput, final DataOutput treeOutput,
+    public AbstractQuadtreeWriter(final int[] addresses, final ZipOutputStream zipOutput, final String name,
             final int maxElementsPerTile, final int maxZoomSteps, final int mapSize) {
-        this.elementOutput = elementOutput;
-        this.treeOutput = treeOutput;
+        this.zipOutput = zipOutput;
         this.maxElementsPerTile = maxElementsPerTile;
         this.maxZoomSteps = maxZoomSteps;
         this.mapSize = mapSize;
         this.addresses = addresses;
+        this.name = name;
     }
 
     protected abstract boolean intersects(final int index, final int zoom, final int x, final int y, final int size);
@@ -42,7 +45,11 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
         final IntList duplicateList = new IntList();
         final IntList dataList = new IntList();
+
         final IntList treeList = new IntList();
+
+        final DataOutputStream dataOutput = new DataOutputStream(zipOutput);
+        zipOutput.putNextEntry(new ZipEntry(name + "Data"));
 
         int writtenDataInts = 0;
         int zoom = 0;
@@ -72,10 +79,14 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
                 zoom = updateStateByInnerNode(choices, zoom);
             }
-            writtenDataInts += writeNodeElements(dataList, duplicateList);
+            writtenDataInts += writeNodeElements(dataList, duplicateList, dataOutput);
         }
 
-        writeIntList(treeList, treeOutput);
+        zipOutput.closeEntry();
+
+        zipOutput.putNextEntry(new ZipEntry(name + "Tree"));
+        writeIntList(treeList, dataOutput);
+        zipOutput.closeEntry();
 
         System.out.println(System.currentTimeMillis() - start);
     }
@@ -90,9 +101,9 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
     private IntList[][] createIndices() {
         final IntList[][] indices = new IntList[maxZoomSteps][];
-        indices[0] = new IntList[]{createInitialList()};
+        indices[0] = new IntList[] { createInitialList() };
         for (int i = 1; i < indices.length; i++) {
-            indices[i] = new IntList[]{new IntList(), new IntList(), new IntList(), new IntList()};
+            indices[i] = new IntList[] { new IntList(), new IntList(), new IntList(), new IntList() };
         }
 
         return indices;
@@ -241,10 +252,11 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         return 2;
     }
 
-    private int writeNodeElements(final IntList data, final IntList duplicates) throws IOException {
-        elementOutput.writeInt((duplicates.size() << 16) | data.size());
-        writeIntList(data, elementOutput);
-        writeIntList(duplicates, elementOutput);
+    private int writeNodeElements(final IntList data, final IntList duplicates, final DataOutput dataOutput)
+            throws IOException {
+        dataOutput.writeInt((duplicates.size() << 16) | data.size());
+        writeIntList(data, dataOutput);
+        writeIntList(duplicates, dataOutput);
         return data.size() + duplicates.size() + 1;
     }
 

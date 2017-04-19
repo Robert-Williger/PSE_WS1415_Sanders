@@ -1,9 +1,12 @@
 package adminTool.map;
 
 import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Area;
 import adminTool.elements.Building;
@@ -24,29 +27,20 @@ public class ElementWriter extends CompressedWriter {
     private Sorting<Building> buildings;
     private Sorting<Label> labels;
 
+    private final ZipOutputStream zipOutput;
+
     int[] areaAddresses;
     int[] streetAddresses;
     int[] wayAddresses;
     int[] buildingAddresses;
     int[] labelAddresses;
 
-    private DataOutput headerOutput;
-    private DataOutput nodeOutput;
-    private DataOutput stringOutput;
-    private DataOutput areaOutput;
-    private DataOutput streetOutput;
-    private DataOutput wayOutput;
-    private DataOutput buildingOutput;
-    private DataOutput labelOutput;
-
     public ElementWriter(
 
             final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
             final Sorting<Building> buildings, final Sorting<Label> labels,
 
-            final DataOutput elementHeaderOutput, final DataOutput nodeOutput, final DataOutput stringOutput,
-            final DataOutput areaOutput, final DataOutput streetOutput, final DataOutput wayOutput,
-            final DataOutput buildingOutput, final DataOutput labelOutput
+            final ZipOutputStream zipOutput
 
     ) {
         this.areas = areas;
@@ -55,14 +49,7 @@ public class ElementWriter extends CompressedWriter {
         this.buildings = buildings;
         this.labels = labels;
 
-        this.nodeOutput = nodeOutput;
-        this.stringOutput = stringOutput;
-        this.areaOutput = areaOutput;
-        this.streetOutput = streetOutput;
-        this.wayOutput = wayOutput;
-        this.headerOutput = elementHeaderOutput;
-        this.buildingOutput = buildingOutput;
-        this.labelOutput = labelOutput;
+        this.zipOutput = zipOutput;
 
         areaAddresses = new int[areas.elements.length];
         streetAddresses = new int[streets.elements.length];
@@ -72,28 +59,30 @@ public class ElementWriter extends CompressedWriter {
     }
 
     public void write() {
+        final DataOutputStream dataOutput = new DataOutputStream(zipOutput);
+
         createNodeMap();
         try {
-            writeNodes();
+            writeNodes(dataOutput);
         } catch (final IOException e) {
             e.printStackTrace();
         }
 
         createNameAndNumberMap();
         try {
-            writeStrings();
-            writeStreets();
-            writeWays();
-            writeAreas();
-            writeBuildings();
-            writeLabels();
+            writeStrings(dataOutput);
+            writeStreets(dataOutput);
+            writeWays(dataOutput);
+            writeAreas(dataOutput);
+            writeBuildings(dataOutput);
+            writeLabels(dataOutput);
+            writeDistributions(dataOutput);
         } catch (final IOException e) {
             e.printStackTrace();
         }
 
         stringMap = null;
         nodeMap = null;
-
     }
 
     private void createNodeMap() {
@@ -142,108 +131,120 @@ public class ElementWriter extends CompressedWriter {
         }
     }
 
-    private void writeNodes() throws IOException {
-        nodeOutput.writeInt(nodeMap.size());
+    private void writeNodes(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("nodes"));
+        dataOutput.writeInt(nodeMap.size());
 
         for (final Entry<Node, Integer> entry : nodeMap.entrySet()) {
-            writePoint(entry.getKey(), nodeOutput);
+            writePoint(entry.getKey(), dataOutput);
         }
+
+        zipOutput.closeEntry();
     }
 
-    private void writeStrings() throws IOException {
+    private void writeStrings(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("strings"));
         // dont store the (null,-1) entry...
-        stringOutput.writeInt(stringMap.size() - 1);
+        dataOutput.writeInt(stringMap.size() - 1);
         for (final Entry<String, Integer> entry : stringMap.entrySet()) {
             // TODO improve this
             final String name = entry.getKey();
             if (name != null) {
-                if (entry.getKey().isEmpty()) {
-                    stringOutput.writeUTF("Unbekannte Straße");
-                } else {
-                    stringOutput.writeUTF(entry.getKey());
-                }
+                dataOutput.writeUTF(entry.getKey());
             }
         }
+
+        zipOutput.closeEntry();
     }
 
-    private void writeStreets() throws IOException {
+    private void writeStreets(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("streets"));
+
         int address = 0;
         int index = -1;
         for (final Street street : streets.elements) {
             streetAddresses[++index] = address;
 
-            streetOutput.writeInt(street.getID());
+            dataOutput.writeInt(street.getID());
             ++address;
 
-            streetOutput.writeInt(stringMap.get(street.getName()));
+            dataOutput.writeInt(stringMap.get(street.getName()));
             ++address;
 
-            address += writeMultiElement(street, streetOutput);
+            address += writeMultiElement(street, dataOutput);
         }
 
-        writeDistribution(streets.distribution, streetAddresses);
+        zipOutput.closeEntry();
     }
 
-    private void writeWays() throws IOException {
+    private void writeWays(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("ways"));
+
         int address = 0;
         int index = -1;
         for (final Way way : ways.elements) {
             wayAddresses[++index] = address;
 
-            address += writeMultiElement(way, wayOutput);
+            address += writeMultiElement(way, dataOutput);
         }
 
-        writeDistribution(ways.distribution, wayAddresses);
+        zipOutput.closeEntry();
     }
 
-    private void writeBuildings() throws IOException {
+    private void writeBuildings(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("buildings"));
+
         int address = 0;
         int index = -1;
         for (final Building building : buildings.elements) {
             buildingAddresses[++index] = address;
 
             // TODO improve this -> not store null explicit with -1.
-            buildingOutput.writeInt(stringMap.get(building.getStreet()));
+            dataOutput.writeInt(stringMap.get(building.getStreet()));
             ++address;
 
-            buildingOutput.writeInt(stringMap.get(building.getHouseNumber()));
+            dataOutput.writeInt(stringMap.get(building.getHouseNumber()));
             ++address;
 
-            buildingOutput.writeInt(stringMap.get(building.getName()));
+            dataOutput.writeInt(stringMap.get(building.getName()));
             ++address;
 
-            address += writeMultiElement(building, buildingOutput);
+            address += writeMultiElement(building, dataOutput);
         }
 
-        writeDistribution(buildings.distribution, buildingAddresses);
+        zipOutput.closeEntry();
     }
 
-    private void writeLabels() throws IOException {
+    private void writeLabels(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("labels"));
+
         int address = 0;
         int index = -1;
         for (final Label label : labels.elements) {
             labelAddresses[++index] = address;
 
-            writePoint(label, labelOutput);
+            writePoint(label, dataOutput);
             address += 2;
 
-            labelOutput.writeInt(stringMap.get(label.getName()));
+            dataOutput.writeInt(stringMap.get(label.getName()));
             ++address;
         }
 
-        writeDistribution(labels.distribution, labelAddresses);
+        zipOutput.closeEntry();
     }
 
-    private void writeAreas() throws IOException {
+    private void writeAreas(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("areas"));
+
         int addresses = 0;
         int index = -1;
         for (final Area area : areas.elements) {
             areaAddresses[++index] = addresses;
 
-            addresses += writeMultiElement(area, areaOutput);
+            addresses += writeMultiElement(area, dataOutput);
         }
 
-        writeDistribution(areas.distribution, areaAddresses);
+        zipOutput.closeEntry();
     }
 
     private int putNodes(final MultiElement[] elements, int nodeCount) {
@@ -275,16 +276,29 @@ public class ElementWriter extends CompressedWriter {
         return ret;
     }
 
-    private void writeDistribution(final int[] distribution, final int[] addresses) throws IOException {
+    private void writeDistributions(final DataOutputStream dataOutput) throws IOException {
+        zipOutput.putNextEntry(new ZipEntry("distributions"));
+
+        writeDistribution(dataOutput, streets.distribution, streetAddresses);
+        writeDistribution(dataOutput, ways.distribution, wayAddresses);
+        writeDistribution(dataOutput, areas.distribution, areaAddresses);
+        writeDistribution(dataOutput, buildings.distribution, buildingAddresses);
+        writeDistribution(dataOutput, labels.distribution, labelAddresses);
+
+        zipOutput.closeEntry();
+    }
+
+    private void writeDistribution(final DataOutput output, final int[] distribution, final int[] addresses)
+            throws IOException {
         int total = 0;
 
-        headerOutput.writeInt(distribution.length);
+        output.writeInt(distribution.length);
         for (int type = 0; type < distribution.length - 1; type++) {
             total += distribution[type];
             // TODO -/+ 1?
-            headerOutput.writeInt(addresses[total]);
+            output.writeInt(addresses[total]);
         }
         // TODO
-        headerOutput.writeInt(addresses[addresses.length - 1] + 1);
+        output.writeInt(addresses[addresses.length - 1] + 1);
     }
 }
