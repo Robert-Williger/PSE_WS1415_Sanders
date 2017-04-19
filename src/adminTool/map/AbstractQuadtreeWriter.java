@@ -1,38 +1,37 @@
 package adminTool.map;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.PrimitiveIterator;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import adminTool.AbstractMapFileWriter;
 import util.IntList;
 
-public abstract class AbstractQuadtreeWriter extends CompressedWriter {
-    private final ZipOutputStream zipOutput;
+public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
     private final int mapSize;
     private final int maxElementsPerTile;
     private final int maxZoomSteps;
+    private final int totalElements;
     private final String name;
-    private final int[] addresses;
 
-    public AbstractQuadtreeWriter(final int[] addresses, final ZipOutputStream zipOutput, final String name,
+    public AbstractQuadtreeWriter(final ZipOutputStream zipOutput, final String name, final int totalElements,
             final int maxElementsPerTile, final int maxZoomSteps, final int mapSize) {
-        this.zipOutput = zipOutput;
+        super(zipOutput);
+
         this.maxElementsPerTile = maxElementsPerTile;
         this.maxZoomSteps = maxZoomSteps;
         this.mapSize = mapSize;
-        this.addresses = addresses;
+        this.totalElements = totalElements;
         this.name = name;
     }
 
     protected abstract boolean intersects(final int index, final int zoom, final int x, final int y, final int size);
 
+    @Override
     public void write() throws IOException {
         long start = System.currentTimeMillis();
 
-        final boolean[] duplicates = new boolean[addresses.length];
+        final boolean[] duplicates = new boolean[totalElements];
 
         final int[][] xPos = new int[maxZoomSteps][4];
         final int[][] yPos = new int[maxZoomSteps][4];
@@ -48,8 +47,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
         final IntList treeList = new IntList();
 
-        final DataOutputStream dataOutput = new DataOutputStream(zipOutput);
-        zipOutput.putNextEntry(new ZipEntry(name + "Data"));
+        putNextEntry(name + "Data");
 
         int writtenDataInts = 0;
         int zoom = 0;
@@ -79,16 +77,15 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
                 zoom = updateStateByInnerNode(choices, zoom);
             }
-            writtenDataInts += writeNodeElements(dataList, duplicateList, dataOutput);
+            writtenDataInts += writeNodeElements(dataList, duplicateList);
         }
+        closeEntry();
 
-        zipOutput.closeEntry();
+        putNextEntry(name + "Tree");
+        writeIntList(treeList);
+        closeEntry();
 
-        zipOutput.putNextEntry(new ZipEntry(name + "Tree"));
-        writeIntList(treeList, dataOutput);
-        zipOutput.closeEntry();
-
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println("   " + name + "-Quadtree creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
     }
 
     private boolean[][] createChildren() {
@@ -110,8 +107,8 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
     }
 
     private IntList createInitialList() {
-        final IntList indices = new IntList(addresses.length);
-        for (int i = 0; i < addresses.length; i++) {
+        final IntList indices = new IntList(totalElements);
+        for (int i = 0; i < totalElements; i++) {
             indices.add(i);
         }
         return indices;
@@ -119,7 +116,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
     private void allocateRoot(final IntList treeList, final boolean[] leafs) {
         treeList.add(0);
-        leafs[0] = maxZoomSteps == 1 || addresses.length <= maxElementsPerTile;
+        leafs[0] = maxZoomSteps == 1 || totalElements <= maxElementsPerTile;
         if (!leafs[0]) {
             treeList.add(0);
         }
@@ -177,7 +174,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
 
     private void setDataList(final IntList dataList) {
         for (int i = 0; i < dataList.size(); i++) {
-            dataList.set(i, addresses[dataList.get(i)]);
+            dataList.set(i, dataList.get(i));
         }
     }
 
@@ -187,7 +184,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         duplicateList.clear();
         for (final PrimitiveIterator.OfInt iterator = indices.iterator(); iterator.hasNext();) {
             final int index = iterator.nextInt();
-            (duplicates[index] ? duplicateList : dataList).add(addresses[index]);
+            (duplicates[index] ? duplicateList : dataList).add(index);
         }
     }
 
@@ -197,7 +194,7 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         for (final PrimitiveIterator.OfInt iterator = indices.iterator(); iterator.hasNext();) {
             final int index = iterator.nextInt();
             if (duplicates[index]) {
-                duplicateList.add(addresses[index]);
+                duplicateList.add(index);
             }
         }
     }
@@ -252,17 +249,16 @@ public abstract class AbstractQuadtreeWriter extends CompressedWriter {
         return 2;
     }
 
-    private int writeNodeElements(final IntList data, final IntList duplicates, final DataOutput dataOutput)
-            throws IOException {
+    private int writeNodeElements(final IntList data, final IntList duplicates) throws IOException {
         dataOutput.writeInt((duplicates.size() << 16) | data.size());
-        writeIntList(data, dataOutput);
-        writeIntList(duplicates, dataOutput);
+        writeIntList(data);
+        writeIntList(duplicates);
         return data.size() + duplicates.size() + 1;
     }
 
-    private void writeIntList(final IntList list, final DataOutput output) throws IOException {
+    private void writeIntList(final IntList list) throws IOException {
         for (final PrimitiveIterator.OfInt iterator = list.iterator(); iterator.hasNext();) {
-            output.writeInt(iterator.nextInt());
+            dataOutput.writeInt(iterator.nextInt());
         }
     }
 

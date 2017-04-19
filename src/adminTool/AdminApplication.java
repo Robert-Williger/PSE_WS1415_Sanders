@@ -1,10 +1,15 @@
 package adminTool;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Boundary;
-import adminTool.map.MapManagerCreator;
+import adminTool.map.MapManagerWriter;
 
 public class AdminApplication {
 
@@ -50,27 +55,54 @@ public class AdminApplication {
 
         // Internal conversion of the data and writing
 
-        GraphCreator graphCreator = new GraphCreator(parser.getStreets(), outputPath);
-        graphCreator.create();
+        ZipOutputStream zipOutput = null;
+        try {
+            zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("default.map")));
+        } catch (final FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
-        MapManagerCreator mapManagerCreator = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
-                parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(),
-                outputPath);
+        if (zipOutput != null) {
+            GraphWriter graphWriter = new GraphWriter(parser.getStreets(), zipOutput);
+            try {
+                graphWriter.write();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
 
-        // TODO take street list of mapManagerCreator instead of graph creator
-        // [already sorted]
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(parser.getBuildings(), graphWriter.getStreets(),
+                    parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(),
+                    parser.getBoundingBox(), zipOutput);
 
-        List<List<Boundary>> boundaries = parser.getBoundaries();
-        parser = null;
-        graphCreator = null;
+            // TODO take street list of mapManagerCreator instead of graph creator
+            // [already sorted]
 
-        mapManagerCreator.create();
+            List<List<Boundary>> boundaries = parser.getBoundaries();
+            parser = null;
+            graphWriter = null;
 
-        IndexCreator indexCreator = new IndexCreator(boundaries, mapManagerCreator.getOrderedStreets(), outputPath);
-        mapManagerCreator = null;
-        boundaries = null;
+            try {
+                mapManagerWriter.write();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
 
-        indexCreator.create();
+            IndexWriter indexCreator = new IndexWriter(boundaries, mapManagerWriter.streetSorting, zipOutput);
+            mapManagerWriter = null;
+            boundaries = null;
+
+            try {
+                indexCreator.write();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                zipOutput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         admininterface.complete();
 

@@ -1,25 +1,19 @@
 package adminTool;
 
 import java.awt.geom.Point2D;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Node;
 import adminTool.elements.Street;
 import adminTool.elements.UnprocessedStreet;
 
-public class GraphCreator {
-
-    // Maps Node to the amount of streets its part of
-    private HashMap<Node, Integer> nodeCount;
-
+public class GraphWriter extends AbstractMapFileWriter {
     // ID's
     private int nodeIdCount;
     private int edgeIdCount;
@@ -31,12 +25,10 @@ public class GraphCreator {
     private List<Integer> oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
-    private final ZipOutputStream zipOutput;
+    public GraphWriter(final Collection<UnprocessedStreet> unprocessedStreets, final ZipOutputStream zipOutput) {
+        super(zipOutput);
 
-    public GraphCreator(final Collection<UnprocessedStreet> unprocessedStreets, final ZipOutputStream zipOutput) {
         this.unprocessedStreets = unprocessedStreets;
-        this.zipOutput = zipOutput;
-
         processedStreets = new ArrayList<>();
     }
 
@@ -44,37 +36,54 @@ public class GraphCreator {
         return processedStreets;
     }
 
-    public void create() {
+    @Override
+    public void write() throws IOException {
 
         nodeIdCount = 0;
-        nodeIdMap = new HashMap<>();
-        nodeCount = new HashMap<>();
 
         edges = new ArrayList<>();
 
+        HashMap<Node, Integer> nodeCountMap = createNodeCountMap();
+        createGraph(nodeCountMap);
+
+        unprocessedStreets = null;
+        nodeIdMap = null;
+        nodeCountMap = null;
+
+        // TODO minimize disk space by other method
+        // Collections.sort(edgesList);
+
+        writeGraph();
+
+        edges = null;
+        oneways = null;
+    }
+
+    private HashMap<Node, Integer> createNodeCountMap() {
         // Step one: count the appearance of every node in the given streets and
+        final HashMap<Node, Integer> nodeMap = new HashMap<>();
         for (final UnprocessedStreet s : unprocessedStreets) {
-
             for (final Node n : s) {
-
                 // Node not yet generated
-                if (!nodeCount.containsKey(n)) {
-                    nodeCount.put(n, 0);
+                if (!nodeMap.containsKey(n)) {
+                    nodeMap.put(n, 0);
                 }
 
-                incrementCount(nodeCount, n);
-
+                incrementCount(nodeMap, n);
             }
-
         }
+        return nodeMap;
+    }
 
+    private void createGraph(final HashMap<Node, Integer> nodeCountMap) {
         // Step two: get the cuttings of the street at intersections (and dead
         // ends)
 
+        nodeIdMap = new HashMap<>();
         oneways = new LinkedList<>();
         for (final UnprocessedStreet street : unprocessedStreets) {
 
-            final List<Integer> intersections = getStreetCuts(street);
+            final List<Integer> intersections = getStreetCuts(street, nodeCountMap);
             // Step three: processing the cutting of the streets.
 
             final Point2D[] degrees = street.getDegrees();
@@ -117,47 +126,34 @@ public class GraphCreator {
                 lastCut = currentCut;
             }
         }
+    }
 
-        unprocessedStreets = null;
-        nodeIdMap = null;
-        nodeCount = null;
+    private void writeGraph() throws IOException {
+        putNextEntry("graph");
 
-        // TODO minimize disk space by other method
-        // Collections.sort(edgesList);
+        dataOutput.writeInt(nodeIdCount);
+        dataOutput.writeInt(edges.size());
+        dataOutput.writeInt(oneways.size());
 
-        try {
-            zipOutput.putNextEntry(new ZipEntry("graph"));
-
-            DataOutputStream dataOutput = new DataOutputStream(zipOutput);
-
-            dataOutput.writeInt(nodeIdCount);
-            dataOutput.writeInt(edges.size());
-            dataOutput.writeInt(oneways.size());
-
-            for (final WeightedEdge edge : edges) {
-                dataOutput.writeInt(edge.node1);
-                dataOutput.writeInt(edge.node2);
-                dataOutput.writeInt(edge.weight);
-            }
-
-            int last = 0;
-            for (final int id : oneways) {
-                dataOutput.writeInt(id - last);
-                last = id;
-            }
-
-            zipOutput.closeEntry();
-        } catch (final IOException e) {
+        for (final WeightedEdge edge : edges) {
+            dataOutput.writeInt(edge.node1);
+            dataOutput.writeInt(edge.node2);
+            dataOutput.writeInt(edge.weight);
         }
 
-        edges = null;
-        oneways = null;
+        int last = 0;
+        for (final int id : oneways) {
+            dataOutput.writeInt(id - last);
+            last = id;
+        }
+
+        closeEntry();
     }
 
     /*
      * Cuts the given street in a list of streets.
      */
-    private List<Integer> getStreetCuts(final UnprocessedStreet s) {
+    private List<Integer> getStreetCuts(final UnprocessedStreet s, final HashMap<Node, Integer> nodeCountMap) {
         final List<Integer> intersections = new ArrayList<>();
 
         // calculating the indexes of the intersections
@@ -166,7 +162,7 @@ public class GraphCreator {
         for (int i = 1; i < nodes.length - 1; i++) {
             final Node node = nodes[i];
 
-            if (nodeCount.get(node) > 1) {
+            if (nodeCountMap.get(node) > 1) {
                 intersections.add(i);
             }
         }
@@ -199,7 +195,6 @@ public class GraphCreator {
     }
 
     private static int getWeight(final double lat1, final double lon1, final double lat2, final double lon2) {
-
         final double earthRadius = 6371;
         final double dLat = Math.toRadians(lat2 - lat1);
         final double dLng = Math.toRadians(lon2 - lon1);

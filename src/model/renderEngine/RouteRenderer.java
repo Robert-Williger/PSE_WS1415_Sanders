@@ -11,7 +11,6 @@ import java.awt.geom.Point2D;
 import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
-import model.map.accessors.CollectiveUtil;
 import model.map.accessors.ICollectiveAccessor;
 
 public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
@@ -113,7 +112,8 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         final int y = tileAccessor.getY();
         final int zoom = tileAccessor.getZoom();
         final int size = streetAccessor.size();
-        final int length = CollectiveUtil.getLength(streetAccessor);
+        // TODO use collective util?
+        final int length = streetAccessor.getAttribute("length");
 
         float currentLength = 0f;
 

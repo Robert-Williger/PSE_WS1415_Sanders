@@ -1,4 +1,4 @@
-package adminTool.map;
+package adminTool;
 
 import adminTool.elements.Typeable;
 

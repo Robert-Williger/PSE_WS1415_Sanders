@@ -10,21 +10,4 @@ public interface ITextProcessor {
 
     AddressPoint parse(String address);
 
-    public static class Entry {
-        private final int street;
-        private final String city;
-
-        public Entry(final int street, final String city) {
-            this.street = street;
-            this.city = city;
-        }
-
-        public String getCity() {
-            return city;
-        }
-
-        public int getStreet() {
-            return street;
-        }
-    }
 }

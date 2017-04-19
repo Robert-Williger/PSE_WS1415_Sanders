@@ -12,10 +12,10 @@ public class WayQuadtreeWriter extends AbstractQuadtreeWriter {
     private final Rectangle rect;
     private final int[] maxWayCoordWidths;
 
-    public WayQuadtreeWriter(final Way[] ways, final int[] addresses, final ZipOutputStream zipOutput,
-            final String name, final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize,
+    public WayQuadtreeWriter(final Way[] ways, final ZipOutputStream zipOutput, final String name,
+            final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize,
             final int[] maxWayCoordWidths) {
-        super(addresses, zipOutput, name, maxElementsPerTile, maxZoomSteps, coordMapSize);
+        super(zipOutput, name, ways.length, maxElementsPerTile, maxZoomSteps, coordMapSize);
         this.ways = ways;
         this.maxWayCoordWidths = maxWayCoordWidths;
         rect = new Rectangle();

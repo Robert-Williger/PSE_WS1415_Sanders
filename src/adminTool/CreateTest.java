@@ -1,4 +1,4 @@
-package adminTool.map;
+package adminTool;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -7,9 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.GraphCreator;
-import adminTool.IOSMParser;
-import adminTool.OSMParser;
+import adminTool.map.MapManagerWriter;
 
 public class CreateTest {
     public static void main(final String[] args) {
@@ -39,21 +37,33 @@ public class CreateTest {
             System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            GraphCreator graphCreator = new GraphCreator(parser.getStreets(), zipOutput);
-            graphCreator.create();
+            GraphWriter graphWriter = new GraphWriter(parser.getStreets(), zipOutput);
+            try {
+                graphWriter.write();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            MapManagerCreator mapCreator = new MapManagerCreator(parser.getBuildings(), graphCreator.getStreets(),
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(parser.getBuildings(), graphWriter.getStreets(),
                     parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(),
                     parser.getBoundingBox(), zipOutput);
 
             try {
-                mapCreator.create();
+                mapManagerWriter.write();
             } catch (final IOException e) {
                 e.printStackTrace();
             }
+
+//            IndexWriter indexWriter = new IndexWriter(parser.getBoundaries(), mapManagerWriter.streetSorting,
+//                    zipOutput);
+//            try {
+//                indexWriter.write();
+//            } catch (final IOException e) {
+//                e.printStackTrace();
+//            }
 
             System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             try {

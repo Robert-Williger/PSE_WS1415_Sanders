@@ -2,10 +2,14 @@ package model.map.accessors;
 
 import java.awt.Point;
 
+import model.targets.AccessPoint;
+
 public class CollectiveUtil {
 
     // TODO
-    public static int getLength(final ICollectiveAccessor accessor) {
+    public static int getLength(final ICollectiveAccessor accessor, final long id) {
+        accessor.setID(id);
+
         float totalLength = 0f;
 
         int lastX = accessor.getX(0);
@@ -22,8 +26,10 @@ public class CollectiveUtil {
         return (int) totalLength;
     }
 
-    public static boolean contains(final ICollectiveAccessor accessor, final int x, final int y) {
-        if (!containsBB(accessor, x, y)) {
+    public static boolean contains(final ICollectiveAccessor accessor, final long id, final int x, final int y) {
+        accessor.setID(id);
+
+        if (!containsBB(accessor, id, x, y)) {
             return false;
         }
 
@@ -37,7 +43,9 @@ public class CollectiveUtil {
         return c;
     }
 
-    public static boolean containsBB(final ICollectiveAccessor accessor, final int x, final int y) {
+    public static boolean containsBB(final ICollectiveAccessor accessor, final long id, final int x, final int y) {
+        accessor.setID(id);
+
         final int size = accessor.size();
 
         int lowX = accessor.getX(0);
@@ -54,10 +62,16 @@ public class CollectiveUtil {
         return x >= lowX && x <= highX && y >= lowY && y <= highY;
     }
 
-    public static Point getLocation(final ICollectiveAccessor accessor, final float offset) {
+    public static Point getLocation(final ICollectiveAccessor accessor, final AccessPoint point) {
+        return getLocation(accessor, point.getStreet(), point.getOffset());
+    }
+
+    public static Point getLocation(final ICollectiveAccessor accessor, final long id, final float offset) {
+        accessor.setID(id);
+
         final int size = accessor.size();
 
-        final float totalLength = getLength(accessor);
+        final float totalLength = getLength(accessor, id);
         final float maxLength = totalLength * offset;
 
         int lastX = accessor.getX(0);

@@ -1,5 +1,6 @@
 package model;
 
+import java.awt.Point;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -8,9 +9,9 @@ import java.util.List;
 import util.BoundedHeap;
 import model.map.IMapManager;
 import model.map.MapManager;
+import model.map.accessors.CollectiveUtil;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
-import model.targets.AccessPoint;
 import model.targets.AddressPoint;
 
 public class AdvancedTextProcessor implements ITextProcessor {
@@ -20,6 +21,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private final int[][] distance;
     private final SortedTree indexRoot;
     private int maxStringLength;
+
+    private final ICollectiveAccessor streetAccessor;
+    private final IStringAccessor stringAccessor;
+    private final IMapManager manager;
 
     public AdvancedTextProcessor() {
         this(new Entry[0][], new MapManager());
@@ -36,6 +41,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
         this.heap = new BoundedHeap<>(suggestions);
         this.maxDistance = maxDistance;
 
+        this.manager = manager;
+        streetAccessor = manager.createCollectiveAccessor("street");
+        stringAccessor = manager.createStringAccessor();
+
         final Tree unsortedRoot = setupIndex(entries, manager);
         distance = createDistanceArray();
         maxStringLength += 2 * maxDistance;
@@ -44,10 +53,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
     }
 
     private Tree setupIndex(final Entry[][] entries, final IMapManager manager) {
-        final Tree root = new Tree("", null, null);
-
-        final ICollectiveAccessor streetAccessor = manager.createCollectiveAccessor("street");
-        final IStringAccessor stringAccessor = manager.createStringAccessor();
+        final Tree root = new Tree("", null);
 
         // TODO do not explictly store as AccessPoint
         maxStringLength = 0;
@@ -57,10 +63,10 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 final String streetName = stringAccessor.getString(streetAccessor.getAttribute("name"));
                 final String cityName = entry[i].getCity();
                 final String realName = streetName + " " + cityName;
-                final AccessPoint node = new AccessPoint(0.5f, entry[i].getStreet());
+                final int street = entry[i].getStreet();
                 // TODO order by size of city
-                add(normalize(streetName + " " + cityName), realName, root, node);
-                add(normalize(cityName + " " + streetName), realName, root, node);
+                add(normalize(streetName + " " + cityName), realName, root, street, 0.5f);
+                add(normalize(cityName + " " + streetName), realName, root, street, 0.5f);
             }
         }
 
@@ -93,16 +99,16 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return distance;
     }
 
-    private void add(final String normalizedName, final String realName, final Tree tree,
-            final AccessPoint accessPoint) {
+    private void add(final String normalizedName, final String realName, final Tree tree, final int street,
+            final float offset) {
         if (normalizedName.length() > maxStringLength) {
             maxStringLength = normalizedName.length();
         }
-        add(normalizedName, realName, accessPoint, tree, 0);
+        add(normalizedName, realName, street, offset, tree, 0);
     }
 
-    private void add(final String normalizedName, final String realName, final AccessPoint accessPoint, final Tree root,
-            int index) {
+    private void add(final String normalizedName, final String realName, final int street, final float offset,
+            final Tree root, int index) {
 
         if (normalizedName.length() > 1) {
             for (final Iterator<Tree> iterator = root.getChildren().iterator(); iterator.hasNext();) {
@@ -115,9 +121,9 @@ public class AdvancedTextProcessor implements ITextProcessor {
                     while (index < length) {
                         if (normalizedName.charAt(index) != childName.charAt(index)) {
                             iterator.remove();
-                            final Tree splitNode = new Tree(normalizedName.substring(0, index), null, null);
+                            final Tree splitNode = new Tree(normalizedName.substring(0, index), null);
                             splitNode.addChild(child);
-                            splitNode.addChild(new Tree(normalizedName, realName, accessPoint));
+                            splitNode.addChild(new Tree(normalizedName, realName, street, offset));
                             root.getChildren().add(splitNode);
                             return;
                         }
@@ -126,22 +132,23 @@ public class AdvancedTextProcessor implements ITextProcessor {
                     if (normalizedName.length() == index) {
                         if (child.getIndexName().length() != index) {
                             iterator.remove();
-                            final Tree splitNode = new Tree(normalizedName, realName, accessPoint);
+                            final Tree splitNode = new Tree(normalizedName, realName, street, offset);
                             splitNode.addChild(child);
                             root.getChildren().add(splitNode);
                         } else if (child.getName() == null) {
                             child.setName(realName);
-                            child.setAccessPoint(accessPoint);
+                            child.setStreet(street);
+                            child.setOffset(offset);
                         }
                         return;
                     }
-                    add(normalizedName, realName, accessPoint, child, index);
+                    add(normalizedName, realName, street, offset, child, index);
                     return;
                 }
 
             }
 
-            root.getChildren().add(new Tree(normalizedName, realName, accessPoint));
+            root.getChildren().add(new Tree(normalizedName, realName, street, offset));
         }
     }
 
@@ -151,7 +158,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
         suggestBinary(normalizedAddress, indexRoot, 0);
 
-        int length = Math.min(suggestions, heap.size());
+        final int length = Math.min(suggestions, heap.size());
 
         final String[] choice = new String[length];
         for (int i = 0; i < length; i++) {
@@ -161,7 +168,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
         return Arrays.asList(choice);
     }
 
-    private void suggestBinary(final String input, final SortedTree tree, int index) {
+    private void suggestBinary(final String input, final SortedTree tree, final int index) {
         int distance = prefixEditDistance(input, tree.getIndexName());
 
         if (distance <= maxDistance) {
@@ -235,7 +242,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
             ++index;
         }
 
-        return index == input.length() ? child.getAddressNode() : parse(child, input, index);
+        return index == input.length() ? child.createAddressPoint() : parse(child, input, index);
     }
 
     // TODO fit edit costs --> nearby keys lower costs than far away ones
@@ -322,18 +329,18 @@ public class AdvancedTextProcessor implements ITextProcessor {
         name = name.toLowerCase();
 
         final StringBuilder nameSB = new StringBuilder(name);
-        replaceAllSB(nameSB, "ß", "ss");
-        replaceAllSB(nameSB, "ä", "ae");
-        replaceAllSB(nameSB, "ü", "ue");
-        replaceAllSB(nameSB, "ö", "oe");
+        replaceAll(nameSB, "ß", "ss");
+        replaceAll(nameSB, "ä", "ae");
+        replaceAll(nameSB, "ü", "ue");
+        replaceAll(nameSB, "ö", "oe");
         // TODO is that reasonable?
-        replaceAllSB(nameSB, " ", "");
-        replaceAllSB(nameSB, "-", "");
+        replaceAll(nameSB, " ", "");
+        replaceAll(nameSB, "-", "");
 
         return nameSB.toString();
     }
 
-    private static void replaceAllSB(final StringBuilder nameSB, final String from, final String to) {
+    private static void replaceAll(final StringBuilder nameSB, final String from, final String to) {
         int index = nameSB.indexOf(from);
         while (index >= 0) {
             nameSB.replace(index, index + from.length(), to);
@@ -371,18 +378,26 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     }
 
-    private static class Tree {
-        private static final SortedTree[] emptyChildren = new SortedTree[0];
+    private static final SortedTree[] emptyChildren = new SortedTree[0];
 
+    private class Tree {
         private String name;
         private final String indexName;
         private final List<Tree> children;
-        private AccessPoint accessPoint;
+        private int street;
+        private float offset;
 
-        public Tree(final String indexName, final String name, final AccessPoint accessPoint) {
+        public Tree(final String indexName, final String name, final int street, final float offset) {
             this.indexName = indexName;
             this.name = name;
-            this.accessPoint = accessPoint;
+            this.street = street;
+            this.offset = offset;
+            children = new LinkedList<>();
+        }
+
+        public Tree(final String indexName, final String name) {
+            this.indexName = indexName;
+            this.name = name;
             children = new LinkedList<>();
         }
 
@@ -394,8 +409,12 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return indexName;
         }
 
-        public void setAccessPoint(final AccessPoint accessPoint) {
-            this.accessPoint = accessPoint;
+        public void setStreet(final int street) {
+            this.street = street;
+        }
+
+        public void setOffset(final float offset) {
+            this.offset = offset;
         }
 
         public List<Tree> getChildren() {
@@ -428,21 +447,67 @@ public class AdvancedTextProcessor implements ITextProcessor {
                 children = emptyChildren;
             }
 
-            return new SortedTree(indexName, name, accessPoint, children);
+            return new SortedTree(indexName, name, street, offset, children);
         }
     }
 
-    private static class SortedTree implements Comparable<SortedTree> {
+    // private class SortedTree implements Comparable<SortedTree> {
+    // private final String name;
+    // private final String indexName;
+    // private final SortedTree[] children;
+    // private final AccessPoint accessPoint;
+    //
+    // public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
+    // final SortedTree[] children) {
+    // this.indexName = indexName;
+    // this.name = name;
+    // this.accessPoint = accessPoint;
+    // this.children = children;
+    // }
+    //
+    // public String getIndexName() {
+    // return indexName;
+    // }
+    //
+    // public AccessPoint getAccessPoint() {
+    // return accessPoint;
+    // }
+    //
+    // public AddressPoint createAddressPoint() {
+    // final int street = getAccessPoint().getStreet();
+    // final float offset = getAccessPoint().getOffset();
+    // streetAccessor.setID(street);
+    // final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
+    // return new AddressPoint(name, location.x, location.y, street, offset, manager.getState().getConverter());
+    // }
+    //
+    // public SortedTree[] getChildren() {
+    // return children;
+    // }
+    //
+    // public String getName() {
+    // return name;
+    // }
+    //
+    // @Override
+    // public int compareTo(final SortedTree o) {
+    // return indexName.compareTo(o.indexName);
+    // }
+    // }
+
+    private class SortedTree implements Comparable<SortedTree> {
         private final String name;
         private final String indexName;
         private final SortedTree[] children;
-        private final AccessPoint accessPoint;
+        private final int street;
+        private final float offset;
 
-        public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
+        public SortedTree(final String indexName, final String name, final int street, final float offset,
                 final SortedTree[] children) {
             this.indexName = indexName;
+            this.offset = offset;
             this.name = name;
-            this.accessPoint = accessPoint;
+            this.street = street;
             this.children = children;
         }
 
@@ -450,8 +515,11 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return indexName;
         }
 
-        public AccessPoint getAddressNode() {
-            return accessPoint;
+        public AddressPoint createAddressPoint() {
+            streetAccessor.setID(street);
+            final float offset = getOffset();
+            final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
+            return new AddressPoint(name, location.x, location.y, street, offset, manager.getState().getConverter());
         }
 
         public SortedTree[] getChildren() {
@@ -462,9 +530,23 @@ public class AdvancedTextProcessor implements ITextProcessor {
             return name;
         }
 
+        protected float getOffset() {
+            return offset;
+        }
+
         @Override
         public int compareTo(final SortedTree o) {
             return indexName.compareTo(o.indexName);
+        }
+    }
+
+    private static class Entry {
+        public String getCity() {
+            return "";
+        }
+
+        public int getStreet() {
+            return 0;
         }
     }
 }

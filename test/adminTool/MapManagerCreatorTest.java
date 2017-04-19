@@ -15,8 +15,8 @@ import org.junit.Test;
 public class MapManagerCreatorTest {
 
     private static IOSMParser parser;
-    private static GraphCreator gc;
-    private static MapManagerCreator mmc;
+    private static GraphWriter gc;
+    private static MapManagerWriter mmc;
     private static File gcFile;
     private static File mmcFile;
 
@@ -30,7 +30,7 @@ public class MapManagerCreatorTest {
         }
 
         gcFile = new File("Resources/gcFile.tsk");
-        gc = new GraphCreator(parser.getStreets(), gcFile);
+        gc = new GraphWriter(parser.getStreets(), gcFile);
         gc.create();
 
         mmcFile = new File("Resources/mmctest.tsk");
@@ -39,7 +39,7 @@ public class MapManagerCreatorTest {
         } catch (final IOException e) {
             e.printStackTrace();
         }
-        mmc = new MapManagerCreator(parser.getBuildings(), gc.getStreets(), parser.getPOIs(), parser.getWays(),
+        mmc = new MapManagerWriter(parser.getBuildings(), gc.getStreets(), parser.getPOIs(), parser.getWays(),
                 parser.getTerrain(), parser.getLabels(), parser.getBoundingBox(), mmcFile);
 
     }

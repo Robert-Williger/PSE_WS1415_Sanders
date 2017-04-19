@@ -271,8 +271,7 @@ public class MapManager implements IMapManager {
         final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("building");
         while (iterator.hasNext()) {
             final long building = iterator.nextLong();
-            buildingAccessor.setID(building);
-            if (CollectiveUtil.contains(buildingAccessor, x, y)) {
+            if (CollectiveUtil.contains(buildingAccessor, building, x, y)) {
                 return building;
             }
         }

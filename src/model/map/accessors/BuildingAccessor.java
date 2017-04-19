@@ -2,8 +2,10 @@ package model.map.accessors;
 
 public class BuildingAccessor extends CollectiveAccessor {
 
-    public BuildingAccessor(final int[] data, final int[] x, final int[] y, final int[] distribution) {
-        super(data, x, y, distribution);
+    public BuildingAccessor(final int[] distribution, final int[] data, final int[] addresses, final int[] x,
+            final int[] y) {
+
+        super(distribution, data, addresses, x, y);
     }
 
     @Override
@@ -15,11 +17,11 @@ public class BuildingAccessor extends CollectiveAccessor {
     public int getAttribute(final String identifier) {
         switch (identifier) {
             case "street":
-                return data[getIntID()];
+                return data[getAddress()];
             case "number":
-                return data[getIntID() + 1];
+                return data[getAddress() + 1];
             case "name":
-                return data[getIntID() + 2];
+                return data[getAddress() + 2];
             default:
                 return super.getAttribute(identifier);
         }

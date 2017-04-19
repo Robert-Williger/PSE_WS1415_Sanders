@@ -1,6 +1,6 @@
 package model.map.accessors;
 
-public class ElementAccessor extends Accessor implements IElementAccessor {
+public abstract class ElementAccessor extends Accessor implements IElementAccessor {
     private final int[] distribution;
 
     public ElementAccessor(final int[] distribution) {
@@ -23,7 +23,5 @@ public class ElementAccessor extends Accessor implements IElementAccessor {
         return type;
     }
 
-    protected int getIntID() {
-        return (int) getID();
-    }
+    protected abstract int getAddress();
 }

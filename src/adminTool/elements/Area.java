@@ -1,7 +1,5 @@
 package adminTool.elements;
 
-import java.awt.Polygon;
-
 public class Area extends MultiElement implements Typeable {
 
     private final int type;
@@ -10,21 +8,6 @@ public class Area extends MultiElement implements Typeable {
         super(nodes);
 
         this.type = type;
-    }
-
-    protected Polygon calculatePolygon(final Node[] nodes) {
-        final int[] xpoints = new int[nodes.length];
-        final int[] ypoints = new int[nodes.length];
-
-        int i = 0;
-
-        for (final Node node : nodes) {
-            xpoints[i] = node.getX();
-            ypoints[i] = node.getY();
-            i++;
-        }
-
-        return new Polygon(xpoints, ypoints, nodes.length);
     }
 
     @Override

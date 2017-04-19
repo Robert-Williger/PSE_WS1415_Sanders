@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class GraphCreatorTest {
 
-    private static GraphCreator gc;
+    private static GraphWriter gc;
     private static File outFile;
 
     @BeforeClass
@@ -23,7 +23,7 @@ public class GraphCreatorTest {
             e.printStackTrace();
         }
         outFile = new File("Resources/osmtest.tsk");
-        gc = new GraphCreator(parser.getStreets(), outFile);
+        gc = new GraphWriter(parser.getStreets(), outFile);
     }
 
     @AfterClass

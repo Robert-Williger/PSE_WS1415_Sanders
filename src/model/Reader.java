@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import model.ITextProcessor.Entry;
 import model.map.CollectiveAccessorFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
@@ -58,38 +57,31 @@ public class Reader implements IReader {
     @Override
     public boolean read(final File file) {
         canceled = false;
-        MapManagerReader managerReader = new MapManagerReader();
 
         ZipFile zipFile = null;
         try {
             zipFile = new ZipFile(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (file == null) {
+        } catch (final IOException e) {
+            fireErrorOccured("Beim Lesen der Datei ist ein Fehler aufgetreten.");
             return false;
         }
 
         totalBytes = (long) Math.ceil(getTotalBytes(zipFile) / 100.0);
-
         currentBytes = 0;
         progress = -1;
+
         try {
             graph = readGraph(zipFile);
-            manager = managerReader.readMapManager(zipFile);
-            tp = new AdvancedTextProcessor(new Entry[0][], manager);
+            manager = new MapManagerReader().readMapManager(zipFile);
+            tp = new AdvancedTextProcessor();
         } catch (final Exception e) {
-            managerReader = null;
-
+            e.printStackTrace();
             if (!canceled) {
                 fireErrorOccured("Beim Kartenimport ist ein Fehler aufgetreten.");
             }
 
             return false;
         }
-
-        managerReader = null;
 
         rm = new RouteManager(graph, manager);
 
@@ -163,6 +155,36 @@ public class Reader implements IReader {
         return new DataInputStream(new BufferedInputStream(new ProgressableInputStream(zipFile.getInputStream(entry))));
     }
 
+    private int[] readIntArray(final ZipFile zipFile, final String name) throws IOException {
+        return readIntArray(zipFile, zipFile.getEntry(name));
+    }
+
+    private int[] readIntArray(final ZipFile zipFile, final ZipEntry entry) throws IOException {
+        assert zipFile != null;
+
+        if (entry != null) {
+            final long size = entry.getSize();
+            if (size != -1) {
+                applyInputStream(zipFile, entry);
+                final int[] ret = readIntArray(stream, (int) (size / 4));
+                stream.close();
+                return ret;
+            }
+        }
+
+        // TODO what to do here?
+        return new int[0];
+    }
+
+    private int[] readIntArray(final DataInputStream stream, final int size) throws IOException {
+        final int[] ret = new int[size];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = stream.readInt();
+        }
+
+        return ret;
+    }
+
     /*
      * Reads the Graph-section of the map file and generates the Graph.
      */
@@ -199,70 +221,59 @@ public class Reader implements IReader {
         return new DirectedGraph(0, new int[0], new int[0], new int[0], new int[0]);
     }
 
-    // private void readIndex(final IStreet[] streets, final Label[] labels)
-    // throws IOException {
+    // private class IndexReader {
+    // final IMapManager manager;
+    //
+    // public IndexReader(final IMapManager manager) {
+    // this.manager = manager;
+    // }
+    //
+    // private void readIndex(final int[] streets, final int[] labels) throws IOException {
     // fireStepCommenced("Lade Index...");
     //
-    // String[] cities = new String[reader.readCompressedInt()];
+    // readStreets();
+    //
+    // // TODO reactivate!
+    // // for (final Label label : labels) {
+    // // final AddressNode addressNode =
+    // // manager.getAddressNode(label.getLocation());
+    // // if (addressNode != null) {
+    // // nodeMap.put(label.getName(), addressNode.getStreetNode());
+    // // }
+    // // }
+    //
+    // // tp = new AdvancedTextProcessor(entries, labels, manager);
+    // }
+    //
+    // private void readStreets() throws IOException {
+    // final ICollectiveAccessor accessor = manager.createCollectiveAccessor("street");
+    // final String[] cities = readCities();
+    //
+    // int maxCityCount = stream.readInt();
+    //
+    // for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
+    // final int n = stream.readInt();
+    //
+    // for (int j = 0; j < n; j++) {
+    // final int street = stream.readInt();
+    // accessor.setID(id);
+    // for (int k = 1; k < cityCount; k++) {
+    // final int street = stream.readInt();
+    // final int city = stream.readInt();
+    // }
+    // }
+    // }
+    // }
+    //
+    // private String[] readCities() throws IOException {
+    // final String[] cities = new String[stream.readInt()];
     //
     // for (int i = 0; i < cities.length; i++) {
-    // cities[i] = reader.readUTF();
+    // cities[i] = stream.readUTF();
+    // }
+    // return cities;
     // }
     //
-    // final HashMap<String, StreetNode> nodeMap = new HashMap<String,
-    // StreetNode>();
-    // final HashMap<String, String[]> cityMap = new HashMap<String,
-    // String[]>();
-    // final TextProcessor.Entry[][] entries = new
-    // TextProcessor.Entry[reader.readCompressedInt()][];
-    //
-    // int maxCollisions = reader.readCompressedInt();
-    // int entryCount = -1;
-    //
-    // for (int i = 0; i < maxCollisions; i++) {
-    // int occurances = reader.readCompressedInt();
-    // int firstLevelLast = 0;
-    // for (int j = 0; j < occurances; j++) {
-    // final String[] cityNames = new String[i + 1];
-    // final TextProcessor.Entry[] entry = new TextProcessor.Entry[i + 1];
-    //
-    // int secondLevelLast = reader.readCompressedInt() + firstLevelLast;
-    // firstLevelLast = secondLevelLast;
-    //
-    // nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f,
-    // streets[secondLevelLast]));
-    //
-    // cityNames[0] = cities[reader.readCompressedInt()];
-    // // TODO
-    // // entry[0] = new TextProcessor.Entry(streets[secondLevelLast],
-    // // cityNames[0]);
-    //
-    // for (int k = 1; k < cityNames.length; k++) {
-    // secondLevelLast += reader.readCompressedInt();
-    //
-    // nodeMap.put(streets[secondLevelLast].getName(), new StreetNode(0.5f,
-    // streets[secondLevelLast]));
-    // cityNames[k] = cities[reader.readCompressedInt()];
-    // // TODO
-    // // entry[k] = new
-    // // TextProcessor.Entry(streets[secondLevelLast],
-    // // cityNames[k]);
-    // }
-    // cityMap.put(streets[secondLevelLast].getName(), cityNames);
-    // entries[++entryCount] = entry;
-    // }
-    // }
-
-    // TODO reactivate!
-    // for (final Label label : labels) {
-    // final AddressNode addressNode =
-    // manager.getAddressNode(label.getLocation());
-    // if (addressNode != null) {
-    // nodeMap.put(label.getName(), addressNode.getStreetNode());
-    // }
-    // }
-
-    // tp = new AdvancedTextProcessor(entries, labels, manager);
     // }
 
     private class MapManagerReader {
@@ -271,15 +282,13 @@ public class Reader implements IReader {
             fireStepCommenced("Lade Header...");
 
             final IMapState state = readMapState(zipFile);
-            final int[][] distributions = readDistributions(zipFile);
 
             final String[] strings = readStrings(zipFile);
             final int[][] nodes = readNodes(zipFile);
             final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
             final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
-            readElements(zipFile, nodes, distributions, elementIteratorMap, pointMap, collectiveMap,
-                    state.getMinZoom());
+            readElements(zipFile, nodes, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
             final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
                 @Override
                 public ITileAccessor create() {
@@ -311,23 +320,6 @@ public class Reader implements IReader {
         private IPixelConverter readConverter(final DataInputStream stream) throws IOException {
             final int conversionBits = stream.readInt();
             return new PixelConverter(conversionBits);
-        }
-
-        private int[][] readDistributions(final ZipFile zipFile) throws IOException {
-            // TODO improve this
-            final ZipEntry entry = zipFile.getEntry("distributions");
-            if (entry == null) {
-                return null;
-            }
-            applyInputStream(zipFile, entry);
-
-            final int[][] distributions = new int[5][];
-            for (int i = 0; i < 5; i++) {
-                distributions[i] = readIntArray(stream, stream.readInt());
-            }
-            stream.close();
-
-            return distributions;
         }
 
         private int[][] readNodes(final ZipFile zipFile) throws IOException {
@@ -371,30 +363,37 @@ public class Reader implements IReader {
             return strings;
         }
 
-        private void readElements(final ZipFile zipFile, final int[][] nodes, final int[][] distributions,
+        private void readElements(final ZipFile zipFile, final int[][] nodes,
                 final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
 
-            final String[] names = { "street", "way", "area", "building" };
-            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude" };
+            final String[] names = { "street", "way", "area", "building", "label" };
+            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude", "Labels" };
+            final int[][] distributions = new int[names.length][];
+            final int[][] addresses = new int[names.length][];
 
-            final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[names.length];
-            accessors[0] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[0]) {
-                @Override
-                public ICollectiveAccessor create() {
-                    return new StreetAccessor(data, x, y, distribution);
-                }
-            };
-            accessors[1] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[1]);
-            accessors[2] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[2]);
-            accessors[3] = new CollectiveAccessorFactory(nodes[0], nodes[1], distributions[3]) {
-                @Override
-                public ICollectiveAccessor create() {
-                    return new BuildingAccessor(data, x, y, distribution);
-                }
-            };
             for (int i = 0; i < names.length; i++) {
+                distributions[i] = readIntArray(zipFile, names[i] + "Distribution");
+                addresses[i] = readIntArray(zipFile, names[i] + "Addresses");
+            }
+
+            final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[names.length - 1];
+            accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0], nodes[0], nodes[1]) {
+                @Override
+                public ICollectiveAccessor create() {
+                    return new StreetAccessor(distribution, data, addresses, x, y);
+                }
+            };
+            accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1], nodes[0], nodes[1]);
+            accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2], nodes[0], nodes[1]);
+            accessors[3] = new CollectiveAccessorFactory(distributions[3], addresses[3], nodes[0], nodes[1]) {
+                @Override
+                public ICollectiveAccessor create() {
+                    return new BuildingAccessor(distribution, data, addresses, x, y);
+                }
+            };
+            for (int i = 0; i < names.length - 1; i++) {
                 fireStepCommenced("Lade " + outputNames[i] + "...");
 
                 final ZipEntry entry = zipFile.getEntry(names[i] + "s");
@@ -417,39 +416,9 @@ public class Reader implements IReader {
             // TODO handle missing entry!
             final int[] data = readIntArray(zipFile, "labels");
             final IFactory<IPointAccessor> labelAccessorFactory = () -> {
-                return new LabelAccessor(distributions[4], data);
+                return new LabelAccessor(distributions[4], data, 3);
             };
             pointMap.put("label", labelAccessorFactory);
-        }
-
-        private int[] readIntArray(final ZipFile zipFile, final String name) throws IOException {
-            return readIntArray(zipFile, zipFile.getEntry(name));
-        }
-
-        private int[] readIntArray(final ZipFile zipFile, final ZipEntry entry) throws IOException {
-            assert zipFile != null;
-
-            if (entry != null) {
-                final long size = entry.getSize();
-                if (size != -1) {
-                    applyInputStream(zipFile, entry);
-                    final int[] ret = readIntArray(stream, (int) (size / 4));
-                    stream.close();
-                    return ret;
-                }
-            }
-
-            // TODO what to do here?
-            return new int[0];
-        }
-
-        private int[] readIntArray(final DataInputStream stream, final int size) throws IOException {
-            final int[] ret = new int[size];
-            for (int i = 0; i < ret.length; i++) {
-                ret[i] = stream.readInt();
-            }
-
-            return ret;
         }
     }
 

@@ -2,6 +2,7 @@ package adminTool.map;
 
 import java.util.zip.ZipOutputStream;
 
+import adminTool.Util;
 import adminTool.elements.Area;
 import adminTool.elements.Node;
 
@@ -9,9 +10,9 @@ public class AreaQuadtreeWriter extends AbstractQuadtreeWriter {
 
     private final Area[] areas;
 
-    public AreaQuadtreeWriter(final Area[] areas, final int[] addresses, final ZipOutputStream zipOutput,
-            final String name, final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize) {
-        super(addresses, zipOutput, name, maxElementsPerTile, maxZoomSteps, coordMapSize);
+    public AreaQuadtreeWriter(final Area[] areas, final ZipOutputStream zipOutput, final String name,
+            final int maxElementsPerTile, final int maxZoomSteps, final int coordMapSize) {
+        super(zipOutput, name, areas.length, maxElementsPerTile, maxZoomSteps, coordMapSize);
         this.areas = areas;
     }
 

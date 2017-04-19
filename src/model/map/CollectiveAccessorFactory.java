@@ -8,10 +8,13 @@ public class CollectiveAccessorFactory implements IFactory<ICollectiveAccessor> 
     protected final int[] x;
     protected final int[] y;
     protected final int[] distribution;
+    protected final int[] addresses;
     protected int[] data;
 
-    public CollectiveAccessorFactory(final int[] xPoints, final int[] yPoints, final int[] distribution) {
+    public CollectiveAccessorFactory(final int[] distribution, final int[] addresses, final int[] xPoints,
+            final int[] yPoints) {
         this.distribution = distribution;
+        this.addresses = addresses;
         this.x = xPoints;
         this.y = yPoints;
     }
@@ -22,6 +25,6 @@ public class CollectiveAccessorFactory implements IFactory<ICollectiveAccessor> 
 
     @Override
     public ICollectiveAccessor create() {
-        return new CollectiveAccessor(data, x, y, distribution);
+        return new CollectiveAccessor(distribution, data, addresses, x, y);
     }
 }
