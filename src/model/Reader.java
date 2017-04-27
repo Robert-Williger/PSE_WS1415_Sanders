@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import model.AdvancedTextProcessor.Entry;
 import model.map.CollectiveAccessorFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
@@ -41,9 +44,9 @@ public class Reader implements IReader {
     private DataInputStream stream;
 
     private IDirectedGraph graph;
-    private IMapManager manager;
-    private IRouteManager rm;
-    private ITextProcessor tp;
+    private IMapManager mapManager;
+    private IRouteManager routeManager;
+    private ITextProcessor textProcessor;
     private boolean canceled;
 
     private long totalBytes;
@@ -72,8 +75,8 @@ public class Reader implements IReader {
 
         try {
             graph = readGraph(zipFile);
-            manager = new MapManagerReader().readMapManager(zipFile);
-            tp = new AdvancedTextProcessor();
+            mapManager = new MapManagerReader().readMapManager(zipFile);
+            textProcessor = new IndexReader().readIndex(zipFile);
         } catch (final Exception e) {
             e.printStackTrace();
             if (!canceled) {
@@ -83,24 +86,24 @@ public class Reader implements IReader {
             return false;
         }
 
-        rm = new RouteManager(graph, manager);
+        routeManager = new RouteManager(graph, mapManager);
 
         return true;
     }
 
     @Override
     public IMapManager getMapManager() {
-        return manager;
+        return mapManager;
     }
 
     @Override
     public IRouteManager getRouteManager() {
-        return rm;
+        return routeManager;
     }
 
     @Override
     public ITextProcessor getTextProcessor() {
-        return tp;
+        return textProcessor;
     }
 
     @Override
@@ -221,60 +224,53 @@ public class Reader implements IReader {
         return new DirectedGraph(0, new int[0], new int[0], new int[0], new int[0]);
     }
 
-    // private class IndexReader {
-    // final IMapManager manager;
-    //
-    // public IndexReader(final IMapManager manager) {
-    // this.manager = manager;
-    // }
-    //
-    // private void readIndex(final int[] streets, final int[] labels) throws IOException {
-    // fireStepCommenced("Lade Index...");
-    //
-    // readStreets();
-    //
-    // // TODO reactivate!
-    // // for (final Label label : labels) {
-    // // final AddressNode addressNode =
-    // // manager.getAddressNode(label.getLocation());
-    // // if (addressNode != null) {
-    // // nodeMap.put(label.getName(), addressNode.getStreetNode());
-    // // }
-    // // }
-    //
-    // // tp = new AdvancedTextProcessor(entries, labels, manager);
-    // }
-    //
-    // private void readStreets() throws IOException {
-    // final ICollectiveAccessor accessor = manager.createCollectiveAccessor("street");
-    // final String[] cities = readCities();
-    //
-    // int maxCityCount = stream.readInt();
-    //
-    // for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
-    // final int n = stream.readInt();
-    //
-    // for (int j = 0; j < n; j++) {
-    // final int street = stream.readInt();
-    // accessor.setID(id);
-    // for (int k = 1; k < cityCount; k++) {
-    // final int street = stream.readInt();
-    // final int city = stream.readInt();
-    // }
-    // }
-    // }
-    // }
-    //
-    // private String[] readCities() throws IOException {
-    // final String[] cities = new String[stream.readInt()];
-    //
-    // for (int i = 0; i < cities.length; i++) {
-    // cities[i] = stream.readUTF();
-    // }
-    // return cities;
-    // }
-    //
-    // }
+    private class IndexReader {
+        public ITextProcessor readIndex(final ZipFile zipFile) throws IOException {
+            fireStepCommenced("Lade Index...");
+
+            final Collection<Entry> entries = readStreets(zipFile);
+            return new AdvancedTextProcessor(entries, mapManager);
+        }
+
+        private Collection<Entry> readStreets(final ZipFile zipFile) throws IOException {
+            applyInputStream(zipFile, zipFile.getEntry("index"));
+
+            final String[] cities = readCities();
+
+            int maxCityCount = stream.readInt();
+
+            // Arrays.stream(cities).forEach(c -> System.out.println(c));
+
+            final List<AdvancedTextProcessor.Entry> list = new ArrayList<>();
+            for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
+                final int n = stream.readInt();
+
+                for (int j = 0; j < n; j++) {
+                    for (int k = 0; k < cityCount; k++) {
+                        final int street = stream.readInt();
+                        final int city = stream.readInt();
+                        final String cityName = city != -1 ? cities[city] : "";
+
+                        list.add(new AdvancedTextProcessor.Entry(cityName, street));
+                    }
+                }
+            }
+
+            stream.close();
+
+            return list;
+        }
+
+        private String[] readCities() throws IOException {
+            final String[] cities = new String[stream.readInt()];
+
+            for (int i = 0; i < cities.length; i++) {
+                cities[i] = stream.readUTF();
+            }
+            return cities;
+        }
+
+    }
 
     private class MapManagerReader {
 

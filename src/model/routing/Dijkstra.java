@@ -9,14 +9,14 @@ import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
 
 public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
-    private final IDirectedGraph               graph;
-    private final int[]                        distance;
-    private final int[]                        parentNode;
-    private final int[]                        parentEdge;
+    private final IDirectedGraph graph;
+    private final int[] distance;
+    private final int[] parentNode;
+    private final int[] parentEdge;
     private IAddressablePriorityQueue<Integer> queue;
-    private int[]                              endNodes;
-    private int                                achievedNodes;
-    private int                                state;
+    private int[] endNodes;
+    private int achievedNodes;
+    private int state;
 
     public Dijkstra(final IDirectedGraph graph) {
         this.graph = graph;
@@ -64,7 +64,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
         initializeStartNode(start.getCorrespondingEdge(), (int) (weight * (1 - offset)));
 
         // TODO handle one-ways!
-        endNodes = new int[]{graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge())};
+        endNodes = new int[] { graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge()) };
     }
 
     private void initializeStartNode(final int edge, final int weight) {
@@ -133,7 +133,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     }
 
     private Path createPath(final InterNode start, final InterNode end) {
-        final int[] weights = {0, 0};
+        final int[] weights = { 0, 0 };
         weights[0] = distance[endNodes[0]] + Math.round(graph.getWeight(end.getEdge()) * end.getOffset());
         weights[1] = distance[endNodes[1]] + Math.round(graph.getWeight(end.getEdge()) * (1 - end.getOffset()));
 

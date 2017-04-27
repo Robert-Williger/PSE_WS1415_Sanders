@@ -1,12 +1,10 @@
-package adminTool.map;
+package adminTool;
 
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.AbstractMapFileWriter;
-import adminTool.Sorting;
 import adminTool.elements.Area;
 import adminTool.elements.Building;
 import adminTool.elements.Label;
@@ -14,6 +12,10 @@ import adminTool.elements.POI;
 import adminTool.elements.Street;
 import adminTool.elements.Typeable;
 import adminTool.elements.Way;
+import adminTool.quadtree.AreaQuadtreePolicy;
+import adminTool.quadtree.IQuadtreePolicy;
+import adminTool.quadtree.LinkedQuadtreeWriter;
+import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
 
@@ -93,22 +95,25 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         //
 
         // TODO improve this
-        final int[] maxWayCoordWidths = new int[MAX_ZOOM_STEPS];
+        final int[] maxWayWidths = new int[MAX_ZOOM_STEPS];
         for (int zoom = minZoomStep; zoom < maxZoomStep; ++zoom) {
-            maxWayCoordWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
+            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
         }
 
-        new AreaQuadtreeWriter(areaSorting.elements, zipOutput, "area", MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
-                coordMapSize).write();
+        final String[] names = new String[] { "area", "way", "street", "building" };
+        final IQuadtreePolicy[] policies = new IQuadtreePolicy[names.length];
+        final int[] elements = new int[] { areaSorting.elements.length, waySorting.elements.length,
+                streetSorting.elements.length, buildingSorting.elements.length };
 
-        new WayQuadtreeWriter(waySorting.elements, zipOutput, "way", MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
-                coordMapSize, maxWayCoordWidths).write();
+        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS);
+        policies[1] = new WayQuadtreePolicy(waySorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, maxWayWidths);
+        policies[2] = new WayQuadtreePolicy(streetSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
+                maxWayWidths);
+        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS);
 
-        new WayQuadtreeWriter(streetSorting.elements, zipOutput, "street", MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
-                coordMapSize, maxWayCoordWidths).write();
-
-        new AreaQuadtreeWriter(buildingSorting.elements, zipOutput, "building", MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
-                coordMapSize).write();
+        for (int i = 0; i < names.length; i++) {
+            new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
+        }
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {

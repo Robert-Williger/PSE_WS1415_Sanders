@@ -48,12 +48,10 @@ public class MapManager implements IMapManager {
     }
 
     public MapManager() {
-        // TODO
-        this(new HashMap<String, IFactory<IPointAccessor>>(), new HashMap<String, IFactory<ICollectiveAccessor>>(),
-                emptyFactory(), new String[0], new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
+        this(new HashMap<>(), new HashMap<>(), emptyFactory(), new String[0],
+                new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
     }
 
-    // TODO
     public MapManager(final java.util.Map<String, IFactory<IPointAccessor>> pointMap,
             final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap,
             final IFactory<ITileAccessor> tileFactory, final String[] strings, final IMapState state) {

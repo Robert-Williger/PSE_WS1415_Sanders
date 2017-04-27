@@ -140,13 +140,11 @@ public class Map extends AbstractModel implements IMap {
 
     @Override
     public int getX(final int zoom) {
-        // TODO Auto-generated method stub
         return (int) converter.getPixelDistance(state.getCoordX(), zoom);
     }
 
     @Override
     public int getY(final int zoom) {
-        // TODO Auto-generated method stub
         return (int) converter.getPixelDistance(state.getCoordY(), zoom);
     }
 }

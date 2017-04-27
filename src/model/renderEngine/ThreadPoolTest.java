@@ -58,11 +58,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 
     public void flush() {
         synchronized (queue) {
-            // TODO add reset / removeAll / clear method in
-            // AddressableBinaryHeap
-            while (!queue.isEmpty()) {
-                queue.deleteMin();
-            }
+            queue.clear();
             jobs.clear();
         }
     }

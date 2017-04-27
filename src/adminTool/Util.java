@@ -8,21 +8,29 @@ public class Util {
     private static final int OUT_RIGHT = 0b0100;
     private static final int OUT_BOTTOM = 0b1000;
 
-    public static boolean polygonContainsPoint(final Node[] nodes, final int x, final int y) {
-        if (!polygonBBContainsPoint(nodes, x, y)) {
-            return false;
-        }
+    // test whether rectangle [1] contains rectangle [2]
+    public static boolean rectangleContainsRectangle(final int minX1, final int minY1, final int maxX1, final int maxY1,
+            final int minX2, final int minY2, final int maxX2, final int maxY2) {
+        return minX1 <= minX2 && minY1 <= minY2 && maxX1 >= maxX2 && maxY1 >= maxY2;
+    }
 
+    public static boolean rectangleContainsPoint(final int minX, final int minY, final int maxX, final int maxY,
+            final int x, final int y) {
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    public static boolean polygonContainsPoint(final Node[] nodes, final double x, final double y) {
         boolean ret = false;
-        for (int i = 0, j = 0; i < nodes.length; j = i++) {
+        for (int i = 0, j = nodes.length - 1; i < nodes.length; j = i++) {
             if (((nodes[i].getY() > y) != (nodes[j].getY() > y)) && (x < (nodes[j].getX() - nodes[i].getX())
-                    * (y - nodes[i].getY()) / (nodes[j].getY() - nodes[i].getY()) + nodes[i].getY()))
+                    * (y - nodes[i].getY()) / (nodes[j].getY() - nodes[i].getY()) + nodes[i].getX()))
                 ret = !ret;
         }
+
         return ret;
     }
 
-    public static boolean polygonBBContainsPoint(final Node[] nodes, final int x, final int y) {
+    public static boolean polygonBBContainsPoint(final Node[] nodes, final double x, final double y) {
         int minX = nodes[0].getX();
         int maxX = minX;
         int minY = nodes[0].getY();

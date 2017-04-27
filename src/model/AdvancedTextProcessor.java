@@ -2,6 +2,8 @@ package model;
 
 import java.awt.Point;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,14 +29,14 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private final IMapManager manager;
 
     public AdvancedTextProcessor() {
-        this(new Entry[0][], new MapManager());
+        this(Collections.emptyList(), new MapManager());
     }
 
-    public AdvancedTextProcessor(final Entry[][] entries, final IMapManager manager) {
+    public AdvancedTextProcessor(final Collection<Entry> entries, final IMapManager manager) {
         this(entries, manager, 5, 2);
     }
 
-    public AdvancedTextProcessor(final Entry[][] entries, final IMapManager manager, final int suggestions,
+    public AdvancedTextProcessor(final Collection<Entry> entries, final IMapManager manager, final int suggestions,
             final int maxDistance) {
 
         this.suggestions = suggestions;
@@ -52,22 +54,21 @@ public class AdvancedTextProcessor implements ITextProcessor {
         indexRoot = unsortedRoot.toSortedTree();
     }
 
-    private Tree setupIndex(final Entry[][] entries, final IMapManager manager) {
+    private Tree setupIndex(final Collection<Entry> entries, final IMapManager manager) {
         final Tree root = new Tree("", null);
 
         // TODO do not explictly store as AccessPoint
         maxStringLength = 0;
-        for (final Entry[] entry : entries) {
-            for (int i = 0; i < entry.length; i++) {
-                streetAccessor.setID(entry[i].getStreet());
-                final String streetName = stringAccessor.getString(streetAccessor.getAttribute("name"));
-                final String cityName = entry[i].getCity();
-                final String realName = streetName + " " + cityName;
-                final int street = entry[i].getStreet();
-                // TODO order by size of city
-                add(normalize(streetName + " " + cityName), realName, root, street, 0.5f);
-                add(normalize(cityName + " " + streetName), realName, root, street, 0.5f);
-            }
+        for (final Entry entry : entries) {
+            final int street = entry.street;
+            streetAccessor.setID(street);
+            final String streetName = stringAccessor.getString(streetAccessor.getAttribute("name"));
+            final String cityName = entry.city;
+            final String realName = streetName + " " + cityName;
+
+            // TODO order by size of city
+            add(normalize(streetName + " " + cityName), realName, root, street, 0.5f);
+            add(normalize(cityName + " " + streetName), realName, root, street, 0.5f);
         }
 
         // TODO suburbs can collide --> include city names
@@ -540,13 +541,13 @@ public class AdvancedTextProcessor implements ITextProcessor {
         }
     }
 
-    private static class Entry {
-        public String getCity() {
-            return "";
-        }
+    public static class Entry {
+        private final String city;
+        private final int street;
 
-        public int getStreet() {
-            return 0;
+        public Entry(final String city, final int street) {
+            this.city = city;
+            this.street = street;
         }
     }
 }

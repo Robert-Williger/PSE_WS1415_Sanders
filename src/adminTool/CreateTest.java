@@ -7,8 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.map.MapManagerWriter;
-
 public class CreateTest {
     public static void main(final String[] args) {
         new CreateTest();
@@ -57,15 +55,18 @@ public class CreateTest {
                 e.printStackTrace();
             }
 
-//            IndexWriter indexWriter = new IndexWriter(parser.getBoundaries(), mapManagerWriter.streetSorting,
-//                    zipOutput);
-//            try {
-//                indexWriter.write();
-//            } catch (final IOException e) {
-//                e.printStackTrace();
-//            }
-
             System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
+            IndexWriter indexWriter = new IndexWriter(parser.getBoundaries(), mapManagerWriter.streetSorting,
+                    zipOutput);
+            try {
+                indexWriter.write();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("index creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+
             try {
                 zipOutput.close();
             } catch (IOException e) {

@@ -85,7 +85,6 @@ public class PointListener implements IDragListener {
         if (e.getButton() == MouseEvent.BUTTON1) {
             machine.selectPoint(point);
             if (e.getClickCount() == 2) {
-                // TODO
                 final int zoom = application.getMap().getZoom();
                 application.getMap().center(point.getX(zoom), point.getY(zoom));
                 application.getImageLoader().update();

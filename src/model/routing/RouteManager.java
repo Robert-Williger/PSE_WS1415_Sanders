@@ -69,15 +69,12 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int minY = Integer.MAX_VALUE;
         int maxY = Integer.MIN_VALUE;
 
-        // TODO calculate route bounds
         for (final IRoutePoint routePoint : pointList) {
-            // TODO
             final int x = routePoint.getX(state.getZoom());
             final int y = routePoint.getY(state.getZoom());
 
             minX = Math.min(minX, x);
             maxX = Math.max(maxX, x);
-
             minY = Math.min(minY, y);
             maxY = Math.max(maxY, y);
         }

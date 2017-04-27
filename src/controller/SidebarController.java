@@ -11,6 +11,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import model.IApplication;
+import model.map.IMap;
 import model.targets.IRoutePoint;
 import view.IListListener;
 import view.ISidebarView;
@@ -43,8 +44,8 @@ public class SidebarController extends AbstractController<ISidebarView> {
                 if (e.getClickCount() == 1) {
                     machine.selectPoint(point);
                 } else {
-                    // TODO
-                    // application.getMap().center(point.getAccessPoint().getLocation());
+                    final IMap map = application.getMap();
+                    map.center(point.getX(map.getZoom()), point.getY(map.getZoom()));
                     application.getImageLoader().update();
                 }
             }

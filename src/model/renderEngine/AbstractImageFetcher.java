@@ -76,8 +76,6 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
             @Override
             public void run() {
                 for (int i = 0; i < getCacheSize(); i++) {
-                    // TODO is this an improvement?
-                    // TODO BITMASK instead of TRANSCLUENT?
                     freeList.add(createImage());
                 }
             }
@@ -102,6 +100,5 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
         final BufferedImage ret = config.createCompatibleImage(imageSize, imageSize, Transparency.TRANSLUCENT);
         // new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
         return ret;
-        // return new SpecialImage(imageSize, imageSize);
     }
 }

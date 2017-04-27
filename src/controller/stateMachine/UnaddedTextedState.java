@@ -28,8 +28,6 @@ class UnaddedTextedState extends AbstractTextedState {
 
     @Override
     protected void cancelPointRelocation() {
-        // TODO
-        // getStore().getPoint().setLocation(null);
     }
 
 }

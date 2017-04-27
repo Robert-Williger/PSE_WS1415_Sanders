@@ -1,4 +1,4 @@
-package adminTool.map;
+package adminTool.quadtree;
 
 import java.io.IOException;
 import java.util.PrimitiveIterator;
@@ -7,25 +7,21 @@ import java.util.zip.ZipOutputStream;
 import adminTool.AbstractMapFileWriter;
 import util.IntList;
 
-public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
+public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     private final int mapSize;
-    private final int maxElementsPerTile;
-    private final int maxZoomSteps;
     private final int totalElements;
     private final String name;
+    private final IQuadtreePolicy policy;
 
-    public AbstractQuadtreeWriter(final ZipOutputStream zipOutput, final String name, final int totalElements,
-            final int maxElementsPerTile, final int maxZoomSteps, final int mapSize) {
+    public LinkedQuadtreeWriter(final IQuadtreePolicy policy, final ZipOutputStream zipOutput, final String name,
+            final int totalElements, final int mapSize) {
         super(zipOutput);
 
-        this.maxElementsPerTile = maxElementsPerTile;
-        this.maxZoomSteps = maxZoomSteps;
+        this.policy = policy;
         this.mapSize = mapSize;
         this.totalElements = totalElements;
         this.name = name;
     }
-
-    protected abstract boolean intersects(final int index, final int zoom, final int x, final int y, final int size);
 
     @Override
     public void write() throws IOException {
@@ -33,6 +29,7 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
 
         final boolean[] duplicates = new boolean[totalElements];
 
+        final int maxZoomSteps = policy.getMaxZoomSteps();
         final int[][] xPos = new int[maxZoomSteps][4];
         final int[][] yPos = new int[maxZoomSteps][4];
 
@@ -85,19 +82,20 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
         writeIntList(treeList);
         closeEntry();
 
-        System.out.println("   " + name + "-Quadtree creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        System.out.println(
+                "   " + name + "-Quadtree creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
     }
 
     private boolean[][] createChildren() {
-        final boolean[][] children = new boolean[maxZoomSteps][4];
+        final boolean[][] children = new boolean[policy.getMaxZoomSteps()][4];
         for (int i = 0; i < 4; i++) {
-            children[maxZoomSteps - 1][i] = true;
+            children[children.length - 1][i] = true;
         }
         return children;
     }
 
     private IntList[][] createIndices() {
-        final IntList[][] indices = new IntList[maxZoomSteps][];
+        final IntList[][] indices = new IntList[policy.getMaxZoomSteps()][];
         indices[0] = new IntList[] { createInitialList() };
         for (int i = 1; i < indices.length; i++) {
             indices[i] = new IntList[] { new IntList(), new IntList(), new IntList(), new IntList() };
@@ -116,7 +114,7 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
 
     private void allocateRoot(final IntList treeList, final boolean[] leafs) {
         treeList.add(0);
-        leafs[0] = maxZoomSteps == 1 || totalElements <= maxElementsPerTile;
+        leafs[0] = policy.getMaxZoomSteps() == 1 || totalElements <= policy.getMaxElementsPerTile();
         if (!leafs[0]) {
             treeList.add(0);
         }
@@ -137,7 +135,7 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
 
             int matches = 0;
             for (int i = 0; i < 4; i++) {
-                if (intersects(index, zoom, distXPos[i], distYPos[i], size)) {
+                if (policy.intersects(index, zoom, distXPos[i], distYPos[i], size)) {
                     distIndices[i].add(index);
                     ++matches;
                 }
@@ -148,7 +146,7 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
             }
         }
 
-        if (zoom + 1 != maxZoomSteps - 1) {
+        if (zoom + 1 != policy.getMaxZoomSteps() - 1) {
             setLeafs(leafs, distIndices);
         }
     }
@@ -162,7 +160,7 @@ public abstract class AbstractQuadtreeWriter extends AbstractMapFileWriter {
 
     private void setLeafs(final boolean[] leafs, final IntList[] indices) {
         for (int i = 0; i < leafs.length; i++) {
-            leafs[i] = indices[i].size() <= maxElementsPerTile;
+            leafs[i] = indices[i].size() <= policy.getMaxElementsPerTile();
         }
     }
 

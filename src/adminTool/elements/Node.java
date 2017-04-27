@@ -3,7 +3,6 @@ package adminTool.elements;
 import java.awt.Point;
 
 public class Node {
-    // TODO exentends Point?
     private int x;
     private int y;
 
@@ -23,8 +22,12 @@ public class Node {
         return y;
     }
 
-    public Point getLocation() {
-        return new Point(getX(), getY());
+    public double x() {
+        return x;
+    }
+
+    public double y() {
+        return y;
     }
 
     public void setLocation(final int x, final int y) {

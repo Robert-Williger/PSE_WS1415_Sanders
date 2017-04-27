@@ -28,4 +28,6 @@ public interface IAddressablePriorityQueue<T> {
 
     boolean contains(T element);
 
+    void clear();
+
 }

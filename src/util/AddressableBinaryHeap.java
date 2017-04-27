@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
-    private final List<Entry<T>>       heap;
+    private final List<Entry<T>> heap;
     private final HashMap<T, Entry<T>> mapping;
 
     public AddressableBinaryHeap() {
@@ -189,8 +189,8 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
 
     private static class Entry<T> {
         private final T content;
-        private int     index;
-        private int     priority;
+        private int index;
+        private int priority;
 
         private Entry(final T content, final int index, final int priority) {
             this.content = content;
@@ -206,5 +206,11 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
             this.priority = priority;
         }
 
+    }
+
+    @Override
+    public void clear() {
+        mapping.clear();
+        heap.clear();
     }
 }

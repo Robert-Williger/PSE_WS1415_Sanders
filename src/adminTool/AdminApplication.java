@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Boundary;
-import adminTool.map.MapManagerWriter;
 
 public class AdminApplication {
 

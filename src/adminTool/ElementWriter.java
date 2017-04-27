@@ -1,4 +1,4 @@
-package adminTool.map;
+package adminTool;
 
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -7,8 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.AbstractMapFileWriter;
-import adminTool.Sorting;
 import adminTool.elements.Area;
 import adminTool.elements.Building;
 import adminTool.elements.Label;
@@ -46,21 +44,47 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     public void write() {
+        long start = System.currentTimeMillis();
         nodeMap = createNodeMap();
+        System.out.println("   node map creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        start = System.currentTimeMillis();
         try {
             writeNodes(dataOutput);
         } catch (final IOException e) {
             e.printStackTrace();
         }
 
+        System.out.println("   node write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        start = System.currentTimeMillis();
+
         stringMap = createStringMap();
+        System.out.println("   string map creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+
+        start = System.currentTimeMillis();
         try {
             writeStreets(dataOutput);
+            System.out.println("   street write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
             writeWays(dataOutput);
+            System.out.println("   way write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
             writeAreas(dataOutput);
+            System.out.println("   area write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
             writeBuildings(dataOutput);
+            System.out.println("   building write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
             writeLabels(dataOutput);
+            System.out.println("   label write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
+
             writeStrings(dataOutput);
+            System.out.println("   string write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            start = System.currentTimeMillis();
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -311,10 +335,8 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         for (int type = 0; type < distribution.length; type++) {
             total += distribution[type];
-            // TODO -/+ 1?
             dataOutput.writeInt(total);
         }
-        // TODO
 
         closeEntry();
 

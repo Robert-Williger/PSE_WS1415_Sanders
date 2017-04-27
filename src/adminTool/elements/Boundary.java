@@ -4,6 +4,8 @@ import adminTool.elements.Node;
 
 public class Boundary {
 
+    private static int count;
+    private final int id;
     private final String name;
     private final Node[][] inner;
     private final Node[][] outer;
@@ -12,6 +14,7 @@ public class Boundary {
         this.name = name;
         this.inner = inner;
         this.outer = outer;
+        id = count++;
     }
 
     public Node[][] getOuter() {
@@ -24,5 +27,9 @@ public class Boundary {
 
     public String getName() {
         return name;
+    }
+
+    public int getID() {
+        return id;
     }
 }
