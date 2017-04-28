@@ -67,7 +67,7 @@ public class JPMSTTest {
         weights[++count] = 1;
         weights[++count] = 2;
 
-        final IUndirectedGraph undirectedGraph = new UndirectedGraph(10, edges, weights);
+        final IUndirectedGraph undirectedGraph = new UndirectedGraph(10, convert(edges), weights);
         jp = new JPMST(undirectedGraph);
         mst = jp.calculateMST();
     }
@@ -86,7 +86,8 @@ public class JPMSTTest {
     public void testStructure() {
         boolean error = false;
 
-        final Integer[][] adj = {{1, 2}, {0, 5}, {0, 4}, {4, 6}, {2, 3}, {1}, {3, 7}, {6, 8}, {7, 9}, {8}};
+        final Integer[][] adj = { { 1, 2 }, { 0, 5 }, { 0, 4 }, { 4, 6 }, { 2, 3 }, { 1 }, { 3, 7 }, { 6, 8 }, { 7, 9 },
+                { 8 } };
 
         for (int i = 0; i < mst.getNodes(); i++) {
             final Iterator<Integer> it = mst.getAdjacentNodes(i);
@@ -107,6 +108,15 @@ public class JPMSTTest {
 
         }
         assertFalse(error);
+    }
+
+    private static int[][] convert(final long[] edges) {
+        final int[][] ret = new int[2][edges.length];
+        for (int i = 0; i < edges.length; i++) {
+            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[1][i] = (int) (edges[i] >> 32);
+        }
+        return ret;
     }
 
 }

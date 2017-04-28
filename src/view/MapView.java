@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.util.ListIterator;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -63,6 +64,11 @@ public class MapView extends JPanel implements IMapView {
 
             @Override
             public void pointRemoved(final IRoutePoint point) {
+                pointLayer.repaint();
+            }
+
+            @Override
+            public void listCleared(int oldSize) {
                 pointLayer.repaint();
             }
 
@@ -261,7 +267,8 @@ public class MapView extends JPanel implements IMapView {
         }
 
         private void paint(final Graphics2D g, final int x, final int y) {
-            for (final IRoutePoint point : list) {
+            for (final ListIterator<IRoutePoint> iterator = list.listIterator(list.size()); iterator.hasPrevious();) {
+                final IRoutePoint point = iterator.previous();
                 paintPoint(g, point, x, y);
             }
         }
@@ -276,11 +283,12 @@ public class MapView extends JPanel implements IMapView {
             final double mapX = (1 - s) * (map.getX(sZoom) - (int) deltaX) + s * map.getX(dZoom);
             final double mapY = (1 - s) * (map.getY(sZoom) - (int) deltaY) + s * map.getY(dZoom);
 
-            for (final IRoutePoint point : list) {
+            for (final ListIterator<IRoutePoint> iterator = list.listIterator(list.size()); iterator.hasPrevious();) {
+                final IRoutePoint point = iterator.previous();
                 // interpolate point position linear
                 final double pointX = (1 - s) * point.getX(sZoom) + s * point.getX(dZoom);
                 final double pointY = (1 - s) * point.getY(sZoom) + s * point.getY(dZoom);
-                routePointView.paint(g, point.getState(), Integer.toString(point.getTargetIndex() + 1),
+                routePointView.paint(g, point.getState(), Integer.toString(point.getListIndex() + 1),
                         pointX - mapX + map.getWidth() / 2 - POINT_DIAMETER / 2,
                         pointY - mapY + map.getHeight() / 2 - POINT_DIAMETER / 2);
             }
@@ -288,7 +296,7 @@ public class MapView extends JPanel implements IMapView {
 
         private void paintPoint(final Graphics2D g, final IRoutePoint point, final int x, final int y) {
             final int zoom = map.getZoom();
-            routePointView.paint(g, point.getState(), Integer.toString(point.getTargetIndex() + 1),
+            routePointView.paint(g, point.getState(), Integer.toString(point.getListIndex() + 1),
                     point.getX(zoom) - x + map.getWidth() / 2 - POINT_DIAMETER / 2,
                     point.getY(zoom) - y + map.getHeight() / 2 - POINT_DIAMETER / 2);
         }

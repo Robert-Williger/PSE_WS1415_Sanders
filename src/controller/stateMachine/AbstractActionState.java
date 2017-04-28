@@ -5,7 +5,7 @@ import java.util.Set;
 
 import model.targets.AddressPoint;
 import model.targets.IRoutePoint;
-import model.targets.PointState;
+import model.targets.IRoutePoint.State;
 
 abstract class AbstractActionState extends AbstractState {
 
@@ -48,7 +48,7 @@ abstract class AbstractActionState extends AbstractState {
 
             getStore().setPoint(point);
             getStore().storePoint();
-            point.setState(PointState.editing);
+            point.setState(State.editing);
             getSidebarView().setPointOrderChangable(true);
 
             return EditingState.getInstance();

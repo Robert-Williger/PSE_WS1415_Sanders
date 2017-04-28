@@ -12,7 +12,7 @@ import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import model.targets.PointState;
+import model.targets.IRoutePoint.State;
 
 public class RoutePointViewFlyweight {
 
@@ -25,7 +25,7 @@ public class RoutePointViewFlyweight {
 
         final float[] fractions = { 0f, 1f };
 
-        final Paint[] paints = new Paint[PointState.STATES];
+        final Paint[] paints = new Paint[State.STATES];
         paints[0] = new RadialGradientPaint(new Rectangle(0, 0, diameter, diameter), fractions,
                 new Color[] { Color.green, Color.green.darker() }, CycleMethod.NO_CYCLE);
         paints[1] = new RadialGradientPaint(new Rectangle(0, 0, diameter, diameter), fractions,
@@ -34,8 +34,8 @@ public class RoutePointViewFlyweight {
                 new Color[] { Color.red, Color.red.darker() }, CycleMethod.NO_CYCLE);
         final Color[] borderColor = new Color[] { new Color(94, 94, 94), new Color(94, 94, 94), Color.DARK_GRAY };
 
-        images = new Image[PointState.STATES];
-        for (int i = 0; i < PointState.STATES; i++) {
+        images = new Image[State.STATES];
+        for (int i = 0; i < State.STATES; i++) {
             final BufferedImage image = new BufferedImage(diameter, diameter, BufferedImage.TYPE_INT_ARGB);
             final Graphics2D g2 = image.createGraphics();
 
@@ -60,13 +60,13 @@ public class RoutePointViewFlyweight {
         this.diameter = diameter;
     }
 
-    public void paint(final Graphics2D g, final PointState state, final double x, final double y) {
+    public void paint(final Graphics2D g, final State state, final double x, final double y) {
         g.translate(x, y);
         g.drawImage(images[state.getIndex()], 0, 0, null);
         g.translate(-x, -y);
     }
 
-    public void paint(final Graphics2D g, final PointState state, final String index, final double x, final double y) {
+    public void paint(final Graphics2D g, final State state, final String index, final double x, final double y) {
         g.translate(x, y);
         g.drawImage(images[state.getIndex()], 0, 0, null);
 

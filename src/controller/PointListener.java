@@ -7,7 +7,7 @@ import controller.stateMachine.IStateMachine;
 import model.IApplication;
 import model.map.IMap;
 import model.targets.IRoutePoint;
-import model.targets.PointState;
+import model.targets.IRoutePoint.State;
 import view.IDragListener;
 import view.IMapView;
 
@@ -41,7 +41,7 @@ public class PointListener implements IDragListener {
     @Override
     public void mouseDragged(final MouseEvent e) {
         if (start != null) {
-            if (point.getState() != PointState.added) {
+            if (point.getState() != State.added) {
                 final int x = e.getX();
                 final int y = e.getY();
 
@@ -107,7 +107,7 @@ public class PointListener implements IDragListener {
     @Override
     public void mouseReleased(final MouseEvent e) {
         if (dragged) { // Check whether dragged before
-            if (point.getState() != PointState.added) {
+            if (point.getState() != State.added) {
                 final int zoom = application.getMap().getZoom();
                 machine.locatePoint(point.getX(zoom), point.getY(zoom));
             }
@@ -134,8 +134,8 @@ public class PointListener implements IDragListener {
         @Override
         public void run() {
             while (!isInterrupted()) {
-                if ((x != 0 || y != 0)
-                        && (point.getState() == PointState.editing || point.getState() == PointState.unadded)) {
+                if ((x != 0 || y != 0) && (point.getState() == IRoutePoint.State.editing
+                        || point.getState() == IRoutePoint.State.unadded)) {
                     application.getMap().move(x, y);
                     application.getImageLoader().update();
                     try {

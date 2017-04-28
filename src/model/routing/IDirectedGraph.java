@@ -1,6 +1,6 @@
 package model.routing;
 
-import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
 
 public interface IDirectedGraph {
 
@@ -8,7 +8,7 @@ public interface IDirectedGraph {
 
     int getEdges();
 
-    Iterator<Integer> getOutgoingEdges(int node);
+    OfInt getOutgoingEdges(int node);
 
     int getEndNode(int edge);
 

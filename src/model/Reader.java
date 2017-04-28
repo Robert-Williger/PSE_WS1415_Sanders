@@ -239,8 +239,6 @@ public class Reader implements IReader {
 
             int maxCityCount = stream.readInt();
 
-            // Arrays.stream(cities).forEach(c -> System.out.println(c));
-
             final List<AdvancedTextProcessor.Entry> list = new ArrayList<>();
             for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
                 final int n = stream.readInt();

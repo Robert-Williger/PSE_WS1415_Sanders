@@ -243,7 +243,15 @@ public class AdvancedTextProcessor implements ITextProcessor {
             ++index;
         }
 
-        return index == input.length() ? child.createAddressPoint() : parse(child, input, index);
+        return index == input.length() ? createAddressPoint(child) : parse(child, input, index);
+    }
+
+    private AddressPoint createAddressPoint(final SortedTree tree) {
+        final float offset = tree.getOffset();
+        final int street = tree.street;
+
+        final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
+        return new AddressPoint(tree.name, location.x, location.y, street, offset, manager.getState().getConverter());
     }
 
     // TODO fit edit costs --> nearby keys lower costs than far away ones
@@ -379,9 +387,9 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
     }
 
-    private static final SortedTree[] emptyChildren = new SortedTree[0];
+    private static class Tree {
+        private static final SortedTree[] emptyChildren = new SortedTree[0];
 
-    private class Tree {
         private String name;
         private final String indexName;
         private final List<Tree> children;
@@ -452,51 +460,7 @@ public class AdvancedTextProcessor implements ITextProcessor {
         }
     }
 
-    // private class SortedTree implements Comparable<SortedTree> {
-    // private final String name;
-    // private final String indexName;
-    // private final SortedTree[] children;
-    // private final AccessPoint accessPoint;
-    //
-    // public SortedTree(final String indexName, final String name, final AccessPoint accessPoint,
-    // final SortedTree[] children) {
-    // this.indexName = indexName;
-    // this.name = name;
-    // this.accessPoint = accessPoint;
-    // this.children = children;
-    // }
-    //
-    // public String getIndexName() {
-    // return indexName;
-    // }
-    //
-    // public AccessPoint getAccessPoint() {
-    // return accessPoint;
-    // }
-    //
-    // public AddressPoint createAddressPoint() {
-    // final int street = getAccessPoint().getStreet();
-    // final float offset = getAccessPoint().getOffset();
-    // streetAccessor.setID(street);
-    // final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
-    // return new AddressPoint(name, location.x, location.y, street, offset, manager.getState().getConverter());
-    // }
-    //
-    // public SortedTree[] getChildren() {
-    // return children;
-    // }
-    //
-    // public String getName() {
-    // return name;
-    // }
-    //
-    // @Override
-    // public int compareTo(final SortedTree o) {
-    // return indexName.compareTo(o.indexName);
-    // }
-    // }
-
-    private class SortedTree implements Comparable<SortedTree> {
+    private static class SortedTree implements Comparable<SortedTree> {
         private final String name;
         private final String indexName;
         private final SortedTree[] children;
@@ -514,13 +478,6 @@ public class AdvancedTextProcessor implements ITextProcessor {
 
         public String getIndexName() {
             return indexName;
-        }
-
-        public AddressPoint createAddressPoint() {
-            streetAccessor.setID(street);
-            final float offset = getOffset();
-            final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
-            return new AddressPoint(name, location.x, location.y, street, offset, manager.getState().getConverter());
         }
 
         public SortedTree[] getChildren() {

@@ -1,10 +1,14 @@
 package model.targets;
 
+import java.util.ListIterator;
+
 import model.IModel;
 
 public interface IPointList extends Iterable<IRoutePoint>, IModel {
 
     int size();
+
+    boolean isEmpty();
 
     boolean remove(IRoutePoint point);
 
@@ -19,5 +23,7 @@ public interface IPointList extends Iterable<IRoutePoint>, IModel {
     void clear();
 
     void addPointListListener(IPointListListener listener);
+
+    ListIterator<IRoutePoint> listIterator(final int index);
 
 }

@@ -2,7 +2,7 @@ package controller.stateMachine;
 
 import model.targets.IPointList;
 import model.targets.IRoutePoint;
-import model.targets.PointState;
+import model.targets.IRoutePoint.State;
 
 abstract class AbstractEditingState extends AbstractActionState {
 
@@ -11,7 +11,7 @@ abstract class AbstractEditingState extends AbstractActionState {
         final IRoutePoint point = getPoint();
         getSidebarView().setPointOrderChangable(false);
 
-        point.setState(PointState.added);
+        point.setState(State.added);
 
         return DefaultState.getInstance();
     }
@@ -66,7 +66,7 @@ abstract class AbstractEditingState extends AbstractActionState {
         final IRoutePoint point = getPoint();
         getSidebarView().setPointOrderChangable(false);
 
-        point.setState(PointState.added);
+        point.setState(State.added);
     }
 
     protected abstract IState getChangedState();

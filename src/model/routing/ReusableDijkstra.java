@@ -2,8 +2,8 @@ package model.routing;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator.OfInt;
 
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
@@ -109,9 +109,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     private final void scan(final int u) {
-        final Iterator<Integer> iterator = graph.getOutgoingEdges(u);
+        final OfInt iterator = graph.getOutgoingEdges(u);
         while (iterator.hasNext()) {
-            relax(u, iterator.next());
+            relax(u, iterator.nextInt());
         }
     }
 

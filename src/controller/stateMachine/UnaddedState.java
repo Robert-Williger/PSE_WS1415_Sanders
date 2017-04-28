@@ -1,7 +1,7 @@
 package controller.stateMachine;
 
 import model.targets.IRoutePoint;
-import model.targets.PointState;
+import model.targets.IRoutePoint.State;
 
 class UnaddedState extends AbstractActionState {
 
@@ -22,7 +22,7 @@ class UnaddedState extends AbstractActionState {
         getSidebarView().setAddable(false);
 
         final IRoutePoint point = getStore().getPoint();
-        point.setState(PointState.added);
+        point.setState(State.added);
         getSidebarView().setResettable(true);
         if (getList().size() >= 2) {
             getSidebarView().setStartable(true);

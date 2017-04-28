@@ -78,7 +78,7 @@ public class ChristophidesTSPAlgorithmTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, edges, weights);
+        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, convert(edges), weights);
         routing = new ChristofidesTSPSolver(undirectedGraph);
     }
 
@@ -202,5 +202,14 @@ public class ChristophidesTSPAlgorithmTest {
 
         routing.calculateRoute(edges);
         assertFalse(error);
+    }
+
+    private static int[][] convert(final long[] edges) {
+        final int[][] ret = new int[2][edges.length];
+        for (int i = 0; i < edges.length; i++) {
+            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[1][i] = (int) (edges[i] >> 32);
+        }
+        return ret;
     }
 }

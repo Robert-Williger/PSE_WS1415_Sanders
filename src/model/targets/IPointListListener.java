@@ -6,4 +6,6 @@ public interface IPointListListener {
 
     void pointRemoved(IRoutePoint point);
 
+    void listCleared(int oldSize);
+
 }

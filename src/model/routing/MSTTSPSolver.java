@@ -9,10 +9,10 @@ import util.IntList;
 import model.IProgressListener;
 
 public class MSTTSPSolver extends AbstractRouteSolver {
-    private IUndirectedGraph  mst;
-    private Path[]            completeMapping;
-    private IntList           tspNodes;
-    private boolean           canceled;
+    private IUndirectedGraph mst;
+    private Path[] completeMapping;
+    private IntList tspNodes;
+    private boolean canceled;
     private final ISPSPSolver solver;
 
     public MSTTSPSolver(final IDirectedGraph graph) {

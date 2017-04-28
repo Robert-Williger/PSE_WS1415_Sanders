@@ -1,6 +1,6 @@
 package model.routing;
 
-import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
 
 public class DirectedGraph implements IDirectedGraph {
     private final int[] nodeBorders;
@@ -18,7 +18,7 @@ public class DirectedGraph implements IDirectedGraph {
         this.nodeBorders = new int[nodes + 1];
 
         this.weights = weights;
-        this.nodes = new int[][]{firstNodes, secondNodes};
+        this.nodes = new int[][] { firstNodes, secondNodes };
 
         int onewayIndex = 0;
         int oneway = getOneway(onewayIndex, oneways);
@@ -92,7 +92,7 @@ public class DirectedGraph implements IDirectedGraph {
     }
 
     @Override
-    public Iterator<Integer> getOutgoingEdges(final int node) {
+    public OfInt getOutgoingEdges(final int node) {
         return new EdgeIterator(node);
     }
 
@@ -111,7 +111,7 @@ public class DirectedGraph implements IDirectedGraph {
         return weights[getEdgeIndex(edge)];
     }
 
-    private class EdgeIterator implements Iterator<Integer> {
+    private class EdgeIterator implements OfInt {
         private int currentElement;
         private final int limit;
 
@@ -127,13 +127,8 @@ public class DirectedGraph implements IDirectedGraph {
         }
 
         @Override
-        public Integer next() {
+        public int nextInt() {
             return outgoingEdges[currentElement++];
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
 
     }

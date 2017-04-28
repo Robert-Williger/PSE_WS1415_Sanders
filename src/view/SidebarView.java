@@ -39,7 +39,6 @@ import model.targets.IPointList;
 import model.targets.IPointListListener;
 import model.targets.IPointListener;
 import model.targets.IRoutePoint;
-import model.targets.PointState;
 
 public class SidebarView extends JPanel implements ISidebarView {
 
@@ -96,6 +95,11 @@ public class SidebarView extends JPanel implements ISidebarView {
 
             @Override
             public void pointRemoved(final IRoutePoint point) {
+            }
+
+            @Override
+            public void listCleared(int oldSize) {
+
             }
 
         };
@@ -647,25 +651,22 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         @Override
         public void listIndexChanged() {
-            repaint();
         }
 
         @Override
         public void addressChanged() {
             textField.setText(point.getAddress());
             textField.requestFocus();
-            repaint();
         }
 
         @Override
         public void locationChanged() {
-            repaint();
         }
 
         @Override
         public void stateChanged() {
-            final PointState state = point.getState();
-            if (state == PointState.editing || state == PointState.unadded) {
+            final IRoutePoint.State state = point.getState();
+            if (state == IRoutePoint.State.editing || state == IRoutePoint.State.unadded) {
                 textField.setText(point.getAddress());
                 textField.requestFocus();
             }
@@ -673,7 +674,6 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         @Override
         public void targetIndexChanged() {
-            repaint();
         }
     }
 

@@ -5,15 +5,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator.OfInt;
 import java.util.Set;
 
 import model.IProgressListener;
 
 public class ChristofidesTSPSolver extends AbstractRouteSolver {
 
-    private boolean       canceled;
-    private ISPSPSolver   solver;
-    private Path[]        completeMapping;
+    private boolean canceled;
+    private ISPSPSolver solver;
+    private Path[] completeMapping;
     private List<Integer> matchingMapping;
 
     public ChristofidesTSPSolver(final IDirectedGraph undirectedGraph) {
@@ -118,7 +119,7 @@ public class ChristofidesTSPSolver extends AbstractRouteSolver {
 
         for (int node = 0; node < mstGraph.getNodes(); node++) {
             int count = 0;
-            for (final Iterator<Integer> it = mstGraph.getAdjacentNodes(node); it.hasNext(); it.next()) {
+            for (final OfInt it = mstGraph.getAdjacentNodes(node); it.hasNext(); it.nextInt()) {
                 ++count;
             }
             if (count % 2 == 1) {
@@ -161,8 +162,8 @@ public class ChristofidesTSPSolver extends AbstractRouteSolver {
         }
 
         for (int node = 0; node < mstGraph.getNodes(); node++) {
-            for (final Iterator<Integer> it = mstGraph.getAdjacentNodes(node); it.hasNext();) {
-                final int otherNode = it.next();
+            for (final OfInt it = mstGraph.getAdjacentNodes(node); it.hasNext();) {
+                final int otherNode = it.nextInt();
                 if (otherNode < node) {
                     firstNodes[i] = node;
                     secondNodes[i] = otherNode;

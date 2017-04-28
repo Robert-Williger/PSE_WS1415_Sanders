@@ -30,6 +30,10 @@ public class UndirectedGraph implements IUndirectedGraph {
 
     }
 
+    public UndirectedGraph(final int nodeCount, final int[][] nodes, final int[] weights) {
+        this(nodeCount, nodes[0], nodes[1], weights);
+    }
+
     public UndirectedGraph(final int nodes, final int[] firstNodes, final int[] secondNodes, final int[] weights) {
         this.nodes = new int[nodes + 1];
         this.edges = new int[firstNodes.length * 2];

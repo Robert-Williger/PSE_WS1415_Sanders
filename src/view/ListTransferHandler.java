@@ -3,31 +3,26 @@ package view;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
-import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.TransferHandler;
 
 import model.targets.IRoutePoint;
 
-public class ListTransferHandler<T> extends TransferHandler {
+public abstract class ListTransferHandler extends TransferHandler {
     private static final long serialVersionUID = 1L;
 
-    private final JList<T> list;
-    private final DefaultListModel<T> listModel;
-
+    private final JList<?> list;
     private final DataFlavor flavor;
-    private T selectedValue;
 
-    public ListTransferHandler(final JList<T> list) {
-        if (!(list.getModel() instanceof DefaultListModel)) {
-            throw new IllegalArgumentException(
-                    "Invalid listmodel. It has to be subclass of DefaultListModel for being able to be modified.");
-        }
+    private int selectedIndex;
+    private int targetIndex;
 
+    public ListTransferHandler(final JList<?> list) {
         this.list = list;
-        this.listModel = (DefaultListModel<T>) list.getModel();
         this.flavor = new DataFlavor(IRoutePoint.class, "Test");
+        targetIndex = -1;
+        selectedIndex = -1;
     }
 
     @Override
@@ -37,7 +32,7 @@ public class ListTransferHandler<T> extends TransferHandler {
 
     @Override
     protected Transferable createTransferable(final JComponent c) {
-        selectedValue = list.getSelectedValue();
+        selectedIndex = list.getSelectedIndex();
 
         return new SingleTransferable(flavor);
     }
@@ -49,14 +44,14 @@ public class ListTransferHandler<T> extends TransferHandler {
 
     @Override
     public boolean importData(final TransferHandler.TransferSupport info) {
-        if (selectedValue == null || !info.isDrop()) {
+        if (selectedIndex == -1 || !info.isDrop()) {
             return false;
         }
 
         final JList.DropLocation dl = (JList.DropLocation) info.getDropLocation();
 
         if (dl.isInsert()) {
-            listModel.add(dl.getIndex(), selectedValue);
+            targetIndex = dl.getIndex();
         }
 
         return true;
@@ -65,7 +60,19 @@ public class ListTransferHandler<T> extends TransferHandler {
     @Override
     protected void exportDone(final JComponent c, final Transferable data, final int action) {
         if (action == TransferHandler.MOVE) {
-            listModel.remove(list.getSelectedIndex());
+            final int fromIndex = selectedIndex;
+            if (targetIndex == -1) {
+                handleRemove(fromIndex);
+            } else {
+                final int toIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex;
+                handleChange(fromIndex, toIndex);
+            }
         }
+
+        targetIndex = -1;
     }
+
+    protected abstract void handleRemove(final int index);
+
+    protected abstract void handleChange(final int fromIndex, final int toIndex);
 }

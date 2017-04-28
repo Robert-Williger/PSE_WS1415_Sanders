@@ -16,7 +16,7 @@ import org.junit.Test;
 public class ViaRouteSolverTest {
 
     private ViaRouteSolver routing;
-    private boolean        error;
+    private boolean error;
 
     public static long getEdge(final int node1, final int node2) {
         long ret;

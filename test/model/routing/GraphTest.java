@@ -73,7 +73,7 @@ public class GraphTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        undirectedGraph = new UndirectedGraph(21, edges, weights);
+        undirectedGraph = new UndirectedGraph(21, convert(edges), weights);
     }
 
     @Test
@@ -130,6 +130,15 @@ public class GraphTest {
     @Test
     public void testWeight() {
         assertEquals(200, undirectedGraph.getWeight(undirectedGraph.getEdge(5, 11)));
+    }
+
+    private static int[][] convert(final long[] edges) {
+        final int[][] ret = new int[2][edges.length];
+        for (int i = 0; i < edges.length; i++) {
+            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[1][i] = (int) (edges[i] >> 32);
+        }
+        return ret;
     }
 
 }

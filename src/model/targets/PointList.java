@@ -3,16 +3,23 @@ package model.targets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import model.AbstractModel;
 
 public class PointList extends AbstractModel implements IPointList {
     private final List<IPointListListener> listener;
-    private final List<IRoutePoint> pointList;
+    private final ArrayList<IRoutePoint> pointList;
 
     public PointList() {
         listener = new ArrayList<>();
         pointList = new ArrayList<>();
+    }
+
+    private void fireClearEvent(final int oldSize) {
+        for (final IPointListListener e : listener) {
+            e.listCleared(oldSize);
+        }
     }
 
     private void fireRemoveEvent(final IRoutePoint point) {
@@ -83,18 +90,24 @@ public class PointList extends AbstractModel implements IPointList {
 
     @Override
     public void clear() {
-        final List<IRoutePoint> temp = new ArrayList<>(pointList);
-
+        final int oldSize = pointList.size();
         pointList.clear();
-
-        for (final IRoutePoint p : temp) {
-            fireRemoveEvent(p);
-        }
+        fireClearEvent(oldSize);
     }
 
     @Override
     public void addPointListListener(final IPointListListener listener) {
         this.listener.add(listener);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return pointList.isEmpty();
+    }
+
+    @Override
+    public ListIterator<IRoutePoint> listIterator(final int index) {
+        return pointList.listIterator(index);
     }
 
 }

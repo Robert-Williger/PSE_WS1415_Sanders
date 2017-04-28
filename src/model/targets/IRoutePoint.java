@@ -12,7 +12,7 @@ public interface IRoutePoint extends IModel {
 
     void setTargetIndex(int index);
 
-    void setState(PointState state);
+    void setState(State state);
 
     void setLocation(int x, int y);
 
@@ -26,10 +26,25 @@ public interface IRoutePoint extends IModel {
 
     int getTargetIndex();
 
-    PointState getState();
+    State getState();
 
     default String getAddress() {
         final AddressPoint point = getAddressPoint();
         return point != null ? point.getAddress() : null;
+    }
+
+    public enum State {
+        added(0), editing(1), unadded(2);
+
+        public final static int STATES = 3;
+        private final int index;
+
+        private State(final int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
+        }
     }
 }

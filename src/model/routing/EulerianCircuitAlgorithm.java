@@ -2,10 +2,10 @@ package model.routing;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PrimitiveIterator.OfInt;
 
 public class EulerianCircuitAlgorithm {
 
@@ -40,9 +40,9 @@ public class EulerianCircuitAlgorithm {
         availableNodes = new ArrayList<>(undirectedGraph.getNodes());
         for (int node = 0; node < undirectedGraph.getNodes(); node++) {
             final Map<Integer, Integer> adjacentNodes = new HashMap<>();
-            for (final Iterator<Integer> iterator = undirectedGraph.getAdjacentNodes(node); iterator.hasNext();) {
+            for (final OfInt iterator = undirectedGraph.getAdjacentNodes(node); iterator.hasNext();) {
 
-                final int other = iterator.next();
+                final int other = iterator.nextInt();
                 Integer occurances = adjacentNodes.get(other);
                 if (occurances == null) {
                     adjacentNodes.put(other, 1);

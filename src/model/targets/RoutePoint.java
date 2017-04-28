@@ -7,50 +7,50 @@ import java.util.List;
 import model.AbstractModel;
 
 public class RoutePoint extends AbstractModel implements IRoutePoint {
-    private final List<IPointListener> listener;
+    private final List<IPointListener> listeners;
     private int listIndex;
     private int targetIndex;
-    private PointState pointState;
+    private State pointState;
     private final Point location;
     private AddressPoint addressPoint;
 
     public RoutePoint() {
         location = new Point();
-        pointState = PointState.unadded;
-        listener = new ArrayList<>();
+        pointState = State.unadded;
+        listeners = new ArrayList<>();
     }
 
     private void fireAddressEvent() {
         fireChange();
-        for (final IPointListener e : listener) {
+        for (final IPointListener e : listeners) {
             e.addressChanged();
         }
     }
 
     private void fireIndexEvent() {
         fireChange();
-        for (final IPointListener e : listener) {
+        for (final IPointListener e : listeners) {
             e.listIndexChanged();
         }
     }
 
     private void fireLocationEvent() {
         fireChange();
-        for (final IPointListener e : listener) {
+        for (final IPointListener e : listeners) {
             e.locationChanged();
         }
     }
 
     private void fireStateEvent() {
         fireChange();
-        for (final IPointListener e : listener) {
+        for (final IPointListener e : listeners) {
             e.stateChanged();
         }
     }
 
     @Override
     public void addPointListener(final IPointListener listener) {
-        this.listener.add(listener);
+        this.listeners.add(listener);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public void setState(final PointState state) {
+    public void setState(final State state) {
         this.pointState = state;
         fireStateEvent();
     }
@@ -115,7 +115,7 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     }
 
     @Override
-    public PointState getState() {
+    public State getState() {
         return pointState;
     }
 

@@ -1,6 +1,6 @@
 package model.routing;
 
-import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
 
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
@@ -45,9 +45,9 @@ public class JPMST {
     private void scan(final int u) {
         if (ready != true) {
 
-            final Iterator<Integer> it = undirectedGraph.getAdjacentNodes(u);
+            final OfInt it = undirectedGraph.getAdjacentNodes(u);
             while (it.hasNext()) {
-                relax(u, it.next());
+                relax(u, it.nextInt());
             }
         }
     }
