@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -14,15 +13,12 @@ import adminTool.elements.Street;
 import adminTool.elements.UnprocessedStreet;
 
 public class GraphWriter extends AbstractMapFileWriter {
-    // ID's
     private int nodeIdCount;
-    private int edgeIdCount;
 
     private HashMap<Node, Integer> nodeIdMap;
 
     private List<WeightedEdge> edges;
     private final List<Street> processedStreets;
-    private List<Integer> oneways;
     private Collection<UnprocessedStreet> unprocessedStreets;
 
     public GraphWriter(final Collection<UnprocessedStreet> unprocessedStreets, final ZipOutputStream zipOutput) {
@@ -38,25 +34,14 @@ public class GraphWriter extends AbstractMapFileWriter {
 
     @Override
     public void write() throws IOException {
-
-        nodeIdCount = 0;
-
-        edges = new ArrayList<>();
-
-        HashMap<Node, Integer> nodeCountMap = createNodeCountMap();
-        createGraph(nodeCountMap);
+        final int oneways = createGraph();
 
         unprocessedStreets = null;
         nodeIdMap = null;
-        nodeCountMap = null;
 
-        // TODO minimize disk space by other method
-        // Collections.sort(edgesList);
-
-        writeGraph();
+        writeGraph(oneways);
 
         edges = null;
-        oneways = null;
     }
 
     private HashMap<Node, Integer> createNodeCountMap() {
@@ -75,76 +60,83 @@ public class GraphWriter extends AbstractMapFileWriter {
         return nodeMap;
     }
 
-    private void createGraph(final HashMap<Node, Integer> nodeCountMap) {
+    private int createGraph() {
+        final HashMap<Node, Integer> nodeCountMap = createNodeCountMap();
+
+        edges = new ArrayList<>();
+        nodeIdMap = new HashMap<>();
+
+        for (final UnprocessedStreet street : unprocessedStreets) {
+            if (street.isOneway()) {
+                processStreet(street, nodeCountMap);
+            }
+        }
+        final int oneways = edges.size();
+
+        for (final UnprocessedStreet street : unprocessedStreets) {
+            if (!street.isOneway()) {
+                processStreet(street, nodeCountMap);
+            }
+        }
+
+        final int edgeCount = edges.size();
+        for (int i = 0; i < oneways; i++) {
+            processedStreets.get(i).setID(0x80000000 | i);
+        }
+        for (int i = oneways; i < edgeCount; i++) {
+            processedStreets.get(i).setID(i);
+        }
+
+        return oneways;
+    }
+
+    private void processStreet(final UnprocessedStreet street, final HashMap<Node, Integer> nodeCountMap) {
         // Step two: get the cuttings of the street at intersections (and dead
         // ends)
+        final List<Integer> intersections = getStreetCuts(street, nodeCountMap);
 
-        nodeIdMap = new HashMap<>();
-        oneways = new LinkedList<>();
-        for (final UnprocessedStreet street : unprocessedStreets) {
+        // Step three: processing the cutting of the streets.
 
-            final List<Integer> intersections = getStreetCuts(street, nodeCountMap);
-            // Step three: processing the cutting of the streets.
+        final Point2D[] degrees = street.getDegrees();
+        final Node[] nodes = street.getNodes();
 
-            final Point2D[] degrees = street.getDegrees();
-            final Node[] nodes = street.getNodes();
+        int lastCut = 0;
+        for (int i = 0; i < intersections.size(); i++) {
+            final int currentCut = intersections.get(i);
 
-            int lastCut = 0;
-            for (int i = 0; i < intersections.size(); i++) {
-                final int currentCut = intersections.get(i);
+            final int id1 = generateID(nodes[lastCut]);
+            final int id2 = generateID(nodes[currentCut]);
 
-                final int id1 = generateID(nodes[lastCut]);
-                final int id2 = generateID(nodes[currentCut]);
+            final Node[] streetNodes = new Node[currentCut - lastCut + 1];
 
-                final Node[] streetNodes = new Node[currentCut - lastCut + 1];
+            double weight = 0;
 
-                double weight = 0;
-                for (int j = lastCut; j < currentCut; j++) {
-                    weight += getWeight(degrees[j].getY(), degrees[j].getX(), degrees[j + 1].getY(),
-                            degrees[j + 1].getX());
-                }
-
-                int id = edgeIdCount++;
-                final WeightedEdge edge;
-                if (street.isOneway()) {
-                    oneways.add(id);
-                    id = 0x80000000 | id;
-                    edge = new WeightedEdge(id1, id2, (int) weight);
-                } else {
-                    edge = new WeightedEdge(id1, id2, (int) weight);
-                }
-
-                for (int j = lastCut; j <= currentCut; j++) {
-                    streetNodes[j - lastCut] = nodes[j];
-                }
-
-                final Street newStreet = new Street(streetNodes, street.getType(), street.getName(), id);
-
-                processedStreets.add(newStreet);
-                edges.add(edge);
-
-                lastCut = currentCut;
+            for (int j = lastCut; j < currentCut; j++) {
+                weight += getWeight(degrees[j].getY(), degrees[j].getX(), degrees[j + 1].getY(), degrees[j + 1].getX());
             }
+
+            for (int j = lastCut; j <= currentCut; j++) {
+                streetNodes[j - lastCut] = nodes[j];
+            }
+
+            edges.add(new WeightedEdge(id1, id2, (int) weight));
+            processedStreets.add(new Street(streetNodes, street.getType(), street.getName()));
+
+            lastCut = currentCut;
         }
     }
 
-    private void writeGraph() throws IOException {
+    private void writeGraph(final int oneways) throws IOException {
         putNextEntry("graph");
 
         dataOutput.writeInt(nodeIdCount);
         dataOutput.writeInt(edges.size());
-        dataOutput.writeInt(oneways.size());
+        dataOutput.writeInt(oneways);
 
         for (final WeightedEdge edge : edges) {
             dataOutput.writeInt(edge.node1);
             dataOutput.writeInt(edge.node2);
             dataOutput.writeInt(edge.weight);
-        }
-
-        int last = 0;
-        for (final int id : oneways) {
-            dataOutput.writeInt(id - last);
-            last = id;
         }
 
         closeEntry();

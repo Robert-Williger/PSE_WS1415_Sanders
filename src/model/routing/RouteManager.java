@@ -11,7 +11,6 @@ import model.map.IMapState;
 import model.map.accessors.ICollectiveAccessor;
 import model.renderEngine.IRenderRoute;
 import model.renderEngine.RenderRoute;
-import model.targets.AccessPoint;
 import model.targets.IPointList;
 import model.targets.IRoutePoint;
 import model.targets.PointList;
@@ -49,16 +48,17 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     private List<InterNode> createInterNodeList() {
         final List<InterNode> interNodeList = new ArrayList<>(pointList.size());
 
-        for (int i = 0; i < pointList.size(); i++) {
-            final AccessPoint accessPoint = pointList.get(i).getAddressPoint();
-            final int street = accessPoint.getStreet();
+        for (final IRoutePoint point : pointList) {
+            final float offset = point.getAddressPoint().getOffset();
+            final int street = point.getAddressPoint().getStreet();
             streetAccessor.setID(street);
-            int edge = streetAccessor.getAttribute("graphId");
-            // TODO own instance for mapping from id to graph edges?
-            int correspondingEdge = streetAccessor.getAttribute("oneway") != 0 ? (edge | 0x80000000) : -1;
-            final InterNode interNode = new InterNode(edge, correspondingEdge, accessPoint.getOffset());
-            interNodeList.add(interNode);
+            final int edge = streetAccessor.getAttribute("graphId");
+            final boolean isOneway = streetAccessor.getAttribute("oneway") != 0;
+
+            // TODO own instance for corresponding-edge-mapping?
+            interNodeList.add(isOneway ? new InterNode(edge, offset) : new InterNode(edge, edge | 0x80000000, offset));
         }
+
         return interNodeList;
     }
 

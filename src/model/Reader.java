@@ -198,30 +198,25 @@ public class Reader implements IReader {
         if (entry != null) {
             applyInputStream(zipFile, entry);
             final int nodeCount = stream.readInt();
+            final int edgeCount = stream.readInt();
+            final int onewayCount = stream.readInt();
 
-            final int[] firstNodes = new int[stream.readInt()];
-            final int[] secondNodes = new int[firstNodes.length];
-            final int[] weights = new int[firstNodes.length];
-            final int[] oneways = new int[stream.readInt()];
+            final int[] firstNodes = new int[edgeCount];
+            final int[] secondNodes = new int[edgeCount];
+            final int[] weights = new int[edgeCount];
 
-            for (int i = 0; i < firstNodes.length; i++) {
+            for (int i = 0; i < edgeCount; i++) {
                 firstNodes[i] = stream.readInt();
                 secondNodes[i] = stream.readInt();
                 weights[i] = stream.readInt();
             }
 
-            int id = 0;
-            for (int i = 0; i < oneways.length; i++) {
-                id += stream.readInt();
-                oneways[i] = id;
-            }
-
             stream.close();
 
-            return new DirectedGraph(nodeCount, firstNodes, secondNodes, weights, oneways);
+            return new DirectedGraph(nodeCount, onewayCount, firstNodes, secondNodes, weights);
         }
 
-        return new DirectedGraph(0, new int[0], new int[0], new int[0], new int[0]);
+        return new DirectedGraph(0, 0, new int[0], new int[0], new int[0]);
     }
 
     private class IndexReader {

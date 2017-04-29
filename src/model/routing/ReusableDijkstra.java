@@ -12,18 +12,17 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     private final IDirectedGraph graph;
     private final int[] distance;
     private final int[] parent;
-    // TODO
-    // private final Set<Integer> endNodeSet;
+
     private int[] endNodes;
     private IAddressablePriorityQueue<Integer> queue;
     private boolean canceled;
 
     private InterNode start;
+    private int achievedNodes;
 
     public ReusableDijkstra(final IDirectedGraph graph) {
         this.graph = graph;
         final int nodes = graph.getNodes();
-        // endNodeSet = new HashSet<Integer>(2);
         distance = new int[nodes];
         parent = new int[nodes];
     }
@@ -41,7 +40,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     @Override
     public Path calculateShortestPath(final InterNode start, final InterNode end) {
         initializeDijkstra(start, end);
-        if (parent[endNodes[0]] == -1 || parent[endNodes[1]] == -1) {
+
+        // endNodes.length is 1 or 2 ..
+        if (parent[endNodes[0]] == -1 || parent[endNodes[endNodes.length - 1]] == -1) {
             execute();
         }
 
@@ -52,6 +53,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
         if (!start.equals(this.start)) {
             this.start = start;
 
+            achievedNodes = 0;
             queue = createQueue();
 
             for (int i = 0; i < graph.getNodes(); i++) {
@@ -63,29 +65,26 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             final float offset = start.getOffset();
 
             initializeStartNode(start.getEdge(), (int) (weight * offset));
-            initializeStartNode(start.getCorrespondingEdge(), (int) (weight * (1 - offset)));
+            if (!start.isOneway()) {
+                initializeStartNode(start.getCorrespondingEdge(), (int) (weight * (1 - offset)));
+            }
         }
 
         canceled = false;
-        // TODO handle one-ways!
-        endNodes = new int[] { graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge()) };
-    }
 
-    private void initializeStartNode(final int edge, final int weight) {
-        if (edge != -1) {
-            final int node = graph.getStartNode(edge);
-            distance[node] = weight;
-            parent[node] = edge;
-            queue.insert(node, weight);
+        if (!end.isOneway()) {
+            endNodes = new int[] { graph.getStartNode(end.getEdge()), graph.getEndNode(end.getEdge()) };
+        } else {
+            endNodes = new int[] { graph.getStartNode(end.getEdge()) };
         }
     }
 
-    // TODO
-    // private void initializeEndNode(final int edge, final int index) {
-    // final int node = graph.getStartNode(edge);
-    // endNodeSet.add(node);
-    // endNodes[index] = node;
-    // }
+    private void initializeStartNode(final int edge, final int weight) {
+        final int node = graph.getStartNode(edge);
+        distance[node] = weight;
+        parent[node] = edge;
+        queue.insert(node, weight);
+    }
 
     private void execute() {
 
@@ -93,17 +92,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             final int u = queue.deleteMin();
 
             scan(u);
-
-            if (u == endNodes[0]) {
-                if (parent[endNodes[1]] != -1) {
-                    break;
-                }
-            } else if (u == endNodes[1]) {
-                if (parent[endNodes[0]] != -1) {
-                    break;
-                }
+            if ((u == endNodes[0] || u == endNodes[endNodes.length - 1]) && ++achievedNodes >= endNodes.length) {
+                break;
             }
-
         }
 
     }
@@ -149,8 +140,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
     }
 
     private Path createPath(final InterNode start, final InterNode end) {
-
-        if (distance[endNodes[0]] == Integer.MAX_VALUE && distance[endNodes[1]] == Integer.MAX_VALUE) {
+        // endNodes.length is 1 or 2 ..
+        if (distance[endNodes[0]] == Integer.MAX_VALUE
+                && distance[endNodes[endNodes.length - 1]] == Integer.MAX_VALUE) {
             fireNoRouteError();
             return null;
         }
@@ -169,9 +161,16 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
         fireReadyEvent();
 
         if (start.getEdge() == end.getEdge()) {
-            final float temp = (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
+            float temp = Float.MAX_VALUE;
+
+            if (!end.isOneway()) {
+                temp = (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
+            } else if (start.getOffset() < end.getOffset()) {
+                temp = (end.getOffset() - start.getOffset()) * graph.getWeight(start.getEdge());
+            }
+
             if (temp <= weights[minIndex]) {
-                return new Path(Math.round(temp), new ArrayList<Integer>(), start, end);
+                return new Path(Math.round(temp), Collections.emptyList(), start, end);
             }
         }
 

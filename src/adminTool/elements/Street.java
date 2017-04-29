@@ -1,38 +1,15 @@
 package adminTool.elements;
 
-import java.awt.Point;
-import java.util.Iterator;
-
 public class Street extends Way {
 
-    private final int id;
-    private int length;
+    private int id;
 
-    public Street(final Node[] nodes, final int type, final String name, final int id) {
+    public Street(final Node[] nodes, final int type, final String name) {
         super(nodes, type, name);
+    }
+
+    public void setID(final int id) {
         this.id = id;
-    }
-
-    public int getLength() {
-        if (length == 0) {
-            calculateLength();
-        }
-
-        return length;
-    }
-
-    private void calculateLength() {
-        float totalLength = 0f;
-        final Iterator<Node> iterator = iterator();
-        Node lastNode = iterator.next();
-
-        while (iterator.hasNext()) {
-            final Node currentNode = iterator.next();
-            totalLength += Point.distance(currentNode.getX(), currentNode.getY(), lastNode.getX(), lastNode.getY());
-            lastNode = currentNode;
-        }
-
-        length = (int) totalLength;
     }
 
     public int getID() {
@@ -64,6 +41,5 @@ public class Street extends Way {
         }
         return true;
     }
-
 
 }

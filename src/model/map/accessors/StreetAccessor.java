@@ -18,7 +18,7 @@ public class StreetAccessor extends CollectiveAccessor {
                 // TODO how to use getID() here?
                 return data[getAddress()] & 0x7FFFFFFF;
             case "oneway":
-                return data[getAddress()] >>> 7;
+                return data[getAddress()] >>> 31;
             case "length":
                 return CollectiveUtil.getLength(this, getID());
             default:

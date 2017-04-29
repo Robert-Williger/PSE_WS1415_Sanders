@@ -3,11 +3,21 @@ package model.routing;
 public class InterNode {
     private final int edge;
     private final int correspondingEdge;
+    private final boolean isOneway;
     private final float offset;
 
     public InterNode(final int edge, final int correspondingEdge, final float offset) {
+        this(edge, correspondingEdge, false, offset);
+    }
+
+    public InterNode(final int edge, final float offset) {
+        this(edge, edge, true, offset);
+    }
+
+    private InterNode(final int edge, final int correspondingEdge, final boolean isOneway, final float offset) {
         this.edge = edge;
         this.correspondingEdge = correspondingEdge;
+        this.isOneway = isOneway;
         this.offset = offset;
     }
 
@@ -17,6 +27,10 @@ public class InterNode {
 
     public int getCorrespondingEdge() {
         return correspondingEdge;
+    }
+
+    public boolean isOneway() {
+        return isOneway;
     }
 
     public float getOffset() {

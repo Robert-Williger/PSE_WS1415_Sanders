@@ -9,60 +9,52 @@ public class DirectedGraph implements IDirectedGraph {
     private final int[][] nodes;
 
     public DirectedGraph() {
-        this(0, new int[0], new int[0], new int[0], new int[0]);
+        this(0, 0, new int[2][0], new int[0]);
     }
 
-    public DirectedGraph(final int nodes, final int[] firstNodes, final int[] secondNodes, final int[] weights,
-            final int[] oneways) {
+    public DirectedGraph(final int nodeCount, final int onewayCount, final int[] firstNodes, final int[] secondNodes,
+            final int[] weights) {
+        this(nodeCount, onewayCount, new int[][] { firstNodes, secondNodes }, weights);
+    }
 
-        this.nodeBorders = new int[nodes + 1];
-
+    public DirectedGraph(final int nodeCount, final int onewayCount, final int[][] nodes, final int[] weights) {
+        this.nodeBorders = new int[nodeCount + 1];
         this.weights = weights;
-        this.nodes = new int[][] { firstNodes, secondNodes };
+        this.nodes = nodes;
 
-        int onewayIndex = 0;
-        int oneway = getOneway(onewayIndex, oneways);
+        final int edges = weights.length;
 
-        for (int i = 0; i < firstNodes.length; i++) {
-            this.nodeBorders[firstNodes[i]]++;
-            if (i != oneway) {
-                this.nodeBorders[secondNodes[i]]++;
-            } else {
-                ++onewayIndex;
-                oneway = getOneway(onewayIndex, oneways);
-            }
+        int index = 0;
+        for (; index < onewayCount; ++index) {
+            nodeBorders[nodes[0][index]]++;
+        }
+        for (; index < edges; ++index) {
+            nodeBorders[nodes[0][index]]++;
+            nodeBorders[nodes[1][index]]++;
         }
 
         int lastBorder = this.nodeBorders[0];
         int currentBorder;
         this.nodeBorders[0] = 0;
 
-        for (int i = 1; i < this.nodeBorders.length; i++) {
-            currentBorder = this.nodeBorders[i];
-            this.nodeBorders[i] = this.nodeBorders[i - 1] + lastBorder;
+        for (int i = 1; i < nodeBorders.length; i++) {
+            currentBorder = nodeBorders[i];
+            nodeBorders[i] = nodeBorders[i - 1] + lastBorder;
             lastBorder = currentBorder;
         }
 
-        this.outgoingEdges = new int[nodeBorders[nodeBorders.length - 1]];
+        outgoingEdges = new int[nodeBorders[nodeBorders.length - 1]];
 
-        final int[] fillLevel = this.nodeBorders.clone();
+        final int[] fillLevel = nodeBorders.clone();
 
-        onewayIndex = 0;
-        oneway = getOneway(onewayIndex, oneways);
-
-        for (int i = 0; i < firstNodes.length; i++) {
-            this.outgoingEdges[fillLevel[firstNodes[i]]++] = i;
-            if (i != oneway) {
-                this.outgoingEdges[fillLevel[secondNodes[i]]++] = getReversedEdge(i);
-            } else {
-                ++onewayIndex;
-                oneway = getOneway(onewayIndex, oneways);
-            }
+        index = 0;
+        for (; index < onewayCount; ++index) {
+            outgoingEdges[fillLevel[nodes[0][index]]++] = index;
         }
-    }
-
-    private int getOneway(final int index, final int[] oneways) {
-        return index < oneways.length ? oneways[index] : -1;
+        for (; index < edges; ++index) {
+            outgoingEdges[fillLevel[nodes[0][index]]++] = index;
+            outgoingEdges[fillLevel[nodes[1][index]]++] = getReversedEdge(index);
+        }
     }
 
     private int getReversedEdge(final int edge) {
