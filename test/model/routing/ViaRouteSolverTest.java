@@ -79,23 +79,22 @@ public class ViaRouteSolverTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, edges, weights);
+        final IDirectedGraph undirectedGraph = new DirectedGraph(21, 0, convert(edges), weights);
         routing = new ViaRouteSolver(undirectedGraph);
     }
 
     @Test
     public void testDistance() {
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(1, 2), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 0.8F));
-        edges.add(new InterNode(getEdge(12, 18), 1F));
+        edges.add(new InterNode(3, 3 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
+        edges.add(new InterNode(17, 17 | 0x80000000, 1));
 
-        final List<Path> path = routing.calculateRoute(edges);
+        final Route route = routing.calculateRoute(edges);
         int length = 0;
 
-        final Iterator<Path> it = path.iterator();
-        while (it.hasNext()) {
-            length += it.next().getLength();
+        for (final Path path : route) {
+            length += path.getLength();
         }
 
         assertEquals(1400, length);
@@ -106,20 +105,20 @@ public class ViaRouteSolverTest {
         boolean error = false;
 
         final InterNode[] nodes = new InterNode[3];
-        nodes[0] = new InterNode(getEdge(1, 2), 0F);
-        nodes[1] = new InterNode(getEdge(16, 15), 0.8F);
-        nodes[2] = new InterNode(getEdge(12, 18), 1F);
+        nodes[0] = new InterNode(3, 3 | 0x80000000, 0);
+        nodes[1] = new InterNode(19, 19 | 0x80000000, 0.2f);
+        nodes[2] = new InterNode(17, 17 | 0x80000000, 1);
 
         final List<InterNode> edges = new ArrayList<>();
         edges.add(nodes[0]);
         edges.add(nodes[1]);
         edges.add(nodes[2]);
 
-        final List<Path> paths = routing.calculateRoute(edges);
+        final Route route = routing.calculateRoute(edges);
 
         final int[] num = new int[3];
 
-        final Iterator<Path> it = paths.iterator();
+        final Iterator<Path> it = route.iterator();
         while (it.hasNext()) {
             final Path path = it.next();
 
@@ -153,9 +152,9 @@ public class ViaRouteSolverTest {
     public void testNotAccessible() {
         error = false;
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(1, 2), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 0.8F));
-        edges.add(new InterNode(getEdge(19, 20), 1F));
+        edges.add(new InterNode(3, 3 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
+        edges.add(new InterNode(20, 20 | 0x80000000, 1));
 
         routing.addProgressListener(new IProgressListener() {
 
@@ -183,9 +182,9 @@ public class ViaRouteSolverTest {
         error = true;
 
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(1, 2), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 0.8F));
-        edges.add(new InterNode(getEdge(12, 18), 1F));
+        edges.add(new InterNode(3, 3 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
+        edges.add(new InterNode(17, 17 | 0x80000000, 1));
 
         routing.addProgressListener(new IProgressListener() {
 
@@ -206,6 +205,15 @@ public class ViaRouteSolverTest {
 
         routing.calculateRoute(edges);
         assertFalse(error);
+    }
+
+    private static int[][] convert(final long[] edges) {
+        final int[][] ret = new int[2][edges.length];
+        for (int i = 0; i < edges.length; i++) {
+            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[1][i] = (int) (edges[i] >> 32);
+        }
+        return ret;
     }
 
 }

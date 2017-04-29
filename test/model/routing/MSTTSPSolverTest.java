@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import model.IProgressListener;
@@ -38,21 +37,25 @@ public class MSTTSPSolverTest {
         edges[++count] = getEdge(0, 3);
         edges[++count] = getEdge(1, 2);
         edges[++count] = getEdge(1, 6);
+
         edges[++count] = getEdge(2, 7);
         edges[++count] = getEdge(3, 4);
         edges[++count] = getEdge(4, 5);
         edges[++count] = getEdge(5, 11);
         edges[++count] = getEdge(6, 11);
+
         edges[++count] = getEdge(6, 10);
         edges[++count] = getEdge(7, 8);
         edges[++count] = getEdge(9, 13);
         edges[++count] = getEdge(9, 14);
         edges[++count] = getEdge(9, 15);
+
         edges[++count] = getEdge(10, 18);
         edges[++count] = getEdge(12, 13);
         edges[++count] = getEdge(12, 18);
         edges[++count] = getEdge(13, 17);
         edges[++count] = getEdge(15, 16);
+
         edges[++count] = getEdge(19, 20);
 
         count = -1;
@@ -78,23 +81,22 @@ public class MSTTSPSolverTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IUndirectedGraph undirectedGraph = new UndirectedGraph(21, convert(edges), weights);
-        routing = new MSTTSPSolver(undirectedGraph);
+        final IDirectedGraph directedGraph = new DirectedGraph(21, 0, convert(edges), weights);
+        routing = new MSTTSPSolver(directedGraph);
     }
 
     @Test
     public void testDistance() {
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(6, 10), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 1F));
-        edges.add(new InterNode(getEdge(12, 18), 0F));
+        edges.add(new InterNode(10, 10 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0));
+        edges.add(new InterNode(17, 17 | 0x80000000, 0));
 
-        final List<Path> path = routing.calculateRoute(edges);
+        final Route route = routing.calculateRoute(edges);
         int length = 0;
 
-        final Iterator<Path> it = path.iterator();
-        while (it.hasNext()) {
-            length += it.next().getLength();
+        for (final Path path : route) {
+            length += path.getLength();
         }
 
         // Die kürzeste Rundroute beträgt 2000 Einheiten. Da unser Programm die
@@ -108,23 +110,20 @@ public class MSTTSPSolverTest {
         boolean error = false;
 
         final InterNode[] nodes = new InterNode[3];
-        nodes[0] = new InterNode(getEdge(1, 2), 0F);
-        nodes[1] = new InterNode(getEdge(16, 15), 0.8F);
-        nodes[2] = new InterNode(getEdge(12, 18), 1F);
+        nodes[0] = new InterNode(3, 3 | 0x80000000, 0);
+        nodes[1] = new InterNode(19, 19 | 0x80000000, 0.2f);
+        nodes[2] = new InterNode(17, 17 | 0x80000000, 1);
 
         final List<InterNode> edges = new ArrayList<>();
         edges.add(nodes[0]);
         edges.add(nodes[1]);
         edges.add(nodes[2]);
 
-        final List<Path> paths = routing.calculateRoute(edges);
+        final Route route = routing.calculateRoute(edges);
 
         final int[] num = new int[3];
 
-        final Iterator<Path> it = paths.iterator();
-        while (it.hasNext()) {
-            final Path path = it.next();
-
+        for (final Path path : route) {
             for (int i = 0; i < 3; i++) {
                 if (path.getStartNode().equals(nodes[i])) {
                     num[i]++;
@@ -148,9 +147,9 @@ public class MSTTSPSolverTest {
     public void testNotAccessible() {
         error = false;
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(1, 2), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 0.8F));
-        edges.add(new InterNode(getEdge(19, 20), 1F));
+        edges.add(new InterNode(3, 3 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
+        edges.add(new InterNode(20, 20 | 0x80000000, 1));
 
         routing.addProgressListener(new IProgressListener() {
 
@@ -178,9 +177,9 @@ public class MSTTSPSolverTest {
         error = true;
 
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(getEdge(1, 2), 0F));
-        edges.add(new InterNode(getEdge(16, 15), 0.8F));
-        edges.add(new InterNode(getEdge(12, 18), 1F));
+        edges.add(new InterNode(3, 3 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2F));
+        edges.add(new InterNode(17, 17 | 0x80000000, 1));
 
         routing.addProgressListener(new IProgressListener() {
 

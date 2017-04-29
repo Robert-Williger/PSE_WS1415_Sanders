@@ -27,10 +27,17 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
         }
     }
 
-    private void fireIndexEvent() {
+    private void fireListIndexEvent() {
         fireChange();
         for (final IPointListener e : listeners) {
             e.listIndexChanged();
+        }
+    }
+
+    private void fireTargetIndexEvent() {
+        fireChange();
+        for (final IPointListener e : listeners) {
+            e.targetIndexChanged();
         }
     }
 
@@ -69,12 +76,13 @@ public class RoutePoint extends AbstractModel implements IRoutePoint {
     @Override
     public void setListIndex(final int index) {
         this.listIndex = index;
-        fireIndexEvent();
+        fireListIndexEvent();
     }
 
     @Override
     public void setTargetIndex(final int index) {
         this.targetIndex = index;
+        fireTargetIndexEvent();
     }
 
     @Override

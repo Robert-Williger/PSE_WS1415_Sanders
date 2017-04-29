@@ -1,6 +1,10 @@
 package model.routing;
 
-public class Route {
+import java.util.Iterator;
+
+import util.Arrays;
+
+public class Route implements Iterable<Path> {
 
     private final int[] targetIndices;
     private final Path[] paths;
@@ -16,5 +20,10 @@ public class Route {
 
     public int getTargetIndex(final int index) {
         return targetIndices[index];
+    }
+
+    @Override
+    public Iterator<Path> iterator() {
+        return Arrays.iterator(getPaths());
     }
 }

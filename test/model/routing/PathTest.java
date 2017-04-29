@@ -10,9 +10,9 @@ import org.junit.Test;
 
 public class PathTest {
     private Path path;
-    private List<Long> edges;
-    private InterNode iNode1;
-    private InterNode iNode2;
+    private List<Integer> edges;
+    private InterNode node1;
+    private InterNode node2;
 
     public static long getEdge(final int node1, final int node2) {
         long ret;
@@ -27,14 +27,14 @@ public class PathTest {
     @Before
     public void setUp() {
         edges = new ArrayList<>();
-        iNode1 = new InterNode(getEdge(0, 16), 1F);
-        iNode2 = new InterNode(getEdge(2, 6), 1F);
+        node1 = new InterNode(0, 0 | 0x80000000, 1);
+        node2 = new InterNode(1, 1 | 0x80000000, 1);
 
-        edges.add(getEdge(0, 16));
-        edges.add(getEdge(16, 2));
-        edges.add(getEdge(6, 2));
+        edges.add(0);
+        edges.add(1);
+        edges.add(2);
 
-        path = new Path(3, edges, iNode1, iNode2);
+        path = new Path(3, edges, node1, node2);
     }
 
     @Test
@@ -44,12 +44,12 @@ public class PathTest {
 
     @Test
     public void testStartNodeTest() {
-        assertEquals(iNode1, path.getStartNode());
+        assertEquals(node1, path.getStartNode());
     }
 
     @Test
     public void testEndNodeTest() {
-        assertEquals(iNode2, path.getEndNode());
+        assertEquals(node2, path.getEndNode());
     }
 
     @Test

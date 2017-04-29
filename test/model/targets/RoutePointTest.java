@@ -3,10 +3,6 @@ package model.targets;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.awt.Point;
-
-import model.map.MapManager;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,84 +16,6 @@ public class RoutePointTest {
     }
 
     @Test
-    public void addressTest() {
-        final String adress = "Test 1234";
-        routePoint.setAddress(adress);
-        assertEquals(adress, routePoint.getAddress());
-    }
-
-    @Test
-    public void addressChangeListenerTest() {
-        error = true;
-
-        routePoint.addPointListener(new IPointListener() {
-
-            @Override
-            public void stateChanged() {
-
-            }
-
-            @Override
-            public void locationChanged() {
-
-            }
-
-            @Override
-            public void listIndexChanged() {
-
-            }
-
-            @Override
-            public void addressChanged() {
-                error = false;
-            }
-
-            @Override
-            public void targetIndexChanged() {
-            }
-        });
-
-        routePoint.setAddress("Test");
-        assertFalse(error);
-    }
-
-    @Test
-    public void streetNodeChangeListenerTest() {
-        error = true;
-
-        routePoint.addPointListener(new IPointListener() {
-
-            @Override
-            public void stateChanged() {
-
-            }
-
-            @Override
-            public void locationChanged() {
-                error = false;
-            }
-
-            @Override
-            public void listIndexChanged() {
-
-            }
-
-            @Override
-            public void addressChanged() {
-
-            }
-
-            @Override
-            public void targetIndexChanged() {
-
-            }
-        });
-
-        routePoint.setStreetNode(new StreetNode(12, new Street(new int[0], 1, "Test", 142313)));
-        assertFalse(error);
-    }
-
-    @Test
     public void indexTest() {
         final int index = 2;
 
@@ -106,7 +24,7 @@ public class RoutePointTest {
     }
 
     @Test
-    public void indexChangeListenerTest() {
+    public void listIndexChangeListenerTest() {
         error = true;
 
         routePoint.addPointListener(new IPointListener() {
@@ -128,6 +46,11 @@ public class RoutePointTest {
 
             @Override
             public void addressChanged() {
+
+            }
+
+            @Override
+            public void targetIndexChanged() {
 
             }
         });
@@ -137,13 +60,49 @@ public class RoutePointTest {
     }
 
     @Test
+    public void targetIndexChangeListenerTest() {
+        error = true;
+
+        routePoint.addPointListener(new IPointListener() {
+
+            @Override
+            public void stateChanged() {
+
+            }
+
+            @Override
+            public void locationChanged() {
+
+            }
+
+            @Override
+            public void listIndexChanged() {
+
+            }
+
+            @Override
+            public void addressChanged() {
+
+            }
+
+            @Override
+            public void targetIndexChanged() {
+                error = false;
+            }
+        });
+
+        routePoint.setTargetIndex(2);
+        assertFalse(error);
+    }
+
+    @Test
     public void initialStateTest() {
-        assertEquals(PointState.unadded, routePoint.getState());
+        assertEquals(IRoutePoint.State.unadded, routePoint.getState());
     }
 
     @Test
     public void stateTest() {
-        final PointState state = PointState.added;
+        final IRoutePoint.State state = IRoutePoint.State.added;
 
         routePoint.setState(state);
         assertEquals(state, routePoint.getState());
@@ -175,23 +134,15 @@ public class RoutePointTest {
             public void addressChanged() {
 
             }
+
+            @Override
+            public void targetIndexChanged() {
+
+            }
         });
 
-        routePoint.setState(PointState.added);
+        routePoint.setState(IRoutePoint.State.added);
         assertFalse(error);
-    }
-
-    @Test
-    public void noLocationTest() {
-        assertEquals(null, routePoint.getLocation());
-    }
-
-    @Test
-    public void locationTest() {
-        final Point point = new Point(123, 2314);
-
-        routePoint.setLocation(point);
-        assertEquals(point, routePoint.getLocation());
     }
 
     @Test
@@ -219,9 +170,14 @@ public class RoutePointTest {
             public void addressChanged() {
 
             }
+
+            @Override
+            public void targetIndexChanged() {
+
+            }
         });
 
-        routePoint.setLocation(new Point(123, 2314));
+        routePoint.setLocation(123, 2314);
         assertFalse(error);
     }
 
