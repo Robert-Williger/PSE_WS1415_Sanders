@@ -5,8 +5,6 @@ import static org.junit.Assert.assertFalse;
 
 import java.awt.Point;
 
-import model.elements.Street;
-import model.elements.StreetNode;
 import model.map.MapManager;
 
 import org.junit.Before;
@@ -18,7 +16,7 @@ public class RoutePointTest {
 
     @Before
     public void setUp() {
-        routePoint = new RoutePoint(new MapManager());
+        routePoint = new RoutePoint();
     }
 
     @Test
@@ -53,18 +51,14 @@ public class RoutePointTest {
             public void addressChanged() {
                 error = false;
             }
+
+            @Override
+            public void targetIndexChanged() {
+            }
         });
 
         routePoint.setAddress("Test");
         assertFalse(error);
-    }
-
-    @Test
-    public void streetNodeTest() {
-        final StreetNode node = new StreetNode(12, new Street(new int[0], 1, "Test", 142313));
-
-        routePoint.setStreetNode(node);
-        assertEquals(node, routePoint.getStreetNode());
     }
 
     @Test
@@ -90,6 +84,11 @@ public class RoutePointTest {
 
             @Override
             public void addressChanged() {
+
+            }
+
+            @Override
+            public void targetIndexChanged() {
 
             }
         });

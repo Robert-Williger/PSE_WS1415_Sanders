@@ -13,16 +13,16 @@ public class PixelConverterTest {
 
     @Before
     public void setUp() {
-        converter = new PixelConverter(1.5);
+        converter = new PixelConverter(2);System.out.println(converter.getPixelDistance(150, 1));
     }
 
     @Test
     public void testCoordConversion() {
-        assertEquals(400, converter.getPixelDistance(150, 2));
+        assertEquals(75, converter.getPixelDistance(150, 1));
     }
 
     @Test
     public void testPixelConversion() {
-        assertEquals(150, converter.getCoordDistance(400, 2));
+        assertEquals(150, converter.getCoordDistance(75, 1));
     }
 }

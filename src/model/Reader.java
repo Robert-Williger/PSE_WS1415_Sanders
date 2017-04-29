@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import model.AdvancedTextProcessor.Entry;
+import model.TextProcessor.Entry;
 import model.map.CollectiveAccessorFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
@@ -224,7 +224,7 @@ public class Reader implements IReader {
             fireStepCommenced("Lade Index...");
 
             final Collection<Entry> entries = readStreets(zipFile);
-            return new AdvancedTextProcessor(entries, mapManager);
+            return new TextProcessor(entries, mapManager);
         }
 
         private Collection<Entry> readStreets(final ZipFile zipFile) throws IOException {
@@ -234,7 +234,7 @@ public class Reader implements IReader {
 
             int maxCityCount = stream.readInt();
 
-            final List<AdvancedTextProcessor.Entry> list = new ArrayList<>();
+            final List<TextProcessor.Entry> list = new ArrayList<>();
             for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
                 final int n = stream.readInt();
 
@@ -244,7 +244,7 @@ public class Reader implements IReader {
                         final int city = stream.readInt();
                         final String cityName = city != -1 ? cities[city] : "";
 
-                        list.add(new AdvancedTextProcessor.Entry(cityName, street));
+                        list.add(new TextProcessor.Entry(cityName, street));
                     }
                 }
             }

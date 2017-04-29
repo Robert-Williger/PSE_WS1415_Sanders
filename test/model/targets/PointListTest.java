@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
 
-import model.map.MapManager;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,18 +25,18 @@ public class PointListTest {
 
     @Test
     public void sizeTest() {
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
 
         assertEquals(3, pointList.size());
     }
 
     @Test
     public void sizeTestRemove() {
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
 
         pointList.remove(1);
 
@@ -47,9 +45,9 @@ public class PointListTest {
 
     @Test
     public void sizeTestReset() {
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
+        pointList.add(new RoutePoint());
 
         pointList.clear();
 
@@ -58,7 +56,7 @@ public class PointListTest {
 
     @Test
     public void removeTest() {
-        final RoutePoint rp = new RoutePoint(new MapManager());
+        final RoutePoint rp = new RoutePoint();
 
         pointList.add(rp);
 
@@ -67,10 +65,10 @@ public class PointListTest {
 
     @Test
     public void getTest() {
-        final RoutePoint rp0 = new RoutePoint(new MapManager());
-        final RoutePoint rp1 = new RoutePoint(new MapManager());
-        final RoutePoint rp2 = new RoutePoint(new MapManager());
-        final RoutePoint rp3 = new RoutePoint(new MapManager());
+        final RoutePoint rp0 = new RoutePoint();
+        final RoutePoint rp1 = new RoutePoint();
+        final RoutePoint rp2 = new RoutePoint();
+        final RoutePoint rp3 = new RoutePoint();
 
         pointList.add(rp0);
         pointList.add(rp1);
@@ -83,10 +81,10 @@ public class PointListTest {
     @Test
     public void changeOrderTest() {
         boolean error = false;
-        final RoutePoint rp0 = new RoutePoint(new MapManager());
-        final RoutePoint rp1 = new RoutePoint(new MapManager());
-        final RoutePoint rp2 = new RoutePoint(new MapManager());
-        final RoutePoint rp3 = new RoutePoint(new MapManager());
+        final RoutePoint rp0 = new RoutePoint();
+        final RoutePoint rp1 = new RoutePoint();
+        final RoutePoint rp2 = new RoutePoint();
+        final RoutePoint rp3 = new RoutePoint();
 
         pointList.add(rp0);
         pointList.add(rp1);
@@ -120,7 +118,7 @@ public class PointListTest {
     @Test
     public void removeChangeListenerTest() {
         error = true;
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
         pointList.addPointListListener(new IPointListListener() {
 
             @Override
@@ -131,6 +129,11 @@ public class PointListTest {
 
             @Override
             public void pointAdded(final IRoutePoint point) {
+
+            }
+
+            @Override
+            public void listCleared(int oldSize) {
 
             }
         });
@@ -157,9 +160,14 @@ public class PointListTest {
                 error = false;
 
             }
+
+            @Override
+            public void listCleared(int oldSize) {
+
+            }
         });
 
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
 
         assertFalse(error);
 
@@ -168,17 +176,22 @@ public class PointListTest {
     @Test
     public void resetChangeListenerTest() {
         error = true;
-        pointList.add(new RoutePoint(null));
+        pointList.add(new RoutePoint());
         pointList.addPointListListener(new IPointListListener() {
 
             @Override
             public void pointRemoved(final IRoutePoint point) {
-                error = false;
+
             }
 
             @Override
             public void pointAdded(final IRoutePoint point) {
 
+            }
+
+            @Override
+            public void listCleared(int oldSize) {
+                error = false;
             }
         });
 

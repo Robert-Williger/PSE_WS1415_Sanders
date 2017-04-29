@@ -16,7 +16,7 @@ import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
 import model.targets.AddressPoint;
 
-public class AdvancedTextProcessor implements ITextProcessor {
+public class TextProcessor implements ITextProcessor {
     private final int maxDistance;
     private final int suggestions;
     private final BoundedHeap<Tuple> heap;
@@ -28,15 +28,15 @@ public class AdvancedTextProcessor implements ITextProcessor {
     private final IStringAccessor stringAccessor;
     private final IMapManager manager;
 
-    public AdvancedTextProcessor() {
+    public TextProcessor() {
         this(Collections.emptyList(), new MapManager());
     }
 
-    public AdvancedTextProcessor(final Collection<Entry> entries, final IMapManager manager) {
+    public TextProcessor(final Collection<Entry> entries, final IMapManager manager) {
         this(entries, manager, 5, 2);
     }
 
-    public AdvancedTextProcessor(final Collection<Entry> entries, final IMapManager manager, final int suggestions,
+    public TextProcessor(final Collection<Entry> entries, final IMapManager manager, final int suggestions,
             final int maxDistance) {
 
         this.suggestions = suggestions;

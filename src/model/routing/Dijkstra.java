@@ -60,9 +60,9 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
         final int startEdgeWeight = graph.getWeight(start.getEdge());
         final float startEdgeOffset = start.getOffset();
 
-        initializeStartNode(start.getEdge(), (int) (startEdgeWeight * startEdgeOffset));
+        initializeStartNode(start.getEdge(), Math.round(startEdgeWeight * startEdgeOffset));
         if (!start.isOneway()) {
-            initializeStartNode(start.getCorrespondingEdge(), (int) (startEdgeWeight * (1 - startEdgeOffset)));
+            initializeStartNode(start.getCorrespondingEdge(), Math.round(startEdgeWeight * (1 - startEdgeOffset)));
         }
 
         if (!end.isOneway()) {
@@ -134,10 +134,10 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     private Path createPath(final InterNode start, final InterNode end) {
         final int endEdgeWeight = graph.getWeight(end.getEdge());
         int endNode = endNodes[0];
-        int weight = distance[endNode] + Math.round(endEdgeWeight * end.getOffset());
+        int weight = distance[endNode] + Math.round(endEdgeWeight * (1 - end.getOffset()));
 
         if (!end.isOneway()) {
-            final int weight2 = distance[endNodes[1]] + Math.round(endEdgeWeight * (1 - end.getOffset()));
+            final int weight2 = distance[endNodes[1]] + Math.round(endEdgeWeight * end.getOffset());
 
             if (weight2 < weight) {
                 endNode = endNodes[1];
@@ -151,7 +151,7 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
             float temp = Float.MAX_VALUE;
 
             if (!end.isOneway()) {
-                temp = (Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge()));
+                temp = Math.abs(start.getOffset() - end.getOffset()) * graph.getWeight(start.getEdge());
             } else if (start.getOffset() < end.getOffset()) {
                 temp = (end.getOffset() - start.getOffset()) * graph.getWeight(start.getEdge());
             }

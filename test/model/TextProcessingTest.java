@@ -1,43 +1,22 @@
 package model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import model.elements.IStreet;
-import model.elements.Street;
-import model.elements.StreetNode;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class TextProcessingTest {
+import model.targets.AddressPoint;
 
-    private static final int length = 3;
+public class TextProcessingTest {
 
     private TextProcessor tp;
 
-    private StreetNode sn;
-
     @Before
     public void setUp() {
-
-        // Erstellt fuer den richtigen Eintrag der Hashtabelle einen passenden
-        // Node
-
-        final IStreet iStreet = new Street(new int[0], 0, "Teststrasse", 0);
-        sn = new StreetNode(0, iStreet);
-
-        final HashMap<String, StreetNode> hm = new HashMap<String, StreetNode>();
-        hm.put("Te4tst2agse", null);
-        hm.put("Teststrahse", null);
-        hm.put("Test", null);
-        hm.put("EIDAKDSLENCP", null);
-        hm.put("Teststrasse", sn);
-
-        tp = new TextProcessor(hm, length);
+        tp = new TextProcessor();
     }
 
     @Test
@@ -56,22 +35,19 @@ public class TextProcessingTest {
 
     @Test
     public void testSuggestShort() {
-
         final List<String> list = tp.suggest("EIDA");
         assertEquals("EIDAKDSLENCP", list.get(0));
-
     }
 
     @Test
     public void testParse() {
 
-        final StreetNode testNode = tp.parse("Teststrasse");
-        assertEquals(sn, testNode);
+        final AddressPoint testNode = tp.parse("Teststrasse");
+        assertNotNull(testNode);
     }
 
     @Test
     public void testNormalize() {
-
         String name = "Wssßäaäüüöössw. 31";
         name = TextProcessor.normalize(name);
         final String normName = "wssssaeaaeueueoeoessw. 31";

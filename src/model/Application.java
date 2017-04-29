@@ -28,7 +28,7 @@ public class Application extends AbstractModel implements IApplication {
         final IMapManager manager = new MapManager();
         loader = new DefaultImageLoader(manager);
         routing = new RouteManager(new DirectedGraph(), manager);
-        processor = new AdvancedTextProcessor();
+        processor = new TextProcessor();
         map = new Map(manager);
     }
 
