@@ -63,8 +63,6 @@ public class RoutePointListModel extends AbstractListModel<IRoutePoint> implemen
 
                     @Override
                     public void listIndexChanged() {
-                        // final int index = point.getListIndex();
-                        // fireContentsChanged(this, index, index);
                     }
 
                     @Override

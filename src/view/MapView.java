@@ -10,8 +10,6 @@ import java.util.ListIterator;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import model.map.IMap;
 import model.map.IMapListener;
@@ -28,7 +26,6 @@ public class MapView extends JPanel implements IMapView {
     private final PointLayer pointLayer;
 
     private final IMapListener mapListener;
-    private final ChangeListener mapChangeListener;
     private final IPointListListener pointListListener;
 
     private final ZoomInfo zoomInfo;
@@ -42,15 +39,6 @@ public class MapView extends JPanel implements IMapView {
         zoomInfo = new ZoomInfo();
         pointLayer = new PointLayer();
         mapLayer = new MapLayer();
-
-        mapChangeListener = new ChangeListener() {
-
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                pointLayer.repaint();
-            }
-
-        };
 
         pointListListener = new IPointListListener() {
 
@@ -102,7 +90,7 @@ public class MapView extends JPanel implements IMapView {
         this.list = list;
         mapLayer.setLoader(loader);
         list.addPointListListener(pointListListener);
-        map.addChangeListener(mapChangeListener);
+        map.addChangeListener((e) -> pointLayer.repaint());
         map.addMapListener(mapListener);
 
         repaint();

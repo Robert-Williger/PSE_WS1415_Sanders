@@ -7,10 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -29,8 +26,6 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentListener;
 
 import model.IProgressListener;
@@ -86,25 +81,8 @@ public class SidebarView extends JPanel implements ISidebarView {
         content = createContent();
         gap = createGap(6, 0);
 
-        pointListener = new IPointListListener() {
-
-            @Override
-            public void pointAdded(final IRoutePoint point) {
-                point.addPointListener(new PointListener(point));
-            }
-
-            @Override
-            public void pointRemoved(final IRoutePoint point) {
-            }
-
-            @Override
-            public void listCleared(int oldSize) {
-
-            }
-
-        };
-
-        progressListener = new ProgressListener();
+        pointListener = createPointListListener();
+        progressListener = createProgressListener();
 
         setModel(manager);
         initialize();
@@ -116,13 +94,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         manager.addProgressListener(progressListener);
         listView.setPointList(list);
 
-        manager.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                setCalculating(manager.isCalculating());
-            }
-        });
+        manager.addChangeListener((e) -> setCalculating(manager.isCalculating()));
         resetView();
     }
 
@@ -148,6 +120,46 @@ public class SidebarView extends JPanel implements ISidebarView {
         routeSolverBox.getModel().setSelectedItem(routeSolverBox.getItemAt(0));
         cancelCalcButton.setEnabled(false);
         revalidate();
+    }
+
+    protected IProgressListener createProgressListener() {
+        return new IProgressListener() {
+            @Override
+            public void progressDone(final int progress) {
+                SwingUtilities.invokeLater(() -> progressBar.setValue(progress));
+            }
+
+            @Override
+            public void errorOccured(final String message) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showConfirmDialog(null, message, "Fehler bei Routenberechnung",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
+                });
+            }
+
+            @Override
+            public void stepCommenced(final String step) {
+            }
+        };
+    }
+
+    protected IPointListListener createPointListListener() {
+        return new IPointListListener() {
+
+            @Override
+            public void pointAdded(final IRoutePoint point) {
+                point.addPointListener(new PointListener(point));
+            }
+
+            @Override
+            public void pointRemoved(final IRoutePoint point) {
+            }
+
+            @Override
+            public void listCleared(int oldSize) {
+            }
+
+        };
     }
 
     private JPanel createGap(final int width, final int height) {
@@ -206,24 +218,7 @@ public class SidebarView extends JPanel implements ISidebarView {
             }
         });
 
-        // TODO improve this?
-        textField.addFocusListener(new FocusAdapter() {
-
-            @Override
-            public void focusGained(FocusEvent e) {
-
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (getRootPane() != null && e.getOppositeComponent() == getRootPane()) {
-                    textField.requestFocus();
-                }
-            }
-        });
-
         ret.add(textField);
-
         ret.add(multiFuncButton);
 
         upButton.setPreferredSize(new Dimension(23, 23));
@@ -366,6 +361,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     @Override
     public void setAddressSuggestions(final List<String> list) {
         suggestionView.setSuggestions(list);
+        textField.requestFocus();
     }
 
     @Override
@@ -436,6 +432,16 @@ public class SidebarView extends JPanel implements ISidebarView {
         public Dimension getMaximumSize() {
             return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
         }
+
+        @Override
+        public Dimension getMinimumSize() {
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+        }
+
+        @Override
+        public Dimension getSize() {
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+        }
     }
 
     private class MultiFunctionButton extends JButton {
@@ -492,23 +498,14 @@ public class SidebarView extends JPanel implements ISidebarView {
             final JMenuItem ret = new JMenuItem();
 
             if (listen) {
-                ret.addChangeListener(new ChangeListener() {
-
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        if (ret.isArmed()) {
-                            textField.setText(ret.getText());
-                        }
+                ret.addChangeListener((e) -> {
+                    if (ret.isArmed()) {
+                        textField.setText(ret.getText());
                     }
                 });
-
-                ret.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        textField.setText(ret.getText());
-                        multiFuncButton.doClick();
-                    }
+                ret.addActionListener((e) -> {
+                    textField.setText(ret.getText());
+                    multiFuncButton.doClick();
                 });
             }
 
@@ -520,6 +517,7 @@ public class SidebarView extends JPanel implements ISidebarView {
             ret.setHorizontalTextPosition(JMenuItem.LEFT);
             ret.setHorizontalAlignment(SwingConstants.LEFT);
             ret.setFont(new Font("Tahoma", Font.PLAIN, 11));
+
             add(ret);
 
             return ret;
@@ -575,24 +573,19 @@ public class SidebarView extends JPanel implements ISidebarView {
             setContentAreaFilled(false);
             setBorder(null);
             setFocusable(false);
-            addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    if (hidden) {
-                        content.setPreferredSize(new Dimension(210, 0));
-                        gap.setPreferredSize(new Dimension(6, 0));
-                        setText("<");
-                    } else {
-                        content.setPreferredSize(new Dimension(0, 0));
-                        gap.setPreferredSize(new Dimension(0, 0));
-                        setText(">");
-                    }
-                    hidden = !hidden;
-
-                    revalidate();
+            addActionListener((e) -> {
+                if (hidden) {
+                    content.setPreferredSize(new Dimension(210, 0));
+                    gap.setPreferredSize(new Dimension(6, 0));
+                    setText("<");
+                } else {
+                    content.setPreferredSize(new Dimension(0, 0));
+                    gap.setPreferredSize(new Dimension(0, 0));
+                    setText(">");
                 }
+                hidden = !hidden;
 
+                revalidate();
             });
         }
     }
@@ -674,39 +667,6 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         @Override
         public void targetIndexChanged() {
-        }
-    }
-
-    private class ProgressListener implements IProgressListener {
-        @Override
-        public void progressDone(final int progress) {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    progressBar.setValue(progress);
-                }
-
-            });
-        }
-
-        @Override
-        public void errorOccured(final String message) {
-
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    JOptionPane.showConfirmDialog(null, message, "Fehler bei Routenberechnung",
-                            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
-                }
-
-            });
-        }
-
-        @Override
-        public void stepCommenced(final String step) {
-
         }
     }
 }

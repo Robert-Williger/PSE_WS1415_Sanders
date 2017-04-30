@@ -23,9 +23,7 @@ public class FileChooserView extends JFileChooser {
         setFileView(new FileView() {
             @Override
             public Icon getIcon(final File f) {
-
                 return !f.getName().endsWith(".map") ? FileSystemView.getFileSystemView().getSystemIcon(f) : mapIcon;
-
             }
 
             @Override
