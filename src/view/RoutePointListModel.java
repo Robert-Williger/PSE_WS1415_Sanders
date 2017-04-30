@@ -75,7 +75,9 @@ public class RoutePointListModel extends AbstractListModel<IRoutePoint> implemen
             @Override
             public void listCleared(final int oldSize) {
                 size = 0;
-                fireIntervalRemoved(this, 0, oldSize - 1);
+                if (oldSize != 0) {
+                    fireIntervalRemoved(this, 0, oldSize - 1);
+                }
             }
         });
     }
