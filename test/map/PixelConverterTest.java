@@ -13,7 +13,7 @@ public class PixelConverterTest {
 
     @Before
     public void setUp() {
-        converter = new PixelConverter(2);System.out.println(converter.getPixelDistance(150, 1));
+        converter = new PixelConverter(2);
     }
 
     @Test

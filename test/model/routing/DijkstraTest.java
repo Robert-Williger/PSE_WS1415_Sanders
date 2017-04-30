@@ -113,7 +113,6 @@ public class DijkstraTest {
     public void testPath() {
         final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0),
                 new InterNode(10, getCorrespondingEdge(10), 0));
-        System.out.println(path.getEdges());
         final Integer[] route = { getCorrespondingEdge(0), 1, getCorrespondingEdge(3), 4 };
         assertArrayEquals(route, path.getEdges().toArray());
     }
