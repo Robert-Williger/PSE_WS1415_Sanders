@@ -64,9 +64,9 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
             final int weight = graph.getWeight(start.getEdge());
             final float offset = start.getOffset();
 
-            initializeStartNode(start.getEdge(), Math.round(weight * offset));
+            initializeStartNode(start.getEdge(), Math.round(weight * (1 - offset)));
             if (!start.isOneway()) {
-                initializeStartNode(start.getCorrespondingEdge(), Math.round(weight * (1 - offset)));
+                initializeStartNode(start.getCorrespondingEdge(), Math.round(weight * offset));
             }
         }
 
@@ -148,7 +148,7 @@ public class ReusableDijkstra extends AbstractProgressable implements ISPSPSolve
         }
 
         final int[] weights = new int[endNodes.length];
-        final float[] offsets = new float[] { 1 - end.getOffset(), end.getOffset() };
+        final float[] offsets = new float[] { end.getOffset(), 1 - end.getOffset() };
         int minIndex = 0;
 
         for (int i = 0; i < weights.length; i++) {

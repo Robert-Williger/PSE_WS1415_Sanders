@@ -57,12 +57,12 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
             parentEdge[i] = -1;
         }
 
-        final int startEdgeWeight = graph.getWeight(start.getEdge());
-        final float startEdgeOffset = start.getOffset();
+        final int startWeight = graph.getWeight(start.getEdge());
+        final float startOffset = start.getOffset();
 
-        initializeStartNode(start.getEdge(), Math.round(startEdgeWeight * startEdgeOffset));
+        initializeStartNode(start.getEdge(), Math.round(startWeight * (1 - startOffset)));
         if (!start.isOneway()) {
-            initializeStartNode(start.getCorrespondingEdge(), Math.round(startEdgeWeight * (1 - startEdgeOffset)));
+            initializeStartNode(start.getCorrespondingEdge(), Math.round(startWeight * startOffset));
         }
 
         if (!end.isOneway()) {
@@ -134,10 +134,9 @@ public class Dijkstra extends AbstractProgressable implements ISPSPSolver {
     private Path createPath(final InterNode start, final InterNode end) {
         final int endEdgeWeight = graph.getWeight(end.getEdge());
         int endNode = endNodes[0];
-        int weight = distance[endNode] + Math.round(endEdgeWeight * (1 - end.getOffset()));
-
+        int weight = distance[endNode] + Math.round(endEdgeWeight * end.getOffset());
         if (!end.isOneway()) {
-            final int weight2 = distance[endNodes[1]] + Math.round(endEdgeWeight * end.getOffset());
+            final int weight2 = distance[endNodes[1]] + Math.round(endEdgeWeight * (1 - end.getOffset()));
 
             if (weight2 < weight) {
                 endNode = endNodes[1];

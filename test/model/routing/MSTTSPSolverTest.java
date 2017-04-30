@@ -205,8 +205,8 @@ public class MSTTSPSolverTest {
     private static int[][] convert(final long[] edges) {
         final int[][] ret = new int[2][edges.length];
         for (int i = 0; i < edges.length; i++) {
-            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
-            ret[1][i] = (int) (edges[i] >> 32);
+            ret[1][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[0][i] = (int) (edges[i] >> 32);
         }
         return ret;
     }

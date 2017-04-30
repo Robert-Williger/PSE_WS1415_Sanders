@@ -90,30 +90,31 @@ public class DijkstraTest {
 
     @Test
     public void testDistanceSameEdge() {
-        final Path path = routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 0.8f),
-                new InterNode(19, 19 | 0x80000000, 0.2f));
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0.2f),
+                new InterNode(19, getCorrespondingEdge(19), 0.8f));
         assertEquals(60, path.getLength());
     }
 
     @Test
     public void testPathSameEdge() {
-        final Path path = routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 0.8f),
-                new InterNode(19, 19 | 0x80000000, 0.2f));
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0.8f),
+                new InterNode(19, getCorrespondingEdge(19), 0.2f));
         assertEquals(0, path.getEdges().size());
     }
 
     @Test
     public void testDistance() {
-        final Path path = routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 1),
-                new InterNode(10, 10 | 0x80000000, 1f));
-        assertEquals(1000, path.getLength());
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0),
+                new InterNode(10, getCorrespondingEdge(10), 0));
+        assertEquals(800, path.getLength());
     }
 
     @Test
     public void testPath() {
-        final Path path = routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 1),
-                new InterNode(10, 10 | 0x80000000, 1f));
-        final Long[] route = { getEdge(0, 16), getEdge(0, 2), getEdge(1, 2), getEdge(1, 6), getEdge(6, 10) };
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0),
+                new InterNode(10, getCorrespondingEdge(10), 0));
+        System.out.println(path.getEdges());
+        final Integer[] route = { getCorrespondingEdge(0), 1, getCorrespondingEdge(3), 4 };
         assertArrayEquals(route, path.getEdges().toArray());
     }
 
@@ -136,7 +137,8 @@ public class DijkstraTest {
             }
         });
 
-        routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 1), new InterNode(20, 20 | 0x80000000, 1));
+        routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 1),
+                new InterNode(20, getCorrespondingEdge(20), 1));
         assertTrue(error);
     }
 
@@ -160,15 +162,22 @@ public class DijkstraTest {
             }
         });
 
-        routing.calculateShortestPath(new InterNode(19, 19 | 0x80000000, 1), new InterNode(20, 20 | 0x80000000, 1));
+        routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 1),
+                new InterNode(20, getCorrespondingEdge(20), 1));
         assertFalse(error);
+    }
+
+    private static int getCorrespondingEdge(final int edge) {
+        // int msb = edge >>> 31;
+        // return ((edge & 0x7FFFFFFF) | ((1 - msb) << 31));
+        return edge | 0x80000000;
     }
 
     private static int[][] convert(final long[] edges) {
         final int[][] ret = new int[2][edges.length];
         for (int i = 0; i < edges.length; i++) {
-            ret[0][i] = (int) (edges[i] & 0xFFFFFFFF);
-            ret[1][i] = (int) (edges[i] >> 32);
+            ret[1][i] = (int) (edges[i] & 0xFFFFFFFF);
+            ret[0][i] = (int) (edges[i] >> 32);
         }
         return ret;
     }
