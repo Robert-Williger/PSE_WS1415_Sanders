@@ -23,6 +23,7 @@ public class CreateTest {
         }
 
         if (zipOutput != null) {
+            
             // zipOutput.setLevel(ZipOutputStream.STORED);
             IOSMParser parser = new OSMParser();
             try {
