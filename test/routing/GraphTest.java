@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertEquals;
 
@@ -8,6 +8,9 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import model.routing.IUndirectedGraph;
+import model.routing.UndirectedGraph;
 
 public class GraphTest {
     private IUndirectedGraph undirectedGraph;

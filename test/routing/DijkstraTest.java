@@ -1,19 +1,23 @@
-package model.routing;
+package routing;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import model.IProgressListener;
+import model.routing.Dijkstra;
+import model.routing.DirectedGraph;
+import model.routing.IDirectedGraph;
+import model.routing.InterNode;
+import model.routing.Path;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class MSTTSPSolverTest {
+public class DijkstraTest {
 
-    private MSTTSPSolver routing;
+    private Dijkstra routing;
     private boolean error;
 
     public static long getEdge(final int node1, final int node2) {
@@ -64,93 +68,63 @@ public class MSTTSPSolverTest {
         weights[++count] = 100;
         weights[++count] = 100;
         weights[++count] = 300;
+
         weights[++count] = 300;
         weights[++count] = 100;
         weights[++count] = 100;
         weights[++count] = 200;
         weights[++count] = 100;
+
         weights[++count] = 200;
         weights[++count] = 100;
         weights[++count] = 300;
         weights[++count] = 200;
         weights[++count] = 200;
+
         weights[++count] = 100;
         weights[++count] = 100;
         weights[++count] = 300;
         weights[++count] = 200;
         weights[++count] = 100;
+
         weights[++count] = 200;
 
         final IDirectedGraph directedGraph = new DirectedGraph(21, 0, convert(edges), weights);
-        routing = new MSTTSPSolver(directedGraph);
+        routing = new Dijkstra(directedGraph);
+    }
+
+    @Test
+    public void testDistanceSameEdge() {
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0.2f),
+                new InterNode(19, getCorrespondingEdge(19), 0.8f));
+        assertEquals(60, path.getLength());
+    }
+
+    @Test
+    public void testPathSameEdge() {
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0.8f),
+                new InterNode(19, getCorrespondingEdge(19), 0.2f));
+        assertEquals(0, path.getEdges().size());
     }
 
     @Test
     public void testDistance() {
-        final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(10, 10 | 0x80000000, 0));
-        edges.add(new InterNode(19, 19 | 0x80000000, 0));
-        edges.add(new InterNode(17, 17 | 0x80000000, 0));
-
-        final Route route = routing.calculateRoute(edges);
-        int length = 0;
-
-        for (final Path path : route) {
-            length += path.getLength();
-        }
-
-        // Die kürzeste Rundroute beträgt 2000 Einheiten. Da unser Programm die
-        // 2-Approximation verwendet darf die Route maximal doppelt so lange
-        // sein.
-        assertTrue(length < 2000 * 2 ? true : false);
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0),
+                new InterNode(10, getCorrespondingEdge(10), 0));
+        assertEquals(800, path.getLength());
     }
 
     @Test
     public void testPath() {
-        boolean error = false;
-
-        final InterNode[] nodes = new InterNode[3];
-        nodes[0] = new InterNode(3, 3 | 0x80000000, 0);
-        nodes[1] = new InterNode(19, 19 | 0x80000000, 0.2f);
-        nodes[2] = new InterNode(17, 17 | 0x80000000, 1);
-
-        final List<InterNode> edges = new ArrayList<>();
-        edges.add(nodes[0]);
-        edges.add(nodes[1]);
-        edges.add(nodes[2]);
-
-        final Route route = routing.calculateRoute(edges);
-
-        final int[] num = new int[3];
-
-        for (final Path path : route) {
-            for (int i = 0; i < 3; i++) {
-                if (path.getStartNode().equals(nodes[i])) {
-                    num[i]++;
-                }
-                if (path.getEndNode().equals(nodes[i])) {
-                    num[i]++;
-                }
-            }
-        }
-
-        for (int i = 0; i < 3; i++) {
-            if (num[i] != 2) {
-                error = true;
-            }
-        }
-
-        assertFalse(error);
+        final Path path = routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 0),
+                new InterNode(10, getCorrespondingEdge(10), 0));
+        final Integer[] route = { getCorrespondingEdge(0), 1, getCorrespondingEdge(3), 4 };
+        assertArrayEquals(route, path.getEdges().toArray());
     }
 
     @Test
     public void testNotAccessible() {
         error = false;
-        final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(3, 3 | 0x80000000, 0));
-        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
-        edges.add(new InterNode(20, 20 | 0x80000000, 1));
-
         routing.addProgressListener(new IProgressListener() {
 
             @Override
@@ -164,23 +138,17 @@ public class MSTTSPSolverTest {
 
             @Override
             public void stepCommenced(String step) {
-
             }
         });
 
-        routing.calculateRoute(edges);
+        routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 1),
+                new InterNode(20, getCorrespondingEdge(20), 1));
         assertTrue(error);
     }
 
     @Test
     public void testProgress() {
         error = true;
-
-        final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(3, 3 | 0x80000000, 0));
-        edges.add(new InterNode(19, 19 | 0x80000000, 0.2F));
-        edges.add(new InterNode(17, 17 | 0x80000000, 1));
-
         routing.addProgressListener(new IProgressListener() {
 
             @Override
@@ -198,8 +166,15 @@ public class MSTTSPSolverTest {
             }
         });
 
-        routing.calculateRoute(edges);
+        routing.calculateShortestPath(new InterNode(19, getCorrespondingEdge(19), 1),
+                new InterNode(20, getCorrespondingEdge(20), 1));
         assertFalse(error);
+    }
+
+    private static int getCorrespondingEdge(final int edge) {
+        // int msb = edge >>> 31;
+        // return ((edge & 0x7FFFFFFF) | ((1 - msb) << 31));
+        return edge | 0x80000000;
     }
 
     private static int[][] convert(final long[] edges) {

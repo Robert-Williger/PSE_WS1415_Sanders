@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import model.routing.InterNode;
+import model.routing.Path;
 
 public class PathTest {
     private Path path;

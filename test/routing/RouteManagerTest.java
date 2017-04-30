@@ -1,8 +1,10 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertNotNull;
 
 import model.map.MapManager;
+import model.routing.DirectedGraph;
+import model.routing.RouteManager;
 
 import org.junit.Before;
 import org.junit.Test;

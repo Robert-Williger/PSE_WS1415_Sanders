@@ -1,4 +1,4 @@
-package model.targets;
+package targets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,6 +8,12 @@ import java.util.Iterator;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import model.targets.IPointList;
+import model.targets.IPointListListener;
+import model.targets.IRoutePoint;
+import model.targets.PointList;
+import model.targets.RoutePoint;
 
 public class PointListTest {
     private IPointList pointList;

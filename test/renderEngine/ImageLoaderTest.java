@@ -18,13 +18,13 @@ import java.util.Arrays;
 //import model.elements.IWay;
 //import model.map.DefaultTileSource;
 import model.map.IMapManager;
-//import model.map.MapManager;
+import model.map.MapManager;
 //import model.map.MapState;
 //import model.map.PixelConverter;
 //import model.map.Tile;
 import model.renderEngine.IImageAccessor;
 import model.renderEngine.IImageLoader;
-//import model.renderEngine.ImageLoader;
+import model.renderEngine.ImageLoader;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -87,6 +87,8 @@ public class ImageLoaderTest {
         // 2), new Dimension(256, 256));
         // mapManager.getState().setPixelSectionSize(10, 10);
         // loader = new ImageLoader(mapManager);
+        mapManager = new MapManager();
+        loader = new ImageLoader(mapManager);
     }
 
     @Before

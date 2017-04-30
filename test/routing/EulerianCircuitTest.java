@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +12,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+
+import model.routing.EulerianCircuitAlgorithm;
+import model.routing.IUndirectedGraph;
+import model.routing.UndirectedGraph;
 
 public class EulerianCircuitTest {
 

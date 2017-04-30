@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -7,6 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.IProgressListener;
+import model.routing.ChristofidesTSPSolver;
+import model.routing.DirectedGraph;
+import model.routing.IDirectedGraph;
+import model.routing.IRouteSolver;
+import model.routing.InterNode;
+import model.routing.Path;
+import model.routing.Route;
 
 import org.junit.Before;
 import org.junit.Test;

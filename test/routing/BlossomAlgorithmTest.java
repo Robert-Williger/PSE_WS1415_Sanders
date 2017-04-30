@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+
+import model.routing.BlossomAlgorithm;
+import model.routing.IUndirectedGraph;
+import model.routing.UndirectedGraph;
 
 public class BlossomAlgorithmTest {
 

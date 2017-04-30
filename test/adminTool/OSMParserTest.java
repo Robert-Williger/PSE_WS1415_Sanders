@@ -39,7 +39,7 @@ public class OSMParserTest {
 
     @Test
     public void testBBox() {
-        final Rectangle bbox = parser.getBoundingBox();System.out.println(bbox);
+        final Rectangle bbox = parser.getBoundingBox();
 
         assertEquals(281189122, bbox.x);
         assertEquals(184166043, bbox.y);

@@ -1,21 +1,25 @@
-package model.routing;
+package routing;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import model.IProgressListener;
+import model.routing.DirectedGraph;
+import model.routing.IDirectedGraph;
+import model.routing.InterNode;
+import model.routing.MSTTSPSolver;
+import model.routing.Path;
+import model.routing.Route;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class ViaRouteSolverTest {
+public class MSTTSPSolverTest {
 
-    private ViaRouteSolver routing;
+    private MSTTSPSolver routing;
     private boolean error;
 
     public static long getEdge(final int node1, final int node2) {
@@ -39,21 +43,25 @@ public class ViaRouteSolverTest {
         edges[++count] = getEdge(0, 3);
         edges[++count] = getEdge(1, 2);
         edges[++count] = getEdge(1, 6);
+
         edges[++count] = getEdge(2, 7);
         edges[++count] = getEdge(3, 4);
         edges[++count] = getEdge(4, 5);
         edges[++count] = getEdge(5, 11);
         edges[++count] = getEdge(6, 11);
+
         edges[++count] = getEdge(6, 10);
         edges[++count] = getEdge(7, 8);
         edges[++count] = getEdge(9, 13);
         edges[++count] = getEdge(9, 14);
         edges[++count] = getEdge(9, 15);
+
         edges[++count] = getEdge(10, 18);
         edges[++count] = getEdge(12, 13);
         edges[++count] = getEdge(12, 18);
         edges[++count] = getEdge(13, 17);
         edges[++count] = getEdge(15, 16);
+
         edges[++count] = getEdge(19, 20);
 
         count = -1;
@@ -79,16 +87,16 @@ public class ViaRouteSolverTest {
         weights[++count] = 100;
         weights[++count] = 200;
 
-        final IDirectedGraph undirectedGraph = new DirectedGraph(21, 0, convert(edges), weights);
-        routing = new ViaRouteSolver(undirectedGraph);
+        final IDirectedGraph directedGraph = new DirectedGraph(21, 0, convert(edges), weights);
+        routing = new MSTTSPSolver(directedGraph);
     }
 
     @Test
     public void testDistance() {
         final List<InterNode> edges = new ArrayList<>();
-        edges.add(new InterNode(3, 3 | 0x80000000, 0));
-        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
-        edges.add(new InterNode(17, 17 | 0x80000000, 1));
+        edges.add(new InterNode(10, 10 | 0x80000000, 0));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0));
+        edges.add(new InterNode(17, 17 | 0x80000000, 0));
 
         final Route route = routing.calculateRoute(edges);
         int length = 0;
@@ -97,7 +105,10 @@ public class ViaRouteSolverTest {
             length += path.getLength();
         }
 
-        assertEquals(1400, length);
+        // Die kürzeste Rundroute beträgt 2000 Einheiten. Da unser Programm die
+        // 2-Approximation verwendet darf die Route maximal doppelt so lange
+        // sein.
+        assertTrue(length < 2000 * 2 ? true : false);
     }
 
     @Test
@@ -118,10 +129,7 @@ public class ViaRouteSolverTest {
 
         final int[] num = new int[3];
 
-        final Iterator<Path> it = route.iterator();
-        while (it.hasNext()) {
-            final Path path = it.next();
-
+        for (final Path path : route) {
             for (int i = 0; i < 3; i++) {
                 if (path.getStartNode().equals(nodes[i])) {
                     num[i]++;
@@ -133,16 +141,9 @@ public class ViaRouteSolverTest {
         }
 
         for (int i = 0; i < 3; i++) {
-            if (i == 0 || i == 2) {
-                if (num[i] != 1) {
-                    error = true;
-                }
-            } else {
-                if (num[i] != 2) {
-                    error = true;
-                }
+            if (num[i] != 2) {
+                error = true;
             }
-
         }
 
         assertFalse(error);
@@ -183,7 +184,7 @@ public class ViaRouteSolverTest {
 
         final List<InterNode> edges = new ArrayList<>();
         edges.add(new InterNode(3, 3 | 0x80000000, 0));
-        edges.add(new InterNode(19, 19 | 0x80000000, 0.2f));
+        edges.add(new InterNode(19, 19 | 0x80000000, 0.2F));
         edges.add(new InterNode(17, 17 | 0x80000000, 1));
 
         routing.addProgressListener(new IProgressListener() {
@@ -215,5 +216,4 @@ public class ViaRouteSolverTest {
         }
         return ret;
     }
-
 }

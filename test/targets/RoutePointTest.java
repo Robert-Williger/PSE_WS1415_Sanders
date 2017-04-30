@@ -1,10 +1,14 @@
-package model.targets;
+package targets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import model.targets.IPointListener;
+import model.targets.IRoutePoint;
+import model.targets.RoutePoint;
 
 public class RoutePointTest {
     private IRoutePoint routePoint;

@@ -1,4 +1,4 @@
-package model.routing;
+package routing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -11,6 +11,10 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import model.routing.IUndirectedGraph;
+import model.routing.JPMST;
+import model.routing.UndirectedGraph;
 
 public class JPMSTTest {
 
