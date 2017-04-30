@@ -13,7 +13,7 @@ import view.IMapListener;
 import view.IMapView;
 import controller.stateMachine.IStateMachine;
 
-public class MapController extends AbstractController<IMapView> implements IMapListener {
+public class MapController implements IMapListener {
     private final IApplication application;
     private final IMapView view;
 

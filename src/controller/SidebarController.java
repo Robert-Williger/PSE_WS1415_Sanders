@@ -1,7 +1,5 @@
 package controller;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JOptionPane;
@@ -17,7 +15,7 @@ import view.IListListener;
 import view.ISidebarView;
 import controller.stateMachine.IStateMachine;
 
-public class SidebarController extends AbstractController<ISidebarView> {
+public class SidebarController {
 
     private final IApplication application;
 
@@ -84,66 +82,62 @@ public class SidebarController extends AbstractController<ISidebarView> {
             }
 
         });
-        view.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                switch (e.getActionCommand()) {
-                    case "search point":
-                        machine.searchPoint();
-                        break;
-                    case "confirm":
-                        machine.confirm();
-                        break;
-                    case "add point":
-                        machine.addPoint();
-                        break;
-                    case "move up":
-                        machine.movePointUp();
-                        break;
-                    case "move down":
-                        machine.movePointDown();
-                        break;
-                    case "cancel":
-                        machine.cancel();
-                        break;
-                    case "reset":
-                        final int result = JOptionPane.showConfirmDialog(null, "Alle Punkte unwiderruflich löschen?",
-                                "Routenpunkte löschen?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (result == JOptionPane.YES_OPTION) {
-                            machine.resetPoints();
+        view.addActionListener((e) -> {
+            switch (e.getActionCommand()) {
+                case "search point":
+                    machine.searchPoint();
+                    break;
+                case "confirm":
+                    machine.confirm();
+                    break;
+                case "add point":
+                    machine.addPoint();
+                    break;
+                case "move up":
+                    machine.movePointUp();
+                    break;
+                case "move down":
+                    machine.movePointDown();
+                    break;
+                case "cancel":
+                    machine.cancel();
+                    break;
+                case "reset":
+                    final int result = JOptionPane.showConfirmDialog(null, "Alle Punkte unwiderruflich löschen?",
+                            "Routenpunkte löschen?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (result == JOptionPane.YES_OPTION) {
+                        machine.resetPoints();
+                    }
+                    break;
+                case "start calculation":
+                    machine.startCalculation();
+                    break;
+                case "cancel calculation":
+                    machine.cancelCalculation();
+                    break;
+                // TODO improve
+                case "poi enabled":
+                    application.getImageLoader().getImageAccessors().get(2).setVisible(true);
+                    application.getImageLoader().update();
+                    break;
+                case "poi disabled":
+                    application.getImageLoader().getImageAccessors().get(2).setVisible(false);
+                    break;
+                case "label enabled":
+                    application.getImageLoader().getImageAccessors().get(0).setVisible(true);
+                    application.getImageLoader().update();
+                    break;
+                case "label disabled":
+                    application.getImageLoader().getImageAccessors().get(0).setVisible(false);
+                    break;
+                default:
+                    final String[] names = application.getRouteManager().getRouteSolvers();
+                    for (int i = 0; i < names.length; i++) {
+                        if (names[i].equals(e.getActionCommand())) {
+                            machine.setRouteSolver(i);
+                            break;
                         }
-                        break;
-                    case "start calculation":
-                        machine.startCalculation();
-                        break;
-                    case "cancel calculation":
-                        machine.cancelCalculation();
-                        break;
-                    // TODO improve
-                    case "poi enabled":
-                        application.getImageLoader().getImageAccessors().get(2).setVisible(true);
-                        application.getImageLoader().update();
-                        break;
-                    case "poi disabled":
-                        application.getImageLoader().getImageAccessors().get(2).setVisible(false);
-                        break;
-                    case "label enabled":
-                        application.getImageLoader().getImageAccessors().get(0).setVisible(true);
-                        application.getImageLoader().update();
-                        break;
-                    case "label disabled":
-                        application.getImageLoader().getImageAccessors().get(0).setVisible(false);
-                        break;
-                    default:
-                        final String[] names = application.getRouteManager().getRouteSolvers();
-                        for (int i = 0; i < names.length; i++) {
-                            if (names[i].equals(e.getActionCommand())) {
-                                machine.setRouteSolver(i);
-                                break;
-                            }
-                        }
-                }
+                    }
             }
         });
     }

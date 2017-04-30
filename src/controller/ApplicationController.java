@@ -21,7 +21,7 @@ import view.ImportView;
 import controller.stateMachine.IStateMachine;
 import controller.stateMachine.StateMachine;
 
-public class ApplicationController extends AbstractController<IApplicationView> {
+public class ApplicationController {
 
     private final IApplication model;
     private final IApplicationView view;
