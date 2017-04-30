@@ -25,8 +25,6 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
 
     @Override
     public void write() throws IOException {
-        long start = System.currentTimeMillis();
-
         final boolean[] duplicates = new boolean[totalElements];
 
         final int maxZoomSteps = policy.getMaxZoomSteps();
@@ -81,9 +79,6 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
         putNextEntry(name + "Tree");
         writeIntList(treeList);
         closeEntry();
-
-        System.out.println(
-                "   " + name + "-Quadtree creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
     }
 
     private boolean[][] createChildren() {

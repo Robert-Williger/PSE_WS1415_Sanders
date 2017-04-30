@@ -1,7 +1,5 @@
 package adminTool;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -44,47 +42,22 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     public void write() {
-        long start = System.currentTimeMillis();
         nodeMap = createNodeMap();
-        System.out.println("   node map creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-        start = System.currentTimeMillis();
         try {
-            writeNodes(dataOutput);
+            writeNodes();
         } catch (final IOException e) {
             e.printStackTrace();
         }
 
-        System.out.println("   node write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-        start = System.currentTimeMillis();
-
         stringMap = createStringMap();
-        System.out.println("   string map creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
-        start = System.currentTimeMillis();
         try {
-            writeStreets(dataOutput);
-            System.out.println("   street write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
-
-            writeWays(dataOutput);
-            System.out.println("   way write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
-
-            writeAreas(dataOutput);
-            System.out.println("   area write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
-
-            writeBuildings(dataOutput);
-            System.out.println("   building write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
-
-            writeLabels(dataOutput);
-            System.out.println("   label write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
-
-            writeStrings(dataOutput);
-            System.out.println("   string write time: " + (System.currentTimeMillis() - start) / 1000 + "s");
-            start = System.currentTimeMillis();
+            writeStreets();
+            writeWays();
+            writeAreas();
+            writeBuildings();
+            writeLabels();
+            writeStrings();
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -155,18 +128,18 @@ public class ElementWriter extends AbstractMapFileWriter {
         return stringMap;
     }
 
-    private void writeNodes(final DataOutputStream dataOutput) throws IOException {
+    private void writeNodes() throws IOException {
         putNextEntry("nodes");
         dataOutput.writeInt(nodeMap.size());
 
         for (final Entry<Node, Integer> entry : nodeMap.entrySet()) {
-            writePoint(entry.getKey(), dataOutput);
+            writePoint(entry.getKey());
         }
 
         closeEntry();
     }
 
-    private void writeStrings(final DataOutputStream dataOutput) throws IOException {
+    private void writeStrings() throws IOException {
         putNextEntry("strings");
 
         // dont store the (null,-1) entry...
@@ -180,7 +153,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         closeEntry();
     }
 
-    private void writeStreets(final DataOutputStream dataOutput) throws IOException {
+    private void writeStreets() throws IOException {
         putNextEntry("streets");
 
         final int[] addresses = new int[streets.elements.length];
@@ -196,7 +169,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             dataOutput.writeInt(stringMap.get(street.getName()));
             ++address;
 
-            address += writeMultiElement(street, dataOutput);
+            address += writeMultiElement(street);
         }
 
         closeEntry();
@@ -206,7 +179,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         streets = null;
     }
 
-    private void writeWays(final DataOutputStream dataOutput) throws IOException {
+    private void writeWays() throws IOException {
         putNextEntry("ways");
 
         final int[] addresses = new int[ways.elements.length];
@@ -216,7 +189,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final Way way : ways.elements) {
             addresses[++index] = address;
 
-            address += writeMultiElement(way, dataOutput);
+            address += writeMultiElement(way);
         }
 
         closeEntry();
@@ -226,7 +199,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         ways = null;
     }
 
-    private void writeBuildings(final DataOutputStream dataOutput) throws IOException {
+    private void writeBuildings() throws IOException {
         putNextEntry("buildings");
 
         final int[] addresses = new int[buildings.elements.length];
@@ -246,7 +219,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             dataOutput.writeInt(stringMap.get(building.getName()));
             ++address;
 
-            address += writeMultiElement(building, dataOutput);
+            address += writeMultiElement(building);
         }
 
         closeEntry();
@@ -256,7 +229,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         buildings = null;
     }
 
-    private void writeAreas(final DataOutputStream dataOutput) throws IOException {
+    private void writeAreas() throws IOException {
         putNextEntry("areas");
 
         final int[] addresses = new int[areas.elements.length];
@@ -266,7 +239,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final Area area : areas.elements) {
             addresses[++index] = address;
 
-            address += writeMultiElement(area, dataOutput);
+            address += writeMultiElement(area);
         }
 
         closeEntry();
@@ -276,7 +249,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         areas = null;
     }
 
-    private void writeLabels(final DataOutputStream dataOutput) throws IOException {
+    private void writeLabels() throws IOException {
         putNextEntry("labels");
 
         // final int[] addresses = new int[labels.elements.length];
@@ -286,7 +259,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final Label label : labels.elements) {
             // addresses[++index] = address;
 
-            writePoint(label, dataOutput);
+            writePoint(label);
             // address += 2;
 
             dataOutput.writeInt(stringMap.get(label.getName()));
@@ -301,17 +274,17 @@ public class ElementWriter extends AbstractMapFileWriter {
         labels = null;
     }
 
-    private void writePoint(final Node location, final DataOutput output) throws IOException {
-        output.writeInt(location.getX());
-        output.writeInt(location.getY());
+    private void writePoint(final Node location) throws IOException {
+        dataOutput.writeInt(location.getX());
+        dataOutput.writeInt(location.getY());
     }
 
-    private int writeMultiElement(final MultiElement element, final DataOutput output) throws IOException {
-        output.writeInt(element.size());
+    private int writeMultiElement(final MultiElement element) throws IOException {
+        dataOutput.writeInt(element.size());
         int ret = 1;
 
         for (final Node node : element) {
-            output.writeInt(nodeMap.get(node));
+            dataOutput.writeInt(nodeMap.get(node));
             ++ret;
         }
 
