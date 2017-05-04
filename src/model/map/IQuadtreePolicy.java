@@ -1,4 +1,4 @@
-package adminTool.quadtree;
+package model.map;
 
 public interface IQuadtreePolicy {
 

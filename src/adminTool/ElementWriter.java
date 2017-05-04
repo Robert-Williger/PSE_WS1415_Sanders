@@ -10,6 +10,7 @@ import adminTool.elements.Building;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Node;
+import adminTool.elements.POI;
 import adminTool.elements.Street;
 import adminTool.elements.Way;
 
@@ -23,12 +24,12 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<Way> ways;
     private Sorting<Building> buildings;
     private Sorting<Label> labels;
+    private Sorting<POI> pois;
 
     public ElementWriter(
 
             final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
-            final Sorting<Building> buildings, final Sorting<Label> labels,
-
+            final Sorting<Building> buildings, final Sorting<Label> labels, final Sorting<POI> pois,
             final ZipOutputStream zipOutput
 
     ) {
@@ -39,6 +40,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         this.ways = ways;
         this.buildings = buildings;
         this.labels = labels;
+        this.pois = pois;
     }
 
     public void write() {
@@ -57,6 +59,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             writeAreas();
             writeBuildings();
             writeLabels();
+            writePOIs();
             writeStrings();
         } catch (final IOException e) {
             e.printStackTrace();
@@ -247,6 +250,19 @@ public class ElementWriter extends AbstractMapFileWriter {
         writeAddresses("area", addresses);
         writeDistribution("area", areas.distribution);
         areas = null;
+    }
+
+    private void writePOIs() throws IOException {
+        putNextEntry("poi");
+
+        for (final POI poi : pois.elements) {
+            writePoint(poi);
+        }
+
+        closeEntry();
+
+        writeDistribution("poi", pois.distribution);
+        pois = null;
     }
 
     private void writeLabels() throws IOException {

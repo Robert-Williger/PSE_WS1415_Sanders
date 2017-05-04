@@ -30,13 +30,9 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
     }
 
     @Override
-    protected boolean render(final Image image) {
-        if (image == null) {
-            return false;
-        }
-
+    protected void render(final Image image) {
         if (route == null) {
-            return false;
+            return;
         }
 
         g = (Graphics2D) image.getGraphics();
@@ -44,14 +40,11 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        if (drawRoute()) {
-            g.dispose();
-            fireChange();
-            return true;
-        }
-
+        drawRoute();
         g.dispose();
-        return false;
+        if (rendered) {
+            fireChange();
+        }
     }
 
     @Override
@@ -60,7 +53,7 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         streetAccessor = manager.createCollectiveAccessor("street");
     }
 
-    private boolean drawRoute() {
+    private void drawRoute() {
         final Path2D.Float path = new Path2D.Float();
 
         final LongConsumer consumer = (street) -> {
@@ -69,6 +62,8 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
             final int id = streetAccessor.getAttribute("graphId");
 
             // TODO optimize this --> no switch case needed
+
+            boolean rendered = true;
             switch (route.getStreetUse(id)) {
                 case full:
                     path.append(drawLines().getPathIterator(null), false);
@@ -82,8 +77,10 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
                     }
                     break;
                 default:
+                    rendered = false;
                     break;
             }
+            this.rendered |= rendered;
         };
         tileAccessor.forEach("street", consumer);
 
@@ -100,9 +97,6 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
                     (int) (cb / 2 + i * cb / 10f)));
             g.draw(path);
         }
-
-        // TODO return false...
-        return true;
     }
 
     private Path2D.Float createStreetPartPath(final Intervall streetPart) {

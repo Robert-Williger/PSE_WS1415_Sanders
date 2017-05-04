@@ -17,11 +17,10 @@ public abstract class ElementAccessor extends Accessor implements IElementAccess
         // TODO implement binary search?
         int type = 0;
 
-        while (getID() > distribution[type]) {
+        // TODO >= ?
+        while (getID() >= distribution[type]) {
             ++type;
         }
         return type;
     }
-
-    protected abstract int getAddress();
 }

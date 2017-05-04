@@ -23,13 +23,13 @@ public class CreateTest {
         }
 
         if (zipOutput != null) {
-            
             // zipOutput.setLevel(ZipOutputStream.STORED);
             IOSMParser parser = new OSMParser();
             try {
                 parser.read(new File("default.pbf"));
             } catch (final Exception e) {
                 e.printStackTrace();
+                return;
             }
 
             System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");

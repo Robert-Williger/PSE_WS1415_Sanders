@@ -21,7 +21,6 @@ public class POIAccessor extends ElementAccessor implements IPointAccessor {
         return data[getAddress() + 1];
     }
 
-    @Override
     protected int getAddress() {
         return elementSize * (int) getID();
     }

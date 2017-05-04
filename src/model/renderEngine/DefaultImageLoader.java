@@ -201,7 +201,7 @@ public class DefaultImageLoader implements IImageLoader {
                 loadBorderTiles(row, row + visibleRows, column - 2, column, zoom);
                 ret = true;
             }
-            // no if else for resize of map view..
+            // no else if for resize of map view..
             if (column + visibleColumns > lastColumn + lastVisibleColumns) {
                 toColumn = Math.max(lastColumn + lastVisibleColumns, column);
                 loadTiles(row, row + visibleRows, toColumn, column + visibleColumns, zoom);

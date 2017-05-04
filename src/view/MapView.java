@@ -218,7 +218,6 @@ public class MapView extends JPanel implements IMapView {
                 x = 0;
                 for (int column = startColumn; column <= endColumn; column++) {
                     g.drawImage(accessor.getImage(row, column, zoom), x, y, this);
-
                     x += tileSize;
                 }
                 y += tileSize;
@@ -261,6 +260,7 @@ public class MapView extends JPanel implements IMapView {
             }
         }
 
+        // TODO bug occurs when map is zoomed and point relocated.
         private void paint(final Graphics2D g, final double deltaX, final double deltaY, final double scale) {
             final int sZoom = map.getZoom() + zoomInfo.zoomOffset;
             final int dZoom = map.getZoom();

@@ -7,11 +7,8 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Toolkit;
-import java.awt.font.TextLayout;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.LongConsumer;
@@ -45,6 +42,11 @@ public class LabelRenderer extends AbstractRenderer {
                 Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
         styles[6] = new LabelStyle(12, 16, new int[] { 10, 11, 12, 13, 14 },
                 new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
+
+        // TODO check this style.
+        styles[7] = new LabelStyle(12, 16, new int[] { 10, 11, 12, 13, 14 },
+                new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
+
         styles[8] = new LabelStyle(13, 16, new int[] { 11, 12, 13, 14, 14 },
                 new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
 
@@ -113,18 +115,17 @@ public class LabelRenderer extends AbstractRenderer {
     }
 
     @Override
-    protected boolean render(final Image image) {
+    protected void render(final Image image) {
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
 
-        boolean rendered = drawBuildingNamesAndNumbers() | drawLabels();
+        drawBuildingNamesAndNumbers();
+        drawLabels();
 
         g.dispose();
         if (rendered) {
             fireChange();
         }
-
-        return rendered;
     }
 
     @Override
@@ -136,72 +137,55 @@ public class LabelRenderer extends AbstractRenderer {
         stringAccessor = manager.createStringAccessor();
     }
 
-    private boolean drawLabels() {
+    private void drawLabels() {
         final int zoom = tileAccessor.getZoom();
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
 
-        final LongConsumer consumer = (label) -> {
+        final LongConsumer consumer = label -> {
             labelAccessor.setID(label);
 
-            if (styles[labelAccessor.getType()] != null && styles[labelAccessor.getType()].mainStroke(g, zoom)) {
-                // TODO avoid object generation
+            final LabelStyle style = styles[labelAccessor.getType()];
+            if (style != null && style.isVisible(zoom)) {
+                final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
                 final float angle = labelAccessor.getAttribute("rotation");
                 final double sin = Math.sin(angle);
                 final double cos = Math.cos(angle);
-                // TODO avoid code redundance
-                if (styles[labelAccessor.getType()].outlineStroke(g, zoom)) {
-                    final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
-                    TextLayout text = new TextLayout(name, g.getFont(), g.getFontRenderContext());
+                // TODO FontMetrics in stlye avoids object creation.
+                final FontMetrics fontMetrics = g.getFontMetrics(style.getFont(zoom));
+                final int width = fontMetrics.stringWidth(name);
+                final int height = fontMetrics.getHeight();
+                final int descent = fontMetrics.getDescent();
+                final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
+                final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
 
-                    final Shape shape = text.getOutline(g.getTransform());
-                    final Rectangle2D rect = text.getBounds();
+                final double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
+                final double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
 
-                    final double xOffset = -cos * rect.getWidth() / 2 - sin * rect.getHeight() / 2
-                            + sin * text.getDescent();
-                    final double yOffset = cos * rect.getHeight() / 2 - sin * rect.getWidth() / 2
-                            - cos * text.getDescent();
-                    double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
-                    double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
+                g.translate(transX, transY);
+                g.rotate(angle);
 
-                    g.translate(transX, transY);
-                    g.rotate(angle);
-                    g.draw(shape);
-                    styles[labelAccessor.getType()].mainStroke(g, zoom);
-                    g.drawString(name, 0, 0);
-                    g.rotate(-angle);
-                    g.translate(-transX, -transY);
-                } else if (styles[labelAccessor.getType()].mainStroke(g, zoom)) {
-                    final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
-                    final int rotation = labelAccessor.getAttribute("rotation");
-
-                    final FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
-                    final int width = fontMetrics.stringWidth(name);
-                    final int height = fontMetrics.getHeight();
-                    final int descent = fontMetrics.getDescent();
-                    final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
-                    final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
-                    double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
-                    double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
-
-                    g.translate(transX, transY);
-                    g.rotate(rotation);
-                    g.drawString(name, 0, 0);
-                    g.rotate(-rotation);
-                    g.translate(-transX, -transY);
+                if (style.outlineStroke(g, zoom)) {
+                    g.drawString(name, -1, 0);
+                    g.drawString(name, 0, -1);
+                    g.drawString(name, 1, 0);
+                    g.drawString(name, 0, 1);
                 }
+                if (style.mainStroke(g, zoom)) {
+                    g.drawString(name, 0, 0);
+                }
+
+                g.rotate(-angle);
+                g.translate(-transX, -transY);
+
+                rendered = true;
             }
         };
+
         tileAccessor.forEach("label", consumer);
-
-        // TODO return false if not rendered.
-        return true;
-
     }
 
-    private boolean drawBuildingNamesAndNumbers() {
-        boolean rendered = false;
-
+    private void drawBuildingNamesAndNumbers() {
         final int zoom = tileAccessor.getZoom();
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
@@ -215,15 +199,14 @@ public class LabelRenderer extends AbstractRenderer {
             final LongConsumer consumer = building -> {
                 buildingAccessor.setID(building);
 
-                if (!draw(buildingAccessor.getAttribute("name"), x, y, zoom, metrics)) {
-                    draw(buildingAccessor.getAttribute("number"), x, y, zoom, metrics);
-                }
+                // only draw number if name cannot be drawn.
+                rendered |= draw(buildingAccessor.getAttribute("name"), x, y, zoom, metrics)
+                        || draw(buildingAccessor.getAttribute("number"), x, y, zoom, metrics);
+
             };
             tileAccessor.forEach("building", consumer);
         }
 
-        // TODO return false...
-        return rendered;
     }
 
     private boolean draw(final int id, final int x, final int y, final int zoom, final FontMetrics metrics) {
@@ -250,13 +233,14 @@ public class LabelRenderer extends AbstractRenderer {
             minX = converter.getPixelDistance(minX - x, zoom);
             minY = converter.getPixelDistance(minY - y, zoom);
 
-            final Rectangle2D fontRect = metrics.getStringBounds(number, g);
+            final int fontWidth = metrics.stringWidth(number);
+            final int fontHeight = metrics.getHeight();
 
-            if (fontRect.getWidth() < width && fontRect.getHeight() < height) {
+            if (fontWidth < width && fontHeight < height) {
                 final Point2D.Float center = calculateCenter();
                 center.setLocation((center.getX() + minX + width / 2) / 2f, (center.getY() + minY + height / 2) / 2f);
-                g.drawString(number, (float) (center.x - fontRect.getWidth() / 2f),
-                        (float) (center.y - fontRect.getHeight() / 2f + metrics.getAscent()));
+                g.drawString(number, (float) (center.x - fontWidth / 2f),
+                        (float) (center.y - fontHeight / 2f + metrics.getAscent()));
 
                 return true;
             }

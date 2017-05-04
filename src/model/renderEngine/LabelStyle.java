@@ -53,6 +53,15 @@ public class LabelStyle {
         return false;
     }
 
+    public boolean isVisible(final int zoom) {
+        int relativeZoom = zoom - minZoomStep;
+        return (relativeZoom >= 0 && relativeZoom < fonts.length);
+    }
+
+    public Font getFont(final int zoom) {
+        return fonts[zoom - minZoomStep];
+    }
+
     public boolean outlineStroke(final Graphics2D g, final int zoom) {
         if (strokes != null) {
             int relativeZoom = zoom - minZoomStep;

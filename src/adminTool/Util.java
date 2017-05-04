@@ -1,5 +1,7 @@
 package adminTool;
 
+import java.awt.Rectangle;
+
 import adminTool.elements.Node;
 
 public class Util {
@@ -7,6 +9,22 @@ public class Util {
     private static final int OUT_TOP = 0b0010;
     private static final int OUT_RIGHT = 0b0100;
     private static final int OUT_BOTTOM = 0b1000;
+
+    public static Rectangle getBounds(final Node[] nodes) {
+        int minX = nodes[0].getX();
+        int maxX = minX;
+        int minY = nodes[0].getY();
+        int maxY = minY;
+
+        for (int i = 1; i < nodes.length; i++) {
+            minX = Math.min(minX, nodes[i].getX());
+            maxX = Math.max(maxX, nodes[i].getX());
+            minY = Math.min(minY, nodes[i].getY());
+            maxY = Math.max(maxY, nodes[i].getY());
+        }
+
+        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+    }
 
     // test whether rectangle [1] contains rectangle [2]
     public static boolean rectangleContainsRectangle(final int minX1, final int minY1, final int maxX1, final int maxY1,

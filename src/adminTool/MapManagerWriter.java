@@ -8,6 +8,7 @@ import java.util.zip.ZipOutputStream;
 import adminTool.elements.Area;
 import adminTool.elements.Building;
 import adminTool.elements.Label;
+import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.Street;
 import adminTool.elements.Typeable;
@@ -42,6 +43,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<Way> ways;
     private Collection<Building> buildings;
     private Collection<Label> labels;
+    private Collection<POI> pois;
 
     // TODO improve this!
     public Sorting<Street> streetSorting;
@@ -57,6 +59,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         this.ways = ways;
         this.buildings = buildings;
         this.labels = labels;
+        this.pois = pois;
     }
 
     @Override
@@ -85,9 +88,11 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final Sorting<Label> labelSorting = sort(labels, new Label[labels.size()]);
         labels = null;
 
-        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, waySorting, buildingSorting,
-                labelSorting, zipOutput);
+        final Sorting<POI> poiSorting = sort(pois, new POI[pois.size()]);
+        pois = null;
 
+        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, waySorting, buildingSorting,
+                labelSorting, poiSorting, zipOutput);
         elementWriter.write();
 
         //
@@ -105,15 +110,30 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final int[] elements = new int[] { areaSorting.elements.length, waySorting.elements.length,
                 streetSorting.elements.length, buildingSorting.elements.length };
 
-        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS);
-        policies[1] = new WayQuadtreePolicy(waySorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS, maxWayWidths);
-        policies[2] = new WayQuadtreePolicy(streetSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS,
+        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, getBounds(areaSorting), MAX_ELEMENTS_PER_TILE);
+        policies[1] = new WayQuadtreePolicy(waySorting.elements, getBounds(waySorting), MAX_ELEMENTS_PER_TILE,
                 maxWayWidths);
-        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, MAX_ELEMENTS_PER_TILE, MAX_ZOOM_STEPS);
+        policies[2] = new WayQuadtreePolicy(streetSorting.elements, getBounds(streetSorting), MAX_ELEMENTS_PER_TILE,
+                maxWayWidths);
+        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, getBounds(buildingSorting),
+                MAX_ELEMENTS_PER_TILE);
 
         for (int i = 0; i < names.length; i++) {
             new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
         }
+    }
+
+    private Rectangle[][] getBounds(final Sorting<? extends MultiElement> sorting) {
+        final MultiElement[] elements = sorting.elements;
+        final Rectangle[][] ret = new Rectangle[MAX_ZOOM_STEPS][];
+        final Rectangle[] bounds = new Rectangle[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+            bounds[i] = Util.getBounds(elements[i].getNodes());
+        }
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = bounds;
+        }
+        return ret;
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {

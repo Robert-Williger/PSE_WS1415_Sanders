@@ -35,7 +35,6 @@ public class CollectiveAccessor extends ElementAccessor implements ICollectiveAc
         return data[getOffset() + getAddress()];
     }
 
-    @Override
     protected int getAddress() {
         return addresses[(int) getID()];
     }

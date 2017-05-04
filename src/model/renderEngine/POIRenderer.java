@@ -51,20 +51,17 @@ public class POIRenderer extends AbstractRenderer {
     }
 
     @Override
-    public boolean render(final Image image) {
+    public void render(final Image image) {
         g = (Graphics2D) image.getGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        if (drawPOIs()) {
-            g.dispose();
-            fireChange();
-            return true;
-        }
-
+        drawPOIs();
         g.dispose();
-        return false;
+        if (rendered) {
+            fireChange();
+        }
     }
 
     @Override
@@ -73,7 +70,7 @@ public class POIRenderer extends AbstractRenderer {
         poiAccessor = manager.createPointAccessor("poi");
     }
 
-    private boolean drawPOIs() {
+    private void drawPOIs() {
         final int zoom = tileAccessor.getZoom();
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
@@ -86,12 +83,11 @@ public class POIRenderer extends AbstractRenderer {
                 g.drawImage(poiImage[type],
                         converter.getPixelDistance(poiAccessor.getX() - x, zoom) - imageSize.width / 2,
                         converter.getPixelDistance(poiAccessor.getY() - y, zoom) - imageSize.height / 2, null);
+
+                rendered = true;
             }
 
         };
         tileAccessor.forEach("poi", consumer);
-
-        // TODO return false if not rendered.
-        return true;
     }
 }

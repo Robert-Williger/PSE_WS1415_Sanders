@@ -27,15 +27,15 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     public void write() throws IOException {
         final boolean[] duplicates = new boolean[totalElements];
 
-        final int maxZoomSteps = policy.getMaxZoomSteps();
-        final int[][] xPos = new int[maxZoomSteps][4];
-        final int[][] yPos = new int[maxZoomSteps][4];
+        final int maxHeight = policy.getMaxHeight();
+        final int[][] xPos = new int[maxHeight][4];
+        final int[][] yPos = new int[maxHeight][4];
 
         final boolean[][] leafs = createChildren();
         final IntList[][] indices = createIndices();
 
-        final int[] choices = new int[maxZoomSteps];
-        final int[] treeIndices = new int[maxZoomSteps];
+        final int[] choices = new int[maxHeight];
+        final int[] treeIndices = new int[maxHeight];
 
         final IntList duplicateList = new IntList();
         final IntList dataList = new IntList();
@@ -45,32 +45,32 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
         putNextEntry(name + "Data");
 
         int writtenDataInts = 0;
-        int zoom = 0;
+        int height = 0;
 
         allocateRoot(treeList, leafs[0]);
 
-        while (zoom >= 0) {
-            int choice = choices[zoom];
+        while (height >= 0) {
+            int choice = choices[height];
 
-            if (leafs[zoom][choice]) {
-                treeIndices[zoom] += registerChild(treeList, treeIndices[zoom], writtenDataInts);
+            if (leafs[height][choice]) {
+                treeIndices[height] += registerChild(treeList, treeIndices[height], writtenDataInts);
 
-                setLists(dataList, duplicateList, indices[zoom][choice], duplicates);
+                setLists(dataList, duplicateList, indices[height][choice], duplicates);
 
-                zoom = updateStateByChild(choices, zoom);
+                height = updateStateByChild(choices, height);
             } else {
-                treeIndices[zoom] += registerInnerNode(treeList, treeIndices[zoom], writtenDataInts);
+                treeIndices[height] += registerInnerNode(treeList, treeIndices[height], writtenDataInts);
 
-                distribute(leafs[zoom + 1], dataList, duplicates, xPos, yPos, indices, mapSize >> (zoom + 1), zoom,
-                        choice);
+                distribute(leafs[height + 1], dataList, duplicates, xPos, yPos, indices, mapSize >> (height + 1),
+                        height, choice);
 
-                setDuplicateList(duplicateList, duplicates, indices[zoom][choice]);
+                setDuplicateList(duplicateList, duplicates, indices[height][choice]);
                 setDuplactes(duplicates, dataList);
                 setDataList(dataList);
 
-                allocateChildren(treeIndices, treeList, leafs[zoom + 1], zoom);
+                allocateChildren(treeIndices, treeList, leafs[height + 1], height);
 
-                zoom = updateStateByInnerNode(choices, zoom);
+                height = updateStateByInnerNode(choices, height);
             }
             writtenDataInts += writeNodeElements(dataList, duplicateList);
         }
@@ -82,7 +82,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     }
 
     private boolean[][] createChildren() {
-        final boolean[][] children = new boolean[policy.getMaxZoomSteps()][4];
+        final boolean[][] children = new boolean[policy.getMaxHeight()][4];
         for (int i = 0; i < 4; i++) {
             children[children.length - 1][i] = true;
         }
@@ -90,7 +90,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     }
 
     private IntList[][] createIndices() {
-        final IntList[][] indices = new IntList[policy.getMaxZoomSteps()][];
+        final IntList[][] indices = new IntList[policy.getMaxHeight()][];
         indices[0] = new IntList[] { createInitialList() };
         for (int i = 1; i < indices.length; i++) {
             indices[i] = new IntList[] { new IntList(), new IntList(), new IntList(), new IntList() };
@@ -109,28 +109,28 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
 
     private void allocateRoot(final IntList treeList, final boolean[] leafs) {
         treeList.add(0);
-        leafs[0] = policy.getMaxZoomSteps() == 1 || totalElements <= policy.getMaxElementsPerTile();
+        leafs[0] = policy.getMaxHeight() == 1 || totalElements <= policy.getMaxElementsPerTile();
         if (!leafs[0]) {
             treeList.add(0);
         }
     }
 
     private void distribute(boolean[] leafs, IntList dataList, boolean[] duplicates, int[][] xPos, int[][] yPos,
-            IntList[][] indices, int size, int zoom, int choice) {
-        final int[] distXPos = xPos[zoom + 1];
-        final int[] distYPos = yPos[zoom + 1];
-        final IntList[] distIndices = indices[zoom + 1];
+            IntList[][] indices, int size, int height, int choice) {
+        final int[] distXPos = xPos[height + 1];
+        final int[] distYPos = yPos[height + 1];
+        final IntList[] distIndices = indices[height + 1];
 
-        setPositions(distXPos, distYPos, xPos[zoom][choice], yPos[zoom][choice], size);
+        setPositions(distXPos, distYPos, xPos[height][choice], yPos[height][choice], size);
         dataList.clear();
         clearIndices(distIndices);
 
-        for (final PrimitiveIterator.OfInt iterator = indices[zoom][choice].iterator(); iterator.hasNext();) {
+        for (final PrimitiveIterator.OfInt iterator = indices[height][choice].iterator(); iterator.hasNext();) {
             final int index = iterator.nextInt();
 
             int matches = 0;
             for (int i = 0; i < 4; i++) {
-                if (policy.intersects(index, zoom, distXPos[i], distYPos[i], size)) {
+                if (policy.intersects(index, height, distXPos[i], distYPos[i], size)) {
                     distIndices[i].add(index);
                     ++matches;
                 }
@@ -141,7 +141,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
             }
         }
 
-        if (zoom + 1 != policy.getMaxZoomSteps() - 1) {
+        if (height + 1 != policy.getMaxHeight() - 1) {
             setLeafs(leafs, distIndices);
         }
     }
@@ -192,26 +192,26 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
         }
     }
 
-    private int updateStateByChild(final int[] choices, int zoom) {
-        ++choices[zoom];
-        while (choices[zoom] == 4) {
-            if (--zoom == 0) {
+    private int updateStateByChild(final int[] choices, int height) {
+        ++choices[height];
+        while (choices[height] == 4) {
+            if (--height == 0) {
                 return -1;
             }
         }
 
-        return zoom;
+        return height;
     }
 
-    private int updateStateByInnerNode(final int[] choices, int zoom) {
-        ++choices[zoom];
-        choices[++zoom] = 0;
+    private int updateStateByInnerNode(final int[] choices, int height) {
+        ++choices[height];
+        choices[++height] = 0;
 
-        return zoom;
+        return height;
     }
 
-    private void allocateChildren(final int[] treeIndices, final IntList treeList, final boolean[] leafs, int zoom) {
-        treeIndices[zoom + 1] = treeList.size();
+    private void allocateChildren(final int[] treeIndices, final IntList treeList, final boolean[] leafs, int height) {
+        treeIndices[height + 1] = treeList.size();
         treeList.add(0);
         treeList.add(0);
         treeList.add(0);

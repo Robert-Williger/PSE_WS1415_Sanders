@@ -49,13 +49,15 @@ public class BackgroundRenderer extends AbstractRenderer {
     }
 
     @Override
-    protected boolean render(final Image image) {
+    protected void render(final Image image) {
         long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
         graphicsTime += (System.currentTimeMillis() - start);
 
-        final boolean rendered = drawAreas() | drawBuildings() | drawWays();
+        drawAreas();
+        drawBuildings();
+        drawWays();
 
         start = System.currentTimeMillis();
         g.dispose();
@@ -64,8 +66,6 @@ public class BackgroundRenderer extends AbstractRenderer {
         if (rendered) {
             fireChange();
         }
-
-        return rendered;
     }
 
     @Override
@@ -132,7 +132,7 @@ public class BackgroundRenderer extends AbstractRenderer {
         return rendered;
     }
 
-    private boolean drawWays() {
+    private void drawWays() {
         long start = System.currentTimeMillis();
 
         final int zoom = tileAccessor.getZoom();
@@ -147,68 +147,53 @@ public class BackgroundRenderer extends AbstractRenderer {
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
 
-        boolean rendered = false;
         for (final int[] layer : colorScheme.getWayOrder()) {
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].outlineStroke(g, zoom)) {
                     g.draw(paths[way]);
-                    rendered = true;
                 }
             }
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].mainStroke(g, zoom)) {
                     g.draw(paths[way]);
-                    rendered = true;
                 }
             }
             for (final int way : layer) {
                 if (wayStyles[way].isVisible(zoom) && wayStyles[way].middleLineStroke(g, zoom)) {
                     g.draw(paths[way]);
-                    rendered = true;
                 }
             }
         }
 
         graphicsTime += (System.currentTimeMillis() - start);
-
-        return rendered;
     }
 
-    private boolean drawBuildings() {
+    private void drawBuildings() {
         long start = System.currentTimeMillis();
 
         final ShapeStyle[] buildingStyles = colorScheme.getBuildingStyles();
         final int zoom = tileAccessor.getZoom();
 
+        // TODO update for multiple building styles.
         if (!buildingStyles[0].isVisible(zoom)) {
-            return false;
+            return;
         }
 
-        clearPaths(paths, 1);
-        final LongConsumer consumer = (building) -> {
-            buildingAccessor.setID(building);
-
-            appendPath(paths[0], buildingAccessor);
-        };
-        tileAccessor.forEach("building", consumer);
+        clearPaths(paths, buildingStyles.length);
+        tileAccessor.forEach("building", createConsumer(zoom, buildingAccessor, buildingStyles));
 
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
-        boolean rendered = false;
 
         if (buildingStyles[0].mainStroke(g, zoom)) {
             g.fill(paths[0]);
-            rendered = true;
         }
 
         if (buildingStyles[0].outlineStroke(g, zoom)) {
             g.draw(paths[0]);
-            rendered = true;
         }
 
         graphicsTime += (System.currentTimeMillis() - start);
-
-        return rendered;
     }
 
     private void appendPath(final Path2D path, final ICollectiveAccessor accessor) {
@@ -233,6 +218,7 @@ public class BackgroundRenderer extends AbstractRenderer {
             final int type = accessor.getType();
 
             if (styles[type].isVisible(zoom)) {
+                rendered = true;
                 final Path2D path = paths[type];
                 appendPath(path, accessor);
                 // TODO polygons sometimes do not have same start and endpoint!

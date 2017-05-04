@@ -11,6 +11,7 @@ public abstract class AbstractRenderer extends AbstractModel implements IRendere
 
     protected IPixelConverter converter;
     protected ITileAccessor tileAccessor;
+    protected boolean rendered;
 
     public AbstractRenderer(final IMapManager manager) {
         setMapManager(manager);
@@ -22,11 +23,14 @@ public abstract class AbstractRenderer extends AbstractModel implements IRendere
         this.tileAccessor = manager.createTileAccessor();
     }
 
+    // TODO describe default behaviour: returns false unless rendered is set to true by subclass
     @Override
     public final boolean render(final long tileID, final Image image) {
+        rendered = false;
         tileAccessor.setID(tileID);
-        return render(image);
+        render(image);
+        return rendered;
     }
 
-    protected abstract boolean render(final Image image);
+    protected abstract void render(final Image image);
 }
