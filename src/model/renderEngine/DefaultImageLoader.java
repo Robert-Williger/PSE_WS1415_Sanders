@@ -200,7 +200,9 @@ public class DefaultImageLoader implements IImageLoader {
                 loadTiles(row, row + visibleRows, column, fromColumn, zoom);
                 loadBorderTiles(row, row + visibleRows, column - 2, column, zoom);
                 ret = true;
-            } else if (column + visibleColumns > lastColumn + lastVisibleColumns) {
+            }
+            // no if else for resize of map view..
+            if (column + visibleColumns > lastColumn + lastVisibleColumns) {
                 toColumn = Math.max(lastColumn + lastVisibleColumns, column);
                 loadTiles(row, row + visibleRows, toColumn, column + visibleColumns, zoom);
                 loadBorderTiles(row, row + visibleRows, column + visibleColumns, column + visibleColumns + 2, zoom);
@@ -210,7 +212,8 @@ public class DefaultImageLoader implements IImageLoader {
                 loadTiles(row, Math.min(row + visibleRows, lastRow), fromColumn, toColumn, zoom);
                 loadBorderTiles(row - 2, row, fromColumn, toColumn, zoom);
                 ret = true;
-            } else if (row + visibleRows > lastRow + lastVisibleRows) {
+            }
+            if (row + visibleRows > lastRow + lastVisibleRows) {
                 loadTiles(Math.max(lastRow + lastVisibleRows, row), row + visibleRows, fromColumn, toColumn, zoom);
                 loadBorderTiles(row + visibleRows, row + visibleRows + 2, fromColumn, toColumn, zoom);
                 ret = true;
