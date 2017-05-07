@@ -1,8 +1,13 @@
 package adminTool;
 
+import java.awt.Font;
 import java.awt.Rectangle;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.PrimitiveIterator.OfInt;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Area;
@@ -14,8 +19,11 @@ import adminTool.elements.Street;
 import adminTool.elements.Typeable;
 import adminTool.elements.Way;
 import adminTool.quadtree.AreaQuadtreePolicy;
+import adminTool.quadtree.BoundingBoxQuadtreePolicy;
+import adminTool.quadtree.CollisionlessQuadtree;
+import adminTool.quadtree.ICollisionPolicy;
 import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.LinkedQuadtreeWriter;
+import adminTool.quadtree.StoredQuadtreeWriter;
 import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
@@ -34,6 +42,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
     private static final int SCALE_FACTOR_BITS = 21;
 
+    private static final int MAX_POI_PIXEL_WIDTH = 20;
     private static final int MAX_WAY_PIXEL_WIDTH = 17;
 
     private Rectangle bounds;
@@ -69,6 +78,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
         final int maxZoomStep = Math.min(MAX_ZOOM_STEP, minZoomStep + MAX_ZOOM_STEPS - 1);
+        final int zoomSteps = maxZoomStep - minZoomStep + 1;
         final int conversionBits = SCALE_FACTOR_BITS;
 
         writeHeader(minZoomStep, maxZoomStep, conversionBits);
@@ -100,7 +110,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         //
 
         // TODO improve this
-        final int[] maxWayWidths = new int[MAX_ZOOM_STEPS];
+        final int[] maxWayWidths = new int[zoomSteps];
         for (int zoom = minZoomStep; zoom < maxZoomStep; ++zoom) {
             maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
         }
@@ -110,22 +120,38 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final int[] elements = new int[] { areaSorting.elements.length, waySorting.elements.length,
                 streetSorting.elements.length, buildingSorting.elements.length };
 
-        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, getBounds(areaSorting), MAX_ELEMENTS_PER_TILE);
-        policies[1] = new WayQuadtreePolicy(waySorting.elements, getBounds(waySorting), MAX_ELEMENTS_PER_TILE,
-                maxWayWidths);
-        policies[2] = new WayQuadtreePolicy(streetSorting.elements, getBounds(streetSorting), MAX_ELEMENTS_PER_TILE,
-                maxWayWidths);
-        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, getBounds(buildingSorting),
+        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, getBounds(areaSorting, zoomSteps),
+                MAX_ELEMENTS_PER_TILE);
+        policies[1] = new WayQuadtreePolicy(waySorting.elements, getBounds(waySorting, zoomSteps),
+                MAX_ELEMENTS_PER_TILE, maxWayWidths);
+        policies[2] = new WayQuadtreePolicy(streetSorting.elements, getBounds(streetSorting, zoomSteps),
+                MAX_ELEMENTS_PER_TILE, maxWayWidths);
+        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, getBounds(buildingSorting, zoomSteps),
                 MAX_ELEMENTS_PER_TILE);
 
         for (int i = 0; i < names.length; i++) {
-            new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
+            new StoredQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
         }
+
+        putNextEntry("labelTree");
+        CollisionlessQuadtree tree = createLabelQuadtree(labelSorting.elements, minZoomStep, zoomSteps, coordMapSize,
+                conversionBits);
+        for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
+            dataOutput.writeInt(iterator.nextInt());
+        }
+        closeEntry();
+
+        putNextEntry("poiTree");
+        tree = createPOIQuadtree(poiSorting.elements, minZoomStep, zoomSteps, coordMapSize, conversionBits);
+        for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
+            dataOutput.writeInt(iterator.nextInt());
+        }
+        closeEntry();
     }
 
-    private Rectangle[][] getBounds(final Sorting<? extends MultiElement> sorting) {
+    private Rectangle[][] getBounds(final Sorting<? extends MultiElement> sorting, final int zoomSteps) {
         final MultiElement[] elements = sorting.elements;
-        final Rectangle[][] ret = new Rectangle[MAX_ZOOM_STEPS][];
+        final Rectangle[][] ret = new Rectangle[zoomSteps][];
         final Rectangle[] bounds = new Rectangle[elements.length];
         for (int i = 0; i < elements.length; i++) {
             bounds[i] = Util.getBounds(elements[i].getNodes());
@@ -134,6 +160,46 @@ public class MapManagerWriter extends AbstractMapFileWriter {
             ret[i] = bounds;
         }
         return ret;
+    }
+
+    private CollisionlessQuadtree createLabelQuadtree(final Label[] labels, final int minZoomStep, final int zoomSteps,
+            final int mapSize, final int conversionBits) {
+        final Font font = new Font("TimesRoman", Font.PLAIN, 18);
+        final FontRenderContext c = new FontRenderContext(new AffineTransform(), true, true);
+        final Rectangle[][] lBounds = new Rectangle[zoomSteps][labels.length];
+
+        for (int i = 0; i < labels.length; i++) {
+            final Label label = labels[i];
+            final Rectangle2D bounds = font.getStringBounds(label.getName(), c);
+            final int pw = (int) Math.ceil(bounds.getWidth());
+            final int ph = (int) Math.ceil(bounds.getHeight());
+            for (int h = 0; h < zoomSteps; h++) {
+                final int cw = pw << (conversionBits - (h + minZoomStep));
+                final int ch = ph << (conversionBits - (h + minZoomStep));
+                lBounds[h][i] = new Rectangle(label.getX() - cw / 2, label.getY() - ch / 2, cw, ch);
+            }
+        }
+        final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
+        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(lBounds, MAX_ELEMENTS_PER_TILE);
+
+        return new CollisionlessQuadtree(labels.length, qp, cp, mapSize);
+    }
+
+    private CollisionlessQuadtree createPOIQuadtree(final POI[] pois, final int minZoomStep, final int zoomSteps,
+            final int mapSize, final int conversionBits) {
+        final Rectangle[][] lBounds = new Rectangle[zoomSteps][pois.length];
+
+        for (int h = 0; h < zoomSteps; h++) {
+            final int size = MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep));
+            for (int i = 0; i < pois.length; i++) {
+                final POI poi = pois[i];
+                lBounds[h][i] = new Rectangle(poi.getX() - size / 2, poi.getY() - size / 2, size, size);
+            }
+        }
+        final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
+        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(lBounds, MAX_ELEMENTS_PER_TILE);
+
+        return new CollisionlessQuadtree(pois.length, qp, cp, mapSize);
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {

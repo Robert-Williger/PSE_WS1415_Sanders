@@ -253,7 +253,7 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     private void writePOIs() throws IOException {
-        putNextEntry("poi");
+        putNextEntry("pois");
 
         for (final POI poi : pois.elements) {
             writePoint(poi);

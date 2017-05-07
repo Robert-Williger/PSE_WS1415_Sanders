@@ -5,7 +5,7 @@ import java.util.function.LongConsumer;
 
 import util.LongList;
 
-public class Quadtree implements IElementIterator {
+public class LinkedQuadtree implements IElementIterator {
     private final int[] treeData;
     private final int[] elementData;
     private final int zoomOffset;
@@ -13,7 +13,7 @@ public class Quadtree implements IElementIterator {
     private static final int SIZE_BITS = 16;
     private static final int LOWER_BITS = 0xFFFF;
 
-    public Quadtree(final int[] treeData, final int[] elementData, final int zoomOffset) {
+    public LinkedQuadtree(final int[] treeData, final int[] elementData, final int zoomOffset) {
         this.treeData = treeData;
         this.elementData = elementData;
         this.zoomOffset = zoomOffset;

@@ -1,10 +1,5 @@
 package model;
 
-import java.awt.Font;
-import java.awt.Rectangle;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -21,27 +16,22 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import model.TextProcessor.Entry;
-import model.map.BoundingBoxQuadtreePolicy;
 import model.map.CollectiveAccessorFactory;
-import model.map.CollisionlessQuadtree;
-import model.map.ICollisionPolicy;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
-import model.map.IQuadtreePolicy;
 import model.map.IElementIterator;
 import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
-import model.map.Quadtree;
+import model.map.StoredQuadtree;
 import model.map.accessors.BuildingAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
-import model.map.accessors.IStringAccessor;
 import model.map.accessors.ITileAccessor;
 import model.map.accessors.LabelAccessor;
+import model.map.accessors.POIAccessor;
 import model.map.accessors.StreetAccessor;
-import model.map.accessors.StringAccessor;
 import model.map.accessors.TileAccessor;
 import model.routing.DirectedGraph;
 import model.routing.IDirectedGraph;
@@ -288,28 +278,11 @@ public class Reader implements IReader {
             final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
             final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
-            final int labels = readElements(zipFile, nodes, elementIteratorMap, pointMap, collectiveMap,
-                    state.getMinZoom());
+            readElements(zipFile, nodes, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
 
-            final int zoomOffset = (int) Math.ceil(log2(Math.min(state.getCoordMapWidth(), state.getCoordMapHeight())));
-            final int coordMapSize = (1 << zoomOffset);
+            final IFactory<ITileAccessor> tileFactory = () -> new TileAccessor(elementIteratorMap, state);
 
-            final IElementIterator iterator = createLabelQuadtree(pointMap.get("label").create(),
-                    new StringAccessor(strings), labels, state.getMaxZoom() - state.getMinZoom() + 1,
-                    state.getMinZoom(), state.getConverter(), coordMapSize);
-            elementIteratorMap.put("label", iterator);
-
-            final IFactory<ITileAccessor> tileFactory = new IFactory<ITileAccessor>() {
-                @Override
-                public ITileAccessor create() {
-                    return new TileAccessor(elementIteratorMap, state);
-                }
-            };
             return new MapManager(pointMap, collectiveMap, tileFactory, strings, state);
-        }
-
-        private double log2(final double value) {
-            return (Math.log(value) / Math.log(2));
         }
 
         private IMapState readMapState(final ZipFile zipFile) throws IOException {
@@ -377,13 +350,13 @@ public class Reader implements IReader {
             return strings;
         }
 
-        private int readElements(final ZipFile zipFile, final int[][] nodes,
+        private void readElements(final ZipFile zipFile, final int[][] nodes,
                 final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
-
-            final String[] names = { "street", "way", "area", "building", "label" };
-            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude", "Labels" };
+            // TODO handle missing entries!
+            final String[] names = { "street", "way", "area", "building", "label", "poi" };
+            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude", "Labels", "Points of Interest" };
             final int[][] distributions = new int[names.length][];
             final int[][] addresses = new int[names.length][];
 
@@ -392,7 +365,8 @@ public class Reader implements IReader {
                 addresses[i] = readIntArray(zipFile, names[i] + "Addresses");
             }
 
-            final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[names.length - 1];
+            // TODO improve this
+            final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[4];
             accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0], nodes[0], nodes[1]) {
                 @Override
                 public ICollectiveAccessor create() {
@@ -407,7 +381,7 @@ public class Reader implements IReader {
                     return new BuildingAccessor(distribution, data, addresses, x, y);
                 }
             };
-            for (int i = 0; i < names.length - 1; i++) {
+            for (int i = 0; i < 4; i++) {
                 fireStepCommenced("Lade " + outputNames[i] + "...");
 
                 final ZipEntry entry = zipFile.getEntry(names[i] + "s");
@@ -418,46 +392,21 @@ public class Reader implements IReader {
                 accessors[i].setData(readIntArray(zipFile, entry));
                 collectiveMap.put(names[i], accessors[i]);
 
-                // TODO handle missing entries!
-                int[] elementData = readIntArray(zipFile, names[i] + "Data");
+                // int[] elementData = readIntArray(zipFile, names[i] + "Data");
                 int[] treeData = readIntArray(zipFile, names[i] + "Tree");
-                elementIteratorMap.put(names[i], new Quadtree(treeData, elementData, minZoomStep));
+                // elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
+                elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
             }
 
-            fireStepCommenced("Lade Points of Interest...");
+            fireStepCommenced("Lade " + outputNames[4] + "...");
+            final int[] labelData = readIntArray(zipFile, names[4] + "s");
+            pointMap.put(names[4], () -> new LabelAccessor(distributions[4], labelData, 3));
+            elementIteratorMap.put(names[4], new StoredQuadtree(readIntArray(zipFile, names[4] + "Tree"), minZoomStep));
 
-            fireStepCommenced("Lade Labels...");
-            // TODO handle missing entry!
-            final int[] data = readIntArray(zipFile, "labels");
-            final IFactory<IPointAccessor> labelAccessorFactory = () -> {
-                return new LabelAccessor(distributions[4], data, 3);
-            };
-            pointMap.put("label", labelAccessorFactory);
-            return data.length / 3;
-        }
-
-        private IElementIterator createLabelQuadtree(final IPointAccessor lAccessor, final IStringAccessor sAccessor,
-                final int labels, final int zoomSteps, final int minZoomStep, final IPixelConverter converter,
-                final int coordMapSize) {
-
-            final Font font = new Font("TimesRoman", Font.PLAIN, 18);
-            final FontRenderContext c = new FontRenderContext(new AffineTransform(), true, true);
-            final Rectangle[][] lBounds = new Rectangle[zoomSteps][labels];
-
-            for (int i = 0; i < labels; i++) {
-                lAccessor.setID(i);
-                final Rectangle2D bounds = font.getStringBounds(sAccessor.getString(lAccessor.getAttribute("name")), c);
-                final int pw = (int) Math.ceil(bounds.getWidth());
-                final int ph = (int) Math.ceil(bounds.getHeight());
-                for (int h = 0; h < zoomSteps; h++) {
-                    final int cw = converter.getCoordDistance(pw, h + minZoomStep);
-                    final int ch = converter.getCoordDistance(ph, h + minZoomStep);
-                    lBounds[h][i] = new Rectangle(lAccessor.getX() - cw / 2, lAccessor.getY() - ch / 2, cw, ch);
-                }
-            }
-            final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
-            final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(lBounds, 8);
-            return new CollisionlessQuadtree(labels, qp, cp, coordMapSize, minZoomStep);
+            fireStepCommenced("Lade " + outputNames[5] + "...");
+            final int[] poiData = readIntArray(zipFile, names[5] + "s");
+            pointMap.put(names[5], () -> new POIAccessor(distributions[5], poiData, 2));
+            elementIteratorMap.put(names[5], new StoredQuadtree(readIntArray(zipFile, names[5] + "Tree"), minZoomStep));
         }
     }
 
