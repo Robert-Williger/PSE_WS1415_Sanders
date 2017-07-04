@@ -4,6 +4,7 @@ import java.awt.AlphaComposite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ListIterator;
 
@@ -290,10 +291,9 @@ public class MapView extends JPanel implements IMapView {
         }
 
         public IRoutePoint getRoutePoint(final int x, final int y) {
+            final int zoom = map.getZoom();
             for (final IRoutePoint point : list) {
-                final int xDist = x - point.getX(map.getZoom());
-                final int yDist = y - point.getY(map.getZoom());
-                if (xDist * xDist + yDist * yDist <= POINT_RADIUS_SQUARE) {
+                if (Point.distanceSq(x, y, point.getX(zoom), point.getY(zoom)) <= POINT_RADIUS_SQUARE) {
                     return point;
                 }
             }
