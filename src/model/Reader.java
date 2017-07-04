@@ -20,6 +20,7 @@ import model.map.CollectiveAccessorFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
+import model.map.LinkedQuadtree;
 import model.map.IElementIterator;
 import model.map.MapManager;
 import model.map.MapState;
@@ -392,10 +393,10 @@ public class Reader implements IReader {
                 accessors[i].setData(readIntArray(zipFile, entry));
                 collectiveMap.put(names[i], accessors[i]);
 
-                // int[] elementData = readIntArray(zipFile, names[i] + "Data");
+                int[] elementData = readIntArray(zipFile, names[i] + "Data");
                 int[] treeData = readIntArray(zipFile, names[i] + "Tree");
-                // elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
-                elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
+                elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
+                // elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
             }
 
             fireStepCommenced("Lade " + outputNames[4] + "...");

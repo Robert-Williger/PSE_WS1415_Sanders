@@ -53,6 +53,8 @@ public class BackgroundRenderer extends AbstractRenderer {
         long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
+        graphicsTime = 0;
+        nonGraphicsTime = 0;
         graphicsTime += (System.currentTimeMillis() - start);
 
         drawAreas();
@@ -83,13 +85,8 @@ public class BackgroundRenderer extends AbstractRenderer {
         }
     }
 
-    private boolean drawAreas() {
+    private void drawAreas() {
         long start = System.currentTimeMillis();
-
-        // final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("area");
-        // if (!iterator.hasNext()) {
-        // return false;
-        // }
 
         final int zoom = tileAccessor.getZoom();
         final ShapeStyle[] areaStyles = colorScheme.getAreaStyles();
@@ -97,39 +94,20 @@ public class BackgroundRenderer extends AbstractRenderer {
 
         tileAccessor.forEach("area", createConsumer(zoom, areaAccessor, areaStyles));
 
-        // while (iterator.hasNext()) {
-        // final long area = iterator.nextLong();
-        // areaAccessor.setID(area);
-        // final int type = areaAccessor.getType();
-        //
-        // if (areaStyles[type].isVisible(zoom)) {
-        // final Path2D path = paths[type];
-        // appendPath(path, areaAccessor);
-        // rendered = true;
-        // // TODO polygons sometimes do not have same start and endpoint!
-        // // ... improve this
-        // path.closePath();
-        // }
-        // }
-
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
 
-        boolean rendered = false;
         for (final int i : colorScheme.getAreaOrder()) {
             if (areaStyles[i].mainStroke(g, zoom)) {
                 g.fill(paths[i]);
-                rendered = true;
             }
 
             if (areaStyles[i].outlineStroke(g, zoom)) {
                 g.draw(paths[i]);
-                rendered = true;
             }
         }
 
         graphicsTime += (System.currentTimeMillis() - start);
-        return rendered;
     }
 
     private void drawWays() {
@@ -213,8 +191,8 @@ public class BackgroundRenderer extends AbstractRenderer {
     }
 
     private LongConsumer createConsumer(final int zoom, final ICollectiveAccessor accessor, final ShapeStyle[] styles) {
-        return (area) -> {
-            accessor.setID(area);
+        return (id) -> {
+            accessor.setID(id);
             final int type = accessor.getType();
 
             if (styles[type].isVisible(zoom)) {

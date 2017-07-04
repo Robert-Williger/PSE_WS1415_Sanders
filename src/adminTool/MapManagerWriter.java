@@ -23,7 +23,7 @@ import adminTool.quadtree.BoundingBoxQuadtreePolicy;
 import adminTool.quadtree.CollisionlessQuadtree;
 import adminTool.quadtree.ICollisionPolicy;
 import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.StoredQuadtreeWriter;
+import adminTool.quadtree.LinkedQuadtreeWriter;
 import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
@@ -130,7 +130,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
                 MAX_ELEMENTS_PER_TILE);
 
         for (int i = 0; i < names.length; i++) {
-            new StoredQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
+            new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
         }
 
         putNextEntry("labelTree");

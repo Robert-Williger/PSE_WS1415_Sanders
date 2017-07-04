@@ -3,7 +3,6 @@ package model.renderEngine;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.IFactory;
 import model.map.IMapManager;
 import model.map.IMapState;
 
@@ -60,14 +59,10 @@ public class DefaultImageLoader implements IImageLoader {
 
         routeRenderer = new RouteRenderer(mapManager);
 
-        backgroundFetcher = new ParallelImageFetcher(mapManager, new IFactory<IRenderer>() {
-            final ColorScheme colorScheme = new OSMColorScheme();
-
-            @Override
-            public IRenderer create() {
-                return new BackgroundRenderer(mapManager, colorScheme);
-            }
-        });
+        final ColorScheme colorScheme = new OSMColorScheme();
+        final int processors = Runtime.getRuntime().availableProcessors();
+        backgroundFetcher = new ParallelImageFetcher(mapManager, () -> new BackgroundRenderer(mapManager, colorScheme),
+                processors);
 
         POIFetcher = new SequentialImageFetcher(new POIRenderer(mapManager), mapManager);
         routeFetcher = new SequentialImageFetcher(routeRenderer, mapManager);

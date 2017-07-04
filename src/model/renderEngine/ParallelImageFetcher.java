@@ -9,10 +9,12 @@ public class ParallelImageFetcher extends AbstractImageFetcher {
 
     private RenderPool threadPool;
     private IRenderer[] renderers;
+    private final int workerThreads;
 
-    public ParallelImageFetcher(final IMapManager manager, final IFactory<IRenderer> factory) {
+    public ParallelImageFetcher(final IMapManager manager, final IFactory<IRenderer> factory, final int workerThreads) {
         super(manager);
 
+        this.workerThreads = workerThreads;
         renderers = new IRenderer[getWorkerThreads()];
         for (int i = 0; i < renderers.length; i++) {
             renderers[i] = factory.create();
@@ -24,7 +26,7 @@ public class ParallelImageFetcher extends AbstractImageFetcher {
     }
 
     protected int getWorkerThreads() {
-        return 20;
+        return workerThreads;
     }
 
     @Override
@@ -60,10 +62,10 @@ public class ParallelImageFetcher extends AbstractImageFetcher {
         }
     }
 
-//    protected Image createImage() {
-//        // TODO improve this
-//        return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
-//    }
+    // protected Image createImage() {
+    // // TODO improve this
+    // return new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_USHORT_565_RGB);
+    // }
 
     private static class RenderJob extends ThreadJobTest<Boolean> {
 
