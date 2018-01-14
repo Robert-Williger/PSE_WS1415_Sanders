@@ -14,23 +14,27 @@ public class ShapeStyle {
     protected Stroke[] mainStrokes;
     protected Stroke[] outlineStrokes;
 
+    public ShapeStyle() {
+        this(Integer.MAX_VALUE, 0, Color.black);
+    }
+
     public ShapeStyle(final int minZoomStep, final float mainWidth, final Color mainColor) {
         this(minZoomStep, mainWidth, 0, mainColor, null);
     }
 
     public ShapeStyle(final int minZoomStep, final float mainWidth, final float outlineWidth, final Color mainColor,
             final Color outlineColor) {
-        this(minZoomStep, new float[]{mainWidth}, new float[]{outlineWidth}, mainColor, outlineColor);
+        this(minZoomStep, new float[] { mainWidth }, new float[] { outlineWidth }, mainColor, outlineColor);
     }
 
-    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth,
-            final Color mainColor, final Color outlineColor) {
+    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth, final Color mainColor,
+            final Color outlineColor) {
         this(minZoomStep, mainWidth, outlineWidth, mainColor, outlineColor, BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND);
     }
 
-    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth,
-            final Color mainColor, final Color outlineColor, final int cap, final int join) {
+    public ShapeStyle(final int minZoomStep, final float[] mainWidth, final float[] outlineWidth, final Color mainColor,
+            final Color outlineColor, final int cap, final int join) {
         this.minZoomStep = minZoomStep;
 
         this.mainColor = mainColor;
@@ -74,14 +78,14 @@ public class ShapeStyle {
         return ret;
     }
 
-    private Stroke[] createOutlineCompositeStrokes(final float[] outlineWidths, final float[] mainWidths,
-            final int cap, final int join) {
+    private Stroke[] createOutlineCompositeStrokes(final float[] outlineWidths, final float[] mainWidths, final int cap,
+            final int join) {
         final Stroke[] ret;
         if (outlineColor != null) {
             ret = new Stroke[outlineWidths.length];
             for (int i = 0; i < outlineWidths.length; i++) {
-                ret[i] = new CompositeStroke(new BasicStroke(mainWidths[i], cap, join), new BasicStroke(
-                        outlineWidths[i], cap, join));
+                ret[i] = new CompositeStroke(new BasicStroke(mainWidths[i], cap, join),
+                        new BasicStroke(outlineWidths[i], cap, join));
             }
         } else {
             ret = new Stroke[1];

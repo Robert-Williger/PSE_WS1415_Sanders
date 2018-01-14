@@ -107,7 +107,8 @@ public class ApplicationView extends JFrame implements IApplicationView {
     }
 
     private void initialize() {
-        setSize(800, 640);
+        setSize(1200, 640);
+        setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(800, 500));
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);

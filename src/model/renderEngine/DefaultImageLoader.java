@@ -59,7 +59,7 @@ public class DefaultImageLoader implements IImageLoader {
 
         routeRenderer = new RouteRenderer(mapManager);
 
-        final ColorScheme colorScheme = new OSMColorScheme();
+        final ColorScheme colorScheme = new GoogleColorScheme();
         final int processors = Runtime.getRuntime().availableProcessors();
         backgroundFetcher = new ParallelImageFetcher(mapManager, () -> new BackgroundRenderer(mapManager, colorScheme),
                 processors);
