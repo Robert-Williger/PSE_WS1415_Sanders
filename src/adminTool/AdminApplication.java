@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Boundary;
+import adminTool.elements.Street;
+import adminTool.projection.MercatorProjection;
+import adminTool.projection.Projector;
 
 public class AdminApplication {
 
@@ -62,23 +65,28 @@ public class AdminApplication {
         }
 
         if (zipOutput != null) {
-            GraphWriter graphWriter = new GraphWriter(parser.getStreets(), zipOutput);
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getOneways(), parser.getNodes(),
+                    zipOutput);
             try {
                 graphWriter.write();
             } catch (final IOException e) {
                 e.printStackTrace();
             }
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(parser.getBuildings(), graphWriter.getStreets(),
-                    parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(),
-                    parser.getBoundingBox(), zipOutput);
+            Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
+            projector.performProjection();
+            List<Street> streets = graphWriter.getStreets();
+            graphWriter = null;
+
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getTerrain(),
+                    parser.getBuildings(), parser.getPOIs(), parser.getLabels(), projector.getPoints(),
+                    projector.getSize(), zipOutput);
 
             // TODO take street list of mapManagerCreator instead of graph creator
             // [already sorted]
 
             List<List<Boundary>> boundaries = parser.getBoundaries();
             parser = null;
-            graphWriter = null;
 
             try {
                 mapManagerWriter.write();
@@ -86,12 +94,13 @@ public class AdminApplication {
                 e.printStackTrace();
             }
 
-            IndexWriter indexCreator = new IndexWriter(boundaries, mapManagerWriter.streetSorting, zipOutput);
+            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
+                    zipOutput);
             mapManagerWriter = null;
             boundaries = null;
 
             try {
-                indexCreator.write();
+                indexWriter.write();
             } catch (final IOException e) {
                 e.printStackTrace();
             }

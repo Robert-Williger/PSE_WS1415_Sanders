@@ -12,7 +12,6 @@ import java.util.zip.ZipOutputStream;
 import java.util.Set;
 
 import adminTool.elements.Boundary;
-import adminTool.elements.Node;
 import adminTool.elements.Street;
 
 public class IndexWriter extends AbstractMapFileWriter {
@@ -21,9 +20,10 @@ public class IndexWriter extends AbstractMapFileWriter {
     private List<List<Boundary>> boundaries;
     private Map<String, Integer> cityMap;
     private int cityId;
+    private final PointAccess points;
 
     // TODO speedup
-    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets,
+    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets, final PointAccess points,
             final ZipOutputStream zipOutput) {
         super(zipOutput);
 
@@ -31,6 +31,7 @@ public class IndexWriter extends AbstractMapFileWriter {
         this.boundaries = boundaries;
         this.cityMap = new LinkedHashMap<>();
         this.cityId = -1;
+        this.points = points;
     }
 
     @Override
@@ -63,25 +64,25 @@ public class IndexWriter extends AbstractMapFileWriter {
         return bounds;
     }
 
-    private static Rectangle getBounds(final Boundary boundary) {
+    private Rectangle getBounds(final Boundary boundary) {
         int minX = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int minY = Integer.MAX_VALUE;
         int maxY = Integer.MIN_VALUE;
 
-        for (final Node[] nodes : boundary.getOuter()) {
-            for (final Node node : nodes) {
-                minX = Math.min(minX, node.getX());
-                maxX = Math.max(maxX, node.getX());
-                minY = Math.min(minY, node.getY());
-                maxY = Math.max(maxY, node.getY());
+        for (final int[] indices : boundary.getOuter()) {
+            for (int i = 0; i < indices.length; ++i) {
+                minX = Math.min(minX, points.getX(indices[i]));
+                maxX = Math.max(maxX, points.getX(indices[i]));
+                minY = Math.min(minY, points.getY(indices[i]));
+                maxY = Math.max(maxY, points.getY(indices[i]));
             }
         }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    private static boolean contains(final Boundary boundary, final Rectangle bounds, final double x, final double y) {
+    private boolean contains(final Boundary boundary, final Rectangle bounds, final double x, final double y) {
         if (!bounds.contains(x, y)) {
             return false;
         }
@@ -91,8 +92,8 @@ public class IndexWriter extends AbstractMapFileWriter {
         // }
         // }
 
-        for (final Node[] nodes : boundary.getOuter()) {
-            if (Util.polygonContainsPoint(nodes, x, y)) {
+        for (final int[] indices : boundary.getOuter()) {
+            if (Util.polygonContainsPoint(indices, points, x, y)) {
                 return true;
             }
         }
@@ -166,12 +167,10 @@ public class IndexWriter extends AbstractMapFileWriter {
     private int getCityId(final Street street) {
         for (int i = 0; i < 5; i++) {
             for (final Boundary boundary : boundaries.get(9 - i)) {
-                // for (final Node node : street) {
-                final Node node = street.getNodes()[street.getNodes().length / 2];
-                if (contains(boundary, bounds[boundary.getID()], node.getX(), node.getY())) {
+                final int node = street.getNode(street.size() / 2);
+                if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {
                     return generateCityId(boundary.getName());
                 }
-                // }
             }
         }
 

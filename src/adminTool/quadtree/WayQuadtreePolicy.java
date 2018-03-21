@@ -1,7 +1,7 @@
 package adminTool.quadtree;
 
+import adminTool.PointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.elements.Node;
 
 import static adminTool.Util.rectangleIntersectsLine;
 
@@ -11,12 +11,14 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
 
     private final MultiElement[] ways;
     private final int[] maxWayCoordWidths;
+    private final PointAccess points;
 
-    public WayQuadtreePolicy(final MultiElement[] ways, final Rectangle[][] bounds, final int maxElementsPerTile,
-            final int[] maxWayCoordWidths) {
+    public WayQuadtreePolicy(final MultiElement[] ways, final PointAccess points, final Rectangle[][] bounds,
+            final int maxElementsPerTile, final int[] maxWayCoordWidths) {
         super(bounds, maxElementsPerTile);
         this.ways = ways;
         this.maxWayCoordWidths = maxWayCoordWidths;
+        this.points = points;
     }
 
     @Override
@@ -32,11 +34,9 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
         }
 
         final MultiElement way = ways[index];
-        final Node[] nodes = way.getNodes();
-
         for (int i = 1; i < way.size(); i++) {
-            if (rectangleIntersectsLine(rectX, rectY, rectSize, rectSize, nodes[i - 1].getX(), nodes[i - 1].getY(),
-                    nodes[i].getX(), nodes[i].getY())) {
+            if (rectangleIntersectsLine(rectX, rectY, rectSize, rectSize, points.getX(way.getNode(i - 1)),
+                    points.getY(way.getNode(i - 1)), points.getX(way.getNode(i)), points.getY(way.getNode(i)))) {
                 return true;
             }
         }

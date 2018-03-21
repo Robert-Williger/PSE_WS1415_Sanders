@@ -1,6 +1,5 @@
 package adminTool;
 
-import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,124 +7,140 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.elements.Node;
 import adminTool.elements.Street;
-import adminTool.elements.UnprocessedStreet;
+import adminTool.elements.Way;
 
 public class GraphWriter extends AbstractMapFileWriter {
     private int nodeIdCount;
 
-    private HashMap<Node, Integer> nodeIdMap;
+    private HashMap<Integer, Integer> nodeIdMap;
 
     private List<WeightedEdge> edges;
-    private final List<Street> processedStreets;
-    private Collection<UnprocessedStreet> unprocessedStreets;
+    private final List<Street> streets;
+    private Collection<Way> ways;
+    private Collection<Way> oneways;
+    private final NodeAccess nodes;
 
-    public GraphWriter(final Collection<UnprocessedStreet> unprocessedStreets, final ZipOutputStream zipOutput) {
+    public GraphWriter(final Collection<Way> ways, final Collection<Way> oneways, final NodeAccess nodes, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
-        this.unprocessedStreets = unprocessedStreets;
-        processedStreets = new ArrayList<>();
+        this.ways = ways;
+        this.oneways = oneways;
+        this.nodes = nodes;
+        streets = new ArrayList<>();
     }
 
-    public Collection<Street> getStreets() {
-        return processedStreets;
+    public List<Street> getStreets() {
+        return streets;
     }
 
     @Override
     public void write() throws IOException {
-        final int oneways = createGraph();
+        final int onewayCount = createGraph();
 
-        unprocessedStreets = null;
+        ways = null;
+        oneways = null;
         nodeIdMap = null;
 
-        writeGraph(oneways);
+        writeGraph(onewayCount);
 
         edges = null;
     }
 
-    private HashMap<Node, Integer> createNodeCountMap() {
-        // Step one: count the appearance of every node in the given streets and
-        final HashMap<Node, Integer> nodeMap = new HashMap<>();
-        for (final UnprocessedStreet s : unprocessedStreets) {
-            for (final Node n : s) {
-                // Node not yet generated
-                if (!nodeMap.containsKey(n)) {
-                    nodeMap.put(n, 0);
-                }
-
-                incrementCount(nodeMap, n);
-            }
-        }
-        return nodeMap;
-    }
-
     private int createGraph() {
-        final HashMap<Node, Integer> nodeCountMap = createNodeCountMap();
+        final int[] nodeCounts = new int[nodes.size()];
+        countNodes(nodeCounts);
 
         edges = new ArrayList<>();
         nodeIdMap = new HashMap<>();
 
-        for (final UnprocessedStreet street : unprocessedStreets) {
-            if (street.isOneway()) {
-                processStreet(street, nodeCountMap);
+        for (final Way street : oneways) {
+            processWay(street, nodeCounts, 0x80000000); //msb set
+        }
+        final int onewayCount = edges.size();
+        for (final Way street : ways) {
+            processWay(street, nodeCounts, 0x00000000); //msb not set
+        }
+
+        return onewayCount;
+    }
+    
+    private void countNodes(final int[] nodeCounts) {
+        // Step one: count the appearance of every node in the given ways
+        for (final Way s : oneways) {
+            for (int i = 0; i < s.size(); ++i) {
+                ++nodeCounts[s.getNode(i)];
             }
         }
-        final int oneways = edges.size();
-
-        for (final UnprocessedStreet street : unprocessedStreets) {
-            if (!street.isOneway()) {
-                processStreet(street, nodeCountMap);
+        for (final Way s : ways) {
+            for (int i = 0; i < s.size(); ++i) {
+                ++nodeCounts[s.getNode(i)];
             }
         }
-
-        final int edgeCount = edges.size();
-        for (int i = 0; i < oneways; i++) {
-            processedStreets.get(i).setID(0x80000000 | i);
-        }
-        for (int i = oneways; i < edgeCount; i++) {
-            processedStreets.get(i).setID(i);
-        }
-
-        return oneways;
     }
 
-    private void processStreet(final UnprocessedStreet street, final HashMap<Node, Integer> nodeCountMap) {
-        // Step two: get the cuttings of the street at intersections (and dead
-        // ends)
-        final List<Integer> intersections = getStreetCuts(street, nodeCountMap);
+    private void processWay(final Way way, final int[] nodeCounts, final int mask) {
+        // Step two: get the cuttings of the way at intersections (and dead ends)
+        final List<Integer> intersections = getWayCuts(way, nodeCounts);
 
-        // Step three: processing the cutting of the streets.
-
-        final Point2D[] degrees = street.getDegrees();
-        final Node[] nodes = street.getNodes();
+        // Step three: processing the cutting of the way
 
         int lastCut = 0;
         for (int i = 0; i < intersections.size(); i++) {
             final int currentCut = intersections.get(i);
 
-            final int id1 = generateID(nodes[lastCut]);
-            final int id2 = generateID(nodes[currentCut]);
+            final int id1 = generateID(way.getNode(lastCut));
+            final int id2 = generateID(way.getNode(currentCut));
 
-            final Node[] streetNodes = new Node[currentCut - lastCut + 1];
+            final int[] indices = new int[currentCut - lastCut + 1];
 
             double weight = 0;
-
             for (int j = lastCut; j < currentCut; j++) {
-                weight += getWeight(degrees[j].getY(), degrees[j].getX(), degrees[j + 1].getY(), degrees[j + 1].getX());
+                weight += getWeight(nodes.getLat(way.getNode(j)), nodes.getLon(way.getNode(j)), nodes.getLat(way.getNode(j + 1)), nodes.getLon(way.getNode(j + 1)));
             }
 
             for (int j = lastCut; j <= currentCut; j++) {
-                streetNodes[j - lastCut] = nodes[j];
+                indices[j - lastCut] = way.getNode(j);
             }
 
             edges.add(new WeightedEdge(id1, id2, (int) weight));
-            processedStreets.add(new Street(streetNodes, street.getType(), street.getName()));
+            final int id = mask | streets.size();
+            streets.add(new Street(indices, way.getType(), way.getName(), id));
 
             lastCut = currentCut;
         }
     }
 
+    /*
+     * Cuts the given ways in a list of streets.
+     */
+    private List<Integer> getWayCuts(final Way s, final int[] nodeCounts) {
+        final List<Integer> intersections = new ArrayList<>();
+
+        // calculating the indexes of the intersections
+
+        for (int i = 1; i < s.size() - 1; i++) {
+            if (nodeCounts[s.getNode(i)] > 1) {
+                intersections.add(i);
+            }
+        }
+        intersections.add(s.size() - 1);
+
+        return intersections;
+    }
+
+    /*
+     * Generates and returns the unique id for the given node. If the id is already created, its id is returned.
+     */
+    private int generateID(final int node) {
+        Integer ret = nodeIdMap.get(node);
+        if (ret != null) {
+            return ret;
+        }
+        nodeIdMap.put(node, nodeIdCount);
+        return nodeIdCount++;
+    }
+    
     private void writeGraph(final int oneways) throws IOException {
         putNextEntry("graph");
 
@@ -140,50 +155,6 @@ public class GraphWriter extends AbstractMapFileWriter {
         }
 
         closeEntry();
-    }
-
-    /*
-     * Cuts the given street in a list of streets.
-     */
-    private List<Integer> getStreetCuts(final UnprocessedStreet s, final HashMap<Node, Integer> nodeCountMap) {
-        final List<Integer> intersections = new ArrayList<>();
-
-        // calculating the indexes of the intersections
-        final Node[] nodes = s.getNodes();
-
-        for (int i = 1; i < nodes.length - 1; i++) {
-            final Node node = nodes[i];
-
-            if (nodeCountMap.get(node) > 1) {
-                intersections.add(i);
-            }
-        }
-        intersections.add(nodes.length - 1);
-
-        return intersections;
-    }
-
-    private void incrementCount(final HashMap<Node, Integer> hm, final Node n) {
-
-        int value = hm.get(n);
-        value++;
-        hm.put(n, value);
-
-    }
-
-    /*
-     * Generates and returns the unique id for the given node. If the id is already created, its id is returned.
-     */
-    private int generateID(final Node parsedNode) {
-
-        if (nodeIdMap.get(parsedNode) != null) {
-            return nodeIdMap.get(parsedNode);
-        }
-
-        else {
-            nodeIdMap.put(parsedNode, nodeIdCount);
-            return nodeIdCount++;
-        }
     }
 
     private static int getWeight(final double lat1, final double lon1, final double lat2, final double lon2) {

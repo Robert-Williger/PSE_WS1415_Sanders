@@ -1,5 +1,6 @@
 package adminTool;
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
@@ -10,14 +11,12 @@ import java.util.Collection;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.elements.Area;
 import adminTool.elements.Building;
-import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.Street;
+import adminTool.elements.Label;
 import adminTool.elements.Typeable;
-import adminTool.elements.Way;
 import adminTool.quadtree.AreaQuadtreePolicy;
 import adminTool.quadtree.BoundingBoxQuadtreePolicy;
 import adminTool.quadtree.CollisionlessQuadtree;
@@ -45,35 +44,35 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private static final int MAX_POI_PIXEL_WIDTH = 20;
     private static final int MAX_WAY_PIXEL_WIDTH = 17;
 
-    private Rectangle bounds;
-
     private Collection<Street> streets;
-    private Collection<Area> areas;
-    private Collection<Way> ways;
+    private Collection<MultiElement> areas;
     private Collection<Building> buildings;
     private Collection<Label> labels;
     private Collection<POI> pois;
 
+    private final Dimension size;
+    private final PointAccess points;
+
     // TODO improve this!
     public Sorting<Street> streetSorting;
 
-    public MapManagerWriter(final Collection<Building> buildings, final Collection<Street> streets,
-            final Collection<POI> pois, final Collection<Way> ways, final Collection<Area> terrain,
-            final Collection<Label> labels, final Rectangle boundingBox, final ZipOutputStream zipOutput) {
+    public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
+            final Collection<Building> buildings, final Collection<POI> pois, final Collection<Label> labels,
+            final PointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
-        this.bounds = boundingBox;
         this.streets = streets;
         this.areas = terrain;
-        this.ways = ways;
         this.buildings = buildings;
         this.labels = labels;
         this.pois = pois;
+        this.points = points;
+        this.size = size;
     }
 
     @Override
     public void write() throws IOException {
-        final int zoomOffset = (int) Math.ceil(log2(Math.min(bounds.getWidth(), bounds.getHeight()) / MIN_TILES));
+        final int zoomOffset = (int) Math.ceil(log2(Math.min(size.getWidth(), size.getHeight()) / MIN_TILES));
         final int coordMapSize = (1 << zoomOffset);
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
@@ -83,11 +82,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
         writeHeader(minZoomStep, maxZoomStep, conversionBits);
 
-        final Sorting<Area> areaSorting = sort(areas, new Area[areas.size()]);
+        final Sorting<MultiElement> areaSorting = sort(areas, new MultiElement[areas.size()]);
         areas = null;
-
-        final Sorting<Way> waySorting = sort(ways, new Way[ways.size()]);
-        ways = null;
 
         streetSorting = sort(streets, new Street[streets.size()]);
         streets = null;
@@ -101,8 +97,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final Sorting<POI> poiSorting = sort(pois, new POI[pois.size()]);
         pois = null;
 
-        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, waySorting, buildingSorting,
-                labelSorting, poiSorting, zipOutput);
+        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, buildingSorting, labelSorting,
+                poiSorting, points, zipOutput);
         elementWriter.write();
 
         //
@@ -115,18 +111,16 @@ public class MapManagerWriter extends AbstractMapFileWriter {
             maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
         }
 
-        final String[] names = new String[] { "area", "way", "street", "building" };
+        final String[] names = new String[] { "area", "street", "building" };
         final IQuadtreePolicy[] policies = new IQuadtreePolicy[names.length];
-        final int[] elements = new int[] { areaSorting.elements.length, waySorting.elements.length,
-                streetSorting.elements.length, buildingSorting.elements.length };
+        final int[] elements = new int[] { areaSorting.elements.length, streetSorting.elements.length,
+                buildingSorting.elements.length };
 
-        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, getBounds(areaSorting, zoomSteps),
+        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, points, getBounds(areaSorting, zoomSteps),
                 MAX_ELEMENTS_PER_TILE);
-        policies[1] = new WayQuadtreePolicy(waySorting.elements, getBounds(waySorting, zoomSteps),
+        policies[1] = new WayQuadtreePolicy(streetSorting.elements, points, getBounds(streetSorting, zoomSteps),
                 MAX_ELEMENTS_PER_TILE, maxWayWidths);
-        policies[2] = new WayQuadtreePolicy(streetSorting.elements, getBounds(streetSorting, zoomSteps),
-                MAX_ELEMENTS_PER_TILE, maxWayWidths);
-        policies[3] = new AreaQuadtreePolicy(buildingSorting.elements, getBounds(buildingSorting, zoomSteps),
+        policies[2] = new AreaQuadtreePolicy(buildingSorting.elements, points, getBounds(buildingSorting, zoomSteps),
                 MAX_ELEMENTS_PER_TILE);
 
         for (int i = 0; i < names.length; i++) {
@@ -154,7 +148,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final Rectangle[][] ret = new Rectangle[zoomSteps][];
         final Rectangle[] bounds = new Rectangle[elements.length];
         for (int i = 0; i < elements.length; i++) {
-            bounds[i] = Util.getBounds(elements[i].getNodes());
+            bounds[i] = Util.getBounds(elements[i], points);
         }
         for (int i = 0; i < ret.length; i++) {
             ret[i] = bounds;
@@ -176,7 +170,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
             for (int h = 0; h < zoomSteps; h++) {
                 final int cw = pw << (conversionBits - (h + minZoomStep));
                 final int ch = ph << (conversionBits - (h + minZoomStep));
-                lBounds[h][i] = new Rectangle(label.getX() - cw / 2, label.getY() - ch / 2, cw, ch);
+                lBounds[h][i] = new Rectangle(points.getX(label.getNode()) - cw / 2,
+                        points.getY(label.getNode()) - ch / 2, cw, ch);
             }
         }
         final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
@@ -193,7 +188,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
             final int size = MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep));
             for (int i = 0; i < pois.length; i++) {
                 final POI poi = pois[i];
-                lBounds[h][i] = new Rectangle(poi.getX() - size / 2, poi.getY() - size / 2, size, size);
+                lBounds[h][i] = new Rectangle(points.getX(poi.getNode()) - size / 2,
+                        points.getY(poi.getNode()) - size / 2, size, size);
             }
         }
         final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
@@ -216,8 +212,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         putNextEntry("header");
 
         dataOutput.writeInt(conversionBits);
-        dataOutput.writeInt(bounds.width);
-        dataOutput.writeInt(bounds.height);
+        dataOutput.writeInt(size.width);
+        dataOutput.writeInt(size.height);
         dataOutput.writeInt(minZoomStep);
         dataOutput.writeInt(maxZoomStep);
         dataOutput.writeInt(TILE_LENGTH);

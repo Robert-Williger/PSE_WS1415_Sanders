@@ -1,8 +1,9 @@
 package adminTool;
 
 import java.awt.Rectangle;
+import java.util.List;
 
-import adminTool.elements.Node;
+import adminTool.elements.MultiElement;
 
 public class Util {
     private static final int OUT_LEFT = 0b0001;
@@ -10,17 +11,17 @@ public class Util {
     private static final int OUT_RIGHT = 0b0100;
     private static final int OUT_BOTTOM = 0b1000;
 
-    public static Rectangle getBounds(final Node[] nodes) {
-        int minX = nodes[0].getX();
+    public static Rectangle getBounds(final MultiElement element, final PointAccess points) {
+        int minX = points.getX(element.getNode(0));
         int maxX = minX;
-        int minY = nodes[0].getY();
+        int minY = points.getY(element.getNode(0));
         int maxY = minY;
 
-        for (int i = 1; i < nodes.length; i++) {
-            minX = Math.min(minX, nodes[i].getX());
-            maxX = Math.max(maxX, nodes[i].getX());
-            minY = Math.min(minY, nodes[i].getY());
-            maxY = Math.max(maxY, nodes[i].getY());
+        for (int i = 1; i < element.size(); i++) {
+            minX = Math.min(minX, points.getX(element.getNode(i)));
+            maxX = Math.max(maxX, points.getX(element.getNode(i)));
+            minY = Math.min(minY, points.getY(element.getNode(i)));
+            maxY = Math.max(maxY, points.getY(element.getNode(i)));
         }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
@@ -37,28 +38,39 @@ public class Util {
         return x >= minX && x <= maxX && y >= minY && y <= maxY;
     }
 
-    public static boolean polygonContainsPoint(final Node[] nodes, final double x, final double y) {
+    public static boolean polygonContainsPoint(final MultiElement element, final PointAccess points, final double x, final double y) {
         boolean ret = false;
-        for (int i = 0, j = nodes.length - 1; i < nodes.length; j = i++) {
-            if (((nodes[i].getY() > y) != (nodes[j].getY() > y)) && (x < (nodes[j].getX() - nodes[i].getX())
-                    * (y - nodes[i].getY()) / (nodes[j].getY() - nodes[i].getY()) + nodes[i].getX()))
+        for (int i = 0, j = element.size() - 1; i < element.size(); j = i++) {
+            if (((points.getY(element.getNode(i)) > y) != (points.getY(element.getNode(j)) > y)) && (x < (points.getX(element.getNode(j)) - points.getX(element.getNode(i)))
+                    * (y - points.getY(element.getNode(i))) / (points.getY(element.getNode(j)) - points.getY(element.getNode(i))) + points.getX(element.getNode(i))))
+                ret = !ret;
+        }
+
+        return ret;
+    }
+    
+    public static boolean polygonContainsPoint(final int[] indices, final PointAccess points, final double x, final double y) {
+        boolean ret = false;
+        for (int i = 0, j = indices.length - 1; i < indices.length; j = i++) {
+            if (((points.getY(indices[i]) > y) != (points.getY(indices[j]) > y)) && (x < (points.getX(indices[j]) - points.getX(indices[i]))
+                    * (y - points.getY(indices[i])) / (points.getY(indices[j]) - points.getY(indices[i])) + points.getX(indices[i])))
                 ret = !ret;
         }
 
         return ret;
     }
 
-    public static boolean polygonBBContainsPoint(final Node[] nodes, final double x, final double y) {
-        int minX = nodes[0].getX();
+    public static boolean polygonBBContainsPoint(final int[] indices, final PointAccess points, final double x, final double y) {
+        int minX = points.getX(indices[0]);
         int maxX = minX;
-        int minY = nodes[0].getY();
+        int minY = points.getY(indices[0]);
         int maxY = minY;
 
-        for (int i = 1; i < nodes.length; i++) {
-            minX = Math.min(minX, nodes[i].getX());
-            maxX = Math.max(maxX, nodes[i].getX());
-            minY = Math.min(minY, nodes[i].getY());
-            maxY = Math.max(maxY, nodes[i].getY());
+        for (int i = 1; i < indices.length; i++) {
+            minX = Math.min(minX, points.getX(indices[i]));
+            maxX = Math.max(maxX, points.getX(indices[i]));
+            minY = Math.min(minY, points.getY(indices[i]));
+            maxY = Math.max(maxY, points.getY(indices[i]));
         }
 
         return x >= minX && x <= maxX && y >= minY && y <= maxY;
@@ -104,5 +116,23 @@ public class Util {
         }
 
         return out;
+    }
+    
+    static void reverse(int array[]) {
+        int temp;
+        for (int i = 0; i < array.length / 2; i++) {
+            temp = array[i];
+            array[i] = array[array.length-1-i];
+            array[array.length-1-i] = temp;
+        }
+    }
+    
+    static int[] toArray(List<Integer> list) {
+        int[] ret = new int[list.size()];
+        int index = 0;
+        for (final int data : list) {
+            ret[index++] = data;
+        }
+        return ret;
     }
 }

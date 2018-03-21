@@ -1,7 +1,7 @@
 package adminTool.quadtree;
 
+import adminTool.PointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.elements.Node;
 
 import static adminTool.Util.polygonContainsPoint;
 import static adminTool.Util.rectangleIntersectsLine;
@@ -10,10 +10,13 @@ import java.awt.Rectangle;
 
 public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
     private final MultiElement[] elements;
+    private final PointAccess points;
 
-    public AreaQuadtreePolicy(final MultiElement[] areas, final Rectangle[][] bounds, final int maxElementsPerTile) {
+    public AreaQuadtreePolicy(final MultiElement[] areas, final PointAccess points, final Rectangle[][] bounds,
+            final int maxElementsPerTile) {
         super(bounds, maxElementsPerTile);
         this.elements = areas;
+        this.points = points;
     }
 
     @Override
@@ -22,17 +25,19 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
             return false;
         }
 
-        final Node[] nodes = elements[index].getNodes();
-        return edgeIntersection(nodes, x, y, size) || polygonContainsPoint(nodes, x, y);
+        final MultiElement element = elements[index];
+        return edgeIntersection(element, x, y, size) || polygonContainsPoint(element, points, x, y);
     }
 
-    private static boolean edgeIntersection(final Node[] nodes, final int x, final int y, final int size) {
-        Node last = nodes[nodes.length - 1];
-        for (final Node node : nodes) {
-            if (rectangleIntersectsLine(x, y, size, size, node.getX(), node.getY(), last.getX(), last.getY())) {
+    private boolean edgeIntersection(final MultiElement element, final int x, final int y, final int size) {
+        int last = element.size() - 1;
+        for (int i = 0; i < element.size(); ++i) {
+            if (rectangleIntersectsLine(x, y, size, size, points.getX(element.getNode(i)),
+                    points.getY(element.getNode(i)), points.getX(element.getNode(last)),
+                    points.getY(element.getNode(last)))) {
                 return true;
             }
-            last = node;
+            last = i;
         }
 
         return false;

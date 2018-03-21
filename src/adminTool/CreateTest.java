@@ -5,7 +5,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.zip.ZipOutputStream;
+
+import adminTool.elements.Boundary;
+import adminTool.elements.Street;
+import adminTool.projection.MercatorProjection;
+import adminTool.projection.Projector;
 
 public class CreateTest {
     public static void main(final String[] args) {
@@ -35,7 +41,8 @@ public class CreateTest {
             System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            GraphWriter graphWriter = new GraphWriter(parser.getStreets(), zipOutput);
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getOneways(), parser.getNodes(),
+                    zipOutput);
             try {
                 graphWriter.write();
             } catch (IOException e) {
@@ -43,11 +50,17 @@ public class CreateTest {
             }
 
             System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+
+            Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
+            projector.performProjection();
+            List<Street> streets = graphWriter.getStreets();
+            graphWriter = null;
+
             start = System.currentTimeMillis();
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(parser.getBuildings(), graphWriter.getStreets(),
-                    parser.getPOIs(), parser.getWays(), parser.getTerrain(), parser.getLabels(),
-                    parser.getBoundingBox(), zipOutput);
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getTerrain(),
+                    parser.getBuildings(), parser.getPOIs(), parser.getLabels(), projector.getPoints(),
+                    projector.getSize(), zipOutput);
 
             try {
                 mapManagerWriter.write();
@@ -58,7 +71,9 @@ public class CreateTest {
             System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            IndexWriter indexWriter = new IndexWriter(parser.getBoundaries(), mapManagerWriter.streetSorting,
+            List<List<Boundary>> boundaries = parser.getBoundaries();
+            parser = null;
+            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
                     zipOutput);
             try {
                 indexWriter.write();

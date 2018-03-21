@@ -5,42 +5,38 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.elements.Area;
 import adminTool.elements.Building;
-import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
-import adminTool.elements.Node;
 import adminTool.elements.POI;
 import adminTool.elements.Street;
-import adminTool.elements.Way;
+import adminTool.elements.Label;
 
 //TODO compress
 public class ElementWriter extends AbstractMapFileWriter {
-    private LinkedHashMap<Node, Integer> nodeMap;
+    private LinkedHashMap<Integer, Integer> nodeMap;
     private LinkedHashMap<String, Integer> stringMap;
 
-    private Sorting<Area> areas;
+    private Sorting<MultiElement> areas;
     private Sorting<Street> streets;
-    private Sorting<Way> ways;
     private Sorting<Building> buildings;
     private Sorting<Label> labels;
     private Sorting<POI> pois;
+    
+    private PointAccess pointAccess;
 
     public ElementWriter(
-
-            final Sorting<Area> areas, final Sorting<Street> streets, final Sorting<Way> ways,
-            final Sorting<Building> buildings, final Sorting<Label> labels, final Sorting<POI> pois,
+            final Sorting<MultiElement> areas, final Sorting<Street> streets, final Sorting<Building> buildings,
+            final Sorting<Label> labels, final Sorting<POI> pois, final PointAccess pointAccess, 
             final ZipOutputStream zipOutput
-
     ) {
         super(zipOutput);
 
         this.areas = areas;
         this.streets = streets;
-        this.ways = ways;
         this.buildings = buildings;
         this.labels = labels;
         this.pois = pois;
+        this.pointAccess = pointAccess;
     }
 
     public void write() {
@@ -55,7 +51,6 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         try {
             writeStreets();
-            writeWays();
             writeAreas();
             writeBuildings();
             writeLabels();
@@ -69,21 +64,21 @@ public class ElementWriter extends AbstractMapFileWriter {
         nodeMap = null;
     }
 
-    private LinkedHashMap<Node, Integer> createNodeMap() {
-        final LinkedHashMap<Node, Integer> nodeMap = new LinkedHashMap<>();
+    private LinkedHashMap<Integer, Integer> createNodeMap() {
+        final LinkedHashMap<Integer, Integer> nodeMap = new LinkedHashMap<>();
 
         int id = -1;
         id = putNodes(nodeMap, streets.elements, id);
-        id = putNodes(nodeMap, ways.elements, id);
         id = putNodes(nodeMap, buildings.elements, id);
         putNodes(nodeMap, areas.elements, id);
 
         return nodeMap;
     }
 
-    private int putNodes(final LinkedHashMap<Node, Integer> nodeMap, final MultiElement[] elements, int nodeCount) {
+    private int putNodes(final LinkedHashMap<Integer, Integer> nodeMap, final MultiElement[] elements, int nodeCount) {
         for (final MultiElement element : elements) {
-            for (final Node node : element) {
+            for (int i = 0; i < element.size(); ++i) {
+                int node = element.getNode(i);
                 if (!nodeMap.containsKey(node)) {
                     nodeMap.put(node, ++nodeCount);
                 }
@@ -135,7 +130,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         putNextEntry("nodes");
         dataOutput.writeInt(nodeMap.size());
 
-        for (final Entry<Node, Integer> entry : nodeMap.entrySet()) {
+        for (final Entry<Integer, Integer> entry : nodeMap.entrySet()) {
             writePoint(entry.getKey());
         }
 
@@ -166,7 +161,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final Street street : streets.elements) {
             addresses[++index] = address;
 
-            dataOutput.writeInt(street.getID());
+            dataOutput.writeInt(street.getId());
             ++address;
 
             dataOutput.writeInt(stringMap.get(street.getName()));
@@ -180,26 +175,6 @@ public class ElementWriter extends AbstractMapFileWriter {
         writeAddresses("street", addresses);
         writeDistribution("street", streets.distribution);
         streets = null;
-    }
-
-    private void writeWays() throws IOException {
-        putNextEntry("ways");
-
-        final int[] addresses = new int[ways.elements.length];
-
-        int address = 0;
-        int index = -1;
-        for (final Way way : ways.elements) {
-            addresses[++index] = address;
-
-            address += writeMultiElement(way);
-        }
-
-        closeEntry();
-
-        writeAddresses("way", addresses);
-        writeDistribution("way", ways.distribution);
-        ways = null;
     }
 
     private void writeBuildings() throws IOException {
@@ -239,7 +214,7 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         int address = 0;
         int index = -1;
-        for (final Area area : areas.elements) {
+        for (final MultiElement area : areas.elements) {
             addresses[++index] = address;
 
             address += writeMultiElement(area);
@@ -256,7 +231,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         putNextEntry("pois");
 
         for (final POI poi : pois.elements) {
-            writePoint(poi);
+            writePoint(poi.getNode());
         }
 
         closeEntry();
@@ -275,7 +250,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final Label label : labels.elements) {
             // addresses[++index] = address;
 
-            writePoint(label);
+            writePoint(label.getNode());
             // address += 2;
 
             dataOutput.writeInt(stringMap.get(label.getName()));
@@ -290,17 +265,17 @@ public class ElementWriter extends AbstractMapFileWriter {
         labels = null;
     }
 
-    private void writePoint(final Node location) throws IOException {
-        dataOutput.writeInt(location.getX());
-        dataOutput.writeInt(location.getY());
+    private void writePoint(final int point) throws IOException {
+        dataOutput.writeInt(pointAccess.getX(point));
+        dataOutput.writeInt(pointAccess.getY(point));
     }
 
     private int writeMultiElement(final MultiElement element) throws IOException {
         dataOutput.writeInt(element.size());
         int ret = 1;
 
-        for (final Node node : element) {
-            dataOutput.writeInt(nodeMap.get(node));
+        for (int i = 0; i < element.size(); ++i) {
+            dataOutput.writeInt(nodeMap.get(element.getNode(i)));
             ++ret;
         }
 

@@ -76,7 +76,7 @@ public class Reader implements IReader {
         progress = -1;
 
         try {
-            graph = readGraph(zipFile);
+            graph = new GraphReader().readGraph(zipFile);
             mapManager = new MapManagerReader().readMapManager(zipFile);
             textProcessor = new IndexReader().readIndex(zipFile);
         } catch (final Exception e) {
@@ -190,35 +190,34 @@ public class Reader implements IReader {
         return ret;
     }
 
-    /*
-     * Reads the Graph-section of the map file and generates the Graph.
-     */
-    private IDirectedGraph readGraph(final ZipFile zipFile) throws IOException {
-        fireStepCommenced("Lade Graph...");
+    private class GraphReader {
+        private IDirectedGraph readGraph(final ZipFile zipFile) throws IOException {
+            fireStepCommenced("Lade Graph...");
 
-        final ZipEntry entry = zipFile.getEntry("graph");
-        if (entry != null) {
-            applyInputStream(zipFile, entry);
-            final int nodeCount = stream.readInt();
-            final int edgeCount = stream.readInt();
-            final int onewayCount = stream.readInt();
+            final ZipEntry entry = zipFile.getEntry("graph");
+            if (entry != null) {
+                applyInputStream(zipFile, entry);
+                final int nodeCount = stream.readInt();
+                final int edgeCount = stream.readInt();
+                final int onewayCount = stream.readInt();
 
-            final int[] firstNodes = new int[edgeCount];
-            final int[] secondNodes = new int[edgeCount];
-            final int[] weights = new int[edgeCount];
+                final int[] firstNodes = new int[edgeCount];
+                final int[] secondNodes = new int[edgeCount];
+                final int[] weights = new int[edgeCount];
 
-            for (int i = 0; i < edgeCount; i++) {
-                firstNodes[i] = stream.readInt();
-                secondNodes[i] = stream.readInt();
-                weights[i] = stream.readInt();
+                for (int i = 0; i < edgeCount; i++) {
+                    firstNodes[i] = stream.readInt();
+                    secondNodes[i] = stream.readInt();
+                    weights[i] = stream.readInt();
+                }
+
+                stream.close();
+
+                return new DirectedGraph(nodeCount, onewayCount, firstNodes, secondNodes, weights);
             }
 
-            stream.close();
-
-            return new DirectedGraph(nodeCount, onewayCount, firstNodes, secondNodes, weights);
+            return new DirectedGraph(0, 0, new int[0], new int[0], new int[0]);
         }
-
-        return new DirectedGraph(0, 0, new int[0], new int[0], new int[0]);
     }
 
     private class IndexReader {
@@ -230,29 +229,31 @@ public class Reader implements IReader {
         }
 
         private Collection<Entry> readStreets(final ZipFile zipFile) throws IOException {
-            applyInputStream(zipFile, zipFile.getEntry("index"));
-
-            final String[] cities = readCities();
-
-            int maxCityCount = stream.readInt();
-
+            final ZipEntry entry = zipFile.getEntry("index");
             final List<TextProcessor.Entry> list = new ArrayList<>();
-            for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
-                final int n = stream.readInt();
+            if (entry != null) {
+                applyInputStream(zipFile, entry);
 
-                for (int j = 0; j < n; j++) {
-                    for (int k = 0; k < cityCount; k++) {
-                        final int street = stream.readInt();
-                        final int city = stream.readInt();
-                        final String cityName = city != -1 ? cities[city] : "";
+                final String[] cities = readCities();
 
-                        list.add(new TextProcessor.Entry(cityName, street));
+                int maxCityCount = stream.readInt();
+
+                for (int cityCount = 1; cityCount <= maxCityCount; ++cityCount) {
+                    final int n = stream.readInt();
+
+                    for (int j = 0; j < n; j++) {
+                        for (int k = 0; k < cityCount; k++) {
+                            final int street = stream.readInt();
+                            final int city = stream.readInt();
+                            final String cityName = city != -1 ? cities[city] : "";
+
+                            list.add(new TextProcessor.Entry(cityName, street));
+                        }
                     }
                 }
             }
 
             stream.close();
-
             return list;
         }
 
@@ -275,7 +276,7 @@ public class Reader implements IReader {
             final IMapState state = readMapState(zipFile);
 
             final String[] strings = readStrings(zipFile);
-            final int[][] nodes = readNodes(zipFile);
+            final int[] nodes = readNodes(zipFile);
             final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
             final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
@@ -310,27 +311,23 @@ public class Reader implements IReader {
             return new PixelConverter(conversionBits);
         }
 
-        private int[][] readNodes(final ZipFile zipFile) throws IOException {
+        private int[] readNodes(final ZipFile zipFile) throws IOException {
             fireStepCommenced("Lade Nodes...");
 
             final ZipEntry entry = zipFile.getEntry("nodes");
             if (entry == null) {
                 // TODO
-                return new int[0][0];
+                return new int[0];
             }
             applyInputStream(zipFile, entry);
 
-            int count = 0;
-
-            final int[] xPoints = new int[stream.readInt()];
-            final int[] yPoints = new int[xPoints.length];
-            for (count = 0; count < xPoints.length; count++) {
-                xPoints[count] = stream.readInt();
-                yPoints[count] = stream.readInt();
+            final int[] points = new int[stream.readInt() << 1]; //even/odd indices for x/y coords
+            for (int count = 0; count < points.length; count++) {
+                points[count] = stream.readInt();
             }
             stream.close();
 
-            return new int[][] { xPoints, yPoints };
+            return points;
         }
 
         private String[] readStrings(final ZipFile zipFile) throws IOException {
@@ -351,13 +348,13 @@ public class Reader implements IReader {
             return strings;
         }
 
-        private void readElements(final ZipFile zipFile, final int[][] nodes,
+        private void readElements(final ZipFile zipFile, final int[] nodes,
                 final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
                 final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep)
                 throws IOException {
             // TODO handle missing entries!
-            final String[] names = { "street", "way", "area", "building", "label", "poi" };
-            final String[] outputNames = { "Straßen", "Wege", "Gelände", "Gebäude", "Labels", "Points of Interest" };
+            final String[] names = { "street", "area", "building", "label", "poi" };
+            final String[] outputNames = { "Straßen", "Gelände", "Gebäude", "Labels", "Points of Interest" };
             final int[][] distributions = new int[names.length][];
             final int[][] addresses = new int[names.length][];
 
@@ -368,21 +365,20 @@ public class Reader implements IReader {
 
             // TODO improve this
             final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[4];
-            accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0], nodes[0], nodes[1]) {
+            accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0], nodes) {
                 @Override
                 public ICollectiveAccessor create() {
-                    return new StreetAccessor(distribution, data, addresses, x, y);
+                    return new StreetAccessor(distribution, data, addresses, points);
                 }
             };
-            accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1], nodes[0], nodes[1]);
-            accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2], nodes[0], nodes[1]);
-            accessors[3] = new CollectiveAccessorFactory(distributions[3], addresses[3], nodes[0], nodes[1]) {
+            accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1], nodes);
+            accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2], nodes) {
                 @Override
                 public ICollectiveAccessor create() {
-                    return new BuildingAccessor(distribution, data, addresses, x, y);
+                    return new BuildingAccessor(distribution, data, addresses, points);
                 }
             };
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 3; i++) {
                 fireStepCommenced("Lade " + outputNames[i] + "...");
 
                 final ZipEntry entry = zipFile.getEntry(names[i] + "s");
@@ -399,15 +395,15 @@ public class Reader implements IReader {
                 // elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
             }
 
-            fireStepCommenced("Lade " + outputNames[4] + "...");
-            final int[] labelData = readIntArray(zipFile, names[4] + "s");
-            pointMap.put(names[4], () -> new LabelAccessor(distributions[4], labelData, 3));
-            elementIteratorMap.put(names[4], new StoredQuadtree(readIntArray(zipFile, names[4] + "Tree"), minZoomStep));
+            fireStepCommenced("Lade " + outputNames[3] + "...");
+            final int[] labelData = readIntArray(zipFile, names[3] + "s");
+            pointMap.put(names[3], () -> new LabelAccessor(distributions[3], labelData, 3));
+            elementIteratorMap.put(names[3], new StoredQuadtree(readIntArray(zipFile, names[3] + "Tree"), minZoomStep));
 
-            fireStepCommenced("Lade " + outputNames[5] + "...");
-            final int[] poiData = readIntArray(zipFile, names[5] + "s");
-            pointMap.put(names[5], () -> new POIAccessor(distributions[5], poiData, 2));
-            elementIteratorMap.put(names[5], new StoredQuadtree(readIntArray(zipFile, names[5] + "Tree"), minZoomStep));
+            fireStepCommenced("Lade " + outputNames[4] + "...");
+            final int[] poiData = readIntArray(zipFile, names[4] + "s");
+            pointMap.put(names[4], () -> new POIAccessor(distributions[4], poiData, 2));
+            elementIteratorMap.put(names[4], new StoredQuadtree(readIntArray(zipFile, names[4] + "Tree"), minZoomStep));
         }
     }
 

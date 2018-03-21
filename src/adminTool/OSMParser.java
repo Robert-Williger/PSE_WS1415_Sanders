@@ -1,59 +1,48 @@
 package adminTool;
 
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import util.Arrays;
 import adminTool.elements.Boundary;
-import adminTool.elements.UnprocessedStreet;
-import adminTool.elements.Area;
 import adminTool.elements.Building;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
-import adminTool.elements.Node;
 import adminTool.elements.POI;
+import adminTool.elements.Way;
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat.DenseNodes;
 import crosby.binary.Osmformat.HeaderBlock;
 import crosby.binary.Osmformat.Relation;
-import crosby.binary.Osmformat.Way;
 import crosby.binary.file.BlockInputStream;
-import crosby.binary.file.BlockReaderAdapter;
 
 public class OSMParser implements IOSMParser {
 
-    private final Collection<adminTool.elements.Way> wayList;
-    private final Collection<UnprocessedStreet> streetList;
-    private final Collection<Area> areaList;
+    private final Collection<Way> wayList;
+    private final Collection<Way> onewayList;
+    private final Collection<MultiElement> areaList;
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
     private final Collection<Label> labelList;
     private final List<List<Boundary>> boundaries;
-    private final Rectangle bBox;
+    private NodeAccess nodes;
 
     public OSMParser() {
         // TODO lists instead of sets!
-        labelList = new HashSet<>();
-        wayList = new HashSet<>();
-        streetList = new HashSet<>();
-        areaList = new HashSet<>();
-        poiList = new HashSet<>();
-        buildingList = new HashSet<>();
-        bBox = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        labelList = new ArrayList<>();
+        wayList = new ArrayList<>();
+        onewayList = new ArrayList<>();
+        areaList = new ArrayList<>();
+        poiList = new ArrayList<>();
+        buildingList = new ArrayList<>();
 
         boundaries = new ArrayList<>(12);
         for (int i = 0; i < 12; i++) {
@@ -63,18 +52,22 @@ public class OSMParser implements IOSMParser {
 
     @Override
     public void read(final File file) throws Exception {
-        final InputStream input = new FileInputStream(file);
-        final BlockReaderAdapter brad = new Parser();
-        new BlockInputStream(input, brad).process();
+        new BlockInputStream(new FileInputStream(file), new Preprocessor()).process();
+        new BlockInputStream(new FileInputStream(file), new Parser()).process();
     }
 
     @Override
-    public Collection<adminTool.elements.Way> getWays() {
+    public Collection<Way> getWays() {
         return wayList;
     }
 
     @Override
-    public Collection<Area> getTerrain() {
+    public Collection<Way> getOneways() {
+        return onewayList;
+    }
+
+    @Override
+    public Collection<MultiElement> getTerrain() {
         return areaList;
     }
 
@@ -89,16 +82,6 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public Rectangle getBoundingBox() {
-        return bBox;
-    }
-
-    @Override
-    public Collection<UnprocessedStreet> getStreets() {
-        return streetList;
-    }
-
-    @Override
     public Collection<Label> getLabels() {
         return labelList;
     }
@@ -108,64 +91,96 @@ public class OSMParser implements IOSMParser {
         return boundaries;
     }
 
-    private class Parser extends BinaryParser {
-        private Map<Long, Node> nodeMap;
-        private Map<Integer, Byte> areaMap;
-        private Map<Integer, Node[]> wayMap;
+    @Override
+    public NodeAccess getNodes() {
+        return nodes;
+    }
 
-        private final int SHIFT = 1 << 29;
+    private class Preprocessor extends BinaryParser {
+        private int nodeCount;
+
+        @Override
+        protected void parseNodes(final List<crosby.binary.Osmformat.Node> nodes) {
+            nodeCount += nodes.size();
+        }
+
+        @Override
+        protected void parseDense(final DenseNodes nodes) {
+            nodeCount += nodes.getIdCount();
+        }
+
+        @Override
+        protected void parseWays(final List<crosby.binary.Osmformat.Way> ways) {
+        }
+
+        @Override
+        protected void parseRelations(final List<Relation> rels) {
+        }
+
+        @Override
+        public void complete() {
+            nodes = new NodeAccess(nodeCount);
+        }
+
+        @Override
+        protected void parse(final HeaderBlock header) {
+        }
+    }
+
+    private class Parser extends BinaryParser {
+        private int nodeId;
+        private Map<Long, Integer> nodeMap;
+        private Map<Integer, Byte> areaMap;
+        private Map<Integer, int[]> wayMap;
 
         public Parser() {
             nodeMap = new HashMap<>();
             wayMap = new HashMap<>();
             areaMap = new HashMap<>();
+            nodeId = 0;
         }
 
         @Override
-        protected void parseNodes(final List<crosby.binary.Osmformat.Node> nodes) {
-            for (final crosby.binary.Osmformat.Node n : nodes) {
-                final int x = (int) n.getLon();
-                final int y = (int) n.getLat();
-
+        protected void parseNodes(final List<crosby.binary.Osmformat.Node> nodeList) {
+            for (final crosby.binary.Osmformat.Node n : nodeList) {
+                int id = nodeId++;
+                nodes.set(id, parseLat(n.getLat()), parseLon(n.getLon()));
+                nodeMap.put(n.getId(), id);
                 for (int i = 0; i < n.getKeysCount(); i++) {
-
                     final String key = getStringById(n.getKeys(i));
                     final String value = getStringById(n.getVals(i));
 
                     if (key.equals("amenity") || key.equals("tourism")) {
                         final int type = getAmenityType(value);
                         if (type >= 0) {
-                            poiList.add(new POI(x, y, type));
+                            poiList.add(new POI(id, type));
                         }
                     }
                 }
-
-                nodeMap.put(n.getId(), new Node(x, y));
             }
-
         }
 
         @Override
-        protected void parseDense(final DenseNodes nodes) {
+        protected void parseDense(final DenseNodes dNodes) {
             long lastId = 0;
             long lastLat = 0;
             long lastLon = 0;
 
             String tag;
 
-            final Iterator<Integer> iterator = nodes.getKeysValsList().iterator();
+            final Iterator<Integer> iterator = dNodes.getKeysValsList().iterator();
 
-            for (int i = 0; i < nodes.getIdCount(); i++) {
+            for (int i = 0; i < dNodes.getIdCount(); i++) {
                 tag = "";
 
-                lastId += nodes.getId(i);
-                lastLat += nodes.getLat(i);
-                lastLon += nodes.getLon(i);
+                lastId += dNodes.getId(i);
+                lastLat += dNodes.getLat(i);
+                lastLon += dNodes.getLon(i);
+                int id = nodeId++;
+                nodes.set(id, parseLat(lastLat), parseLon(lastLon));
+                nodeMap.put(lastId, id);
 
-                final int x = (int) lastLon;
-                final int y = (int) lastLat;
                 int keyValId;
-
                 while ((keyValId = iterator.next()) != 0) {
                     final String key = getStringById(keyValId);
                     final String value = getStringById(iterator.next());
@@ -175,7 +190,7 @@ public class OSMParser implements IOSMParser {
                         case "tourism:":
                             int type = getAmenityType(value);
                             if (type >= 0) {
-                                poiList.add(new POI(x, y, type));
+                                poiList.add(new POI(id, type));
                             }
                             break;
                         case "place":
@@ -184,7 +199,7 @@ public class OSMParser implements IOSMParser {
                             } else {
                                 type = getPlaceType(value);
                                 if (type != -1) {
-                                    labelList.add(Label.create(tag, type, x, y));
+                                    labelList.add(Label.create(id, type, tag));
                                 }
                             }
                             break;
@@ -194,19 +209,17 @@ public class OSMParser implements IOSMParser {
                             } else {
                                 type = getPlaceType(tag);
                                 if (type != -1) {
-                                    labelList.add(Label.create(value, type, x, y));
+                                    labelList.add(Label.create(id, type, value));
                                 }
                             }
                             break;
                     }
                 }
-
-                nodeMap.put(lastId, new Node(x, y));
             }
         }
 
         @Override
-        protected void parseWays(final List<Way> ways) {
+        protected void parseWays(final List<crosby.binary.Osmformat.Way> ways) {
             String nameTag;
             String addrStreetTag;
             String addrNumberTag;
@@ -224,7 +237,7 @@ public class OSMParser implements IOSMParser {
             boolean foot;
             boolean tunnel;
 
-            for (final Way w : ways) {
+            for (final crosby.binary.Osmformat.Way w : ways) {
                 // Tags
                 nameTag = null;
                 buildingTag = false;
@@ -320,7 +333,7 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                final Node[] nodes = new Node[w.getRefsList().size()];
+                final int[] nodes = new int[w.getRefsList().size()];
                 long lastRef = 0;
                 int count = 0;
                 for (final Long ref : w.getRefsList()) {
@@ -340,55 +353,34 @@ public class OSMParser implements IOSMParser {
                             areaMap.put((int) w.getId(), (byte) terrainType);
                             // TODO equals instead of == ?
                             if (nodes[0] == nodes[nodes.length - 1]) {
-                                areaList.add(new Area(nodes, terrainType));
+                                areaList.add(new MultiElement(nodes, terrainType));
                             }
                         }
 
                         if (!areaTag) {
                             // TODO ways with area tag also valid...
-                            type = getStreetType(wayTag);
+                            type = getWayType(wayTag, bicycle, foot);
                             if (type >= 0) {
-                                boolean oneway = false;
                                 switch (onewayTag) {
                                     case "-1":
-                                        Arrays.reverse(nodes); // fall throug
+                                        Util.reverse(nodes); // fall throug
                                     case "yes":
-                                        oneway = true;
+                                        onewayList.add(new Way(nodes, type, nameTag));
                                         break;
-                                }
-                                final Point2D[] degrees = new Point2D[nodes.length];
-                                for (int i = 0; i < nodes.length; i++) {
-                                    final Node node = nodes[i];
-                                    final float lat = (float) parseLat(node.getY());
-                                    final float lon = (float) parseLon(node.getX());
-
-                                    degrees[i] = new Point2D.Float(lon, lat);
-                                }
-
-                                if (wayTag.equals("path")) {
-                                    if (bicycle) {
-                                        type = getStreetType("cycleway");
-                                    } else if (foot) {
-                                        type = getStreetType("footway");
-                                    }
-                                }
-
-                                streetList.add(new UnprocessedStreet(degrees, nodes, type, nameTag, oneway));
-                            } else {
-                                type = getWayType(wayTag);
-
-                                if (type >= 0) {
-                                    if (!tunnel || type != 2) {
-                                        wayList.add(new adminTool.elements.Way(nodes, type, nameTag));
-                                    }
+                                    default:
+                                        if (!tunnel || type != 2)
+                                            wayList.add(new Way(nodes, type, nameTag));
                                 }
                             }
                         }
                     }
 
                     if (amenityType >= 0) {
-                        final Point center = calculateCenter(nodes);
-                        poiList.add(new POI(center.x, center.y, amenityType));
+                        /*
+                         * final Point center = calculateCenter(nodes); poiList.add(new NodePOI(center.x, center.y,
+                         * amenityType));
+                         */
+                        // TODO fix this
                     }
 
                 }
@@ -425,7 +417,7 @@ public class OSMParser implements IOSMParser {
             int areaType = getRelationAreaType(relation);
 
             if (areaType != -1) {
-                final List<HashMap<Node, List<Node>>> maps = createMultipolygonMaps(relation);
+                final List<HashMap<Integer, List<Integer>>> maps = createMultipolygonMaps(relation);
 
                 if (areaType == Integer.MAX_VALUE) {
                     String housenumber = null;
@@ -446,22 +438,21 @@ public class OSMParser implements IOSMParser {
                         }
                     }
 
-                    for (final List<Node> list : maps.get(0).values()) {
-                        buildingList
-                                .add(Building.create(list.toArray(new Node[list.size()]), address, housenumber, name));
+                    for (final List<Integer> list : maps.get(0).values()) {
+                        buildingList.add(Building.create(Util.toArray(list), address, housenumber, name));
                     }
-                    for (final List<Node> list : maps.get(1).values()) {
-                        buildingList.add(Building.create(list.toArray(new Node[list.size()])));
+                    for (final List<Integer> list : maps.get(1).values()) {
+                        buildingList.add(Building.create(Util.toArray(list)));
                     }
                 } else {
-                    for (final List<Node> list : maps.get(0).values()) {
+                    for (final List<Integer> list : maps.get(0).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new Area(list.toArray(new Node[list.size()]), areaType));
+                        areaList.add(new MultiElement(Util.toArray(list), areaType));
                         // }
                     }
-                    for (final List<Node> list : maps.get(1).values()) {
+                    for (final List<Integer> list : maps.get(1).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new Area(list.toArray(new Node[list.size()]), areaType));
+                        areaList.add(new MultiElement(Util.toArray(list), areaType));
                         // }
                     }
                 }
@@ -490,20 +481,20 @@ public class OSMParser implements IOSMParser {
             }
 
             if (administrative && level != -1) {
-                final List<HashMap<Node, List<Node>>> maps = createMultipolygonMaps(relation);
+                final List<HashMap<Integer, List<Integer>>> maps = createMultipolygonMaps(relation);
 
                 if (!maps.get(0).isEmpty()) {
-                    final Node[][] outer = new Node[maps.get(0).size()][];
-                    final Node[][] inner = new Node[maps.get(1).size()][];
+                    final int[][] outer = new int[maps.get(0).size()][];
+                    final int[][] inner = new int[maps.get(1).size()][];
 
                     int count = -1;
-                    for (final Entry<Node, List<Node>> entry : maps.get(0).entrySet()) {
-                        outer[++count] = entry.getValue().toArray(new Node[entry.getValue().size()]);
+                    for (final Entry<Integer, List<Integer>> entry : maps.get(0).entrySet()) {
+                        outer[++count] = Util.toArray(entry.getValue());
                     }
 
                     count = -1;
-                    for (final Entry<Node, List<Node>> entry : maps.get(1).entrySet()) {
-                        inner[++count] = entry.getValue().toArray(new Node[entry.getValue().size()]);
+                    for (final Entry<Integer, List<Integer>> entry : maps.get(1).entrySet()) {
+                        inner[++count] = Util.toArray(entry.getValue());
                     }
 
                     boundaries.get(level).add(new Boundary(name, outer, inner));
@@ -511,12 +502,12 @@ public class OSMParser implements IOSMParser {
             }
         }
 
-        private List<HashMap<Node, List<Node>>> createMultipolygonMaps(final Relation relation) {
+        private List<HashMap<Integer, List<Integer>>> createMultipolygonMaps(final Relation relation) {
             long id = 0;
 
-            final List<HashMap<Node, List<Node>>> maps = new ArrayList<>(2);
-            maps.add(new HashMap<Node, List<Node>>());
-            maps.add(new HashMap<Node, List<Node>>());
+            final List<HashMap<Integer, List<Integer>>> maps = new ArrayList<>(2);
+            maps.add(new HashMap<Integer, List<Integer>>());
+            maps.add(new HashMap<Integer, List<Integer>>());
 
             for (int j = 0; j < relation.getRolesSidCount(); j++) {
                 final String role = getStringById(relation.getRolesSid(j));
@@ -526,27 +517,27 @@ public class OSMParser implements IOSMParser {
                     if (wayMap.containsKey((int) id)) {
                         // TODO save as small parts of ways may
                         // reduce disc space
-                        List<Node> my = new ArrayList<>(wayMap.get((int) id).length);
-                        for (final Node node : wayMap.get((int) id)) {
+                        List<Integer> my = new ArrayList<>(wayMap.get((int) id).length);
+                        for (final int node : wayMap.get((int) id)) {
                             my.add(node);
                         }
 
                         int index = role.equals("inner") ? 1 : 0;
-                        final HashMap<Node, List<Node>> map = maps.get(index);
-                        final Node myFirst = my.get(0);
-                        final Node myLast = my.get(my.size() - 1);
+                        final HashMap<Integer, List<Integer>> map = maps.get(index);
+                        final int myFirst = my.get(0);
+                        final int myLast = my.get(my.size() - 1);
 
                         if (map.containsKey(myLast)) {
-                            final List<Node> other = map.get(myLast);
+                            final List<Integer> other = map.get(myLast);
                             map.remove(other.get(0));
                             map.remove(other.get(other.size() - 1));
 
                             if (other.get(0).equals(myLast)) {
-                                for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
+                                for (final ListIterator<Integer> it = other.listIterator(1); it.hasNext();) {
                                     my.add(it.next());
                                 }
                             } else {
-                                for (final ListIterator<Node> it = other.listIterator(other.size()); it
+                                for (final ListIterator<Integer> it = other.listIterator(other.size()); it
                                         .hasPrevious();) {
                                     my.add(it.previous());
                                 }
@@ -554,17 +545,17 @@ public class OSMParser implements IOSMParser {
                         }
 
                         if (map.containsKey(myFirst)) {
-                            final List<Node> other = map.get(myFirst);
+                            final List<Integer> other = map.get(myFirst);
                             map.remove(other.get(0));
                             map.remove(other.get(other.size() - 1));
 
                             if (other.get(0).equals(myFirst)) {
                                 Collections.reverse(my);
-                                for (final ListIterator<Node> it = other.listIterator(1); it.hasNext();) {
+                                for (final ListIterator<Integer> it = other.listIterator(1); it.hasNext();) {
                                     my.add(it.next());
                                 }
                             } else {
-                                for (final ListIterator<Node> it = my.listIterator(1); it.hasNext();) {
+                                for (final ListIterator<Integer> it = my.listIterator(1); it.hasNext();) {
                                     other.add(it.next());
                                 }
                                 my = other;
@@ -616,40 +607,9 @@ public class OSMParser implements IOSMParser {
 
         @Override
         public void complete() {
-            calculateBounds(wayList);
-            calculateBounds(streetList);
-            calculateBounds(areaList);
-            calculateBounds(buildingList);
-            bBox.setBounds(bBox.x, bBox.y, bBox.width - bBox.x, bBox.height - bBox.y);
-
-            updateNodes(nodeMap.values());
-            updateNodes(poiList);
-            updateNodes(labelList);
-
             nodeMap = null;
             areaMap = null;
             wayMap = null;
-        }
-
-        private void updateNodes(final Collection<? extends Node> nodes) {
-            for (final Node node : nodes) {
-                node.setLocation(translateX(node.getX()) - bBox.x, translateY(node.getY()) - bBox.y);
-            }
-        }
-
-        private void calculateBounds(final Collection<? extends MultiElement> collection) {
-            for (final MultiElement element : collection) {
-                for (final Node node : element) {
-
-                    final int nodeX = translateX(node.getX());
-                    final int nodeY = translateY(node.getY());
-
-                    bBox.x = Math.min(bBox.x, nodeX);
-                    bBox.width = Math.max(bBox.width, nodeX);
-                    bBox.y = Math.min(bBox.y, nodeY);
-                    bBox.height = Math.max(bBox.height, nodeY);
-                }
-            }
         }
 
         @Override
@@ -658,17 +618,20 @@ public class OSMParser implements IOSMParser {
             // projection]
         }
 
-        private final int translateX(final int x) {
-            return (int) (getXCoord(parseLon(x)) * SHIFT);
-        }
-
-        private int translateY(final int y) {
-            return (int) (getYCoord(parseLat(y)) * SHIFT);
-        }
+        /*
+         * private Point calculateCenter(final int[] nodes) { float x = 0f; float y = 0f; int totalPoints = nodes.length
+         * - 1; for (int i = 0; i < totalPoints; i++) { x += lons[i]; y += nodes[i].getLat(); }
+         * 
+         * if (nodes[0].getLon() != nodes[totalPoints].getLon() || nodes[0].getLat() != nodes[totalPoints].getLat()) { x
+         * += nodes[totalPoints].getLon(); y += nodes[totalPoints].getLat(); ++totalPoints; }
+         * 
+         * x = x / totalPoints; y = y / totalPoints;
+         * 
+         * return new Point((int) x, (int) y); }
+         */
     }
 
-    private int getStreetType(final String value) {
-
+    private int getWayType(final String value, final boolean bicycle, final boolean foot) {
         if (value.equals("unclassified") || value.equals("residential") || value.equals("living_street")
                 || value.equals("pedestrian")) {
             return 0;
@@ -698,14 +661,14 @@ public class OSMParser implements IOSMParser {
             return 8;
         }
         if (value.equals("path")) {
+            if (bicycle) {
+                return 7; // cycleway
+            }
+            if (foot) {
+                return 6; // footway
+            }
             return 9;
         }
-
-        return -1;
-    }
-
-    private int getWayType(final String value) {
-
         if (value.equals("river")) {
             return 10;
         }
@@ -937,37 +900,5 @@ public class OSMParser implements IOSMParser {
         }
 
         return -1;
-    }
-
-    /*
-     * Umwandlung lat/lon zu mercator-Koordianten
-     */
-    public double getXCoord(final double lon) {
-        return (lon / 180 + 1) / 2;
-    }
-
-    public double getYCoord(final double lat) {
-        return (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2;
-    }
-
-    private Point calculateCenter(final Node[] nodes) {
-        float x = 0f;
-        float y = 0f;
-        int totalPoints = nodes.length - 1;
-        for (int i = 0; i < totalPoints; i++) {
-            x += nodes[i].getX();
-            y += nodes[i].getY();
-        }
-
-        if (nodes[0].getX() != nodes[totalPoints].getX() || nodes[0].getY() != nodes[totalPoints].getY()) {
-            x += nodes[totalPoints].getX();
-            y += nodes[totalPoints].getY();
-            ++totalPoints;
-        }
-
-        x = x / totalPoints;
-        y = y / totalPoints;
-
-        return new Point((int) x, (int) y);
     }
 }

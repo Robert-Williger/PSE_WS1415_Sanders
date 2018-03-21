@@ -1,17 +1,12 @@
 package adminTool.elements;
 
-import java.awt.Point;
+public class POI implements Typeable {
 
-public class POI extends Node implements Typeable {
-
+    private final int index;
     private final int type;
 
-    public POI(final Point location, final int type) {
-        this(location.x, location.y, type);
-    }
-
-    public POI(final int x, final int y, final int type) {
-        super(x, y);
+    public POI(final int index, final int type) {
+        this.index = index;
         this.type = type;
     }
 
@@ -20,30 +15,7 @@ public class POI extends Node implements Typeable {
         return type;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + type;
-        return result;
+    public int getNode() {
+        return index;
     }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final POI other = (POI) obj;
-        if (type != other.type) {
-            return false;
-        }
-        return true;
-    }
-
 }

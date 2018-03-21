@@ -1,20 +1,13 @@
 package adminTool.elements;
 
-public abstract class Label extends Node implements Typeable {
+public abstract class Label extends POI {
 
     private String name;
-    private int type;
 
-    private Label(final String name, final int type, final int x, final int y) {
-        super(x, y);
+    private Label(final int index, final int type, final String name) {
+        super(index, type);
 
         this.name = name;
-        this.type = type;
-    }
-
-    @Override
-    public int getType() {
-        return type;
     }
 
     public String getName() {
@@ -23,17 +16,17 @@ public abstract class Label extends Node implements Typeable {
 
     public abstract float getRotation();
 
-    public static Label create(final String name, final int type, final int x, final int y) {
-        return new DefaultLabel(name, type, x, y);
+    public static Label create(final int index, final int type, final String name) {
+        return new DefaultLabel(index, type, name);
     }
 
-    public static Label create(final String name, final int type, final int x, final int y, final float rotation) {
-        return new RotatedLabel(name, type, x, y, rotation);
+    public static Label create(final int index, final int type, final String name, final float rotation) {
+        return new RotatedLabel(index, type, name, rotation);
     }
 
     private static class DefaultLabel extends Label {
-        public DefaultLabel(final String name, final int type, final int x, final int y) {
-            super(name, type, x, y);
+        public DefaultLabel(final int index, final int type, final String name) {
+            super(index, type, name);
         }
 
         @Override
@@ -45,8 +38,8 @@ public abstract class Label extends Node implements Typeable {
     private static class RotatedLabel extends Label {
         private final float rotation;
 
-        public RotatedLabel(final String name, final int type, final int x, final int y, final float rotation) {
-            super(name, type, x, y);
+        public RotatedLabel(final int index, final int type, final String name, final float rotation) {
+            super(index, type, name);
             this.rotation = rotation;
         }
 
