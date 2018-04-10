@@ -7,7 +7,10 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.zip.ZipOutputStream;
 
@@ -51,14 +54,14 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<POI> pois;
 
     private final Dimension size;
-    private final PointAccess points;
+    private final BoundedPointAccess points;
 
     // TODO improve this!
     public Sorting<Street> streetSorting;
 
     public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
             final Collection<Building> buildings, final Collection<POI> pois, final Collection<Label> labels,
-            final PointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
+            final BoundedPointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
@@ -116,12 +119,12 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final int[] elements = new int[] { areaSorting.elements.length, streetSorting.elements.length,
                 buildingSorting.elements.length };
 
-        policies[0] = new AreaQuadtreePolicy(areaSorting.elements, points, getBounds(areaSorting, zoomSteps),
-                MAX_ELEMENTS_PER_TILE);
-        policies[1] = new WayQuadtreePolicy(streetSorting.elements, points, getBounds(streetSorting, zoomSteps),
-                MAX_ELEMENTS_PER_TILE, maxWayWidths);
-        policies[2] = new AreaQuadtreePolicy(buildingSorting.elements, points, getBounds(buildingSorting, zoomSteps),
-                MAX_ELEMENTS_PER_TILE);
+        policies[0] = new AreaQuadtreePolicy(Arrays.asList(areaSorting.elements), points, MAX_ELEMENTS_PER_TILE,
+                zoomSteps);
+        policies[1] = new WayQuadtreePolicy(Arrays.asList(streetSorting.elements), points, MAX_ELEMENTS_PER_TILE,
+                maxWayWidths);
+        policies[2] = new AreaQuadtreePolicy(Arrays.asList(buildingSorting.elements), points, MAX_ELEMENTS_PER_TILE,
+                zoomSteps);
 
         for (int i = 0; i < names.length; i++) {
             new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
@@ -143,57 +146,51 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         closeEntry();
     }
 
-    private Rectangle[][] getBounds(final Sorting<? extends MultiElement> sorting, final int zoomSteps) {
-        final MultiElement[] elements = sorting.elements;
-        final Rectangle[][] ret = new Rectangle[zoomSteps][];
-        final Rectangle[] bounds = new Rectangle[elements.length];
-        for (int i = 0; i < elements.length; i++) {
-            bounds[i] = Util.getBounds(elements[i], points);
-        }
-        for (int i = 0; i < ret.length; i++) {
-            ret[i] = bounds;
-        }
-        return ret;
-    }
-
     private CollisionlessQuadtree createLabelQuadtree(final Label[] labels, final int minZoomStep, final int zoomSteps,
             final int mapSize, final int conversionBits) {
         final Font font = new Font("TimesRoman", Font.PLAIN, 18);
         final FontRenderContext c = new FontRenderContext(new AffineTransform(), true, true);
-        final Rectangle[][] lBounds = new Rectangle[zoomSteps][labels.length];
+        final List<List<Rectangle>> labelBounds = new ArrayList<List<Rectangle>>(zoomSteps);
 
+        for (int h = 0; h < zoomSteps; h++) {
+            labelBounds.add(new ArrayList<Rectangle>(labels.length));
+        }
         for (int i = 0; i < labels.length; i++) {
             final Label label = labels[i];
-            final Rectangle2D bounds = font.getStringBounds(label.getName(), c);
-            final int pw = (int) Math.ceil(bounds.getWidth());
-            final int ph = (int) Math.ceil(bounds.getHeight());
+            final Rectangle2D stringBounds = font.getStringBounds(label.getName(), c);
+            final int pw = (int) Math.ceil(stringBounds.getWidth());
+            final int ph = (int) Math.ceil(stringBounds.getHeight());
             for (int h = 0; h < zoomSteps; h++) {
                 final int cw = pw << (conversionBits - (h + minZoomStep));
                 final int ch = ph << (conversionBits - (h + minZoomStep));
-                lBounds[h][i] = new Rectangle(points.getX(label.getNode()) - cw / 2,
-                        points.getY(label.getNode()) - ch / 2, cw, ch);
+                labelBounds.get(h).add(new Rectangle(points.getX(label.getNode()) - cw / 2,
+                        points.getY(label.getNode()) - ch / 2, cw, ch));
             }
         }
-        final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
-        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(lBounds, MAX_ELEMENTS_PER_TILE);
+        final ICollisionPolicy cp = (e1, e2, height) -> labelBounds.get(height).get(e1)
+                .intersects(labelBounds.get(height).get(e2));
+        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(labelBounds, MAX_ELEMENTS_PER_TILE);
 
         return new CollisionlessQuadtree(labels.length, qp, cp, mapSize);
     }
 
     private CollisionlessQuadtree createPOIQuadtree(final POI[] pois, final int minZoomStep, final int zoomSteps,
             final int mapSize, final int conversionBits) {
-        final Rectangle[][] lBounds = new Rectangle[zoomSteps][pois.length];
+        final List<List<Rectangle>> poiBounds = new ArrayList<List<Rectangle>>(zoomSteps);
 
         for (int h = 0; h < zoomSteps; h++) {
+            final List<Rectangle> bounds = new ArrayList<Rectangle>(pois.length);
             final int size = MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep));
             for (int i = 0; i < pois.length; i++) {
                 final POI poi = pois[i];
-                lBounds[h][i] = new Rectangle(points.getX(poi.getNode()) - size / 2,
-                        points.getY(poi.getNode()) - size / 2, size, size);
+                bounds.add(new Rectangle(points.getX(poi.getNode()) - size / 2, points.getY(poi.getNode()) - size / 2,
+                        size, size));
             }
+            poiBounds.add(bounds);
         }
-        final ICollisionPolicy cp = (e1, e2, height) -> lBounds[height][e1].intersects(lBounds[height][e2]);
-        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(lBounds, MAX_ELEMENTS_PER_TILE);
+        final ICollisionPolicy cp = (e1, e2, height) -> poiBounds.get(height).get(e1)
+                .intersects(poiBounds.get(height).get(e2));
+        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(poiBounds, MAX_ELEMENTS_PER_TILE);
 
         return new CollisionlessQuadtree(pois.length, qp, cp, mapSize);
     }

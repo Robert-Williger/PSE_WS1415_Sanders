@@ -10,6 +10,11 @@ public class IntList {
     private int[] data;
     private int size;
 
+    public IntList(final int[] data) {
+        this.data = data;
+        this.size = data.length;
+    }
+
     public IntList(int initialCapacity) {
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal Capacity: " + initialCapacity);
@@ -153,14 +158,22 @@ public class IntList {
         return false;
     }
 
+    public void clear() {
+        size = 0;
+    }
+
+    public void reverse() {
+        for (int i = 0, mid = size >> 1, j = size - 1; i < mid; i++, j--) {
+            int copy = data[j];
+            data[j] = data[i];
+            data[i] = copy;
+        }
+    }
+
     private void fastRemove(int index) {
         int numMoved = size - index - 1;
         if (numMoved > 0)
             System.arraycopy(data, index + 1, data, index, numMoved);
-    }
-
-    public void clear() {
-        size = 0;
     }
 
     protected void removeRange(int fromIndex, int toIndex) {
@@ -189,8 +202,26 @@ public class IntList {
         return new Itr();
     }
 
+    public PrimitiveIterator.OfInt iterator(final int index) {
+        return new Itr();
+    }
+
+    public int[] toArray() {
+        int[] ret = new int[size];
+        System.arraycopy(data, 0, ret, 0, size);
+        return ret;
+    }
+
     private class Itr implements PrimitiveIterator.OfInt {
         int cursor; // index of next element to return
+
+        public Itr() {
+            this(0);
+        }
+
+        public Itr(final int cursor) {
+            this.cursor = cursor;
+        }
 
         @Override
         public boolean hasNext() {

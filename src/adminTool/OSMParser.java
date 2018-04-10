@@ -4,11 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,11 +21,11 @@ import crosby.binary.Osmformat.DenseNodes;
 import crosby.binary.Osmformat.HeaderBlock;
 import crosby.binary.Osmformat.Relation;
 import crosby.binary.file.BlockInputStream;
+import util.IntList;
 
 public class OSMParser implements IOSMParser {
 
     private final Collection<Way> wayList;
-    private final Collection<Way> onewayList;
     private final Collection<MultiElement> areaList;
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
@@ -39,7 +37,6 @@ public class OSMParser implements IOSMParser {
         // TODO lists instead of sets!
         labelList = new ArrayList<>();
         wayList = new ArrayList<>();
-        onewayList = new ArrayList<>();
         areaList = new ArrayList<>();
         poiList = new ArrayList<>();
         buildingList = new ArrayList<>();
@@ -59,11 +56,6 @@ public class OSMParser implements IOSMParser {
     @Override
     public Collection<Way> getWays() {
         return wayList;
-    }
-
-    @Override
-    public Collection<Way> getOneways() {
-        return onewayList;
     }
 
     @Override
@@ -360,17 +352,9 @@ public class OSMParser implements IOSMParser {
                         if (!areaTag) {
                             // TODO ways with area tag also valid...
                             type = getWayType(wayTag, bicycle, foot);
-                            if (type >= 0) {
-                                switch (onewayTag) {
-                                    case "-1":
-                                        Util.reverse(nodes); // fall throug
-                                    case "yes":
-                                        onewayList.add(new Way(nodes, type, nameTag));
-                                        break;
-                                    default:
-                                        if (!tunnel || type != 2)
-                                            wayList.add(new Way(nodes, type, nameTag));
-                                }
+                            if (type >= 0 && (!tunnel || type != 2)) {
+                                boolean oneway = onewayTag.equals("-1") || onewayTag.equals("yes");
+                                wayList.add(new Way(nodes, type, nameTag, oneway));
                             }
                         }
                     }
@@ -417,7 +401,7 @@ public class OSMParser implements IOSMParser {
             int areaType = getRelationAreaType(relation);
 
             if (areaType != -1) {
-                final List<HashMap<Integer, List<Integer>>> maps = createMultipolygonMaps(relation);
+                final List<HashMap<Integer, IntList>> maps = createMultipolygonMaps(relation);
 
                 if (areaType == Integer.MAX_VALUE) {
                     String housenumber = null;
@@ -438,21 +422,21 @@ public class OSMParser implements IOSMParser {
                         }
                     }
 
-                    for (final List<Integer> list : maps.get(0).values()) {
-                        buildingList.add(Building.create(Util.toArray(list), address, housenumber, name));
+                    for (final IntList list : maps.get(0).values()) {
+                        buildingList.add(Building.create(list.toArray(), address, housenumber, name));
                     }
-                    for (final List<Integer> list : maps.get(1).values()) {
-                        buildingList.add(Building.create(Util.toArray(list)));
+                    for (final IntList list : maps.get(1).values()) {
+                        buildingList.add(Building.create(list.toArray()));
                     }
                 } else {
-                    for (final List<Integer> list : maps.get(0).values()) {
+                    for (final IntList list : maps.get(0).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new MultiElement(Util.toArray(list), areaType));
+                        areaList.add(new MultiElement(list.toArray(), areaType));
                         // }
                     }
-                    for (final List<Integer> list : maps.get(1).values()) {
+                    for (final IntList list : maps.get(1).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new MultiElement(Util.toArray(list), areaType));
+                        areaList.add(new MultiElement(list.toArray(), areaType));
                         // }
                     }
                 }
@@ -481,20 +465,20 @@ public class OSMParser implements IOSMParser {
             }
 
             if (administrative && level != -1) {
-                final List<HashMap<Integer, List<Integer>>> maps = createMultipolygonMaps(relation);
+                final List<HashMap<Integer, IntList>> maps = createMultipolygonMaps(relation);
 
                 if (!maps.get(0).isEmpty()) {
                     final int[][] outer = new int[maps.get(0).size()][];
                     final int[][] inner = new int[maps.get(1).size()][];
 
                     int count = -1;
-                    for (final Entry<Integer, List<Integer>> entry : maps.get(0).entrySet()) {
-                        outer[++count] = Util.toArray(entry.getValue());
+                    for (final Entry<Integer, IntList> entry : maps.get(0).entrySet()) {
+                        outer[++count] = entry.getValue().toArray();
                     }
 
                     count = -1;
-                    for (final Entry<Integer, List<Integer>> entry : maps.get(1).entrySet()) {
-                        inner[++count] = Util.toArray(entry.getValue());
+                    for (final Entry<Integer, IntList> entry : maps.get(1).entrySet()) {
+                        inner[++count] = entry.getValue().toArray();
                     }
 
                     boundaries.get(level).add(new Boundary(name, outer, inner));
@@ -502,12 +486,12 @@ public class OSMParser implements IOSMParser {
             }
         }
 
-        private List<HashMap<Integer, List<Integer>>> createMultipolygonMaps(final Relation relation) {
+        private List<HashMap<Integer, IntList>> createMultipolygonMaps(final Relation relation) {
             long id = 0;
 
-            final List<HashMap<Integer, List<Integer>>> maps = new ArrayList<>(2);
-            maps.add(new HashMap<Integer, List<Integer>>());
-            maps.add(new HashMap<Integer, List<Integer>>());
+            final List<HashMap<Integer, IntList>> maps = new ArrayList<>(2);
+            maps.add(new HashMap<Integer, IntList>());
+            maps.add(new HashMap<Integer, IntList>());
 
             for (int j = 0; j < relation.getRolesSidCount(); j++) {
                 final String role = getStringById(relation.getRolesSid(j));
@@ -517,46 +501,45 @@ public class OSMParser implements IOSMParser {
                     if (wayMap.containsKey((int) id)) {
                         // TODO save as small parts of ways may
                         // reduce disc space
-                        List<Integer> my = new ArrayList<>(wayMap.get((int) id).length);
+                        IntList my = new IntList(wayMap.get((int) id).length);
                         for (final int node : wayMap.get((int) id)) {
                             my.add(node);
                         }
 
                         int index = role.equals("inner") ? 1 : 0;
-                        final HashMap<Integer, List<Integer>> map = maps.get(index);
+                        final HashMap<Integer, IntList> map = maps.get(index);
                         final int myFirst = my.get(0);
                         final int myLast = my.get(my.size() - 1);
 
-                        if (map.containsKey(myLast)) {
-                            final List<Integer> other = map.get(myLast);
+                        IntList other = map.get(myLast);
+                        if (other != null) {
                             map.remove(other.get(0));
                             map.remove(other.get(other.size() - 1));
 
-                            if (other.get(0).equals(myLast)) {
-                                for (final ListIterator<Integer> it = other.listIterator(1); it.hasNext();) {
-                                    my.add(it.next());
+                            if (other.get(0) == myLast) {
+                                for (int i = 1; i < other.size(); ++i) {
+                                    my.add(other.get(i));
                                 }
                             } else {
-                                for (final ListIterator<Integer> it = other.listIterator(other.size()); it
-                                        .hasPrevious();) {
-                                    my.add(it.previous());
+                                for (int i = other.size() - 2; i >= 0; --i) {
+                                    my.add(other.get(i));
                                 }
                             }
                         }
 
-                        if (map.containsKey(myFirst)) {
-                            final List<Integer> other = map.get(myFirst);
+                        other = map.get(myFirst);
+                        if (other != null) {
                             map.remove(other.get(0));
                             map.remove(other.get(other.size() - 1));
 
-                            if (other.get(0).equals(myFirst)) {
-                                Collections.reverse(my);
-                                for (final ListIterator<Integer> it = other.listIterator(1); it.hasNext();) {
-                                    my.add(it.next());
+                            if (other.get(0) == myFirst) {
+                                my.reverse();
+                                for (int i = 1; i < other.size(); ++i) {
+                                    my.add(other.get(i));
                                 }
                             } else {
-                                for (final ListIterator<Integer> it = my.listIterator(1); it.hasNext();) {
-                                    other.add(it.next());
+                                for (int i = 1; i < my.size(); ++i) {
+                                    other.add(my.get(i));
                                 }
                                 my = other;
                             }

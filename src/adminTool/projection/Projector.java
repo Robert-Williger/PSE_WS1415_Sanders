@@ -4,19 +4,19 @@ import java.awt.Dimension;
 
 import adminTool.AABB;
 import adminTool.NodeAccess;
-import adminTool.PointAccess;
+import adminTool.BoundedPointAccess;
 
 public class Projector {
 
     private final NodeAccess nodes;
     private final IProjection projection;
-    private final PointAccess points;
+    private final BoundedPointAccess points;
     private final Dimension size;
 
     public Projector(final NodeAccess nodes, final IProjection projection) {
         this.nodes = nodes;
         this.projection = projection;
-        points = new PointAccess(nodes.size());
+        points = new BoundedPointAccess(nodes.size());
         size = new Dimension();
     }
     
@@ -27,7 +27,7 @@ public class Projector {
             double lon = nodes.getLon(i);
             int x = projection.getX(lat, lon);
             int y = projection.getY(lat, lon);
-            points.set(i, x, y);
+            points.setPoint(i, x, y);
             
             aabb.setMinX(Math.min(aabb.getMinX(), x));
             aabb.setMinY(Math.min(aabb.getMinY(), y));
@@ -35,12 +35,12 @@ public class Projector {
             aabb.setMaxY(Math.max(aabb.getMaxY(), y));
         }
         for (int i = 0; i < nodes.size(); ++i) {
-            points.set(i, points.getX(i) - aabb.getMinX(), points.getY(i) - aabb.getMinY());
+            points.setPoint(i, points.getX(i) - aabb.getMinX(), points.getY(i) - aabb.getMinY());
         }
         size.setSize(aabb.getMaxX() - aabb.getMinX(), aabb.getMaxY() - aabb.getMinY());
     }
     
-    public PointAccess getPoints() {
+    public BoundedPointAccess getPoints() {
         return points;
     }
     

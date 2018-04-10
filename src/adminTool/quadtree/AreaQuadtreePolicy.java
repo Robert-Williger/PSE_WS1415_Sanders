@@ -1,20 +1,23 @@
 package adminTool.quadtree;
 
-import adminTool.PointAccess;
+import adminTool.IPointAccess;
+import adminTool.Util;
 import adminTool.elements.MultiElement;
 
 import static adminTool.Util.polygonContainsPoint;
 import static adminTool.Util.rectangleIntersectsLine;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
-    private final MultiElement[] elements;
-    private final PointAccess points;
+    private final List<MultiElement> elements;
+    private final IPointAccess points;
 
-    public AreaQuadtreePolicy(final MultiElement[] areas, final PointAccess points, final Rectangle[][] bounds,
-            final int maxElementsPerTile) {
-        super(bounds, maxElementsPerTile);
+    public AreaQuadtreePolicy(final List<MultiElement> areas, final IPointAccess points, final int maxElementsPerTile,
+            final int maxHeight) {
+        super(calculateBounds(areas, points), maxElementsPerTile, maxHeight);
         this.elements = areas;
         this.points = points;
     }
@@ -25,7 +28,7 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
             return false;
         }
 
-        final MultiElement element = elements[index];
+        final MultiElement element = elements.get(index);
         return edgeIntersection(element, x, y, size) || polygonContainsPoint(element, points, x, y);
     }
 
@@ -41,5 +44,13 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
         }
 
         return false;
+    }
+
+    private static List<Rectangle> calculateBounds(final List<MultiElement> elements, final IPointAccess points) {
+        final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
+        for (int i = 0; i < elements.size(); i++) {
+            bounds.add(Util.getBounds(elements.get(i), points));
+        }
+        return bounds;
     }
 }

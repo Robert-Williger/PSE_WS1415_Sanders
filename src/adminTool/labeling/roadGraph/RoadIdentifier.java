@@ -1,0 +1,32 @@
+package adminTool.labeling.roadGraph;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+
+import adminTool.elements.Way;
+
+public class RoadIdentifier {
+    private Collection<Way> ways;
+
+    public RoadIdentifier(final Collection<Way> ways) {
+        this.ways = ways;
+    }
+
+    public Collection<List<Way>> identify() {
+        HashMap<String, List<Way>> wayMap = new HashMap<>();
+        for (final Way way : ways) {
+            if (way.getName() == null || way.getName().isEmpty())
+                continue;
+            List<Way> equalWays = wayMap.get(way.getType() + way.getName());
+            if (equalWays == null) {
+                equalWays = new ArrayList<Way>();
+                wayMap.put(way.getType() + way.getName(), equalWays);
+            }
+            equalWays.add(way);
+        }
+
+        return wayMap.values();
+    }
+}

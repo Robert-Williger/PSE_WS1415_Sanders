@@ -41,8 +41,7 @@ public class CreateTest {
             System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getOneways(), parser.getNodes(),
-                    zipOutput);
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getNodes(), zipOutput);
             try {
                 graphWriter.write();
             } catch (IOException e) {

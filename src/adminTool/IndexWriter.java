@@ -13,6 +13,7 @@ import java.util.Set;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.Street;
+import util.IntList;
 
 public class IndexWriter extends AbstractMapFileWriter {
     private Rectangle[] bounds;
@@ -20,11 +21,11 @@ public class IndexWriter extends AbstractMapFileWriter {
     private List<List<Boundary>> boundaries;
     private Map<String, Integer> cityMap;
     private int cityId;
-    private final PointAccess points;
+    private final BoundedPointAccess points;
 
     // TODO speedup
-    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets, final PointAccess points,
-            final ZipOutputStream zipOutput) {
+    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets,
+            final BoundedPointAccess points, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
@@ -93,7 +94,7 @@ public class IndexWriter extends AbstractMapFileWriter {
         // }
 
         for (final int[] indices : boundary.getOuter()) {
-            if (Util.polygonContainsPoint(indices, points, x, y)) {
+            if (Util.polygonContainsPoint(new IntList(indices), points, x, y)) {
                 return true;
             }
         }

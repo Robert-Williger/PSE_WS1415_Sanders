@@ -18,14 +18,12 @@ public class GraphWriter extends AbstractMapFileWriter {
     private List<WeightedEdge> edges;
     private final List<Street> streets;
     private Collection<Way> ways;
-    private Collection<Way> oneways;
     private final NodeAccess nodes;
 
-    public GraphWriter(final Collection<Way> ways, final Collection<Way> oneways, final NodeAccess nodes, final ZipOutputStream zipOutput) {
+    public GraphWriter(final Collection<Way> ways, final NodeAccess nodes, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.ways = ways;
-        this.oneways = oneways;
         this.nodes = nodes;
         streets = new ArrayList<>();
     }
@@ -39,7 +37,6 @@ public class GraphWriter extends AbstractMapFileWriter {
         final int onewayCount = createGraph();
 
         ways = null;
-        oneways = null;
         nodeIdMap = null;
 
         writeGraph(onewayCount);
@@ -54,24 +51,21 @@ public class GraphWriter extends AbstractMapFileWriter {
         edges = new ArrayList<>();
         nodeIdMap = new HashMap<>();
 
-        for (final Way street : oneways) {
-            processWay(street, nodeCounts, 0x80000000); //msb set
+        for (final Way way : ways) {
+            if (way.isOneway())
+                processWay(way, nodeCounts, 0x80000000); // msb set
         }
         final int onewayCount = edges.size();
-        for (final Way street : ways) {
-            processWay(street, nodeCounts, 0x00000000); //msb not set
+        for (final Way way : ways) {
+            if (!way.isOneway())
+                processWay(way, nodeCounts, 0x00000000); // msb not set
         }
 
         return onewayCount;
     }
-    
+
     private void countNodes(final int[] nodeCounts) {
         // Step one: count the appearance of every node in the given ways
-        for (final Way s : oneways) {
-            for (int i = 0; i < s.size(); ++i) {
-                ++nodeCounts[s.getNode(i)];
-            }
-        }
         for (final Way s : ways) {
             for (int i = 0; i < s.size(); ++i) {
                 ++nodeCounts[s.getNode(i)];
@@ -96,7 +90,8 @@ public class GraphWriter extends AbstractMapFileWriter {
 
             double weight = 0;
             for (int j = lastCut; j < currentCut; j++) {
-                weight += getWeight(nodes.getLat(way.getNode(j)), nodes.getLon(way.getNode(j)), nodes.getLat(way.getNode(j + 1)), nodes.getLon(way.getNode(j + 1)));
+                weight += getWeight(nodes.getLat(way.getNode(j)), nodes.getLon(way.getNode(j)),
+                        nodes.getLat(way.getNode(j + 1)), nodes.getLon(way.getNode(j + 1)));
             }
 
             for (int j = lastCut; j <= currentCut; j++) {
@@ -140,7 +135,7 @@ public class GraphWriter extends AbstractMapFileWriter {
         nodeIdMap.put(node, nodeIdCount);
         return nodeIdCount++;
     }
-    
+
     private void writeGraph(final int oneways) throws IOException {
         putNextEntry("graph");
 

@@ -16,9 +16,7 @@ public interface IOSMParser {
     void read(File file) throws Exception;
 
     Collection<Way> getWays();
-    
-    Collection<Way> getOneways();
-    
+
     Collection<MultiElement> getTerrain();
 
     Collection<POI> getPOIs();

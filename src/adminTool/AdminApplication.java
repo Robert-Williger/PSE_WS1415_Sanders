@@ -65,8 +65,7 @@ public class AdminApplication {
         }
 
         if (zipOutput != null) {
-            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getOneways(), parser.getNodes(),
-                    zipOutput);
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getNodes(), zipOutput);
             try {
                 graphWriter.write();
             } catch (final IOException e) {

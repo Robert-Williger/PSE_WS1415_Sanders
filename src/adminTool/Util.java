@@ -1,17 +1,20 @@
 package adminTool;
 
 import java.awt.Rectangle;
-import java.util.List;
+import java.awt.geom.Point2D;
 
 import adminTool.elements.MultiElement;
+import util.IntList;
 
 public class Util {
+    private static double EPSILON = 1E-5;
+
     private static final int OUT_LEFT = 0b0001;
     private static final int OUT_TOP = 0b0010;
     private static final int OUT_RIGHT = 0b0100;
     private static final int OUT_BOTTOM = 0b1000;
 
-    public static Rectangle getBounds(final MultiElement element, final PointAccess points) {
+    public static Rectangle getBounds(final MultiElement element, final IPointAccess points) {
         int minX = points.getX(element.getNode(0));
         int maxX = minX;
         int minY = points.getY(element.getNode(0));
@@ -38,29 +41,49 @@ public class Util {
         return x >= minX && x <= maxX && y >= minY && y <= maxY;
     }
 
-    public static boolean polygonContainsPoint(final MultiElement element, final PointAccess points, final double x, final double y) {
+    public static boolean polygonContainsPoint(final MultiElement element, final IPointAccess points, final double x,
+            final double y) {
         boolean ret = false;
         for (int i = 0, j = element.size() - 1; i < element.size(); j = i++) {
-            if (((points.getY(element.getNode(i)) > y) != (points.getY(element.getNode(j)) > y)) && (x < (points.getX(element.getNode(j)) - points.getX(element.getNode(i)))
-                    * (y - points.getY(element.getNode(i))) / (points.getY(element.getNode(j)) - points.getY(element.getNode(i))) + points.getX(element.getNode(i))))
+            if (((points.getY(element.getNode(i)) > y) != (points.getY(element.getNode(j)) > y))
+                    && (x < (points.getX(element.getNode(j)) - points.getX(element.getNode(i)))
+                            * (y - points.getY(element.getNode(i)))
+                            / (points.getY(element.getNode(j)) - points.getY(element.getNode(i)))
+                            + points.getX(element.getNode(i))))
                 ret = !ret;
         }
 
         return ret;
     }
-    
-    public static boolean polygonContainsPoint(final int[] indices, final PointAccess points, final double x, final double y) {
+
+    public static boolean polygonContainsPoint(final IntList indices, final IPointAccess points, final double x,
+            final double y) {
         boolean ret = false;
-        for (int i = 0, j = indices.length - 1; i < indices.length; j = i++) {
-            if (((points.getY(indices[i]) > y) != (points.getY(indices[j]) > y)) && (x < (points.getX(indices[j]) - points.getX(indices[i]))
-                    * (y - points.getY(indices[i])) / (points.getY(indices[j]) - points.getY(indices[i])) + points.getX(indices[i])))
+        for (int i = 0, j = indices.size() - 1; i < indices.size(); j = i++) {
+            if (((points.getY(indices.get(i)) > y) != (points.getY(indices.get(j)) > y))
+                    && (x < (points.getX(indices.get(j)) - points.getX(indices.get(i)))
+                            * (y - points.getY(indices.get(i)))
+                            / (points.getY(indices.get(j)) - points.getY(indices.get(i)))
+                            + points.getX(indices.get(i))))
                 ret = !ret;
         }
 
         return ret;
     }
 
-    public static boolean polygonBBContainsPoint(final int[] indices, final PointAccess points, final double x, final double y) {
+    public static Point2D calculatePointInPolygon(final IntList poly, final IPointAccess points) {
+        for (int i = 0; i < poly.size(); ++i) {
+            double x = (points.getX(poly.get(i)) + points.getX(poly.get(i + 1)) + points.getX(poly.get(i + 2))) / 3.;
+            double y = (points.getY(poly.get(i)) + points.getY(poly.get(i + 1)) + points.getY(poly.get(i + 2))) / 3.;
+            if (polygonContainsPoint(poly, points, x, y)) {
+                return new Point2D.Double(x, y);
+            }
+        }
+        return null;
+    }
+
+    public static boolean polygonBBContainsPoint(final int[] indices, final IPointAccess points, final double x,
+            final double y) {
         int minX = points.getX(indices[0]);
         int maxX = minX;
         int minY = points.getY(indices[0]);
@@ -99,6 +122,26 @@ public class Util {
         return true;
     }
 
+    public static Point2D lineIntersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4,
+            double y4) {
+        double denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (denom == 0.0) { // Lines are parallel.
+            return null;
+        }
+        double ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+        double ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+        if (ua >= -EPSILON && ua <= 1.f + EPSILON && ub >= -EPSILON && ub <= 1.f + EPSILON) {
+            return new Point2D.Double(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1));
+        }
+
+        return null;
+    }
+
+    public static boolean lineIntersectsLine(double x1, double y1, double x2, double y2, double x3, double y3,
+            double x4, double y4) {
+        return lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) != null;
+    }
+
     // the double for width and height avoids integer-overflows.
     private static int outcode(final double rectX, final double rectY, final double rectWidth, final double rectHeight,
             final double pointX, final double pointY) {
@@ -117,22 +160,5 @@ public class Util {
 
         return out;
     }
-    
-    static void reverse(int array[]) {
-        int temp;
-        for (int i = 0; i < array.length / 2; i++) {
-            temp = array[i];
-            array[i] = array[array.length-1-i];
-            array[array.length-1-i] = temp;
-        }
-    }
-    
-    static int[] toArray(List<Integer> list) {
-        int[] ret = new int[list.size()];
-        int index = 0;
-        for (final int data : list) {
-            ret[index++] = data;
-        }
-        return ret;
-    }
+
 }

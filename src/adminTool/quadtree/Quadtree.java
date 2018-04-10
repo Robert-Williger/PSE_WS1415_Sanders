@@ -9,13 +9,13 @@ public class Quadtree {
     private final Quadtree[] children;
     private final IntList elements;
 
-    public Quadtree(final int elements, final IQuadtreePolicy policy, final int x, final int y, final int size) {
+    public Quadtree(final int elements, final IQuadtreePolicy policy, final int size) {
         this.elements = new IntList(elements);
         for (int i = 0; i < elements; i++) {
             this.elements.add(i);
         }
 
-        children = createChildren(this.elements, policy, x, y, 0, size);
+        children = createChildren(this.elements, policy, 0, 0, 0, size);
     }
 
     private Quadtree(final IntList elements, final IQuadtreePolicy policy, final int x, final int y, final int height,

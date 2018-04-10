@@ -45,7 +45,7 @@ public class ImageLoader implements IImageLoader {
 
     public ImageLoader(final IMapManager manager) {
         priority = Integer.MAX_VALUE - 16;
-        mapManager = manager;
+        mapManager = manager;System.out.println("DOne");
 
         lastPOIVisibility = true;
         lastRouteVisibility = true;

@@ -22,11 +22,11 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<Label> labels;
     private Sorting<POI> pois;
     
-    private PointAccess pointAccess;
+    private BoundedPointAccess pointAccess;
 
     public ElementWriter(
             final Sorting<MultiElement> areas, final Sorting<Street> streets, final Sorting<Building> buildings,
-            final Sorting<Label> labels, final Sorting<POI> pois, final PointAccess pointAccess, 
+            final Sorting<Label> labels, final Sorting<POI> pois, final BoundedPointAccess pointAccess, 
             final ZipOutputStream zipOutput
     ) {
         super(zipOutput);

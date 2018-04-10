@@ -60,9 +60,11 @@ public class TreeLabeler {
         final int edge = graph.beginEdge(node);
         if (edge == graph.endEdge(node))
             return 0;
-        if (graph.isRoadSection(edge))
-            return maxVR(graph.edgeHead(edge), road, missingLength - graph.edgeWeight(edge), value);
-        return maxVJJ(graph.edgeHead(edge), road, missingLength - graph.edgeWeight(edge), value);
+
+        final int n = graph.edgeHead(edge);
+        if (graph.isRegular(n))
+            return maxVR(n, road, missingLength - graph.edgeWeight(edge), value);
+        return maxVJJ(n, road, missingLength - graph.edgeWeight(edge), value);
     }
 
     // construct vertical label, incoming edge is a junction section
@@ -125,7 +127,7 @@ public class TreeLabeler {
         if (edge != graph.endEdge(node)) {
             final int n = graph.edgeHead(edge);
             final double l = ml - graph.edgeWeight(edge);
-            max = graph.isRoadSection(edge) ? maxHR(n, road, l, value, j, f) : maxHJJ(n, road, l, value, j, f);
+            max = graph.isRegular(node) ? maxHR(n, road, l, value, j, f) : maxHJJ(n, road, l, value, j, f);
         }
 
         final int val = value + maxValue(node, IDENTIFIED);
