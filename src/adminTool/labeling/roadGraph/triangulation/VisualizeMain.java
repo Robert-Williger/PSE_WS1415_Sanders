@@ -1,43 +1,37 @@
-package adminTool.labeling;
+package adminTool.labeling.roadGraph.triangulation;
 
-import java.awt.geom.Area;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import adminTool.BoundedPointAccess;
 import adminTool.elements.Way;
-import adminTool.labeling.roadGraph.HullCreator;
-import adminTool.labeling.roadGraph.HullSimplifier;
-import adminTool.labeling.roadGraph.PolyWriter;
-import adminTool.labeling.roadGraph.Triangulator;
+import adminTool.labeling.roadGraph.hull.HullCreator;
+import adminTool.labeling.roadGraph.hull.HullSimplifier;
 
 public class VisualizeMain {
-    private static float pathWidth = 18;
-    private static int threshold = 5;
+    private static float pathWidth = 35;
+    private static int threshold = 35;
 
     public static void main(final String[] args) {
+        final String filePath = "visualizer";
         final BoundedPointAccess points = createPoints();
         final List<Way> ways = createWays();
 
         final HullCreator hullCreator = new HullCreator(points);
         final HullSimplifier hullSimplifier = new HullSimplifier();
         hullCreator.createHulls(ways, pathWidth);
-        final List<String> filePaths = new ArrayList<String>();
-        for (final Area area : hullCreator.getHulls()) {
-            hullSimplifier.simplify(area, threshold);
-            try {
-                final String filePath = "visualizer" + filePaths.size();
-                new PolyWriter(filePath).write(hullSimplifier.getPoints(), hullSimplifier.getOutline(),
-                        hullSimplifier.getHoles());
-                new Triangulator(filePath).triangulate();
-                filePaths.add(filePath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+        hullSimplifier.simplify(hullCreator.getHulls(), threshold);
+        try {
+            new PolyWriter(filePath).write(hullSimplifier.getPoints(), hullSimplifier.getOutlines(),
+                    hullSimplifier.getHoles());
+            new TriangleAdapter(filePath).triangulate();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        new Visualizer(filePaths);
+        new Visualizer(filePath, pathWidth);
     }
 
     private static BoundedPointAccess createPoints() {

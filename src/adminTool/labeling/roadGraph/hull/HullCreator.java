@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.hull;
 
 import java.awt.BasicStroke;
 import java.awt.Shape;

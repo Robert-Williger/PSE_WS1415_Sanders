@@ -1,4 +1,4 @@
-package adminTool.labeling;
+package adminTool.labeling.roadGraph.triangulation;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -7,26 +7,19 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.JPanel;
-
-import adminTool.labeling.roadGraph.Triangulation;
-import adminTool.labeling.roadGraph.TriangulationReader;
 
 public class TriangulationVisualizer extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final BufferedImage image;
 
-    public TriangulationVisualizer(final List<Triangulation> triangulations) {
+    public TriangulationVisualizer(final Triangulation triangulation) {
         setSize(800, 320);
         image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_RGB);
-
-        for (final Triangulation triangulation : triangulations) {
-            draw(triangulation);
-        }
+        draw(triangulation);
     }
 
     public TriangulationVisualizer(final String name) {

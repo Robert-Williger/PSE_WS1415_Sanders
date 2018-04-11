@@ -54,14 +54,14 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<POI> pois;
 
     private final Dimension size;
-    private final BoundedPointAccess points;
+    private final IPointAccess points;
 
     // TODO improve this!
     public Sorting<Street> streetSorting;
 
     public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
             final Collection<Building> buildings, final Collection<POI> pois, final Collection<Label> labels,
-            final BoundedPointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
+            final IPointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;

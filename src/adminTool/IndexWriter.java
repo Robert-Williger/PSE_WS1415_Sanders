@@ -21,11 +21,11 @@ public class IndexWriter extends AbstractMapFileWriter {
     private List<List<Boundary>> boundaries;
     private Map<String, Integer> cityMap;
     private int cityId;
-    private final BoundedPointAccess points;
+    private final IPointAccess points;
 
     // TODO speedup
-    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets,
-            final BoundedPointAccess points, final ZipOutputStream zipOutput) {
+    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets, final IPointAccess points,
+            final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;

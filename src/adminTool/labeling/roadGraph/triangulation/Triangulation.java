@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.triangulation;
 
 import adminTool.BoundedPointAccess;
 

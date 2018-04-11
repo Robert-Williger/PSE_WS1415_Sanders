@@ -1,15 +1,15 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.triangulation;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class TriangulationReader {
+class TriangulationReader {
     private final String name;
     private Triangulation triangulation;
 
-    public TriangulationReader(final String elePath) {
-        this.name = elePath;
+    public TriangulationReader(final String filePath) {
+        this.name = filePath;
     }
 
     public void read() throws IOException {

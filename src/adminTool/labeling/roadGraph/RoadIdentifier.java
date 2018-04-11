@@ -9,12 +9,13 @@ import adminTool.elements.Way;
 
 public class RoadIdentifier {
     private Collection<Way> ways;
+    private Collection<List<Way>> equalWays;
 
     public RoadIdentifier(final Collection<Way> ways) {
         this.ways = ways;
     }
 
-    public Collection<List<Way>> identify() {
+    public void identify() {
         HashMap<String, List<Way>> wayMap = new HashMap<>();
         for (final Way way : ways) {
             if (way.getName() == null || way.getName().isEmpty())
@@ -27,6 +28,10 @@ public class RoadIdentifier {
             equalWays.add(way);
         }
 
-        return wayMap.values();
+        equalWays = wayMap.values();
+    }
+
+    public Collection<List<Way>> getEqualWays() {
+        return equalWays;
     }
 }

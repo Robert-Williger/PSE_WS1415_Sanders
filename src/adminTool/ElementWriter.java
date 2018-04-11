@@ -21,14 +21,12 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<Building> buildings;
     private Sorting<Label> labels;
     private Sorting<POI> pois;
-    
-    private BoundedPointAccess pointAccess;
 
-    public ElementWriter(
-            final Sorting<MultiElement> areas, final Sorting<Street> streets, final Sorting<Building> buildings,
-            final Sorting<Label> labels, final Sorting<POI> pois, final BoundedPointAccess pointAccess, 
-            final ZipOutputStream zipOutput
-    ) {
+    private IPointAccess pointAccess;
+
+    public ElementWriter(final Sorting<MultiElement> areas, final Sorting<Street> streets,
+            final Sorting<Building> buildings, final Sorting<Label> labels, final Sorting<POI> pois,
+            final IPointAccess pointAccess, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.areas = areas;

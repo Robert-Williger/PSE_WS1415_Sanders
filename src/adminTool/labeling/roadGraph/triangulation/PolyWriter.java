@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.triangulation;
 
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
@@ -12,7 +12,7 @@ import util.IntList;
 
 import static adminTool.Util.calculatePointInPolygon;
 
-public class PolyWriter {
+class PolyWriter {
     private final String filepath;
     private BufferedWriter polyWriter;
     private int node;
@@ -23,34 +23,41 @@ public class PolyWriter {
         this.filepath = filepath;
     }
 
-    public void write(final IPointAccess points, final IntList outline, final List<IntList> holes) throws IOException {
+    public void write(final IPointAccess points, final List<IntList> outlines, final List<IntList> holes)
+            throws IOException {
         this.points = points;
         polyWriter = new BufferedWriter(new FileWriter(filepath + ".poly"));
 
-        final int nodes = countNodes(outline, holes);
-        writeNodes(outline, holes, nodes);
-        writeSegments(outline, holes, nodes);
+        final int nodes = countNodes(outlines, holes);
+        writeNodes(outlines, holes, nodes);
+        writeSegments(outlines, holes, nodes);
         writeHoles(points, holes);
 
         polyWriter.close();
     }
 
-    private int countNodes(final IntList outline, final List<IntList> holes) {
-        int nodes = outline.size();
-        for (final IntList list : holes) {
-            nodes += list.size();
+    private int countNodes(final List<IntList> outlines, final List<IntList> holes) {
+        int nodes = 0;
+        for (final IntList outline : outlines) {
+            nodes += outline.size();
+        }
+        for (final IntList hole : holes) {
+            nodes += hole.size();
         }
         return nodes;
     }
 
-    private void writeNodes(final IntList outline, final List<IntList> holes, final int nodes) throws IOException {
+    private void writeNodes(final List<IntList> outlines, final List<IntList> holes, final int nodes)
+            throws IOException {
         node = 1;
         polyWriter.write(nodes + " 2 0 0");
         polyWriter.newLine();
 
-        writeNodes(outline);
-        for (final IntList list : holes) {
-            writeNodes(list);
+        for (final IntList outline : outlines) {
+            writeNodes(outline);
+        }
+        for (final IntList hole : holes) {
+            writeNodes(hole);
         }
     }
 
@@ -63,14 +70,17 @@ public class PolyWriter {
         }
     }
 
-    private void writeSegments(final IntList outline, final List<IntList> holes, final int nodes) throws IOException {
+    private void writeSegments(final List<IntList> outlines, final List<IntList> holes, final int nodes)
+            throws IOException {
         segment = 1;
         polyWriter.write(nodes + " 0");
         polyWriter.newLine();
 
-        writeSegments(outline.size());
-        for (final IntList list : holes) {
-            writeSegments(list.size());
+        for (final IntList outline : outlines) {
+            writeSegments(outline.size());
+        }
+        for (final IntList hole : holes) {
+            writeSegments(hole.size());
         }
     }
 
