@@ -9,6 +9,7 @@ import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Street;
 import adminTool.elements.Way;
+import util.IntList;
 
 public class GraphWriter extends AbstractMapFileWriter {
     private int nodeIdCount;
@@ -75,7 +76,7 @@ public class GraphWriter extends AbstractMapFileWriter {
 
     private void processWay(final Way way, final int[] nodeCounts, final int mask) {
         // Step two: get the cuttings of the way at intersections (and dead ends)
-        final List<Integer> intersections = getWayCuts(way, nodeCounts);
+        final IntList intersections = getWayCuts(way, nodeCounts);
 
         // Step three: processing the cutting of the way
 
@@ -109,8 +110,8 @@ public class GraphWriter extends AbstractMapFileWriter {
     /*
      * Cuts the given ways in a list of streets.
      */
-    private List<Integer> getWayCuts(final Way s, final int[] nodeCounts) {
-        final List<Integer> intersections = new ArrayList<>();
+    private IntList getWayCuts(final Way s, final int[] nodeCounts) {
+        final IntList intersections = new IntList();
 
         // calculating the indexes of the intersections
 

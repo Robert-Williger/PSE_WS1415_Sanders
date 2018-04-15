@@ -1,4 +1,4 @@
-package adminTool.labeling;
+package adminTool.labeling.roadGraph;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -18,13 +18,13 @@ import javax.swing.JPanel;
 
 import static adminTool.Util.lineIntersection;
 
-public class Cross extends JFrame {
+public class TransformationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
 
-    public Cross() {
-        setTitle("Intersection Test");
-        setLocationRelativeTo(null);
+    public TransformationVisualizer() {
+        setTitle("Transformation Visualizer");
         setSize(400, 400);
+        setLocationRelativeTo(null);
         add(new ImagePanel());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
@@ -117,7 +117,7 @@ public class Cross extends JFrame {
     }
 
     public static void main(String[] args) {
-        new Cross();
+        new TransformationVisualizer();
     }
 
 }

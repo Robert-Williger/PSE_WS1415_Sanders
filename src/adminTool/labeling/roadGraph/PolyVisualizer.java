@@ -1,4 +1,4 @@
-package adminTool.labeling;
+package adminTool.labeling.roadGraph;
 
 import java.awt.Color;
 import java.awt.Graphics;

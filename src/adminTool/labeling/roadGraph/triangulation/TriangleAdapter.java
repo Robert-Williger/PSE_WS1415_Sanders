@@ -6,7 +6,7 @@ class TriangleAdapter {
 
     private ProcessBuilder builder;
 
-    public TriangleAdapter(final String polyFilePath) {
+    public TriangleAdapter(final String polyFilePath) {// use the S switch to set max steiner points?
         builder = new ProcessBuilder("triangle.exe", "-pDnQPB", polyFilePath);
     }
 

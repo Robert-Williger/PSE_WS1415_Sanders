@@ -1,6 +1,11 @@
 package adminTool;
 
+import java.awt.BasicStroke;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 
 import adminTool.elements.MultiElement;
@@ -38,7 +43,7 @@ public class Util {
 
     public static boolean rectangleContainsPoint(final int minX, final int minY, final int maxX, final int maxY,
             final int x, final int y) {
-        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+        return x >= minX && x < maxX && y >= minY && y < maxY;
     }
 
     public static boolean polygonContainsPoint(final MultiElement element, final IPointAccess points, final double x,
@@ -137,6 +142,22 @@ public class Util {
         return null;
     }
 
+    public static boolean lineIntersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4,
+            double y4, double[] offsets) {
+        double denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (denom == 0.0) { // Lines are parallel.
+            return false;
+        }
+        offsets[0] = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+        offsets[1] = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+        if (offsets[0] >= -EPSILON && offsets[0] <= 1.f + EPSILON && offsets[1] >= -EPSILON
+                && offsets[1] <= 1.f + EPSILON) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static boolean lineIntersectsLine(double x1, double y1, double x2, double y2, double x3, double y3,
             double x4, double y4) {
         return lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) != null;
@@ -161,4 +182,35 @@ public class Util {
         return out;
     }
 
+    public static double getLength(final MultiElement element, final IPointAccess points) {
+        double totalLength = 0;
+
+        int lastX = points.getX(element.getNode(0));
+        int lastY = points.getY(element.getNode(0));
+        for (int i = 1; i < element.size(); i++) {
+            int currentX = points.getX(element.getNode(i));
+            int currentY = points.getY(element.getNode(i));
+            totalLength += Point.distance(currentX, currentY, lastX, lastY);
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        return totalLength;
+    }
+
+    public static Shape createStrokedShape(final IPointAccess points, final MultiElement element, final float wayWidth,
+            final int cap, final int join) {
+        return createStrokedShape(points, element, new BasicStroke(wayWidth, cap, join));
+    }
+
+    public static Shape createStrokedShape(final IPointAccess points, final MultiElement element, final Stroke stroke) {
+        Path2D path = new Path2D.Float();
+        int current = element.getNode(0);
+        path.moveTo(points.getX(current), points.getY(current));
+        for (int i = 1; i < element.size(); ++i) {
+            current = element.getNode(i);
+            path.lineTo(points.getX(current), points.getY(current));
+        }
+        return stroke.createStrokedShape(path);
+    }
 }

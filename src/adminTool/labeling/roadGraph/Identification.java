@@ -7,11 +7,11 @@ import java.util.List;
 
 import adminTool.elements.Way;
 
-public class RoadIdentifier {
+public class Identification {
     private Collection<Way> ways;
     private Collection<List<Way>> equalWays;
 
-    public RoadIdentifier(final Collection<Way> ways) {
+    public Identification(final Collection<Way> ways) {
         this.ways = ways;
     }
 

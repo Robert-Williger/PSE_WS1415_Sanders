@@ -13,19 +13,27 @@ import util.IntList;
 public class HullSimplifier {
     private static final double DEFAULT_FLATNESS = Double.POSITIVE_INFINITY;
 
+    private final int threshold;
+    private final double flatness;
+
     private List<IntList> holes;
     private List<IntList> outlines;
     private UnboundedPointAccess points;
 
     public HullSimplifier() {
-        holes = new ArrayList<IntList>();
+        this(0, DEFAULT_FLATNESS);
     }
 
-    public void simplify(final List<Area> areas, final int threshold) {
-        simplify(areas, threshold, DEFAULT_FLATNESS);
+    public HullSimplifier(final int threshold) {
+        this(threshold, DEFAULT_FLATNESS);
     }
 
-    public void simplify(final List<Area> areas, final int threshold, final double flatness) {
+    public HullSimplifier(final int threshold, final double flatness) {
+        this.threshold = threshold;
+        this.flatness = flatness;
+    }
+
+    public void simplify(final List<Area> areas) {
         holes = new ArrayList<IntList>();
         outlines = new ArrayList<IntList>();
         points = new UnboundedPointAccess();

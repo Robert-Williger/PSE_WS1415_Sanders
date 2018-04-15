@@ -11,12 +11,11 @@ import adminTool.labeling.roadGraph.triangulation.Triangulation;
 import util.IntList;
 
 public class PathFormer {
-    private static final int[] mid = new int[] { 0, 1, 0, 1 };
-    private static final int[] edge = new int[] { 0, 2, 2, 3 };
-    private static final int[][] index = new int[][] { new int[] { 1, 2, 0 }, new int[] { 2, 0, 1 },
-            new int[] { 0, 1, 2 } };
+    private static final int[] mid = new int[] { 0, 0, 0, 1 };
+    private static final int[][] index = new int[][] { new int[] { 1, 2 }, new int[] { 2, 0 }, new int[] { 0, 1 } };
     private static final int UNASSIGNED = -1;
 
+    private final int threshold;
     private Triangulation triangulation;
     private BoundedPointAccess points;
     private int pointCount;
@@ -24,7 +23,15 @@ public class PathFormer {
     private boolean[] visited;
     private List<IntList> paths;
     private VisvalingamWhyatt simplifier;
-    private float lineWidth;
+    private double minDistSq;
+
+    public PathFormer() {
+        this(0);
+    }
+
+    public PathFormer(final int threshold) {
+        this.threshold = threshold;
+    }
 
     public IPointAccess getPoints() {
         return points;
@@ -35,14 +42,14 @@ public class PathFormer {
     }
 
     public void formPaths(final Triangulation triangulation, final float lineWidth) {
-        this.lineWidth = lineWidth;
+        this.minDistSq = 0.9 * 0.9 * lineWidth * lineWidth;
         this.triangulation = triangulation;
         pointCount = 0;
 
         createPoints(triangulation);
 
         paths = new ArrayList<IntList>();
-        simplifier = new VisvalingamWhyatt(points, 25);
+        simplifier = new VisvalingamWhyatt(points, threshold);
         triangleToMidpoint = new int[triangulation.getTriangles()];
         for (int i = 0; i < triangulation.getTriangles(); ++i) {
             triangleToMidpoint[i] = UNASSIGNED;
@@ -54,14 +61,19 @@ public class PathFormer {
             if (triangulation.getNeighbors(triangle) != 2) {
                 for (int index = 0; index < 3; ++index) {
                     final int neighbor = triangulation.getNeighbor(triangle, index);
-                    if (!visited(neighbor) && triangulation.getNeighbors(neighbor) == 2) {
+                    if (!visited(neighbor)) {
                         final IntList connection = new IntList();
-                        if (triangulation.getNeighbors(triangle) == 3)
-                            connection.add(getMidpoint(triangle));
-                        connection.add(getEdgePoint(triangle, index));
-                        connect(connection, neighbor, triangle);
-                        // paths.add(simplifier.simplifyMultiline(connection));
-                        paths.add(connection);
+                        if (triangulation.getNeighbors(neighbor) == 2) {
+                            tryAppendMidpoint(connection, triangle);
+                            tryAppendEdgepoint(connection, triangle, index);
+                            append(connection, neighbor, triangle);
+                        } else if (triangle < neighbor) {// avoid generation of duplicates
+                            tryAppendMidpoint(connection, triangle);
+                            tryAppendEdgepoint(connection, triangle, index);
+                            tryAppendMidpoint(connection, neighbor);
+                        }
+                        if (connection.size() > 1)
+                            paths.add(simplifier.simplifyMultiline(connection));
                     }
                 }
             }
@@ -73,18 +85,19 @@ public class PathFormer {
         int edgepoints = 0;
         for (int i = 0; i < triangulation.getTriangles(); ++i) {
             midpoints += mid[triangulation.getNeighbors(i)];
-            edgepoints += edge[triangulation.getNeighbors(i)];
+            edgepoints += triangulation.getNeighbors(i);
         }
         points = new BoundedPointAccess(midpoints + edgepoints / 2);
     }
 
-    // connection contains midpoint from previous and the midpoint of the edge between previous and current triangle
-    private void connect(final IntList connection, int current, int last) {
+    // connection contains midpoint from previous and the midpoint of the edge between last and current triangle
+    // current triangle has exactly two neighbors
+    private void append(final IntList connection, int current, int last) {
         for (int index = 0; index < 3; ++index) {
             final int neighbor = triangulation.getNeighbor(current, index);
             if (!visited(neighbor) && neighbor != last) {
                 visit(current);
-                connection.add(getEdgePoint(current, index));
+                tryAppendEdgepoint(connection, current, index);
                 current = neighbor;
                 break;
             }
@@ -95,38 +108,31 @@ public class PathFormer {
                 final int neighbor = triangulation.getNeighbor(current, index);
                 if (!visited(neighbor)) {
                     visit(current);
-                    connection.add(getEdgePoint(current, index));
+                    tryAppendEdgepoint(connection, current, index);
                     current = neighbor;
                     break;
                 }
             }
         }
 
-        if (triangulation.getNeighbors(current) == 3)
-            connection.add(getMidpoint(current));
+        tryAppendMidpoint(connection, current);
     }
 
-    private int getEdgePoint(final int triangle, final int i) {
+    private int getEdgepoint(final int triangle, final int i) {
         int ex = (triangulation.getX(triangulation.getPoint(triangle, index[i][0]))
                 + triangulation.getX(triangulation.getPoint(triangle, index[i][1]))) / 2;
         int ey = (triangulation.getY(triangulation.getPoint(triangle, index[i][0]))
                 + triangulation.getY(triangulation.getPoint(triangle, index[i][1]))) / 2;
 
-        /*final double minDistSq = 0.45 * 0.45 * lineWidth * lineWidth;
-        if (Point.distanceSq(triangulation.getX(triangulation.getPoint(triangle, index[i][2])),
-                triangulation.getY(triangulation.getPoint(triangle, index[i][2])), ex, ey) < minDistSq) {
+        if (Point.distanceSq(triangulation.getX(triangulation.getPoint(triangle, index[i][0])),
+                triangulation.getY(triangulation.getPoint(triangle, index[i][0])),
+                triangulation.getX(triangulation.getPoint(triangle, index[i][1])),
+                triangulation.getY(triangulation.getPoint(triangle, index[i][1]))) > minDistSq) {
+            points.setPoint(pointCount, ex, ey);
+            return pointCount++;
+        }
 
-            System.out.println(Point.distanceSq(triangulation.getX(triangulation.getPoint(triangle, index[i][2])),
-                    triangulation.getY(triangulation.getPoint(triangle, index[i][2])), ex, ey)
-                    + ", "
-                    + Point.distanceSq(triangulation.getX(triangulation.getPoint(triangle, index[i][0])),
-                            triangulation.getY(triangulation.getPoint(triangle, index[i][0])), ex, ey)
-                    + ", " + minDistSq);
-            ex = 0;
-            ey = 0;
-        }*/
-        points.setPoint(pointCount, ex, ey);
-        return pointCount++;
+        return -1;
     }
 
     private int getMidpoint(final int triangle) {
@@ -143,6 +149,17 @@ public class PathFormer {
             ret = pointCount++;
         }
         return ret;
+    }
+
+    private void tryAppendMidpoint(final IntList connection, final int triangle) {
+        if (triangulation.getNeighbors(triangle) == 3)
+            connection.add(getMidpoint(triangle));
+    }
+
+    private void tryAppendEdgepoint(final IntList connection, final int triangle, final int index) {
+        int edgepoint = getEdgepoint(triangle, index);
+        if (edgepoint != -1)
+            connection.add(edgepoint);
     }
 
     private void visit(final int triangle) {

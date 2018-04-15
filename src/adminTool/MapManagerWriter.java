@@ -75,7 +75,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
     @Override
     public void write() throws IOException {
-        final int zoomOffset = (int) Math.ceil(log2(Math.min(size.getWidth(), size.getHeight()) / MIN_TILES));
+        final int zoomOffset = (int) Math.ceil(log2(Math.max(size.getWidth(), size.getHeight()) / MIN_TILES));
         final int coordMapSize = (1 << zoomOffset);
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
@@ -111,7 +111,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         // TODO improve this
         final int[] maxWayWidths = new int[zoomSteps];
         for (int zoom = minZoomStep; zoom < maxZoomStep; ++zoom) {
-            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 3));
+            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 1));
         }
 
         final String[] names = new String[] { "area", "street", "building" };

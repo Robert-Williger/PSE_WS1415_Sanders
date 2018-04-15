@@ -212,6 +212,23 @@ public class IntList {
         return ret;
     }
 
+    @Override
+    public String toString() {
+        int iMax = size - 1;
+        if (iMax == -1)
+            return "IntList: []";
+
+        StringBuilder b = new StringBuilder();
+        b.append("IntList: [");
+        for (int i = 0;; i++) {
+            b.append(data[i]);
+            if (i == iMax)
+                return b.append(']').toString();
+            b.append(", ");
+        }
+
+    }
+
     private class Itr implements PrimitiveIterator.OfInt {
         int cursor; // index of next element to return
 

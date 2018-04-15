@@ -12,17 +12,17 @@ import java.util.List;
 
 public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
 
-    private final List<MultiElement> ways;
+    private final List<? extends MultiElement> ways;
     private final int[] maxWayCoordWidths;
     private final IPointAccess points;
 
-    public WayQuadtreePolicy(final List<MultiElement> ways, final IPointAccess points, final int maxElementsPerTile,
-            final int maxWayCoordWidth, final int maxHeight) {
+    public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
+            final int maxElementsPerTile, final int maxWayCoordWidth, final int maxHeight) {
         this(ways, points, maxElementsPerTile, createUniformArray(maxWayCoordWidth, maxHeight));
     }
 
-    public WayQuadtreePolicy(final List<MultiElement> ways, final IPointAccess points, final int maxElementsPerTile,
-            final int[] maxWayCoordWidths) {
+    public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
+            final int maxElementsPerTile, final int[] maxWayCoordWidths) {
         super(calculateBounds(ways, points), maxElementsPerTile, maxWayCoordWidths.length);
         this.ways = ways;
         this.maxWayCoordWidths = maxWayCoordWidths;
@@ -51,7 +51,8 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
         return false;
     }
 
-    private static List<Rectangle> calculateBounds(final List<MultiElement> elements, final IPointAccess points) {
+    private static List<Rectangle> calculateBounds(final List<? extends MultiElement> elements,
+            final IPointAccess points) {
         final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
         for (final MultiElement element : elements) {
             bounds.add(Util.getBounds(element, points));

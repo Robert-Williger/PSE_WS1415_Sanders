@@ -18,13 +18,14 @@ public class TriangulationVisualizer extends JPanel {
 
     public TriangulationVisualizer(final Triangulation triangulation) {
         setSize(800, 320);
-        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_RGB);
+        setOpaque(false);
+        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_ARGB);
         draw(triangulation);
     }
 
     public TriangulationVisualizer(final String name) {
         setSize(800, 320);
-        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_RGB);
+        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_ARGB);
 
         TriangulationReader reader = new TriangulationReader(name);
         try {
@@ -45,7 +46,7 @@ public class TriangulationVisualizer extends JPanel {
 
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHints(hints);
-        g2.setColor(Color.WHITE);
+        g2.setColor(new Color(255, 255, 255, 0));
         g2.fillRect(0, 0, 1000, 1000);
 
         g2.setColor(Color.BLACK);

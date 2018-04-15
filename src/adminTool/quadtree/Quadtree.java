@@ -9,6 +9,9 @@ public class Quadtree {
     private final Quadtree[] children;
     private final IntList elements;
 
+    private static final int xOffsets[] = new int[] { 0, 1, 0, 1 };
+    private static final int yOffsets[] = new int[] { 0, 0, 1, 1 };
+
     public Quadtree(final int elements, final IQuadtreePolicy policy, final int size) {
         this.elements = new IntList(elements);
         for (int i = 0; i < elements; i++) {
@@ -39,8 +42,8 @@ public class Quadtree {
             final int halfSize = size / 2;
             children = new Quadtree[4];
             for (int i = 0; i < children.length; i++) {
-                children[i] = new Quadtree(elements, policy, x + (i % 2) * halfSize, y + (i / 2) * halfSize, height + 1,
-                        halfSize);
+                children[i] = new Quadtree(elements, policy, x + getXOffset(i) * halfSize, y + getYOffset(i) * halfSize,
+                        height + 1, halfSize);
             }
         } else {
             children = null;
@@ -59,5 +62,13 @@ public class Quadtree {
 
     public IntList getElements() {
         return elements;
+    }
+
+    public static int getXOffset(final int child) {
+        return xOffsets[child];
+    }
+
+    public static int getYOffset(final int child) {
+        return yOffsets[child];
     }
 }

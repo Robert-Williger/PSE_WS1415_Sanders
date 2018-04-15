@@ -12,6 +12,8 @@ import adminTool.IPointAccess;
 import adminTool.elements.Way;
 import util.IntList;
 
+import static adminTool.Util.createStrokedShape;
+
 public class HullCreator {
     private final IPointAccess points;
 
@@ -26,7 +28,7 @@ public class HullCreator {
     }
 
     public void createHulls(final List<Way> ways, final float lineWidth) {
-        final BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+        final BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
         createShapes(ways, stroke);
         createAreas(shapes);
         createIntersectionGraph(areas);
@@ -82,7 +84,7 @@ public class HullCreator {
                 current = way.getNode(i);
                 path.lineTo(points.getX(current), points.getY(current));
             }
-            shapes[u] = stroke.createStrokedShape(path);
+            shapes[u] = createStrokedShape(points, way, stroke);
             ++u;
         }
     }

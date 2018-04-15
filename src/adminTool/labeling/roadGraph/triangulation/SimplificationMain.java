@@ -9,9 +9,9 @@ import adminTool.elements.Way;
 import adminTool.labeling.roadGraph.hull.HullCreator;
 import adminTool.labeling.roadGraph.hull.HullSimplifier;
 
-public class VisualizeMain {
-    private static float pathWidth = 35;
-    private static int threshold = 35;
+public class SimplificationMain {
+    private static float pathWidth = 40;
+    private static int threshold = 10;
 
     public static void main(final String[] args) {
         final String filePath = "visualizer";
@@ -19,10 +19,10 @@ public class VisualizeMain {
         final List<Way> ways = createWays();
 
         final HullCreator hullCreator = new HullCreator(points);
-        final HullSimplifier hullSimplifier = new HullSimplifier();
+        final HullSimplifier hullSimplifier = new HullSimplifier(threshold);
         hullCreator.createHulls(ways, pathWidth);
 
-        hullSimplifier.simplify(hullCreator.getHulls(), threshold);
+        hullSimplifier.simplify(hullCreator.getHulls());
         try {
             new PolyWriter(filePath).write(hullSimplifier.getPoints(), hullSimplifier.getOutlines(),
                     hullSimplifier.getHoles());
@@ -31,7 +31,7 @@ public class VisualizeMain {
             e.printStackTrace();
         }
 
-        new Visualizer(filePath, pathWidth);
+        new SimplificationVisualizer(filePath, pathWidth);
     }
 
     private static BoundedPointAccess createPoints() {
