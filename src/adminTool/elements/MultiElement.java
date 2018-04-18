@@ -1,9 +1,11 @@
 package adminTool.elements;
 
+import util.Arrays;
+
 public class MultiElement implements Typeable {
 
     private final int[] indices;
-    private final int type;
+    private int type;
 
     public MultiElement(final int[] indices, final int type) {
         this.indices = indices;
@@ -21,6 +23,20 @@ public class MultiElement implements Typeable {
     @Override
     public int getType() {
         return type;
+    }
+
+    public void setType(final int type) {
+        this.type = type;
+    }
+
+    public MultiElement subElement(final int from, final int to) {
+        return new SubElement(indices, type, from, to);
+    }
+
+    public MultiElement reverse() {
+        final int[] indices = new int[this.indices.length];
+        Arrays.reverse(indices);
+        return new MultiElement(indices, type);
     }
 
     private static class SubElement extends MultiElement {
@@ -42,7 +58,4 @@ public class MultiElement implements Typeable {
         }
     }
 
-    public MultiElement subElement(final int from, final int to) {
-        return new SubElement(indices, type, from, to);
-    }
 }

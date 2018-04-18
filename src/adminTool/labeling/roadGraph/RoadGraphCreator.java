@@ -31,14 +31,21 @@ public class RoadGraphCreator {
         final int maxWayCoordWidth = 20 << 5;
         final int threshold = 20 << 2;
 
+        System.out.println("identifiy");
         final Identification roadIdentifier = new Identification(ways);
         roadIdentifier.identify();
 
+        System.out.println("simplify");
         final Simplification roadSimplifier = new Simplification(maxWayCoordWidth, threshold);
         roadSimplifier.simplify(roadIdentifier.getEqualWays(), projectionPoints);
 
+        System.out.println("planarize");
         final Planarization planarization = new Planarization();
         planarization.planarize(roadSimplifier.getPaths(), roadSimplifier.getPoints(), mapSize);
+
+        System.out.println("transform");
+        final Transformation transformation = new Transformation(maxWayCoordWidth, threshold);
+        transformation.transform(roadSimplifier.getPaths(), roadSimplifier.getPoints());
     }
 
 }

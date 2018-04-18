@@ -24,6 +24,11 @@ public class UnboundedPointAccess implements IPointAccess {
         points.add(y);
     }
 
+    public void setPoint(final int index, final int x, final int y) {
+        points.set(index << 1, x);
+        points.set((index << 1) + 1, y);
+    }
+
     @Override
     public int getPoints() {
         return points.size() >> 1;

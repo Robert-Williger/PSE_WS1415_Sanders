@@ -1,123 +1,89 @@
 package adminTool.labeling.roadGraph;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.geom.Line2D;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import static adminTool.Util.lineIntersection;
+import adminTool.UnboundedPointAccess;
+import adminTool.elements.MultiElement;
+import adminTool.elements.Way;
 
 public class TransformationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
 
+    private static final int WAY_WIDTH = 40;
+    private static final int THRESHOLD = 2 * WAY_WIDTH;
+
     public TransformationVisualizer() {
+        setLayout(null);
+        getContentPane().setBackground(Color.white);
         setTitle("Transformation Visualizer");
-        setSize(400, 400);
-        setLocationRelativeTo(null);
-        add(new ImagePanel());
+
+        final UnboundedPointAccess points = createPoints();
+        final List<? extends MultiElement> ways = createWays();
+
+        final JPanel origPaths = new WayVisualizer(points, ways);
+
+        final Transformation transformation = new Transformation(WAY_WIDTH, THRESHOLD);
+        transformation.transform(ways, points);
+        final JPanel cutPaths = new WayVisualizer(points, transformation.getProcessedPaths());
+
+        origPaths.setLocation(20, 10);
+        cutPaths.setLocation(850, 10);
+
+        add(origPaths);
+        add(cutPaths);
+
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(1700, 1040);
+        setLocationRelativeTo(null);
         setVisible(true);
     }
 
-    private class ImagePanel extends JPanel {
-        private static final long serialVersionUID = 1L;
+    private static UnboundedPointAccess createPoints() {
+        final UnboundedPointAccess points = new UnboundedPointAccess();
+        points.addPoint(400, 200);
 
-        private final BufferedImage image;
+        points.addPoint(350, 100);
+        points.addPoint(265, 220);
 
-        public ImagePanel() {
-            image = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
+        points.addPoint(500, 250);
+        points.addPoint(600, 270);
 
-            Map<RenderingHints.Key, Object> hints = new HashMap<>();
-            hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            hints.put(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-            hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-
-            int x1 = 60;
-            int y1 = 60;
-            int x2 = 240;
-            int y2 = 240;
-            int x3 = 50;
-            int y3 = 150;
-            int x4 = 240;
-            int y4 = 60;
-
-            Graphics2D g2 = image.createGraphics();
-            g2.setRenderingHints(hints);
-            g2.setColor(Color.WHITE);
-            g2.fillRect(0, 0, 1000, 1000);
-
-            g2.setColor(Color.BLACK);
-            g2.setStroke(new BasicStroke(40, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
-            g2.drawLine(x1, y1, x2, y2);
-            g2.drawLine(x3, y3, x4, y4);
-
-            g2.setColor(Color.WHITE);
-            g2.setStroke(new BasicStroke(36, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
-            g2.drawLine(x1, y1, x2, y2);
-            g2.drawLine(x3, y3, x4, y4);
-
-            g2.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
-            g2.setColor(Color.black);
-            g2.drawLine(x1, y1, x2, y2);
-            g2.drawLine(x3, y3, x4, y4);
-
-            Line2D[] lines = new Line2D.Double[] { new Line2D.Double(x1, y1, x2, y2),
-                    new Line2D.Double(x3, y3, x4, y4) };
-            for (int i = 0; i < 2; ++i) {
-                Shape shape = new BasicStroke(36, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER)
-                        .createStrokedShape(lines[i]);
-                PathIterator iterator = shape.getPathIterator(null);
-                double[] coords1 = new double[2];
-                double[] coords2 = new double[2];
-                for (int j = 0; j < 2; ++j) {
-                    iterator.currentSegment(coords1);
-                    iterator.next();
-                    iterator.currentSegment(coords2);
-                    iterator.next();
-                    g2.setColor(Color.BLACK);
-                    Point2D point = lineIntersection(coords1[0], coords1[1], coords2[0], coords2[1],
-                            lines[1 - i].getX1(), lines[1 - i].getY1(), lines[1 - i].getX2(), lines[1 - i].getY2());
-                    if (point != null) {
-                        g2.fillOval((int) point.getX() - 5, (int) point.getY() - 5, 10, 10);
-                    }
-                }
-            }
-            g2.fillOval(x1 - 5, y1 - 5, 10, 10);
-            g2.fillOval(x2 - 5, y2 - 5, 10, 10);
-            g2.fillOval(x3 - 5, y3 - 5, 10, 10);
-            g2.fillOval(x4 - 5, y4 - 5, 10, 10);
-
-            Point2D intersection = lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4);
-            if (intersection != null) {
-                g2.fillOval((int) intersection.getX() - 5, (int) intersection.getY() - 5, 10, 10);
-                g2.setColor(Color.WHITE);
-                g2.fillOval((int) intersection.getX() - 3, (int) intersection.getY() - 3, 6, 6);
-            }
-
-            g2.dispose();
-        }
-
-        public void paint(final Graphics g) {
-            g.drawImage(image, 0, 0, this);
-        }
-
+        points.addPoint(400, 100);
+        points.addPoint(295, 50);
+        return points;
     }
 
-    public static void main(String[] args) {
+    private static List<Way> createWays() {
+        final List<Way> ways = new ArrayList<Way>();
+        final int[] indices0 = new int[3];
+        indices0[0] = 0;
+        for (int i = 1; i < 3; ++i) {
+            indices0[i] = i;
+        }
+        ways.add(new Way(indices0, 0, "Testweg0", true));
+
+        final int[] indices1 = new int[3];
+        indices1[0] = 0;
+        for (int i = 1; i < 3; ++i) {
+            indices1[i] = i + 2;
+        }
+        ways.add(new Way(indices1, 1, "Testweg1", true));
+
+        final int[] indices2 = new int[3];
+        indices2[0] = 0;
+        for (int i = 1; i < 3; ++i) {
+            indices2[i] = i + 4;
+        }
+        ways.add(new Way(indices2, 2, "Testweg2", true));
+        return ways;
+    }
+
+    public static void main(final String[] args) {
         new TransformationVisualizer();
     }
-
 }

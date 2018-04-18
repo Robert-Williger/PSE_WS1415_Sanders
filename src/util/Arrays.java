@@ -29,17 +29,25 @@ public final class Arrays {
     }
 
     public static <T> void reverse(final T[] array) {
-        for (int i = 0; i < array.length / 2; i++) {
-            T temp = array[i];
-            array[i] = array[array.length - i - 1];
-            array[array.length - i - 1] = temp;
+        for (int i = 0, mid = array.length >> 1, j = array.length - 1; i < mid; i++, j--) {
+            T copy = array[j];
+            array[j] = array[i];
+            array[i] = copy;
+        }
+    }
+
+    public static void reverse(final int[] array) {
+        for (int i = 0, mid = array.length >> 1, j = array.length - 1; i < mid; i++, j--) {
+            int copy = array[j];
+            array[j] = array[i];
+            array[i] = copy;
         }
     }
 
     private static class ArrayIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int       count;
+        private int count;
 
         public ArrayIterator(final T[] array) {
             this.array = array;
@@ -60,7 +68,7 @@ public final class Arrays {
     private static class ReversedIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int       count;
+        private int count;
 
         public ReversedIterator(final T[] array) {
             this.array = array;
@@ -81,9 +89,9 @@ public final class Arrays {
 
     private static class SubarrayIterator<T> implements Iterator<T> {
 
-        private final T[]   array;
+        private final T[] array;
         private final int[] subArray;
-        private int         count;
+        private int count;
 
         public SubarrayIterator(final T[] array, final int[] subArray) {
             this.array = array;
@@ -118,7 +126,7 @@ public final class Arrays {
     private static class LimitIterator<T> implements Iterator<T> {
 
         private final T[] array;
-        private int       count;
+        private int count;
         private final int limit;
 
         public LimitIterator(final T[] array, final int limit) {

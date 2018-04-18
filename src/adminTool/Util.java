@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 
@@ -12,7 +13,7 @@ import adminTool.elements.MultiElement;
 import util.IntList;
 
 public class Util {
-    private static double EPSILON = 1E-5;
+    public static double EPSILON = 1E-5;
 
     private static final int OUT_LEFT = 0b0001;
     private static final int OUT_TOP = 0b0010;
@@ -127,8 +128,8 @@ public class Util {
         return true;
     }
 
-    public static Point2D lineIntersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4,
-            double y4) {
+    public static Point2D lineIntersectsLine(double x1, double y1, double x2, double y2, double x3, double y3,
+            double x4, double y4) {
         double denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
         if (denom == 0.0) { // Lines are parallel.
             return null;
@@ -142,8 +143,18 @@ public class Util {
         return null;
     }
 
-    public static boolean lineIntersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4,
-            double y4, double[] offsets) {
+    public static Point2D lineIntersectsLine(Point2D p1, Point2D p2, Point2D p3, Point2D p4) {
+        return lineIntersectsLine(p1.getX(), p1.getY(), p2.getX(), p2.getY(), p3.getX(), p3.getY(), p4.getX(),
+                p4.getY());
+    }
+
+    public static Point2D lineIntersectsLine(Line2D l1, Line2D l2) {
+        return lineIntersectsLine(l1.getX1(), l1.getY1(), l1.getX2(), l1.getY2(), l2.getX1(), l2.getY1(), l2.getX2(),
+                l2.getY2());
+    }
+
+    public static boolean lineIntersectsLine(double x1, double y1, double x2, double y2, double x3, double y3,
+            double x4, double y4, double[] offsets) {
         double denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
         if (denom == 0.0) { // Lines are parallel.
             return false;
@@ -158,9 +169,14 @@ public class Util {
         return false;
     }
 
-    public static boolean lineIntersectsLine(double x1, double y1, double x2, double y2, double x3, double y3,
-            double x4, double y4) {
-        return lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) != null;
+    public static boolean lineIntersectsLine(Point2D p1, Point2D p2, Point2D p3, Point2D p4, double[] offsets) {
+        return lineIntersectsLine(p1.getX(), p1.getY(), p2.getX(), p2.getY(), p3.getX(), p3.getY(), p4.getX(),
+                p4.getY(), offsets);
+    }
+
+    public static boolean lineIntersectsLine(Line2D l1, Line2D l2, double[] offsets) {
+        return lineIntersectsLine(l1.getX1(), l1.getY1(), l1.getX2(), l1.getY2(), l2.getX1(), l2.getY1(), l2.getX2(),
+                l2.getY2(), offsets);
     }
 
     // the double for width and height avoids integer-overflows.
