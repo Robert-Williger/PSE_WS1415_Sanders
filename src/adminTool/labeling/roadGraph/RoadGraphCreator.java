@@ -8,12 +8,13 @@ import adminTool.IOSMParser;
 import adminTool.IPointAccess;
 import adminTool.OSMParser;
 import adminTool.elements.Way;
+import adminTool.labeling.roadGraph.simplification.Simplification;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
 
 public class RoadGraphCreator {
     public static void main(final String[] args) {
-        final IOSMParser parser = new OSMParser();
+        IOSMParser parser = new OSMParser();
         try {
             parser.read(new File("default.pbf"));
         } catch (final Exception e) {
@@ -22,9 +23,11 @@ public class RoadGraphCreator {
         }
 
         Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
+        final Collection<Way> ways = parser.getWays();
+        parser = null;
         projector.performProjection();
 
-        new RoadGraphCreator(parser.getWays(), projector.getPoints(), projector.getSize());
+        new RoadGraphCreator(ways, projector.getPoints(), projector.getSize());
     }
 
     public RoadGraphCreator(final Collection<Way> ways, final IPointAccess projectionPoints, final Dimension mapSize) {
@@ -32,8 +35,8 @@ public class RoadGraphCreator {
         final int threshold = 20 << 2;
 
         System.out.println("identifiy");
-        final Identification roadIdentifier = new Identification(ways);
-        roadIdentifier.identify();
+        final Identification roadIdentifier = new Identification();
+        roadIdentifier.identify(ways);
 
         System.out.println("simplify");
         final Simplification roadSimplifier = new Simplification(maxWayCoordWidth, threshold);

@@ -20,9 +20,10 @@ public class WayVisualizer extends JPanel {
     private final BufferedImage image;
 
     public WayVisualizer(final IPointAccess points, final List<? extends MultiElement> paths) {
-        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_RGB);
+        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_ARGB);
         setSize(800, 320);
         draw(points, paths);
+        setOpaque(false);
     }
 
     private void draw(final IPointAccess points, final List<? extends MultiElement> paths) {
@@ -35,7 +36,7 @@ public class WayVisualizer extends JPanel {
 
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHints(hints);
-        g2.setColor(new Color(255, 255, 255, 255));
+        g2.setColor(new Color(255, 255, 255, 0));
         g2.fillRect(0, 0, 1000, 1000);
 
         g2.setColor(Color.BLACK);

@@ -1,8 +1,8 @@
-package adminTool.labeling.roadGraph.triangulation;
+package adminTool.labeling.roadGraph.simplification.triangulation;
 
 import java.io.IOException;
 
-class TriangleAdapter {
+public class TriangleAdapter {
 
     private ProcessBuilder builder;
 

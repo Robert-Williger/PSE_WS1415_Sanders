@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.simplification.triangulation;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -18,8 +18,9 @@ public class PolyVisualizer extends JPanel {
     private final BufferedImage image;
 
     public PolyVisualizer(final String name) {
-        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_RGB);
+        image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_ARGB);
         setSize(1000, 320);
+        setOpaque(false);
         try {
             read(name);
         } catch (IOException e) {
@@ -81,7 +82,7 @@ public class PolyVisualizer extends JPanel {
 
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHints(hints);
-        g2.setColor(Color.WHITE);
+        g2.setColor(new Color(255, 255, 255, 255));
         g2.fillRect(0, 0, 1000, 1000);
 
         g2.setColor(Color.BLACK);

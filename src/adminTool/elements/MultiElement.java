@@ -1,5 +1,7 @@
 package adminTool.elements;
 
+import java.util.PrimitiveIterator;
+
 import util.Arrays;
 
 public class MultiElement implements Typeable {
@@ -37,6 +39,10 @@ public class MultiElement implements Typeable {
         final int[] indices = new int[this.indices.length];
         Arrays.reverse(indices);
         return new MultiElement(indices, type);
+    }
+
+    public PrimitiveIterator.OfInt iterator() {
+        return Arrays.iterator(indices);
     }
 
     private static class SubElement extends MultiElement {

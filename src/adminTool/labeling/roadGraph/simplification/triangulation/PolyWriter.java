@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph.triangulation;
+package adminTool.labeling.roadGraph.simplification.triangulation;
 
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
@@ -12,7 +12,7 @@ import util.IntList;
 
 import static adminTool.Util.calculatePointInPolygon;
 
-class PolyWriter {
+public class PolyWriter {
     private final String filepath;
     private BufferedWriter polyWriter;
     private int node;

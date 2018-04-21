@@ -2,6 +2,7 @@ package util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
 
 public final class Arrays {
 
@@ -26,6 +27,18 @@ public final class Arrays {
 
     public static <T> Iterator<T> iterator(final T[] array, final int[] subarray) {
         return new SubarrayIterator<>(array, subarray);
+    }
+
+    public static PrimitiveIterator.OfInt iterator(final int[] array) {
+        return iterator(array, 0, array.length);
+    }
+
+    public static PrimitiveIterator.OfInt iterator(final int[] array, final int size) {
+        return iterator(array, 0, size);
+    }
+
+    public static PrimitiveIterator.OfInt iterator(final int[] array, final int from, final int size) {
+        return new Itr(array, from, size);
     }
 
     public static <T> void reverse(final T[] array) {
@@ -144,5 +157,30 @@ public final class Arrays {
             return array[count++];
         }
 
+    }
+
+    private static class Itr implements PrimitiveIterator.OfInt {
+        private int cursor; // index of next element to return
+        private final int size;
+        private final int[] array;
+
+        public Itr(final int[] array, final int cursor, final int size) {
+            this.cursor = cursor;
+            this.size = size;
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor != size;
+        }
+
+        @Override
+        public int nextInt() {
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            return array[cursor++];
+        }
     }
 }

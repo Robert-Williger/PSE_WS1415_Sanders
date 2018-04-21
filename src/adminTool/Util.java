@@ -229,4 +229,15 @@ public class Util {
         }
         return stroke.createStrokedShape(path);
     }
+
+    public static Shape createStrokedShape(final IPointAccess points, final IntList element, final Stroke stroke) {
+        Path2D path = new Path2D.Float();
+        int current = element.get(0);
+        path.moveTo(points.getX(current), points.getY(current));
+        for (int i = 1; i < element.size(); ++i) {
+            current = element.get(i);
+            path.lineTo(points.getX(current), points.getY(current));
+        }
+        return stroke.createStrokedShape(path);
+    }
 }

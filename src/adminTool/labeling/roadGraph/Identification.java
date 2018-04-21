@@ -8,14 +8,9 @@ import java.util.List;
 import adminTool.elements.Way;
 
 public class Identification {
-    private Collection<Way> ways;
     private Collection<List<Way>> equalWays;
 
-    public Identification(final Collection<Way> ways) {
-        this.ways = ways;
-    }
-
-    public void identify() {
+    public void identify(final Collection<Way> ways) {
         HashMap<String, List<Way>> wayMap = new HashMap<>();
         for (final Way way : ways) {
             if (way.getName() == null || way.getName().isEmpty())

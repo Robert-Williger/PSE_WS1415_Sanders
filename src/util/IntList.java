@@ -1,6 +1,5 @@
 package util;
 
-import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 
 public class IntList {
@@ -25,10 +24,32 @@ public class IntList {
         this(DEFAULT_CAPACITY);
     }
 
-    public void trimToSize() {
-        if (size < data.length) {
-            data = java.util.Arrays.copyOf(data, size);
-        }
+    public int get(final int index) {
+        rangeCheck(index);
+
+        return data[index];
+    }
+
+    public void add(final int e) {
+        ensureCapacityInternal(size + 1);
+        data[size++] = e;
+    }
+
+    public void add(final int index, final int element) {
+        rangeCheckForAdd(index);
+
+        ensureCapacityInternal(size + 1);
+        System.arraycopy(data, index, data, index + 1, size - index);
+        data[index] = element;
+        size++;
+    }
+
+    public int set(final int index, final int element) {
+        rangeCheck(index);
+
+        int oldValue = data[index];
+        data[index] = element;
+        return oldValue;
     }
 
     public boolean addAll(final IntList list) {
@@ -41,39 +62,6 @@ public class IntList {
         return numNew != 0;
     }
 
-    public void ensureCapacity(int minCapacity) {
-        int minExpand = 0;
-
-        if (minCapacity > minExpand) {
-            ensureExplicitCapacity(minCapacity);
-        }
-    }
-
-    private void ensureCapacityInternal(int minCapacity) {
-        ensureExplicitCapacity(minCapacity);
-    }
-
-    private void ensureExplicitCapacity(int minCapacity) {
-        if (minCapacity - data.length > 0)
-            grow(minCapacity);
-    }
-
-    private void grow(int minCapacity) {
-        int newCapacity = data.length + (data.length >> 1);
-        if (newCapacity - minCapacity < 0)
-            newCapacity = minCapacity;
-        if (newCapacity - MAX_ARRAY_SIZE > 0)
-            newCapacity = hugeCapacity(minCapacity);
-
-        data = java.util.Arrays.copyOf(data, newCapacity);
-    }
-
-    private static int hugeCapacity(int minCapacity) {
-        if (minCapacity < 0) // overflow
-            throw new OutOfMemoryError();
-        return (minCapacity > MAX_ARRAY_SIZE) ? Integer.MAX_VALUE : MAX_ARRAY_SIZE;
-    }
-
     public int size() {
         return size;
     }
@@ -82,12 +70,55 @@ public class IntList {
         return size == 0;
     }
 
-    public boolean contains(int o) {
+    public PrimitiveIterator.OfInt iterator() {
+        return Arrays.iterator(data, size);
+    }
+
+    public PrimitiveIterator.OfInt iterator(final int index) {
+        return Arrays.iterator(data, index, size - index);
+    }
+
+    public int[] toArray() {
+        int[] ret = new int[size];
+        System.arraycopy(data, 0, ret, 0, size);
+        return ret;
+    }
+
+    @Override
+    public String toString() {
+        int iMax = size - 1;
+        if (iMax == -1)
+            return "IntList: []";
+
+        StringBuilder b = new StringBuilder();
+        b.append("IntList: [");
+        for (int i = 0;; i++) {
+            b.append(data[i]);
+            if (i == iMax)
+                return b.append(']').toString();
+            b.append(", ");
+        }
+    }
+
+    public void trimToSize() {
+        if (size < data.length) {
+            data = java.util.Arrays.copyOf(data, size);
+        }
+    }
+
+    public void ensureCapacity(final int minCapacity) {
+        int minExpand = 0;
+
+        if (minCapacity > minExpand) {
+            ensureExplicitCapacity(minCapacity);
+        }
+    }
+
+    public boolean contains(final int o) {
         return indexOf(o) >= 0;
     }
 
-    public int indexOf(int o) {
-
+    public int indexOf(final int o) {
         for (int i = 0; i < size; i++) {
             if (data[i] == o) {
                 return i;
@@ -97,7 +128,7 @@ public class IntList {
         return -1;
     }
 
-    public int lastIndexOf(int o) {
+    public int lastIndexOf(final int o) {
         for (int i = size - 1; i >= 0; i--) {
             if (data[i] == o) {
                 return i;
@@ -107,35 +138,7 @@ public class IntList {
         return -1;
     }
 
-    public int get(int index) {
-        rangeCheck(index);
-
-        return data[index];
-    }
-
-    public int set(int index, int element) {
-        rangeCheck(index);
-
-        int oldValue = data[index];
-        data[index] = element;
-        return oldValue;
-    }
-
-    public void add(int e) {
-        ensureCapacityInternal(size + 1);
-        data[size++] = e;
-    }
-
-    public void add(int index, int element) {
-        rangeCheckForAdd(index);
-
-        ensureCapacityInternal(size + 1);
-        System.arraycopy(data, index, data, index + 1, size - index);
-        data[index] = element;
-        size++;
-    }
-
-    public int removeIndex(int index) {
+    public int removeIndex(final int index) {
         rangeCheck(index);
 
         int oldValue = data[index];
@@ -170,6 +173,31 @@ public class IntList {
         }
     }
 
+    private void ensureCapacityInternal(int minCapacity) {
+        ensureExplicitCapacity(minCapacity);
+    }
+
+    private void ensureExplicitCapacity(int minCapacity) {
+        if (minCapacity - data.length > 0)
+            grow(minCapacity);
+    }
+
+    private void grow(int minCapacity) {
+        int newCapacity = data.length + (data.length >> 1);
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+
+        data = java.util.Arrays.copyOf(data, newCapacity);
+    }
+
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ? Integer.MAX_VALUE : MAX_ARRAY_SIZE;
+    }
+
     private void fastRemove(int index) {
         int numMoved = size - index - 1;
         if (numMoved > 0)
@@ -184,73 +212,18 @@ public class IntList {
         size = newSize;
     }
 
-    private void rangeCheck(int index) {
+    private void rangeCheck(final int index) {
         if (index >= size)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
 
-    private void rangeCheckForAdd(int index) {
+    private void rangeCheckForAdd(final int index) {
         if (index > size || index < 0)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
 
-    private String outOfBoundsMsg(int index) {
+    private String outOfBoundsMsg(final int index) {
         return "Index: " + index + ", Size: " + size;
     }
 
-    public PrimitiveIterator.OfInt iterator() {
-        return new Itr();
-    }
-
-    public PrimitiveIterator.OfInt iterator(final int index) {
-        return new Itr();
-    }
-
-    public int[] toArray() {
-        int[] ret = new int[size];
-        System.arraycopy(data, 0, ret, 0, size);
-        return ret;
-    }
-
-    @Override
-    public String toString() {
-        int iMax = size - 1;
-        if (iMax == -1)
-            return "IntList: []";
-
-        StringBuilder b = new StringBuilder();
-        b.append("IntList: [");
-        for (int i = 0;; i++) {
-            b.append(data[i]);
-            if (i == iMax)
-                return b.append(']').toString();
-            b.append(", ");
-        }
-
-    }
-
-    private class Itr implements PrimitiveIterator.OfInt {
-        int cursor; // index of next element to return
-
-        public Itr() {
-            this(0);
-        }
-
-        public Itr(final int cursor) {
-            this.cursor = cursor;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return cursor != size;
-        }
-
-        @Override
-        public int nextInt() {
-            if (cursor >= size) {
-                throw new NoSuchElementException();
-            }
-            return data[cursor++];
-        }
-    }
 }

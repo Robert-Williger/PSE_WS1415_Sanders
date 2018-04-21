@@ -2,6 +2,7 @@ package adminTool;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PrimitiveIterator;
 
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
@@ -10,59 +11,62 @@ import util.IntList;
 public class VisvalingamWhyatt {
 
     private final int threshold;
-    private final IPointAccess points;
 
-    public VisvalingamWhyatt(final IPointAccess points, final int threshold) {
-        this.points = points;
+    public VisvalingamWhyatt(final int threshold) {
         this.threshold = threshold;
     }
 
-    public IntList simplifyPolygon(final IntList element) {
+    public IntList simplifyPolygon(final IPointAccess points, final PrimitiveIterator.OfInt element) {
         Item head = setupList(element);
-        IAddressablePriorityQueue<Item> queue = setupQueue(head, element.size());
-        head = performSimplification(queue, head);
+        final int size = head.priority;
+        IAddressablePriorityQueue<Item> queue = setupQueue(points, head, size);
+        head = performSimplification(points, queue, head);
 
         return createReturnList(head, !queue.isEmpty() ? queue.size() : 0);
     }
 
-    public IntList simplifyMultiline(final IntList element) {
-        Item head = setupList(element);
-        IAddressablePriorityQueue<Item> queue = setupQueue(head.next, element.size() - 2);
-        performSimplification(queue, null);
+    public IntList simplifyMultiline(final IPointAccess points, final PrimitiveIterator.OfInt element) {
+        final Item head = setupList(element);
+        final int size = head.priority;
+        IAddressablePriorityQueue<Item> queue = setupQueue(points, head.next, size - 2);
+        performSimplification(points, queue, null);
 
         return createReturnList(head, !queue.isEmpty() ? queue.size() + 2 : 2);
     }
 
-    public IntList simplifyPolygon(final int from, final int nodes) {
+    public IntList simplifyPolygon(final IPointAccess points, final int from, final int nodes) {
         Item head = setupList(from, nodes);
-        IAddressablePriorityQueue<Item> queue = setupQueue(head, nodes);
-        head = performSimplification(queue, head);
+        IAddressablePriorityQueue<Item> queue = setupQueue(points, head, nodes);
+        head = performSimplification(points, queue, head);
 
         return createReturnList(head, !queue.isEmpty() ? queue.size() : 0);
     }
 
-    public IntList simplifyMultiline(final int from, final int nodes) {
+    public IntList simplifyMultiline(final IPointAccess points, final int from, final int nodes) {
         Item head = setupList(from, nodes);
-        IAddressablePriorityQueue<Item> queue = setupQueue(head.next, nodes - 2);
-        performSimplification(queue, null);
+        IAddressablePriorityQueue<Item> queue = setupQueue(points, head.next, nodes - 2);
+        performSimplification(points, queue, null);
 
         return createReturnList(head, !queue.isEmpty() ? queue.size() + 2 : 2);
     }
 
-    private Item setupList(final IntList element) {
-        Item head = new Item(element.get(0));
+    private Item setupList(final PrimitiveIterator.OfInt element) {
+        Item head = new Item(element.nextInt());
         Item last = head;
 
-        for (int i = 1; i < element.size(); ++i) {
-            final Item current = new Item(element.get(i));
+        int size = 1;
+        while (element.hasNext()) {
+            final Item current = new Item(element.nextInt());
             current.previous = last;
             last.next = current;
 
             last = current;
+            ++size;
         }
         last.next = head;
         head.previous = last;
 
+        head.priority = size;
         return head;
     }
 
@@ -83,7 +87,7 @@ public class VisvalingamWhyatt {
         return head;
     }
 
-    private IAddressablePriorityQueue<Item> setupQueue(final Item from, final int nodes) {
+    private IAddressablePriorityQueue<Item> setupQueue(final IPointAccess points, final Item from, final int nodes) {
         final IAddressablePriorityQueue<Item> queue = new AddressableBinaryHeap<>();
 
         List<Item> items = new ArrayList<>(nodes);
@@ -92,7 +96,7 @@ public class VisvalingamWhyatt {
         Item current = from;
 
         for (int i = 0; i < nodes; i++) {
-            updatePriority(current);
+            updatePriority(points, current);
             items.add(current);
             priorities.add(current.priority);
             current = current.next;
@@ -103,7 +107,8 @@ public class VisvalingamWhyatt {
         return queue;
     }
 
-    private Item performSimplification(final IAddressablePriorityQueue<Item> queue, final Item head) {
+    private Item performSimplification(final IPointAccess points, final IAddressablePriorityQueue<Item> queue,
+            final Item head) {
         Item currentHead = head;
         while (!queue.isEmpty()) {
             final Item item = queue.deleteMin();
@@ -118,10 +123,10 @@ public class VisvalingamWhyatt {
                 next.previous = previous;
                 previous.next = next;
 
-                updatePriority(next);
+                updatePriority(points, next);
                 queue.changeKey(next, next.priority);
 
-                updatePriority(previous);
+                updatePriority(points, previous);
                 queue.changeKey(previous, previous.priority);
 
             } else {
@@ -145,11 +150,11 @@ public class VisvalingamWhyatt {
         return ret;
     }
 
-    private void updatePriority(final Item item) {
-        item.priority = getArea(item.previous.index, item.index, item.next.index);
+    private void updatePriority(final IPointAccess points, final Item item) {
+        item.priority = getArea(points, item.previous.index, item.index, item.next.index);
     }
 
-    private int getArea(final int previous, final int current, final int next) {
+    private int getArea(final IPointAccess points, final int previous, final int current, final int next) {
         final int lastX = points.getX(previous);
         final int lastY = points.getY(previous);
 

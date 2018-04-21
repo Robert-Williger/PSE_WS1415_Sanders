@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph.triangulation;
+package adminTool.labeling.roadGraph.simplification;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,12 +6,14 @@ import java.util.List;
 
 import adminTool.BoundedPointAccess;
 import adminTool.elements.Way;
-import adminTool.labeling.roadGraph.hull.HullCreator;
-import adminTool.labeling.roadGraph.hull.HullSimplifier;
+import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
+import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;
+import adminTool.labeling.roadGraph.simplification.triangulation.PolyWriter;
+import adminTool.labeling.roadGraph.simplification.triangulation.TriangleAdapter;
 
 public class SimplificationMain {
     private static float pathWidth = 40;
-    private static int threshold = 10;
+    private static int threshold = 50;
 
     public static void main(final String[] args) {
         final String filePath = "visualizer";
@@ -31,7 +33,7 @@ public class SimplificationMain {
             e.printStackTrace();
         }
 
-        new SimplificationVisualizer(filePath, pathWidth);
+        new SimplificationVisualizer(filePath, ways, points, pathWidth, threshold);
     }
 
     private static BoundedPointAccess createPoints() {

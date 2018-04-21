@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph.hull;
+package adminTool.labeling.roadGraph.simplification.hull;
 
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
@@ -13,7 +13,7 @@ import util.IntList;
 public class HullSimplifier {
     private static final double DEFAULT_FLATNESS = Double.POSITIVE_INFINITY;
 
-    private final int threshold;
+    private final VisvalingamWhyatt simplifier;
     private final double flatness;
 
     private List<IntList> holes;
@@ -29,7 +29,7 @@ public class HullSimplifier {
     }
 
     public HullSimplifier(final int threshold, final double flatness) {
-        this.threshold = threshold;
+        simplifier = new VisvalingamWhyatt(threshold);
         this.flatness = flatness;
     }
 
@@ -43,7 +43,6 @@ public class HullSimplifier {
         int from = 0;
         for (final Area area : areas) {
             final PathIterator pathIterator = area.getPathIterator(null, flatness);
-            final VisvalingamWhyatt simplifier = new VisvalingamWhyatt(points, threshold);
 
             int startHoles = holes.size();
             while (!pathIterator.isDone()) {
@@ -59,7 +58,7 @@ public class HullSimplifier {
                             list.add(i);
                         }
                         final int to = points.getPoints();
-                        final IntList hole = simplifier.simplifyPolygon(from, to - from);
+                        final IntList hole = simplifier.simplifyPolygon(points, from, to - from);
                         if (!hole.isEmpty()) {
                             holes.add(hole);
                         }

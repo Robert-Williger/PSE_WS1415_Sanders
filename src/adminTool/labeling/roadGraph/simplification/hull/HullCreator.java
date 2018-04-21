@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph.hull;
+package adminTool.labeling.roadGraph.simplification.hull;
 
 import java.awt.BasicStroke;
 import java.awt.Shape;
@@ -17,10 +17,6 @@ import static adminTool.Util.createStrokedShape;
 public class HullCreator {
     private final IPointAccess points;
 
-    private Shape[] shapes;
-    private Area[] areas;
-    private IntList[] intersectionGraph;
-    private boolean[] marked;
     private List<Area> hulls;
 
     public HullCreator(final IPointAccess points) {
@@ -29,36 +25,37 @@ public class HullCreator {
 
     public void createHulls(final List<Way> ways, final float lineWidth) {
         final BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-        createShapes(ways, stroke);
-        createAreas(shapes);
-        createIntersectionGraph(areas);
 
-        createHulls();
+        final Area[] areas = createAreas(createShapes(ways, stroke));
+        final IntList[] graph = createIntersectionGraph(areas);
+
+        hulls = createHulls(areas, graph);
     }
 
     public List<Area> getHulls() {
         return hulls;
     }
 
-    private void createHulls() {
-        hulls = new ArrayList<Area>();
-        for (int u = 0; u < intersectionGraph.length; ++u) {
-            if (!marked[u]) {
-                appendArea(areas[u], u);
+    private ArrayList<Area> createHulls(final Area[] areas, final IntList[] graph) {
+        ArrayList<Area> hulls = new ArrayList<Area>();
+        for (int u = 0; u < graph.length; ++u) {
+            if (areas[u] != null) {
                 hulls.add(areas[u]);
+                appendArea(areas[u], u, areas, graph);
             }
         }
+        return hulls;
     }
 
-    private void createIntersectionGraph(final Area[] areas) {
-        intersectionGraph = new IntList[areas.length];
+    private IntList[] createIntersectionGraph(final Area[] areas) {
+        IntList[] intersectionGraph = new IntList[areas.length];
         for (int u = 0; u < areas.length; ++u) {
             intersectionGraph[u] = new IntList();
         }
         for (int u = 0; u < areas.length; ++u) {
             for (int v = u + 1; v < areas.length; ++v) {
                 if (areas[u].intersects(areas[v].getBounds2D())) {
-                    Area uArea = new Area(areas[u]);
+                    final Area uArea = new Area(areas[u]);
                     uArea.intersect(areas[v]);
                     if (!uArea.isEmpty()) {
                         intersectionGraph[u].add(v);
@@ -66,14 +63,13 @@ public class HullCreator {
                     }
                 }
             }
-            ++u;
         }
 
-        marked = new boolean[areas.length];
+        return intersectionGraph;
     }
 
-    private void createShapes(final List<Way> ways, final BasicStroke stroke) {
-        shapes = new Shape[ways.size()];
+    private Shape[] createShapes(final List<Way> ways, final BasicStroke stroke) {
+        Shape[] shapes = new Shape[ways.size()];
 
         int u = 0;
         for (final Way way : ways) {
@@ -84,25 +80,28 @@ public class HullCreator {
                 current = way.getNode(i);
                 path.lineTo(points.getX(current), points.getY(current));
             }
+
             shapes[u] = createStrokedShape(points, way, stroke);
             ++u;
         }
+        return shapes;
     }
 
-    private void createAreas(final Shape[] shapes) {
-        areas = new Area[shapes.length];
+    private Area[] createAreas(final Shape[] shapes) {
+        Area[] areas = new Area[shapes.length];
         for (int i = 0; i < shapes.length; ++i) {
             areas[i] = new Area(shapes[i]);
         }
+        return areas;
     }
 
-    private void appendArea(final Area area, final int node) {
-        marked[node] = true;
-        for (final PrimitiveIterator.OfInt it = intersectionGraph[node].iterator(); it.hasNext();) {
+    private void appendArea(final Area area, final int node, final Area[] areas, final IntList[] graph) {
+        areas[node] = null;
+        for (final PrimitiveIterator.OfInt it = graph[node].iterator(); it.hasNext();) {
             final int next = it.nextInt();
-            if (!marked[next]) {
+            if (areas[next] != null) {
                 area.add(areas[next]);
-                appendArea(area, next);
+                appendArea(area, next, areas, graph);
             }
         }
     }

@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.simplification;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -6,8 +6,7 @@ import java.util.List;
 
 import adminTool.BoundedPointAccess;
 import adminTool.IPointAccess;
-import adminTool.VisvalingamWhyatt;
-import adminTool.labeling.roadGraph.triangulation.Triangulation;
+import adminTool.labeling.roadGraph.simplification.triangulation.Triangulation;
 import util.IntList;
 
 public class PathFormer {
@@ -15,23 +14,13 @@ public class PathFormer {
     private static final int[][] index = new int[][] { new int[] { 1, 2 }, new int[] { 2, 0 }, new int[] { 0, 1 } };
     private static final int UNASSIGNED = -1;
 
-    private final int threshold;
     private Triangulation triangulation;
     private BoundedPointAccess points;
     private int pointCount;
     private int[] triangleToMidpoint;
     private boolean[] visited;
     private List<IntList> paths;
-    private VisvalingamWhyatt simplifier;
     private double minDistSq;
-
-    public PathFormer() {
-        this(0);
-    }
-
-    public PathFormer(final int threshold) {
-        this.threshold = threshold;
-    }
 
     public IPointAccess getPoints() {
         return points;
@@ -49,7 +38,6 @@ public class PathFormer {
         createPoints(triangulation);
 
         paths = new ArrayList<IntList>();
-        simplifier = new VisvalingamWhyatt(points, threshold);
         triangleToMidpoint = new int[triangulation.getTriangles()];
         for (int i = 0; i < triangulation.getTriangles(); ++i) {
             triangleToMidpoint[i] = UNASSIGNED;
@@ -73,7 +61,7 @@ public class PathFormer {
                             tryAppendMidpoint(connection, neighbor);
                         }
                         if (connection.size() > 1)
-                            paths.add(simplifier.simplifyMultiline(connection));
+                            paths.add(connection);
                     }
                 }
             }
