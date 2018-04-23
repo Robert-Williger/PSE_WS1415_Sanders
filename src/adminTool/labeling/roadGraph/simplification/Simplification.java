@@ -17,7 +17,7 @@ import util.IntList;
 public class Simplification {
     private final int maxWayCoordWidth;
     private final List<MultiElement> paths;
-    private final UnboundedPointAccess points;
+    private UnboundedPointAccess points;
     private final HullCreator hullCreator;
     private final HullSimplifier hullSimplifier;
     private final Triangulator triangulator;
@@ -27,10 +27,9 @@ public class Simplification {
 
     public Simplification(final int maxWayCoordWidth, final int simplifyThreshold) {
         this.paths = new ArrayList<MultiElement>();
-        this.points = new UnboundedPointAccess();
         this.simplifier = new VisvalingamWhyatt(simplifyThreshold);
-        this.hullCreator = new HullCreator(points);
-        this.hullSimplifier = new HullSimplifier(simplifyThreshold);
+        this.hullCreator = new HullCreator();
+        this.hullSimplifier = new HullSimplifier(5);//simplifyThreshold);
         this.triangulator = new Triangulator();
         this.pathFormer = new PathFormer();
         this.pathSimplifier = new PathSimplifier(simplifyThreshold);
@@ -45,16 +44,17 @@ public class Simplification {
         return paths;
     }
 
-    public void simplify(final Collection<List<Way>> identifiedWays, final IPointAccess points) {
+    public void simplify(final Collection<List<Way>> identifiedWays, final UnboundedPointAccess points) {
+        this.points = points;
         int equalWayNr = 0;
 
         for (final List<Way> equalWays : identifiedWays) {
             if (equalWays.size() > 1) {
-                hullCreator.createHulls(equalWays, maxWayCoordWidth);
+                hullCreator.createHulls(equalWays, points, maxWayCoordWidth);
 
-                if (hullCreator.getHulls().size() == equalWays.size())
+                if (hullCreator.getHulls().size() == equalWays.size()) {
                     appendOriginalPaths(equalWays, points, equalWayNr);
-                else {
+                } else {
                     hullSimplifier.simplify(hullCreator.getHulls());
                     triangulator.triangulate(hullSimplifier.getPoints(), hullSimplifier.getOutlines(),
                             hullSimplifier.getHoles());
@@ -63,13 +63,15 @@ public class Simplification {
 
                     appendSimplifiedPaths(equalWayNr);
                 }
-            } else
+            } else {
                 appendOriginalPaths(equalWays, points, equalWayNr);
+            }
 
             ++equalWayNr;
 
             if (equalWayNr % 1000 == 0)
-                System.out.println("points: " + points.getPoints() + ", paths: " + paths.size());
+                System.out.println(
+                        "ways: " + equalWayNr + ", points: " + this.points.getPoints() + ", paths: " + paths.size());
 
         }
     }
@@ -80,10 +82,13 @@ public class Simplification {
         for (final IntList path : pathSimplifier.getPaths()) {
             final int[] indices = new int[path.size()];
             for (int i = 0; i < indices.length; ++i) {
-                indices[i] = path.get(i) + offset;
-                points.addPoint(pathPoints.getX(i), pathPoints.getY(i));
+                final int index = path.get(i);
+                indices[i] = index + offset;
             }
             this.paths.add(new MultiElement(indices, equalWayNr));
+        }
+        for (int i = 0; i < pathPoints.getPoints(); ++i) {
+            this.points.addPoint(pathPoints.getX(i), pathPoints.getY(i));
         }
     }
 

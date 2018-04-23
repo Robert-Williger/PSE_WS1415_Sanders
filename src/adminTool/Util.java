@@ -79,8 +79,10 @@ public class Util {
 
     public static Point2D calculatePointInPolygon(final IntList poly, final IPointAccess points) {
         for (int i = 0; i < poly.size(); ++i) {
-            double x = (points.getX(poly.get(i)) + points.getX(poly.get(i + 1)) + points.getX(poly.get(i + 2))) / 3.;
-            double y = (points.getY(poly.get(i)) + points.getY(poly.get(i + 1)) + points.getY(poly.get(i + 2))) / 3.;
+            final int i2 = (i + 1) % poly.size();
+            final int i3 = (i + 2) % poly.size();
+            double x = (points.getX(poly.get(i)) + points.getX(poly.get(i2)) + points.getX(poly.get(i3))) / 3.;
+            double y = (points.getY(poly.get(i)) + points.getY(poly.get(i2)) + points.getY(poly.get(i3))) / 3.;
             if (polygonContainsPoint(poly, points, x, y)) {
                 return new Point2D.Double(x, y);
             }

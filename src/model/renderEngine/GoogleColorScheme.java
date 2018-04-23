@@ -10,8 +10,8 @@ public class GoogleColorScheme extends ColorScheme {
     }
 
     private static WayStyle[] createWayStyles() {
-        WayStyle[] wayStyles = new WayStyle[24];
-        int[] wayMinZoomstep = new int[24];
+        WayStyle[] wayStyles = new WayStyle[25];
+        int[] wayMinZoomstep = new int[25];
 
         // pedestrian / living street / residential / unclassified (white +
         // light gray outline)
@@ -135,12 +135,16 @@ public class GoogleColorScheme extends ColorScheme {
         wayMinZoomstep[23] = 15;
         wayStyles[23] = new WayStyle(wayMinZoomstep[23], new float[] { 1f, 1.5f, 2f, 2.5f }, new Color(174, 209, 160));
 
+        // road graph (black)
+        wayMinZoomstep[24] = 13;
+        wayStyles[24] = new WayStyle(wayMinZoomstep[24], new float[] { 1f, 1f, 1f, 1f }, Color.BLACK);
+
         return wayStyles;
     }
 
     private static int[][] createWayOrder() {
         return new int[][] { { 10 }, { 11 }, { 19 }, { 17 }, { 18 }, { 12 }, { 22 }, { 23 }, { 0, 1 }, { 3 }, { 2 },
-                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 } };
+                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 24 } };
     }
 
     private static ShapeStyle[] createAreaStyles() {

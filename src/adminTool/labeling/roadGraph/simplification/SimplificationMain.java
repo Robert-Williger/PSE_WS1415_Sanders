@@ -20,9 +20,9 @@ public class SimplificationMain {
         final BoundedPointAccess points = createPoints();
         final List<Way> ways = createWays();
 
-        final HullCreator hullCreator = new HullCreator(points);
+        final HullCreator hullCreator = new HullCreator();
         final HullSimplifier hullSimplifier = new HullSimplifier(threshold);
-        hullCreator.createHulls(ways, pathWidth);
+        hullCreator.createHulls(ways, points, pathWidth);
 
         hullSimplifier.simplify(hullCreator.getHulls());
         try {
@@ -54,6 +54,12 @@ public class SimplificationMain {
         points.setPoint(12, 360, 115);
         points.setPoint(13, 110, 210);
         points.setPoint(14, 80, 260);
+
+        /*
+         * points.setPoint(0, 100, 100); points.setPoint(1, 150, 100); points.setPoint(2, 150, 150); points.setPoint(3,
+         * 100, 150); points.setPoint(4, 100, 100);
+         */
+
         return points;
     }
 

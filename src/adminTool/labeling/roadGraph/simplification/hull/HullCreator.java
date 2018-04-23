@@ -15,18 +15,13 @@ import util.IntList;
 import static adminTool.Util.createStrokedShape;
 
 public class HullCreator {
-    private final IPointAccess points;
 
     private List<Area> hulls;
 
-    public HullCreator(final IPointAccess points) {
-        this.points = points;
-    }
-
-    public void createHulls(final List<Way> ways, final float lineWidth) {
+    public void createHulls(final List<Way> ways, final IPointAccess points, final float lineWidth) {
         final BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
 
-        final Area[] areas = createAreas(createShapes(ways, stroke));
+        final Area[] areas = createAreas(createShapes(ways, points, stroke));
         final IntList[] graph = createIntersectionGraph(areas);
 
         hulls = createHulls(areas, graph);
@@ -68,7 +63,7 @@ public class HullCreator {
         return intersectionGraph;
     }
 
-    private Shape[] createShapes(final List<Way> ways, final BasicStroke stroke) {
+    private Shape[] createShapes(final List<Way> ways, final IPointAccess points, final BasicStroke stroke) {
         Shape[] shapes = new Shape[ways.size()];
 
         int u = 0;

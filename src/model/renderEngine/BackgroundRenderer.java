@@ -1,5 +1,6 @@
 package model.renderEngine;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -19,7 +20,6 @@ public class BackgroundRenderer extends AbstractRenderer {
     private final Path2D[] paths;
     private ICollectiveAccessor areaAccessor;
     private ICollectiveAccessor buildingAccessor;
-    private ICollectiveAccessor wayAccessor;
     private ICollectiveAccessor streetAccessor;
 
     public long nonGraphicsTime;
@@ -75,7 +75,6 @@ public class BackgroundRenderer extends AbstractRenderer {
         super.setMapManager(manager);
         areaAccessor = manager.createCollectiveAccessor("area");
         buildingAccessor = manager.createCollectiveAccessor("building");
-        wayAccessor = manager.createCollectiveAccessor("way");
         streetAccessor = manager.createCollectiveAccessor("street");
     }
 
@@ -120,7 +119,6 @@ public class BackgroundRenderer extends AbstractRenderer {
         // TODO improve this!
 
         tileAccessor.forEach("street", createConsumer(zoom, streetAccessor, wayStyles));
-        tileAccessor.forEach("way", createConsumer(zoom, wayAccessor, wayStyles));
 
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
@@ -142,6 +140,8 @@ public class BackgroundRenderer extends AbstractRenderer {
                 }
             }
         }
+
+        tileAccessor.forEach("street", createStreetConsumer(zoom, streetAccessor, wayStyles));
 
         graphicsTime += (System.currentTimeMillis() - start);
     }
@@ -202,6 +202,30 @@ public class BackgroundRenderer extends AbstractRenderer {
                 // TODO polygons sometimes do not have same start and endpoint!
                 // ... improve this
                 // path.closePath();
+            }
+        };
+    }
+
+    private LongConsumer createStreetConsumer(final int zoom, final ICollectiveAccessor accessor,
+            final ShapeStyle[] styles) {
+        return (id) -> {
+            accessor.setID(id);
+            final int type = accessor.getType();
+
+            if (styles[type].isVisible(zoom)) {
+                rendered = true;
+                final float x = tileAccessor.getX();
+                final float y = tileAccessor.getY();
+                final int size = accessor.size();
+
+                if (type == 24) {
+                    g.setColor(Color.BLACK);
+                    g.fillOval((int) converter.getPixelDistance(accessor.getX(0) - x, zoom) - 2,
+                            (int) converter.getPixelDistance(accessor.getY(0) - y, zoom) - 2, 5, 5);
+
+                    g.fillOval((int) converter.getPixelDistance(accessor.getX(size - 1) - x, zoom) - 2,
+                            (int) converter.getPixelDistance(accessor.getY(size - 1) - y, zoom) - 2, 5, 5);
+                }
             }
         };
     }

@@ -5,6 +5,10 @@ import util.IntList;
 public class UnboundedPointAccess implements IPointAccess {
     private final IntList points;
 
+    public UnboundedPointAccess(final int initialCapacity) {
+        this.points = new IntList(initialCapacity);
+    }
+
     public UnboundedPointAccess() {
         this.points = new IntList();
     }

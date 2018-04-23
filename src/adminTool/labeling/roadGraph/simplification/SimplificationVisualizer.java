@@ -22,7 +22,7 @@ public class SimplificationVisualizer extends JFrame {
             final IPointAccess points, final float lineWidth, final int simplificationThreshold) {
         setLayout(null);
         getContentPane().setBackground(Color.white);
-        setTitle("Visualizer");
+        setTitle("Simplification Visualizer");
 
         final JPanel poly1 = new PolyVisualizer(filePath);
         final JPanel poly2 = new PolyVisualizer(filePath);

@@ -1,38 +1,34 @@
 package adminTool.labeling.roadGraph;
 
 import java.awt.Dimension;
-import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
-import adminTool.IOSMParser;
-import adminTool.IPointAccess;
-import adminTool.OSMParser;
+import adminTool.UnboundedPointAccess;
+import adminTool.elements.MultiElement;
 import adminTool.elements.Way;
 import adminTool.labeling.roadGraph.simplification.Simplification;
-import adminTool.projection.MercatorProjection;
-import adminTool.projection.Projector;
 
 public class RoadGraphCreator {
-    public static void main(final String[] args) {
-        IOSMParser parser = new OSMParser();
-        try {
-            parser.read(new File("default.pbf"));
-        } catch (final Exception e) {
-            e.printStackTrace();
-            return;
-        }
 
-        Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
-        final Collection<Way> ways = parser.getWays();
-        parser = null;
-        projector.performProjection();
+    private final int maxWayCoordWidth;
+    private final int threshold;
+    private final int stubThreshold;
 
-        new RoadGraphCreator(ways, projector.getPoints(), projector.getSize());
+    private List<MultiElement> paths;
+
+    public RoadGraphCreator(final int maxWayCoordWidth, final int simplificationThreshold, final int stubThreshold) {
+        this.maxWayCoordWidth = maxWayCoordWidth;
+        this.threshold = simplificationThreshold;
+        this.stubThreshold = stubThreshold;
     }
 
-    public RoadGraphCreator(final Collection<Way> ways, final IPointAccess projectionPoints, final Dimension mapSize) {
-        final int maxWayCoordWidth = 20 << 5;
-        final int threshold = 20 << 2;
+    public List<MultiElement> getPaths() {
+        return paths;
+    }
+
+    public void createRoadGraph(final Collection<Way> ways, final UnboundedPointAccess points,
+            final Dimension mapSize) {
 
         System.out.println("identifiy");
         final Identification roadIdentifier = new Identification();
@@ -40,15 +36,18 @@ public class RoadGraphCreator {
 
         System.out.println("simplify");
         final Simplification roadSimplifier = new Simplification(maxWayCoordWidth, threshold);
-        roadSimplifier.simplify(roadIdentifier.getEqualWays(), projectionPoints);
+        roadSimplifier.simplify(roadIdentifier.getEqualWays(), points);
 
         System.out.println("planarize");
-        final Planarization planarization = new Planarization();
+        final Planarization planarization = new Planarization(stubThreshold);
         planarization.planarize(roadSimplifier.getPaths(), roadSimplifier.getPoints(), mapSize);
 
-        System.out.println("transform");
-        final Transformation transformation = new Transformation(maxWayCoordWidth, threshold);
-        transformation.transform(roadSimplifier.getPaths(), roadSimplifier.getPoints());
+        /*
+         * System.out.println("transform"); final Transformation transformation = new Transformation(maxWayCoordWidth,
+         * threshold); transformation.transform(roadSimplifier.getPaths(), roadSimplifier.getPoints());
+         */
+
+        paths = planarization.getProcessedPaths();
     }
 
 }
