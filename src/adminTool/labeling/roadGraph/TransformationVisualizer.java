@@ -14,7 +14,7 @@ import adminTool.elements.Way;
 public class TransformationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
 
-    private static final int WAY_WIDTH = 40;
+    private static final int WAY_WIDTH = 50;
     private static final int THRESHOLD = 2 * WAY_WIDTH;
 
     public TransformationVisualizer() {
@@ -45,41 +45,42 @@ public class TransformationVisualizer extends JFrame {
 
     private static UnboundedPointAccess createPoints() {
         final UnboundedPointAccess points = new UnboundedPointAccess();
-        points.addPoint(400, 200);
-
-        points.addPoint(350, 100);
-        points.addPoint(265, 220);
-
-        points.addPoint(500, 250);
-        points.addPoint(600, 270);
-
-        points.addPoint(400, 100);
-        points.addPoint(295, 50);
+        points.addPoint(100, 100);
+        points.addPoint(180, 100);
+        points.addPoint(220, 100);
+        points.addPoint(300, 100);
+        points.addPoint(180, 150);
+        points.addPoint(220, 50);
         return points;
     }
 
     private static List<Way> createWays() {
         final List<Way> ways = new ArrayList<Way>();
-        final int[] indices0 = new int[3];
+        final int[] indices0 = new int[2];
         indices0[0] = 0;
-        for (int i = 1; i < 3; ++i) {
-            indices0[i] = i;
-        }
+        indices0[1] = 1;
         ways.add(new Way(indices0, 0, "Testweg0", true));
 
-        final int[] indices1 = new int[3];
-        indices1[0] = 0;
-        for (int i = 1; i < 3; ++i) {
-            indices1[i] = i + 2;
-        }
+        final int[] indices1 = new int[2];
+        indices1[0] = 1;
+        indices1[1] = 2;
         ways.add(new Way(indices1, 1, "Testweg1", true));
 
-        final int[] indices2 = new int[3];
-        indices2[0] = 0;
-        for (int i = 1; i < 3; ++i) {
-            indices2[i] = i + 4;
-        }
+        final int[] indices2 = new int[2];
+        indices2[0] = 2;
+        indices2[1] = 3;
         ways.add(new Way(indices2, 2, "Testweg2", true));
+
+        final int[] indices3 = new int[2];
+        indices3[0] = 1;
+        indices3[1] = 4;
+        ways.add(new Way(indices3, 3, "Testweg3", true));
+
+        final int[] indices4 = new int[2];
+        indices4[0] = 2;
+        indices4[1] = 5;
+        ways.add(new Way(indices4, 4, "Testweg4", true));
+
         return ways;
     }
 

@@ -106,13 +106,14 @@ public class MSTTSPSolver extends AbstractRouteSolver {
         final int[] firstNodes = new int[completeMapping.length];
         final int[] secondNodes = new int[firstNodes.length];
 
-        final double progressStep = 100.0 / (points.size() - 1);
+        final int totalSteps = size * (size - 1) / 2;
+        int steps = 0;
 
         for (int i = 0; i < weights.length; i++) {
             weights[i] = Integer.MAX_VALUE;
         }
-        for (int u = 0; u < points.size() && !canceled; u++) {
-            for (int v = u + 1; v < points.size() && !canceled; v++) {
+        for (int u = 0; u < size - 1 && !canceled; u++) {
+            for (int v = u + 1; v < size && !canceled; v++) {
                 final Path path = solver.calculateShortestPath(points.get(u), points.get(v));
                 // TODO can we handle this?
                 if (path == null) {
@@ -126,8 +127,9 @@ public class MSTTSPSolver extends AbstractRouteSolver {
                     weights[index] = path.getLength();
                     completeMapping[index] = path;
                 }
+                fireProgressDone((int) (100 * ++steps / (double) totalSteps));
             }
-            fireProgressDone(progressStep);
+
         }
         return new UndirectedGraph(size, firstNodes, secondNodes, weights);
     }

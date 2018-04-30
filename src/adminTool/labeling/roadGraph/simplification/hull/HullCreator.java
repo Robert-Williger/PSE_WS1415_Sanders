@@ -1,5 +1,7 @@
 package adminTool.labeling.roadGraph.simplification.hull;
 
+import static adminTool.util.ShapeUtil.createStrokedShape;
+
 import java.awt.BasicStroke;
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -11,8 +13,6 @@ import java.util.PrimitiveIterator;
 import adminTool.IPointAccess;
 import adminTool.elements.Way;
 import util.IntList;
-
-import static adminTool.Util.createStrokedShape;
 
 public class HullCreator {
 

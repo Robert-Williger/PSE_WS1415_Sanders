@@ -91,6 +91,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
             public void stateChanged(final ChangeEvent e) {
                 final IApplication application = ApplicationView.this.application;
                 final IRouteManager manager = application.getRouteManager();
+                setTitle("Traveling Salesman Routenplaner - " + application.getName());
                 sidebar.setModel(manager);
                 map.setModels(application.getImageLoader(), manager.getPointList(), application.getMap());
                 manager.addChangeListener(new ChangeListener() {

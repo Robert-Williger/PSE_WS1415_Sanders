@@ -1,11 +1,11 @@
 package adminTool.quadtree;
 
 import adminTool.IPointAccess;
-import adminTool.Util;
 import adminTool.elements.MultiElement;
+import adminTool.util.IntersectionUtil;
 
-import static adminTool.Util.polygonContainsPoint;
-import static adminTool.Util.rectangleIntersectsLine;
+import static adminTool.util.IntersectionUtil.polygonContainsPoint;
+import static adminTool.util.IntersectionUtil.rectangleIntersectsSegment;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -15,9 +15,8 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
     private final List<MultiElement> elements;
     private final IPointAccess points;
 
-    public AreaQuadtreePolicy(final List<MultiElement> areas, final IPointAccess points, final int maxElementsPerTile,
-            final int maxHeight) {
-        super(calculateBounds(areas, points), maxElementsPerTile, maxHeight);
+    public AreaQuadtreePolicy(final List<MultiElement> areas, final IPointAccess points) {
+        super(calculateBounds(areas, points));
         this.elements = areas;
         this.points = points;
     }
@@ -35,7 +34,7 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
     private boolean edgeIntersection(final MultiElement element, final int x, final int y, final int size) {
         int last = element.size() - 1;
         for (int i = 0; i < element.size(); ++i) {
-            if (rectangleIntersectsLine(x, y, size, size, points.getX(element.getNode(i)),
+            if (rectangleIntersectsSegment(x, y, size, size, points.getX(element.getNode(i)),
                     points.getY(element.getNode(i)), points.getX(element.getNode(last)),
                     points.getY(element.getNode(last)))) {
                 return true;
@@ -49,7 +48,7 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
     private static List<Rectangle> calculateBounds(final List<MultiElement> elements, final IPointAccess points) {
         final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
         for (int i = 0; i < elements.size(); i++) {
-            bounds.add(Util.getBounds(elements.get(i), points));
+            bounds.add(IntersectionUtil.getBounds(elements.get(i), points));
         }
         return bounds;
     }

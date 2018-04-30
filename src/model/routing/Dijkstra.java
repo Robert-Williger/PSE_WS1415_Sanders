@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.PrimitiveIterator.OfInt;
 
+import model.AbstractProgressable;
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
 

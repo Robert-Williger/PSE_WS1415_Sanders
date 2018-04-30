@@ -16,9 +16,9 @@ public interface IMapManager {
 
     int getVisibleColumns(int zoom);
 
-    int getRow(int zoom);
+    int getFirstRow(int zoom);
 
-    int getColumn(int zoom);
+    int getFirstColumn(int zoom);
 
     IMapState getState();
 

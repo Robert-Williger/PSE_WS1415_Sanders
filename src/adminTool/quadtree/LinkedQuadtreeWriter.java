@@ -9,25 +9,28 @@ import util.IntList;
 
 public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     private final int mapSize;
-    private final int totalElements;
+    private final int elements;
+    private final int maxHeight;
+    private final int maxElementsPerTile;
     private final String name;
     private final IQuadtreePolicy policy;
 
     public LinkedQuadtreeWriter(final IQuadtreePolicy policy, final ZipOutputStream zipOutput, final String name,
-            final int totalElements, final int mapSize) {
+            final int elements, final int maxHeight, final int maxElementsPerTile, final int mapSize) {
         super(zipOutput);
 
         this.policy = policy;
         this.mapSize = mapSize;
-        this.totalElements = totalElements;
+        this.elements = elements;
+        this.maxHeight = maxHeight;
+        this.maxElementsPerTile = maxElementsPerTile;
         this.name = name;
     }
 
     @Override
     public void write() throws IOException {
-        final boolean[] duplicates = new boolean[totalElements];
+        final boolean[] duplicates = new boolean[elements];
 
-        final int maxHeight = policy.getMaxHeight();
         final int[][] xPos = new int[maxHeight][4];
         final int[][] yPos = new int[maxHeight][4];
 
@@ -82,7 +85,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     }
 
     private boolean[][] createChildren() {
-        final boolean[][] children = new boolean[policy.getMaxHeight()][4];
+        final boolean[][] children = new boolean[maxHeight][4];
         for (int i = 0; i < 4; i++) {
             children[children.length - 1][i] = true;
         }
@@ -90,7 +93,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     }
 
     private IntList[][] createIndices() {
-        final IntList[][] indices = new IntList[policy.getMaxHeight()][];
+        final IntList[][] indices = new IntList[maxHeight][];
         indices[0] = new IntList[] { createInitialList() };
         for (int i = 1; i < indices.length; i++) {
             indices[i] = new IntList[] { new IntList(), new IntList(), new IntList(), new IntList() };
@@ -100,8 +103,8 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
     }
 
     private IntList createInitialList() {
-        final IntList indices = new IntList(totalElements);
-        for (int i = 0; i < totalElements; i++) {
+        final IntList indices = new IntList(elements);
+        for (int i = 0; i < elements; i++) {
             indices.add(i);
         }
         return indices;
@@ -109,7 +112,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
 
     private void allocateRoot(final IntList treeList, final boolean[] leafs) {
         treeList.add(0);
-        leafs[0] = policy.getMaxHeight() == 1 || totalElements <= policy.getMaxElementsPerTile();
+        leafs[0] = maxHeight == 1 || elements <= maxElementsPerTile;
         if (!leafs[0]) {
             treeList.add(0);
         }
@@ -141,7 +144,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
             }
         }
 
-        if (height + 1 != policy.getMaxHeight() - 1) {
+        if (height + 1 != maxHeight - 1) {
             setLeafs(leafs, distIndices);
         }
     }
@@ -155,7 +158,7 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
 
     private void setLeafs(final boolean[] leafs, final IntList[] indices) {
         for (int i = 0; i < leafs.length; i++) {
-            leafs[i] = indices[i].size() <= policy.getMaxElementsPerTile();
+            leafs[i] = indices[i].size() <= maxElementsPerTile;
         }
     }
 

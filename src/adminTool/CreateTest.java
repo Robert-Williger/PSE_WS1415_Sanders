@@ -66,11 +66,12 @@ public class CreateTest {
 
             graphWriter = null;
 
-            final int maxWayCoordWidth = 20 << 4;
-            final int simplificationThreshold = 20 << 2;
-            final int stubThreshold = 20 << 2;
+            final int maxWayCoordWidth = 20 << 3;
+            final int simplificationThreshold = 20 << 3;
+            final int stubThreshold = 30 << 3;
+            final int tBias = 2 << 3;
             RoadGraphCreator roadGraphCreator = new RoadGraphCreator(maxWayCoordWidth, simplificationThreshold,
-                    stubThreshold);
+                    stubThreshold, tBias);
             roadGraphCreator.createRoadGraph(parser.getWays(), projector.getPoints(), projector.getSize());
 
             for (final MultiElement element : roadGraphCreator.getPaths()) {
@@ -78,7 +79,9 @@ public class CreateTest {
                 for (int i = 0; i < indices.length; ++i) {
                     indices[i] = element.getNode(i);
                 }
-                streets.add(new Street(indices, 24, "Unnamed", -1));
+                final int type = element.getType() == -1 ? 24 : 25;
+                final String name = element.getType() == -1 ? "junction edge" : "road section";
+                streets.add(new Street(indices, type, name, -1));
             }
 
             start = System.currentTimeMillis();

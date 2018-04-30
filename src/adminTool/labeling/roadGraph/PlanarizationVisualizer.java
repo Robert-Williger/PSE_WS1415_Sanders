@@ -22,7 +22,7 @@ public class PlanarizationVisualizer extends JFrame {
 
         final UnboundedPointAccess points = createPoints();
         final List<? extends MultiElement> ways = createWays();
-        final Planarization planarization = new Planarization(40);
+        final Planarization planarization = new Planarization(20, 5);
         planarization.planarize(ways, points, new Dimension(615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, ways);
@@ -42,15 +42,32 @@ public class PlanarizationVisualizer extends JFrame {
 
     private static UnboundedPointAccess createPoints() {
         final UnboundedPointAccess points = new UnboundedPointAccess();
-        points.addPoint(50, 200);
-        points.addPoint(100, 195);
-        points.addPoint(280, 170);
-        points.addPoint(420, 20);
-        points.addPoint(670, 300);
+        // points.addPoint(50, 200);
+        // points.addPoint(100, 195);
+        // points.addPoint(280, 170);
+        // points.addPoint(420, 20);
+        // points.addPoint(670, 300);
+        //
+        // points.addPoint(500, 80);
+        // points.addPoint(500, 210);
+        // points.addPoint(595, 100);
+        //
+        // points.addPoint(615, 270);
+        // points.addPoint(595, 210);
+        // points.addPoint(580, 140);
+        // points.addPoint(470, 100);
+        // points.addPoint(360, 115);
+        // points.addPoint(110, 210);
+        // points.addPoint(80, 260);
+        points.addPoint(100, 200);
+        points.addPoint(200, 200);
+        points.addPoint(300, 200);
+        points.addPoint(400, 200);
+        points.addPoint(500, 200);
 
-        points.addPoint(500, 80);
-        points.addPoint(500, 210);
-        points.addPoint(595, 100);
+        points.addPoint(290, 100);
+        points.addPoint(290, 150);
+        points.addPoint(290, 195);
 
         points.addPoint(615, 270);
         points.addPoint(595, 210);
@@ -64,7 +81,7 @@ public class PlanarizationVisualizer extends JFrame {
 
     private static List<Way> createWays() {
         final List<Way> ways = new ArrayList<Way>();
-        final int[] indices0 = new int[5];
+        final int[] indices0 = new int[3];
         for (int i = 0; i < indices0.length; ++i) {
             indices0[i] = i;
         }
@@ -72,13 +89,13 @@ public class PlanarizationVisualizer extends JFrame {
 
         final int[] indices1 = new int[3];
         for (int i = 0; i < indices1.length; ++i) {
-            indices1[i] = i + indices0.length;
+            indices1[i] = i + indices0.length - 1;
         }
         ways.add(new Way(indices1, 1, "Testweg1", true));
 
-        final int[] indices2 = new int[7];
+        final int[] indices2 = new int[3];
         for (int i = 0; i < indices2.length; ++i) {
-            indices2[i] = indices0.length + indices1.length + i;
+            indices2[i] = indices0.length + indices1.length + i - 1;
         }
         ways.add(new Way(indices2, 2, "Testweg2", true));
         return ways;

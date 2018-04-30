@@ -368,12 +368,12 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public int getRow(final int zoom) {
+    public int getFirstRow(final int zoom) {
         return (int) (state.getCoordY() - state.getCoordSectionHeight(zoom) / 2) / state.getCoordTileSize(zoom);
     }
 
     @Override
-    public int getColumn(final int zoom) {
+    public int getFirstColumn(final int zoom) {
         return (int) (state.getCoordX() - state.getCoordSectionWidth(zoom) / 2) / state.getCoordTileSize(zoom);
     }
 

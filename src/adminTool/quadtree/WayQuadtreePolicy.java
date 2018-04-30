@@ -1,10 +1,10 @@
 package adminTool.quadtree;
 
 import adminTool.IPointAccess;
-import adminTool.Util;
 import adminTool.elements.MultiElement;
+import adminTool.util.IntersectionUtil;
 
-import static adminTool.Util.rectangleIntersectsLine;
+import static adminTool.util.IntersectionUtil.rectangleIntersectsSegment;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -17,13 +17,8 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
     private final IPointAccess points;
 
     public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
-            final int maxElementsPerTile, final int maxWayCoordWidth, final int maxHeight) {
-        this(ways, points, maxElementsPerTile, createUniformArray(maxWayCoordWidth, maxHeight));
-    }
-
-    public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
-            final int maxElementsPerTile, final int[] maxWayCoordWidths) {
-        super(calculateBounds(ways, points), maxElementsPerTile, maxWayCoordWidths.length);
+            final int[] maxWayCoordWidths) {
+        super(calculateBounds(ways, points));
         this.ways = ways;
         this.maxWayCoordWidths = maxWayCoordWidths;
         this.points = points;
@@ -43,7 +38,7 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
 
         final MultiElement way = ways.get(index);
         for (int i = 1; i < way.size(); i++) {
-            if (rectangleIntersectsLine(rectX, rectY, rectSize, rectSize, points.getX(way.getNode(i - 1)),
+            if (rectangleIntersectsSegment(rectX, rectY, rectSize, rectSize, points.getX(way.getNode(i - 1)),
                     points.getY(way.getNode(i - 1)), points.getX(way.getNode(i)), points.getY(way.getNode(i)))) {
                 return true;
             }
@@ -55,16 +50,8 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
             final IPointAccess points) {
         final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
         for (final MultiElement element : elements) {
-            bounds.add(Util.getBounds(element, points));
+            bounds.add(IntersectionUtil.getBounds(element, points));
         }
         return bounds;
-    }
-
-    private static int[] createUniformArray(final int maxWayCoordWidth, final int height) {
-        final int[] ret = new int[height];
-        for (int i = 0; i < height; ++i) {
-            ret[i] = maxWayCoordWidth;
-        }
-        return ret;
     }
 }

@@ -43,6 +43,8 @@ public class ViaRouteSolver extends AbstractRouteSolver {
         final Path[] pathArray = new Path[paths - 1];
         final int[] targetIndices = new int[paths];
         targetIndices[0] = 0;
+
+        final int totalSteps = paths - 1;
         for (int i = 1; i < paths && state == 0; i++) {
             final Path path = solver.calculateShortestPath(edges.get(i - 1), edges.get(i));
             if (path == null) {
@@ -50,8 +52,9 @@ public class ViaRouteSolver extends AbstractRouteSolver {
             }
             pathArray[i - 1] = path;
             targetIndices[i] = i;
+
+            fireProgressDone((int) (100 * i / (double) totalSteps));
         }
-        fireProgressDone(100);
 
         return new Route(pathArray, targetIndices);
     }

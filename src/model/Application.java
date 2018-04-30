@@ -8,6 +8,7 @@ import model.map.IMap;
 import model.map.IMapManager;
 import model.map.Map;
 import model.map.MapManager;
+import model.reader.Reader;
 import model.renderEngine.DefaultImageLoader;
 import model.renderEngine.IImageLoader;
 import model.routing.DirectedGraph;
@@ -19,6 +20,7 @@ public class Application extends AbstractModel implements IApplication {
     private final IReader reader;
     private IRouteManager routing;
     private IMap map;
+    private String name;
     private final IImageLoader loader;
     private ITextProcessor processor;
 
@@ -54,11 +56,12 @@ public class Application extends AbstractModel implements IApplication {
 
     @Override
     public boolean setMapData(final File file) {
-        if (/* file != null && file.exists() && */ reader.read(file)) {
+        if (reader.read(file)) {
             routing = reader.getRouteManager();
             processor = reader.getTextProcessor();
             map = new Map(reader.getMapManager());
             loader.setMapManager(reader.getMapManager());
+            name = file.getName();
             SwingUtilities.invokeLater(() -> {
                 fireChange();
             });
@@ -81,5 +84,10 @@ public class Application extends AbstractModel implements IApplication {
     @Override
     public void cancelCalculation() {
         reader.cancelCalculation();
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

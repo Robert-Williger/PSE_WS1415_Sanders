@@ -21,7 +21,7 @@ import adminTool.elements.Street;
 import adminTool.elements.Label;
 import adminTool.elements.Typeable;
 import adminTool.quadtree.AreaQuadtreePolicy;
-import adminTool.quadtree.BoundingBoxQuadtreePolicy;
+import adminTool.quadtree.MultipleBoundingBoxQuadtreePolicy;
 import adminTool.quadtree.CollisionlessQuadtree;
 import adminTool.quadtree.ICollisionPolicy;
 import adminTool.quadtree.IQuadtreePolicy;
@@ -119,15 +119,13 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final int[] elements = new int[] { areaSorting.elements.length, streetSorting.elements.length,
                 buildingSorting.elements.length };
 
-        policies[0] = new AreaQuadtreePolicy(Arrays.asList(areaSorting.elements), points, MAX_ELEMENTS_PER_TILE,
-                zoomSteps);
-        policies[1] = new WayQuadtreePolicy(Arrays.asList(streetSorting.elements), points, MAX_ELEMENTS_PER_TILE,
-                maxWayWidths);
-        policies[2] = new AreaQuadtreePolicy(Arrays.asList(buildingSorting.elements), points, MAX_ELEMENTS_PER_TILE,
-                zoomSteps);
+        policies[0] = new AreaQuadtreePolicy(Arrays.asList(areaSorting.elements), points);
+        policies[1] = new WayQuadtreePolicy(Arrays.asList(streetSorting.elements), points, maxWayWidths);
+        policies[2] = new AreaQuadtreePolicy(Arrays.asList(buildingSorting.elements), points);
 
         for (int i = 0; i < names.length; i++) {
-            new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], coordMapSize).write();
+            new LinkedQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], zoomSteps, MAX_ELEMENTS_PER_TILE,
+                    coordMapSize).write();
         }
 
         putNextEntry("labelTree");
@@ -169,9 +167,9 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         }
         final ICollisionPolicy cp = (e1, e2, height) -> labelBounds.get(height).get(e1)
                 .intersects(labelBounds.get(height).get(e2));
-        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(labelBounds, MAX_ELEMENTS_PER_TILE);
+        final IQuadtreePolicy qp = new MultipleBoundingBoxQuadtreePolicy(labelBounds);
 
-        return new CollisionlessQuadtree(labels.length, qp, cp, mapSize);
+        return new CollisionlessQuadtree(labels.length, zoomSteps, qp, cp, mapSize);
     }
 
     private CollisionlessQuadtree createPOIQuadtree(final POI[] pois, final int minZoomStep, final int zoomSteps,
@@ -190,9 +188,9 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         }
         final ICollisionPolicy cp = (e1, e2, height) -> poiBounds.get(height).get(e1)
                 .intersects(poiBounds.get(height).get(e2));
-        final IQuadtreePolicy qp = new BoundingBoxQuadtreePolicy(poiBounds, MAX_ELEMENTS_PER_TILE);
+        final IQuadtreePolicy qp = new MultipleBoundingBoxQuadtreePolicy(poiBounds);
 
-        return new CollisionlessQuadtree(pois.length, qp, cp, mapSize);
+        return new CollisionlessQuadtree(pois.length, zoomSteps, qp, cp, mapSize);
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {

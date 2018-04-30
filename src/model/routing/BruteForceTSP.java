@@ -84,7 +84,7 @@ public class BruteForceTSP extends AbstractRouteSolver {
         final int size = points.size();
         Path[] completeMapping = new Path[size * size];
 
-        final double progressStep = 100.0 / (size - 1);
+        final int totalSteps = size * size;
 
         int i = 0;
         for (int u = 0; u < size && !canceled; u++) {
@@ -98,8 +98,8 @@ public class BruteForceTSP extends AbstractRouteSolver {
                     completeMapping[i] = path;
                 }
                 ++i;
+                fireProgressDone((int) (100 * i / (double) totalSteps));
             }
-            fireProgressDone(progressStep);
         }
 
         return completeMapping;

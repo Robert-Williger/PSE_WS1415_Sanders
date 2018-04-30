@@ -13,6 +13,7 @@ import java.util.Set;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.Street;
+import adminTool.util.IntersectionUtil;
 import util.IntList;
 
 public class IndexWriter extends AbstractMapFileWriter {
@@ -94,7 +95,7 @@ public class IndexWriter extends AbstractMapFileWriter {
         // }
 
         for (final int[] indices : boundary.getOuter()) {
-            if (Util.polygonContainsPoint(new IntList(indices), points, x, y)) {
+            if (IntersectionUtil.polygonContainsPoint(new IntList(indices), points, x, y)) {
                 return true;
             }
         }

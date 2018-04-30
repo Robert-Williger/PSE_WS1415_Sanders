@@ -50,7 +50,11 @@ public class CutPerformer {
 
         @Override
         public int compareTo(final Cut o) {
-            return Double.compare(segment + offset, o.segment + o.offset);
+            return compareTo(o.segment, o.offset);
+        }
+
+        public int compareTo(final int segment, final double offset) {
+            return Double.compare(this.segment + this.offset, segment + offset);
         }
 
         @Override

@@ -54,8 +54,8 @@ public class DefaultImageLoader implements IImageLoader {
         // set zoomStep to minZoomStep - 1, so on first update all tiles in
         // current view will be rendered
         lastZoomStep = state.getMinZoom() - 1;
-        lastRow = mapManager.getRow(state.getZoom());
-        lastColumn = mapManager.getColumn(state.getZoom());
+        lastRow = mapManager.getFirstRow(state.getZoom());
+        lastColumn = mapManager.getFirstColumn(state.getZoom());
 
         routeRenderer = new RouteRenderer(mapManager);
 
@@ -179,8 +179,8 @@ public class DefaultImageLoader implements IImageLoader {
 
         final int zoom = mapManager.getState().getZoom();
 
-        final int row = mapManager.getRow(zoom);
-        final int column = mapManager.getColumn(zoom);
+        final int row = mapManager.getFirstRow(zoom);
+        final int column = mapManager.getFirstColumn(zoom);
         final int visibleRows = mapManager.getVisibleRows(zoom);
         final int visibleColumns = mapManager.getVisibleColumns(zoom);
 

@@ -5,7 +5,6 @@ import java.io.File;
 import model.map.IMap;
 import model.renderEngine.IImageLoader;
 import model.routing.IRouteManager;
-import model.routing.Progressable;
 
 public interface IApplication extends IModel, Progressable {
 
@@ -19,4 +18,5 @@ public interface IApplication extends IModel, Progressable {
 
     boolean setMapData(File file);
 
+    String getName();
 }

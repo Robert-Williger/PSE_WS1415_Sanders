@@ -37,6 +37,7 @@ public class MultiElement implements Typeable {
 
     public MultiElement reverse() {
         final int[] indices = new int[this.indices.length];
+        System.arraycopy(this.indices, 0, indices, 0, indices.length);
         Arrays.reverse(indices);
         return new MultiElement(indices, type);
     }

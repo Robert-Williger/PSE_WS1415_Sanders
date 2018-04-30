@@ -1,6 +1,7 @@
 package model.routing;
 
 import model.IModel;
+import model.Progressable;
 import model.renderEngine.IRenderRoute;
 import model.targets.IPointList;
 

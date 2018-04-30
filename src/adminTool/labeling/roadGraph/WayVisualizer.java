@@ -40,7 +40,6 @@ public class WayVisualizer extends JPanel {
         g2.fillRect(0, 0, 1000, 1000);
 
         g2.setColor(Color.BLACK);
-
         for (final MultiElement path : paths) {
             int last = path.getNode(0);
 
@@ -49,7 +48,7 @@ public class WayVisualizer extends JPanel {
 
             for (int i = 1; i < path.size(); ++i) {
                 int cur = path.getNode(i);
-                g2.setColor(Color.blue);
+                g2.setColor(path.getType() != -1 ? Color.blue : Color.RED);
                 g2.drawLine(points.getX(last), points.getY(last), points.getX(cur), points.getY(cur));
                 last = cur;
                 g2.setColor(Color.BLACK);

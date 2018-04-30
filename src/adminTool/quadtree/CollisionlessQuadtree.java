@@ -9,12 +9,12 @@ public class CollisionlessQuadtree {
     private CollisionlessQuadtree[] children;
     private final IntList elements;
 
-    public CollisionlessQuadtree(final int elements, final IQuadtreePolicy qp, final ICollisionPolicy cp,
-            final int size) {
+    public CollisionlessQuadtree(final int elements, final int maxHeight, final IQuadtreePolicy qp,
+            final ICollisionPolicy cp, final int size) {
         this.elements = new IntList();
 
         for (int element = 0; element < elements; element++) {
-            add(element, qp, cp, 0, 0, 0, size);
+            add(element, maxHeight, qp, cp, 0, 0, 0, size);
         }
     }
 
@@ -22,20 +22,20 @@ public class CollisionlessQuadtree {
         elements = new IntList();
     }
 
-    private void add(final int element, final IQuadtreePolicy qp, final ICollisionPolicy cp, final int x, final int y,
-            final int height, final int size) {
+    private void add(final int element, final int maxHeight, final IQuadtreePolicy qp, final ICollisionPolicy cp,
+            final int x, final int y, final int height, final int size) {
         final int destHeight = getCollisionlessHeight(element, qp, cp, x, y, height, size);
-        add(element, x, y, size, height, destHeight, qp);
+        add(element, x, y, size, height, destHeight, maxHeight, qp);
     }
 
     private void add(final int element, final int x, final int y, final int size, final int height,
-            final int destHeight, final IQuadtreePolicy qp) {
+            final int destHeight, final int maxHeight, final IQuadtreePolicy qp) {
         if (qp.intersects(element, height, x, y, size)) {
             if (height >= destHeight) {
                 elements.add(element);
             }
 
-            if (height + 1 < qp.getMaxHeight()) {
+            if (height + 1 < maxHeight) {
                 if (children == null) {
                     children = new CollisionlessQuadtree[4];
                     for (int i = 0; i < children.length; i++) {
@@ -47,7 +47,7 @@ public class CollisionlessQuadtree {
                 for (int i = 0; i < children.length; i++) {
                     final int nx = x + (i % 2) * nSize;
                     final int ny = y + (i / 2) * nSize;
-                    children[i].add(element, nx, ny, nSize, nHeight, destHeight, qp);
+                    children[i].add(element, nx, ny, nSize, nHeight, destHeight, maxHeight, qp);
                 }
             }
         }

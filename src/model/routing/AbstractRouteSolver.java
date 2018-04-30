@@ -1,5 +1,7 @@
 package model.routing;
 
+import model.AbstractProgressable;
+
 public abstract class AbstractRouteSolver extends AbstractProgressable implements IRouteSolver {
 
     protected IDirectedGraph graph;

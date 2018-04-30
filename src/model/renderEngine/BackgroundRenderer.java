@@ -218,13 +218,16 @@ public class BackgroundRenderer extends AbstractRenderer {
                 final float y = tileAccessor.getY();
                 final int size = accessor.size();
 
-                if (type == 24) {
-                    g.setColor(Color.BLACK);
-                    g.fillOval((int) converter.getPixelDistance(accessor.getX(0) - x, zoom) - 2,
-                            (int) converter.getPixelDistance(accessor.getY(0) - y, zoom) - 2, 5, 5);
+                if (type == 24 || type == 25) {
+                    final int offset = (zoom - 9) / 3;
+                    final int dotSize = 2 * offset + 1;
+                    g.setColor(new Color(0, 0, 0, 60));
+                    g.fillOval((int) converter.getPixelDistance(accessor.getX(0) - x, zoom) - offset,
+                            (int) converter.getPixelDistance(accessor.getY(0) - y, zoom) - offset, dotSize, dotSize);
 
-                    g.fillOval((int) converter.getPixelDistance(accessor.getX(size - 1) - x, zoom) - 2,
-                            (int) converter.getPixelDistance(accessor.getY(size - 1) - y, zoom) - 2, 5, 5);
+                    g.fillOval((int) converter.getPixelDistance(accessor.getX(size - 1) - x, zoom) - offset,
+                            (int) converter.getPixelDistance(accessor.getY(size - 1) - y, zoom) - offset, dotSize,
+                            dotSize);
                 }
             }
         };
