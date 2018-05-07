@@ -50,7 +50,11 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
             final IPointAccess points) {
         final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
         for (final MultiElement element : elements) {
-            bounds.add(IntersectionUtil.getBounds(element, points));
+            final Rectangle bb = IntersectionUtil.getBounds(element, points);
+            // avoid cases with zero width or height - BoundingBoxQuadtreePolicy always would return false
+            bb.width = Math.max(1, bb.width);
+            bb.height = Math.max(1, bb.height);
+            bounds.add(bb);
         }
         return bounds;
     }

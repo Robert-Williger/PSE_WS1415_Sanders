@@ -28,6 +28,10 @@ public class CutPerformer {
     }
 
     private static MultiElement performCut(final MultiElement path, final Cut previous, final Cut current) {
+        if (current.getSegment() - previous.getSegment() < 0) {
+            System.out.println("Arsch");
+            System.exit(0);
+        }
         int[] indices = new int[current.getSegment() - previous.getSegment() + 2];
         indices[0] = previous.getPoint();
         for (int i = 1; i < indices.length - 1; ++i) {
@@ -54,7 +58,11 @@ public class CutPerformer {
         }
 
         public int compareTo(final int segment, final double offset) {
-            return Double.compare(this.segment + this.offset, segment + offset);
+            int ret = Integer.compare(this.segment, segment);
+            if (ret == 0) {
+                ret = Double.compare(this.offset, offset);
+            }
+            return ret;
         }
 
         @Override

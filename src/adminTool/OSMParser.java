@@ -30,7 +30,7 @@ public class OSMParser implements IOSMParser {
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
     private final Collection<Label> labelList;
-    private final List<List<Boundary>> boundaries;
+    private final Collection<Boundary> boundaryList;
     private NodeAccess nodes;
 
     public OSMParser() {
@@ -40,17 +40,14 @@ public class OSMParser implements IOSMParser {
         areaList = new ArrayList<>();
         poiList = new ArrayList<>();
         buildingList = new ArrayList<>();
-
-        boundaries = new ArrayList<>(12);
-        for (int i = 0; i < 12; i++) {
-            boundaries.add(new ArrayList<Boundary>());
-        }
+        boundaryList = new ArrayList<>();
     }
 
     @Override
     public void read(final File file) throws Exception {
         new BlockInputStream(new FileInputStream(file), new Preprocessor()).process();
         new BlockInputStream(new FileInputStream(file), new Parser()).process();
+        compactificate();
     }
 
     @Override
@@ -79,13 +76,19 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public List<List<Boundary>> getBoundaries() {
-        return boundaries;
+    public Collection<Boundary> getBoundaries() {
+        return boundaryList;
     }
 
     @Override
     public NodeAccess getNodes() {
         return nodes;
+    }
+
+    private void compactificate() {
+        final IdMap map = new IdMap();
+        map.createIds();
+        new Compactification(map).compactificate();
     }
 
     private class Preprocessor extends BinaryParser {
@@ -125,11 +128,17 @@ public class OSMParser implements IOSMParser {
         private Map<Integer, Byte> areaMap;
         private Map<Integer, int[]> wayMap;
 
+        private int[] pointMap;
+
         public Parser() {
             nodeMap = new HashMap<>();
             wayMap = new HashMap<>();
             areaMap = new HashMap<>();
             nodeId = 0;
+            pointMap = new int[nodes.size()];
+            for (int i = 0; i < pointMap.length; ++i) {
+                pointMap[i] = -1;
+            }
         }
 
         @Override
@@ -341,15 +350,17 @@ public class OSMParser implements IOSMParser {
                         // TODO check behaviour
                         buildingList.add(Building.create(nodes, addrStreetTag, addrNumberTag, nameTag));
                     } else {
+                        boolean area = false;
                         if (terrainType >= 0) {
                             areaMap.put((int) w.getId(), (byte) terrainType);
                             // TODO equals instead of == ?
                             if (nodes[0] == nodes[nodes.length - 1]) {
                                 areaList.add(new MultiElement(nodes, terrainType));
+                                area = true;
                             }
                         }
 
-                        if (!areaTag) {
+                        if (!area && !areaTag) {
                             // TODO ways with area tag also valid...
                             type = getWayType(wayTag, bicycle, foot);
                             if (type >= 0 && (!tunnel || type != 2)) {
@@ -468,20 +479,20 @@ public class OSMParser implements IOSMParser {
                 final List<HashMap<Integer, IntList>> maps = createMultipolygonMaps(relation);
 
                 if (!maps.get(0).isEmpty()) {
-                    final int[][] outer = new int[maps.get(0).size()][];
-                    final int[][] inner = new int[maps.get(1).size()][];
+                    final MultiElement[] outer = new MultiElement[maps.get(0).size()];
+                    final MultiElement[] inner = new MultiElement[maps.get(1).size()];
 
                     int count = -1;
                     for (final Entry<Integer, IntList> entry : maps.get(0).entrySet()) {
-                        outer[++count] = entry.getValue().toArray();
+                        outer[++count] = new MultiElement(entry.getValue().toArray(), level);
                     }
 
                     count = -1;
                     for (final Entry<Integer, IntList> entry : maps.get(1).entrySet()) {
-                        inner[++count] = entry.getValue().toArray();
+                        inner[++count] = new MultiElement(entry.getValue().toArray(), level);
                     }
 
-                    boundaries.get(level).add(new Boundary(name, outer, inner));
+                    boundaryList.add(new Boundary(outer, inner, name));
                 }
             }
         }
@@ -883,5 +894,136 @@ public class OSMParser implements IOSMParser {
         }
 
         return -1;
+    }
+
+    private class IdMap {
+        private boolean[] used;
+        private int idCount;
+        private int[] ids;
+
+        public void createIds() {
+            determineUses();
+            createIdArray();
+            used = null;
+        }
+
+        public int getIds() {
+            return idCount;
+        }
+
+        public int getId(final int id) {
+            return ids[id];
+        }
+
+        private void createIdArray() {
+            ids = new int[nodes.size()];
+            idCount = 0;
+            for (int i = 0; i < ids.length; ++i) {
+                ids[i] = used[i] ? idCount++ : -1;
+            }
+        }
+
+        private void determineUses() {
+            used = new boolean[nodes.size()];
+            determineElementUses(wayList);
+            determineElementUses(areaList);
+            determineElementUses(buildingList);
+            //determineBoundaryUses();
+            determinePointUses(poiList);
+            determinePointUses(labelList);
+        }
+
+        private void determineBoundaryUses() {
+            for (final Boundary boundary : boundaryList) {
+                for (int i = 0; i < boundary.getOutlines(); ++i) {
+                    determineElementUses(boundary.getOutline(i));
+                }
+                for (int i = 0; i < boundary.getHoles(); ++i) {
+                    determineElementUses(boundary.getHole(i));
+                }
+            }
+        }
+
+        private void determineElementUses(final Collection<? extends MultiElement> elements) {
+            for (final MultiElement element : elements) {
+                determineElementUses(element);
+            }
+        }
+
+        private void determineElementUses(final MultiElement element) {
+            for (int i = 0; i < element.size(); ++i) {
+                used[element.getNode(i)] = true;
+            }
+        }
+
+        private void determinePointUses(final Collection<? extends POI> elements) {
+            for (final POI poi : elements) {
+                used[poi.getNode()] = true;
+            }
+        }
+    }
+
+    private class Compactification {
+        private final IdMap map;
+
+        public Compactification(final IdMap map) {
+            this.map = map;
+        }
+
+        public void compactificate() {
+            updateElements();
+            updatePoints();
+        }
+
+        private void updateElements() {
+            updateElements(wayList);
+            updateElements(areaList);
+            updateElements(buildingList);
+            //updateBoundaries();
+            updatePoints(poiList);
+            updatePoints(labelList);
+        }
+
+        private void updateBoundaries() {
+            for (final Boundary boundary : boundaryList) {
+                for (int i = 0; i < boundary.getOutlines(); ++i) {
+                    updateElement(boundary.getOutline(i));
+                }
+                for (int i = 0; i < boundary.getHoles(); ++i) {
+                    updateElement(boundary.getHole(i));
+                }
+            }
+        }
+
+        private void updateElements(final Collection<? extends MultiElement> elements) {
+            for (final MultiElement element : elements) {
+                updateElement(element);
+            }
+        }
+
+        private void updateElement(final MultiElement element) {
+            for (int i = 0; i < element.size(); ++i) {
+                assert map.getId(element.getNode(i)) != -1 : element.getNode(i);
+                element.setNode(i, map.getId(element.getNode(i)));
+
+            }
+        }
+
+        private void updatePoints(final Collection<? extends POI> elements) {
+            for (final POI poi : elements) {
+                poi.setNode(map.getId(poi.getNode()));
+            }
+        }
+
+        private void updatePoints() {
+            final NodeAccess nodeAccess = new NodeAccess(map.getIds());
+            int current = 0;
+            for (int i = 0; i < nodes.size(); ++i) {
+                if (map.getId(i) != -1)
+                    nodeAccess.set(current++, nodes.getLat(i), nodes.getLon(i));
+            }
+            nodes = nodeAccess;
+        }
+
     }
 }

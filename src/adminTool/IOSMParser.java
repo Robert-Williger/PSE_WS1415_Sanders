@@ -2,7 +2,6 @@ package adminTool;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.Building;
@@ -25,7 +24,7 @@ public interface IOSMParser {
 
     Collection<Label> getLabels();
 
-    List<List<Boundary>> getBoundaries();
+    Collection<Boundary> getBoundaries();
 
     NodeAccess getNodes();
 }

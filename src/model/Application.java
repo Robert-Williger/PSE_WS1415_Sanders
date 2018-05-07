@@ -8,6 +8,7 @@ import model.map.IMap;
 import model.map.IMapManager;
 import model.map.Map;
 import model.map.MapManager;
+import model.reader.IReader;
 import model.reader.Reader;
 import model.renderEngine.DefaultImageLoader;
 import model.renderEngine.IImageLoader;

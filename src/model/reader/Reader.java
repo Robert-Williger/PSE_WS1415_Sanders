@@ -10,7 +10,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import model.IProgressListener;
-import model.IReader;
 import model.ITextProcessor;
 import model.map.IMapManager;
 import model.routing.IRouteManager;

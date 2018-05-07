@@ -86,10 +86,8 @@ public class StoredQuadtreeWriter extends AbstractMapFileWriter {
                         nElements.add(element);
                     }
                 }
-                if (!nElements.isEmpty()) {
-                    data.set(startIndex + i, data.size());
-                    distribute(data, elements, nx, ny, nHeight);
-                }
+                data.set(startIndex + i, data.size());
+                distribute(data, elements, nx, ny, nHeight);
             }
         }
     }

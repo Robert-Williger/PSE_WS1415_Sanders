@@ -2,6 +2,7 @@ package adminTool;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -12,6 +13,7 @@ import java.util.zip.ZipOutputStream;
 import java.util.Set;
 
 import adminTool.elements.Boundary;
+import adminTool.elements.MultiElement;
 import adminTool.elements.Street;
 import adminTool.util.IntersectionUtil;
 import util.IntList;
@@ -19,13 +21,13 @@ import util.IntList;
 public class IndexWriter extends AbstractMapFileWriter {
     private Rectangle[] bounds;
     private Sorting<Street> streets;
-    private List<List<Boundary>> boundaries;
+    private Collection<Boundary> boundaries;
     private Map<String, Integer> cityMap;
     private int cityId;
     private final IPointAccess points;
 
     // TODO speedup
-    public IndexWriter(final List<List<Boundary>> boundaries, final Sorting<Street> streets, final IPointAccess points,
+    public IndexWriter(final Collection<Boundary> boundaries, final Sorting<Street> streets, final IPointAccess points,
             final ZipOutputStream zipOutput) {
         super(zipOutput);
 
@@ -52,16 +54,13 @@ public class IndexWriter extends AbstractMapFileWriter {
 
     private Rectangle[] calculateBounds() {
         int maxId = 0;
-        for (final List<Boundary> list : boundaries) {
-            for (final Boundary boundary : list) {
-                maxId = Math.max(maxId, boundary.getID());
-            }
+        for (final Boundary boundary : boundaries) {
+            maxId = Math.max(maxId, boundary.getID());
+
         }
         final Rectangle[] bounds = new Rectangle[maxId + 1];
-        for (final List<Boundary> list : boundaries) {
-            for (final Boundary boundary : list) {
-                bounds[boundary.getID()] = getBounds(boundary);
-            }
+        for (final Boundary boundary : boundaries) {
+            bounds[boundary.getID()] = getBounds(boundary);
         }
         return bounds;
     }
@@ -72,12 +71,14 @@ public class IndexWriter extends AbstractMapFileWriter {
         int minY = Integer.MAX_VALUE;
         int maxY = Integer.MIN_VALUE;
 
-        for (final int[] indices : boundary.getOuter()) {
-            for (int i = 0; i < indices.length; ++i) {
-                minX = Math.min(minX, points.getX(indices[i]));
-                maxX = Math.max(maxX, points.getX(indices[i]));
-                minY = Math.min(minY, points.getY(indices[i]));
-                maxY = Math.max(maxY, points.getY(indices[i]));
+        for (int b = 0; b < boundary.getOutlines(); ++b) {
+            final MultiElement element = boundary.getOutline(b);
+
+            for (int i = 0; i < element.size(); ++i) {
+                minX = Math.min(minX, points.getX(element.getNode(i)));
+                maxX = Math.max(maxX, points.getX(element.getNode(i)));
+                minY = Math.min(minY, points.getY(element.getNode(i)));
+                maxY = Math.max(maxY, points.getY(element.getNode(i)));
             }
         }
 
@@ -88,14 +89,14 @@ public class IndexWriter extends AbstractMapFileWriter {
         if (!bounds.contains(x, y)) {
             return false;
         }
-        // for (final Node[] nodes : boundary.getInner()) {
-        // if (Util.polygonContainsPoint(nodes, x, y)) {
-        // return false;
-        // }
-        // }
+        for (int i = 0; i < boundary.getHoles(); ++i) {
+            if (IntersectionUtil.polygonContainsPoint(boundary.getHole(i), points, x, y)) {
+                return false;
+            }
+        }
 
-        for (final int[] indices : boundary.getOuter()) {
-            if (IntersectionUtil.polygonContainsPoint(new IntList(indices), points, x, y)) {
+        for (int i = 0; i < boundary.getOutlines(); ++i) {
+            if (IntersectionUtil.polygonContainsPoint(boundary.getOutline(i), points, x, y)) {
                 return true;
             }
         }

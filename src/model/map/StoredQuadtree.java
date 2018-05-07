@@ -6,17 +6,17 @@ import java.util.function.LongConsumer;
 public class StoredQuadtree implements IElementIterator {
 
     private final int[] data;
-    private final int minZoom;
+    private final int zoomOffset;
 
-    public StoredQuadtree(final int[] data, final int minZoom) {
+    public StoredQuadtree(final int[] data, final int zoomOffset) {
         this.data = data;
-        this.minZoom = minZoom;
+        this.zoomOffset = zoomOffset;
     }
 
     private int getAddress(final int row, final int column, final int zoom) {
         int address = 0;
 
-        for (int i = zoom - minZoom - 1; i >= 0; i--) {
+        for (int i = zoom - 1; i >= 0; i--) {
             final int xChoice = (column >> i) & 1;
             final int yChoice = (row >> i) & 1;
             final int choice = xChoice + 2 * yChoice;
@@ -24,7 +24,6 @@ public class StoredQuadtree implements IElementIterator {
             final int nodeAddress = data[address + choice];
             if (!exists(nodeAddress)) {
                 return address;
-
             }
 
             address = nodeAddress;
@@ -38,21 +37,36 @@ public class StoredQuadtree implements IElementIterator {
     }
 
     @Override
-    public OfLong iterator(final int row, final int column, final int zoom) {
-        return new It(getAddress(row, column, zoom) + 4);
+    public OfLong iterator(final int row, final int column, int zoom) {
+        zoom -= zoomOffset;
+        if (isInvalid(row, column, zoom)) {
+            return new EmptyIterator();
+        }
+
+        return new DataIterator(getAddress(row, column, zoom) + 4);
     }
 
     @Override
     public void forEach(int row, int column, int zoom, LongConsumer consumer) {
+        zoom -= zoomOffset;
+        if (isInvalid(row, column, zoom)) {
+            return;
+        }
+
         for (int i = getAddress(row, column, zoom) + 4; data[i] != -1; i++) {
             consumer.accept(data[i]);
         }
     }
 
-    private class It implements OfLong {
+    private boolean isInvalid(final int row, final int column, int zoom) {
+        int maxValue = (1 << zoom) - 1;
+        return row > maxValue || column > maxValue || row < 0 || column < 0;
+    }
+
+    private class DataIterator implements OfLong {
         private int address;
 
-        public It(final int startAddress) {
+        public DataIterator(final int startAddress) {
             this.address = startAddress;
         }
 
@@ -68,4 +82,15 @@ public class StoredQuadtree implements IElementIterator {
 
     }
 
+    private class EmptyIterator implements OfLong {
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public long nextLong() {
+            return -1;
+        }
+    }
 }

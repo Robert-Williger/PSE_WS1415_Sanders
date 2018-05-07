@@ -120,11 +120,10 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
 
     private void distribute(boolean[] leafs, IntList dataList, boolean[] duplicates, int[][] xPos, int[][] yPos,
             IntList[][] indices, int size, int height, int choice) {
-        final int[] distXPos = xPos[height + 1];
-        final int[] distYPos = yPos[height + 1];
+        final int[] distXPos = updateXPositions(xPos, height, xPos[height][choice], size);
+        final int[] distYPos = updateYPositions(yPos, height, yPos[height][choice], size);
         final IntList[] distIndices = indices[height + 1];
 
-        setPositions(distXPos, distYPos, xPos[height][choice], yPos[height][choice], size);
         dataList.clear();
         clearIndices(distIndices);
 
@@ -149,11 +148,22 @@ public class LinkedQuadtreeWriter extends AbstractMapFileWriter {
         }
     }
 
-    private void setPositions(final int[] xPos, final int[] yPos, final int x, final int y, final int size) {
+    private int[] updateXPositions(final int[][] xPos, final int height, final int choice, final int size) {
+        final int[] ret = xPos[height + 1];
+        final int x = xPos[height][choice];
         for (int i = 0; i < 4; i++) {
-            xPos[i] = x + (i % 2) * size;
-            yPos[i] = y + (i / 2) * size;
+            ret[i] = x + (i % 2) * size;
         }
+        return ret;
+    }
+
+    private int[] updateYPositions(final int[][] yPos, final int height, final int choice, final int size) {
+        final int[] ret = yPos[height + 1];
+        final int x = yPos[height][choice];
+        for (int i = 0; i < 4; i++) {
+            ret[i] = x + (i / 2) * size;
+        }
+        return ret;
     }
 
     private void setLeafs(final boolean[] leafs, final IntList[] indices) {

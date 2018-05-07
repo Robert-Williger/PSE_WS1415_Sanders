@@ -5,22 +5,30 @@ public class Boundary {
     private static int count;
     private final int id;
     private final String name;
-    private final int[][] inner;
-    private final int[][] outer;
+    private final MultiElement[] outlines;
+    private final MultiElement[] holes;
 
-    public Boundary(final String name, final int[][] outer, final int[][] inner) {
+    public Boundary(final MultiElement[] outlines, final MultiElement[] holes, final String name) {
+        this.outlines = outlines;
         this.name = name;
-        this.inner = inner;
-        this.outer = outer;
+        this.holes = holes;
         id = count++;
     }
 
-    public int[][] getOuter() {
-        return outer;
+    public MultiElement getOutline(final int index) {
+        return outlines[index];
     }
 
-    public int[][] getInner() {
-        return inner;
+    public int getOutlines() {
+        return outlines.length;
+    }
+
+    public MultiElement getHole(final int index) {
+        return holes[index];
+    }
+
+    public int getHoles() {
+        return holes.length;
     }
 
     public String getName() {

@@ -14,6 +14,7 @@ public class RoadGraphMain {
         final int maxWayCoordWidth = 20 << 5;
         final int simplificationThreshold = 20 << 2;
         final int stubThreshold = 20 << 3;
+        final int junctionThreshold = 20 << 6;
         final int tBias = 2 << 3;
         IOSMParser parser = new OSMParser();
         try {
@@ -29,7 +30,7 @@ public class RoadGraphMain {
         projector.performProjection();
 
         RoadGraphCreator roadGraphCreator = new RoadGraphCreator(maxWayCoordWidth, simplificationThreshold,
-                stubThreshold, tBias);
+                stubThreshold, tBias, junctionThreshold);
         roadGraphCreator.createRoadGraph(ways, projector.getPoints(), projector.getSize());
     }
 }

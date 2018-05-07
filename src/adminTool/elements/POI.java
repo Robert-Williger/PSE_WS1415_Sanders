@@ -2,7 +2,7 @@ package adminTool.elements;
 
 public class POI implements Typeable {
 
-    private final int index;
+    private int index;
     private final int type;
 
     public POI(final int index, final int type) {
@@ -17,5 +17,9 @@ public class POI implements Typeable {
 
     public int getNode() {
         return index;
+    }
+
+    public void setNode(final int index) {
+        this.index = index;
     }
 }

@@ -191,7 +191,7 @@ public class BackgroundRenderer extends AbstractRenderer {
     }
 
     private LongConsumer createConsumer(final int zoom, final ICollectiveAccessor accessor, final ShapeStyle[] styles) {
-        return (id) -> {
+        LongConsumer ret = (id) -> {
             accessor.setID(id);
             final int type = accessor.getType();
 
@@ -204,6 +204,7 @@ public class BackgroundRenderer extends AbstractRenderer {
                 // path.closePath();
             }
         };
+        return ret;
     }
 
     private LongConsumer createStreetConsumer(final int zoom, final ICollectiveAccessor accessor,

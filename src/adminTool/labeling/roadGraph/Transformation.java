@@ -21,15 +21,17 @@ import adminTool.util.ShapeUtil;
 import util.IntList;
 
 public class Transformation {
+    private final int wayWidthSq;
     private final int wayWidth;
     private final int threshold;
     private final CutPerformer cutPerformer;
     private UnboundedPointAccess points;
     private List<MultiElement> processedPaths;
 
-    public Transformation(final int wayWidth, final int threshold) {
+    public Transformation(final int wayWidth, final int junctionThreshold) {
         this.wayWidth = wayWidth;
-        this.threshold = threshold;
+        this.wayWidthSq = wayWidth * wayWidth;
+        this.threshold = junctionThreshold;
         this.cutPerformer = new CutPerformer();
     }
 
@@ -77,7 +79,7 @@ public class Transformation {
             final IntList list = entry.getValue();
 
             if (list.size() > 1) {
-                final MultiElement[] elements = createReducedPaths(paths, entry);
+                final MultiElement[] elements = createDirectedPaths(paths, entry);
                 final Shape[] shapes = createShapes(elements);
                 final Cut[] cuts = createCuts(elements);
 
@@ -96,6 +98,7 @@ public class Transformation {
                     }
                 }
 
+//                capCuts(elements, cuts);
                 updatePoints(elements, cuts);
 
                 for (int i = 0; i < cuts.length; ++i) {
@@ -107,6 +110,7 @@ public class Transformation {
         }
 
         return cutArray;
+
     }
 
     private CutInfo[] createInitialCuts(final List<? extends MultiElement> paths) {
@@ -117,14 +121,14 @@ public class Transformation {
         return cutList;
     }
 
-    private MultiElement[] createReducedPaths(final List<? extends MultiElement> paths,
+    private MultiElement[] createDirectedPaths(final List<? extends MultiElement> paths,
             final HashMap.Entry<Integer, IntList> entry) {
         final int node = entry.getKey();
         final IntList list = entry.getValue();
         final MultiElement[] elements = new MultiElement[list.size()];
         for (int i = 0; i < elements.length; ++i) {
             final MultiElement element = paths.get(list.get(i));
-            elements[i] = reduce(element.getNode(0) != node ? element.reverse() : element);
+            elements[i] = element.getNode(0) != node ? element.reverse() : element;
         }
         return elements;
     }
@@ -147,37 +151,42 @@ public class Transformation {
         return cuts;
     }
 
-    private void updateCut(final Cut cut, final MultiElement path, final Point2D intersect) {
+    private void updateCut(final Cut cut, final MultiElement path, final Point2D isect) {
         final Point last = new Point();
         final Point current = new Point();
 
         last.setLocation(points.getX(path.getNode(0)), points.getY(path.getNode(0)));
-        for (int segment = 0; segment < path.size() - 1; ++segment) {
-            current.setLocation(points.getX(path.getNode(segment + 1)), points.getY(path.getNode(segment + 1)));
+        for (int node = 0; node < path.size() - 1; ++node) {
+            current.setLocation(points.getX(path.getNode(node + 1)), points.getY(path.getNode(node + 1)));
             final long dx = current.x - last.x;
             final long dy = current.y - last.y;
             final long square = (dx * dx + dy * dy);
-            final double s = ((intersect.getX() - last.x) * dx + (intersect.getY() - last.y) * dy) / (double) square;
-            if (s > -IntersectionUtil.EPSILON && s < 1 + IntersectionUtil.EPSILON) {
+            final double s = ((isect.getX() - last.x) * dx + (isect.getY() - last.y) * dy) / (double) square;
+            if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0
+                    && isNearEnough(last.x + s * dx, last.y + s * dy, isect)) {
                 // TODO epsilon comparison?
-                if (cut.compareTo(segment, s) < 0) {
-                    cut.setSegment(segment);
-                    cut.setOffset(s);
-                }
+                cut.setSegment(node);
+                cut.setOffset(s);
             }
             last.setLocation(current);
         }
     }
 
+    private boolean isNearEnough(final double plumbX, final double plumbY, final Point2D isect) {
+        return wayWidthSq - Point.distanceSq(plumbX, plumbY, isect.getX(), isect.getY()) > -IntersectionUtil.EPSILON;
+    }
+
     private void appendCut(final Cut cut, final CutInfo info, final int pathsize, final boolean reverse) {
         final Cut my = reverse ? new Cut(cut.getPoint(), pathsize - 2 - cut.getSegment(), 1 - cut.getOffset()) : cut;
         final List<Cut> cutList = info.getCuts();
+
         if (cutList.isEmpty() || (reverse != my.compareTo(cutList.get(0)) < 0)) {
             cutList.add(my);
             if (reverse)
                 info.setSecondJunction();
-            else
+            else {
                 info.setFirstJunction();
+            }
         } else {
             cutList.clear();
             info.reset();
@@ -185,45 +194,65 @@ public class Transformation {
         }
     }
 
-    private MultiElement reduce(final MultiElement element) {
-        double totalLength = 0;
-
-        int lastX = points.getX(element.getNode(0));
-        int lastY = points.getY(element.getNode(0));
-        for (int i = 1; i < element.size(); i++) {
-            int currentX = points.getX(element.getNode(i));
-            int currentY = points.getY(element.getNode(i));
-            totalLength += Point.distance(currentX, currentY, lastX, lastY);
-            if (totalLength >= threshold) {
-                return element.subElement(0, i + 1);
-            }
-            lastX = currentX;
-            lastY = currentY;
-        }
-        return element;
-    }
-
     private void appendPaths(final HashMap<Integer, IntList> map, final MultiElement path, final CutInfo cutInfo) {
         final List<MultiElement> paths = cutPerformer.performCuts(path, cutInfo.getCuts());
         final Iterator<MultiElement> iterator = paths.iterator();
 
-        while (iterator.hasNext()) {
+        if (cutInfo.hasFirstJunction()) {
+            final MultiElement element = iterator.next();
+            element.setType(-1);
+            processedPaths.add(element);
+        }
+        if (cutInfo.hasRoadSection()) {
             processedPaths.add(iterator.next());
         }
-        // if (cutInfo.hasFirstJunction()) {
-        // final MultiElement element = iterator.next();
-        // element.setType(-1);
-        // processedPaths.add(element);
-        // }
-        // if (cutInfo.hasRoadSection()) {
-        // processedPaths.add(iterator.next());
-        // }
-        // if (cutInfo.hasSecondJunction()) {
-        // final MultiElement element = iterator.next();
-        // element.setType(-1);
-        // processedPaths.add(element);
-        // }
+        if (cutInfo.hasSecondJunction()) {
+            final MultiElement element = iterator.next();
+            element.setType(-1);
+            processedPaths.add(element);
+        }
+    }
 
+    private void capCuts(final MultiElement[] elements, final Cut[] cuts) {
+        for (int i = 0; i < cuts.length; ++i) {
+            final Cut cut = cuts[i];
+            final MultiElement element = elements[i];
+            capCut(cut, element);
+        }
+    }
+
+    private void capCut(final Cut cut, final MultiElement element) {
+        final int endNode = cut.getSegment();
+
+        double totalLength = 0;
+        int lastX = points.getX(element.getNode(0));
+        int lastY = points.getY(element.getNode(0));
+        for (int node = 1; node <= endNode; node++) {
+            int currentX = points.getX(element.getNode(node));
+            int currentY = points.getY(element.getNode(node));
+            double length = Point.distance(currentX, currentY, lastX, lastY);
+            if (totalLength + length - threshold > -IntersectionUtil.EPSILON) {
+                final double missingLength = threshold - totalLength;
+                final double offset = missingLength / length;
+
+                cut.setOffset(offset);
+                cut.setSegment(node - 1);
+                return;
+            }
+            lastX = currentX;
+            lastY = currentY;
+            totalLength += length;
+        }
+
+        int currentX = points.getX(element.getNode(endNode + 1));
+        int currentY = points.getY(element.getNode(endNode + 1));
+        double length = Point.distance(currentX, currentY, lastX, lastY);
+        if (totalLength + cut.getOffset() * length - threshold > -IntersectionUtil.EPSILON) {
+            final double missingLength = threshold - totalLength;
+            final double offset = missingLength / length;
+            cut.setOffset(Math.min(offset, cut.getOffset()));
+            return;
+        }
     }
 
     private void updatePoints(final MultiElement[] elements, final Cut[] cuts) {

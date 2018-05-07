@@ -114,10 +114,8 @@ public class CollisionlessQuadtree {
         if (!tree.isLeaf()) {
             final CollisionlessQuadtree[] children = tree.getChildren();
             for (int i = 0; i < 4; i++) {
-                if (!children[i].getElements().isEmpty()) {
-                    data.set(startIndex + i, data.size());
-                    toList(data, children[i]);
-                }
+                data.set(startIndex + i, data.size());
+                toList(data, children[i]);
             }
         }
     }

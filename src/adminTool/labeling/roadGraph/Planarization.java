@@ -61,19 +61,35 @@ public class Planarization {
         final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
         countNodes(paths);
 
+        // int count = 0;
         final Quadtree quadtree = createQuadtree(paths, points, size);
         final Iterator<List<Cut>> cutIterator = createCutList(paths, size, quadtree).iterator();
         for (final Iterator<? extends MultiElement> pathIterator = paths.iterator(); pathIterator.hasNext();) {
-            final List<MultiElement> elements = cutPerformer.performCuts(pathIterator.next(), cutIterator.next());
+            final List<Cut> cuts = cutIterator.next();
+            final List<MultiElement> elements = cutPerformer.performCuts(pathIterator.next(), cuts);
             final Iterator<MultiElement> iterator = elements.iterator();
 
-            tryAppend(iterator.next());
+            // int sizeD = processedPaths.size();
+            tryAppendEnd(iterator.next());
             if (iterator.hasNext()) {
                 for (int j = 0; j < elements.size() - 2; ++j) {
-                    processedPaths.add(iterator.next());
+                    tryAppendInner(iterator.next());
                 }
-                tryAppend(iterator.next());
+                tryAppendEnd(iterator.next());
             }
+
+            // if (count == 132) {
+            // System.out.println(cuts);
+            // for (final MultiElement element : elements) {
+            // String output = "";
+            // for (int i = 0; i < element.size(); ++i) {
+            // output += element.getNode(i) + (i != elements.size() - 1 ? ", " : "");
+            // }
+            // System.out.println(output);
+            // }
+            // System.out.println(processedPaths.size() - sizeD);
+            // }
+            // ++count;
         }
     }
 
@@ -176,7 +192,14 @@ public class Planarization {
         return tBias / length;
     }
 
-    private void tryAppend(final MultiElement element) {
+    private void tryAppendInner(final MultiElement element) {
+        // TODO use 1 instead of size() - 1
+        if (element.size() > 3 || element.getNode(0) != element.getNode(element.size() - 1)) {
+            processedPaths.add(element);
+        }
+    }
+
+    private void tryAppendEnd(final MultiElement element) {
         if (isOriginalJunction(element.getNode(0)) || isOriginalJunction(element.getNode(element.size() - 1))
                 || isLongEnough(element)) {
             processedPaths.add(element);

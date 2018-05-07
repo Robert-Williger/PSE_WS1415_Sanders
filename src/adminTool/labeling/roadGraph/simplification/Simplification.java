@@ -29,7 +29,7 @@ public class Simplification {
         this.paths = new ArrayList<MultiElement>();
         this.simplifier = new VisvalingamWhyatt(simplifyThreshold);
         this.hullCreator = new HullCreator();
-        this.hullSimplifier = new HullSimplifier(5);//simplifyThreshold);
+        this.hullSimplifier = new HullSimplifier(5);// simplifyThreshold);
         this.triangulator = new Triangulator();
         this.pathFormer = new PathFormer();
         this.pathSimplifier = new PathSimplifier(simplifyThreshold);

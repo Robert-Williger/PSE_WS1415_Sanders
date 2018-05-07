@@ -133,8 +133,8 @@ class MapManagerReader {
             accessors[i].setData(readIntArray(readerContext, names[i] + "s"));
             int[] elementData = readIntArray(readerContext, names[i] + "Data");
             int[] treeData = readIntArray(readerContext, names[i] + "Tree");
-            elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
-            // elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
+            //elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
+            elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
         }
         final int[] labelData = readIntArray(readerContext, names[3] + "s");
         pointMap.put(names[3], () -> new LabelAccessor(distributions[3], labelData, 3));

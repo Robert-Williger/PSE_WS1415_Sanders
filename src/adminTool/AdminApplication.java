@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -84,7 +85,7 @@ public class AdminApplication {
             // TODO take street list of mapManagerCreator instead of graph creator
             // [already sorted]
 
-            List<List<Boundary>> boundaries = parser.getBoundaries();
+            Collection<Boundary> boundaries = parser.getBoundaries();
             parser = null;
 
             try {

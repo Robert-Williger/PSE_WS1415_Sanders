@@ -49,9 +49,9 @@ class TextProcessorReader {
                     }
                 }
             }
+            stream.close();
         }
 
-        stream.close();
         return list;
     }
 

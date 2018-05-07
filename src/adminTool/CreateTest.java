@@ -66,12 +66,13 @@ public class CreateTest {
 
             graphWriter = null;
 
-            final int maxWayCoordWidth = 20 << 3;
-            final int simplificationThreshold = 20 << 3;
-            final int stubThreshold = 30 << 3;
-            final int tBias = 2 << 3;
+            final int maxWayCoordWidth = 18 << 3;
+            final int simplificationThreshold = 18 << 2;
+            final int stubThreshold = 30 << 2;
+            final int tThreshold = 2 << 2;
+            final int junctionThreshold = 18 << 4;
             RoadGraphCreator roadGraphCreator = new RoadGraphCreator(maxWayCoordWidth, simplificationThreshold,
-                    stubThreshold, tBias);
+                    stubThreshold, tThreshold, junctionThreshold);
             roadGraphCreator.createRoadGraph(parser.getWays(), projector.getPoints(), projector.getSize());
 
             for (final MultiElement element : roadGraphCreator.getPaths()) {
@@ -98,16 +99,16 @@ public class CreateTest {
             System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            List<List<Boundary>> boundaries = parser.getBoundaries();
+            Collection<Boundary> boundaries = parser.getBoundaries();
             parser = null;
-            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
+            /*IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
                     zipOutput);
             try {
                 indexWriter.write();
             } catch (final IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("index creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+            System.out.println("index creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");*/
 
             try {
                 zipOutput.close();
