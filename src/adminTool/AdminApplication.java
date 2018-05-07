@@ -73,14 +73,16 @@ public class AdminApplication {
                 e.printStackTrace();
             }
 
-            Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
-            projector.performProjection();
+            Projector projector = new Projector(new MercatorProjection());
+            projector.performProjection(parser.getNodes());
+
+            Aligner alignment = new Aligner(projector.getPoints());
             List<Street> streets = graphWriter.getStreets();
             graphWriter = null;
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getTerrain(),
-                    parser.getBuildings(), parser.getPOIs(), parser.getLabels(), projector.getPoints(),
-                    projector.getSize(), zipOutput);
+                    parser.getBuildings(), parser.getPOIs(), parser.getLabels(), alignment.getPoints(),
+                    alignment.getSize(), zipOutput);
 
             // TODO take street list of mapManagerCreator instead of graph creator
             // [already sorted]
@@ -94,7 +96,7 @@ public class AdminApplication {
                 e.printStackTrace();
             }
 
-            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
+            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, alignment.getPoints(),
                     zipOutput);
             mapManagerWriter = null;
             boundaries = null;

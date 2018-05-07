@@ -26,7 +26,6 @@ import adminTool.quadtree.StoredQuadtreeWriter;
 import adminTool.quadtree.CollisionlessQuadtree;
 import adminTool.quadtree.ICollisionPolicy;
 import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.LinkedQuadtreeWriter;
 import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {

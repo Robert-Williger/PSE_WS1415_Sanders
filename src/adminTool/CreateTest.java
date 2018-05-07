@@ -56,8 +56,8 @@ public class CreateTest {
 
             System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
-            Projector projector = new Projector(parser.getNodes(), new MercatorProjection());
-            projector.performProjection();
+            Projector projector = new Projector(new MercatorProjection());
+            projector.performProjection(parser.getNodes());
             final List<Street> streets = graphWriter.getStreets();
             final Collection<Label> labels = parser.getLabels();
             final Collection<POI> pois = parser.getPOIs();
@@ -66,6 +66,9 @@ public class CreateTest {
 
             graphWriter = null;
 
+            final Aligner aligner = new Aligner(projector.getPoints());
+            aligner.performAlignment(streets, areas);
+
             final int maxWayCoordWidth = 18 << 3;
             final int simplificationThreshold = 18 << 2;
             final int stubThreshold = 30 << 2;
@@ -73,7 +76,7 @@ public class CreateTest {
             final int junctionThreshold = 18 << 4;
             RoadGraphCreator roadGraphCreator = new RoadGraphCreator(maxWayCoordWidth, simplificationThreshold,
                     stubThreshold, tThreshold, junctionThreshold);
-            roadGraphCreator.createRoadGraph(parser.getWays(), projector.getPoints(), projector.getSize());
+            roadGraphCreator.createRoadGraph(parser.getWays(), aligner.getPoints(), aligner.getSize());
 
             for (final MultiElement element : roadGraphCreator.getPaths()) {
                 final int[] indices = new int[element.size()];
@@ -88,7 +91,7 @@ public class CreateTest {
             start = System.currentTimeMillis();
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, pois, labels,
-                    projector.getPoints(), projector.getSize(), zipOutput);
+                    aligner.getPoints(), aligner.getSize(), zipOutput);
 
             try {
                 mapManagerWriter.write();
@@ -99,16 +102,18 @@ public class CreateTest {
             System.out.println("map manager creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            Collection<Boundary> boundaries = parser.getBoundaries();
-            parser = null;
-            /*IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, projector.getPoints(),
-                    zipOutput);
-            try {
-                indexWriter.write();
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-            System.out.println("index creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");*/
+            // Collection<Boundary> boundaries = parser.getBoundaries();
+            // parser = null;
+            //
+            // IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting,
+            // aligner.getPoints(),
+            // zipOutput);
+            // try {
+            // indexWriter.write();
+            // } catch (final IOException e) {
+            // e.printStackTrace();
+            // }
+            System.out.println("index creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             try {
                 zipOutput.close();
