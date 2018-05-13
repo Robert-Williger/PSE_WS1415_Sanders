@@ -108,10 +108,9 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         //
         //
 
-        // TODO improve this
         final int[] maxWayWidths = new int[zoomSteps];
-        for (int zoom = minZoomStep; zoom < maxZoomStep; ++zoom) {
-            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - (zoom + 1));
+        for (int zoom = minZoomStep; zoom <= maxZoomStep; ++zoom) {
+            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - zoom);
         }
 
         final String[] names = new String[] { "area", "street", "building" };

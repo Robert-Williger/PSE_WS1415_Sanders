@@ -28,8 +28,8 @@ public class HullSimplifier {
         this(threshold, DEFAULT_FLATNESS);
     }
 
-    public HullSimplifier(final int threshold, final double flatness) {
-        simplifier = new VisvalingamWhyatt(threshold);
+    public HullSimplifier(final int simplificationThreshold, final double flatness) {
+        simplifier = new VisvalingamWhyatt(simplificationThreshold);
         this.flatness = flatness;
     }
 

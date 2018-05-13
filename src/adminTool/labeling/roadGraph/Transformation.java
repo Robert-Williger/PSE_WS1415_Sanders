@@ -1,13 +1,12 @@
 package adminTool.labeling.roadGraph;
 
-import static adminTool.util.IntersectionUtil.segmentIntersectsSegment;
-
 import java.awt.BasicStroke;
 import java.awt.Point;
 import java.awt.Shape;
-import java.awt.geom.Line2D;
+import java.awt.Stroke;
+import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,22 +16,23 @@ import adminTool.UnboundedPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.util.IntersectionUtil;
-import adminTool.util.ShapeUtil;
 import util.IntList;
 
 public class Transformation {
     private final int wayWidthSq;
-    private final int wayWidth;
     private final int threshold;
     private final CutPerformer cutPerformer;
+    private final Stroke stroke;
     private UnboundedPointAccess points;
     private List<MultiElement> processedPaths;
+    private final float[] intersection;
 
     public Transformation(final int wayWidth, final int junctionThreshold) {
-        this.wayWidth = wayWidth;
         this.wayWidthSq = wayWidth * wayWidth;
         this.threshold = junctionThreshold;
         this.cutPerformer = new CutPerformer();
+        this.stroke = new BasicStroke(wayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+        this.intersection = new float[2];
     }
 
     public List<MultiElement> getProcessedPaths() {
@@ -84,21 +84,20 @@ public class Transformation {
                 final Cut[] cuts = createCuts(elements);
 
                 for (int u = 0; u < shapes.length - 1; ++u) {
-                    for (final SegmentIterator uIt = new SegmentIterator(shapes[u]); uIt.hasNext();) {
-                        final Line2D uSegment = uIt.next();
-                        for (int v = u + 1; v < shapes.length; ++v) {
-                            for (final SegmentIterator vIt = new SegmentIterator(shapes[v]); vIt.hasNext();) {
-                                final Point2D intersection = segmentIntersectsSegment(uSegment, vIt.next());
-                                if (intersection != null) {
-                                    updateCut(cuts[u], elements[u], intersection);
-                                    updateCut(cuts[v], elements[v], intersection);
-                                }
+                    for (int v = u + 1; v < shapes.length; ++v) {
+                        final Area intersect = new Area(shapes[u]);
+                        intersect.intersect(new Area(shapes[v]));
+                        if (!intersect.isEmpty()) {
+                            for (final PathIterator iterator = intersect.getPathIterator(null); !iterator.isDone();) {
+                                iterator.currentSegment(intersection);
+                                iterator.next();
+                                updateCut(cuts[u], elements[u]);
+                                updateCut(cuts[v], elements[v]);
                             }
                         }
                     }
                 }
 
-//                capCuts(elements, cuts);
                 updatePoints(elements, cuts);
 
                 for (int i = 0; i < cuts.length; ++i) {
@@ -107,6 +106,7 @@ public class Transformation {
                     appendCut(cuts[i], cutArray[index], path.size(), path.getNode(0) != node);
                 }
             }
+
         }
 
         return cutArray;
@@ -136,10 +136,37 @@ public class Transformation {
     private Shape[] createShapes(final MultiElement[] elements) {
         final Shape[] shapes = new Shape[elements.length];
         for (int i = 0; i < shapes.length; ++i) {
-            shapes[i] = ShapeUtil.createStrokedShape(points, elements[i],
-                    new BasicStroke(wayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+            shapes[i] = createBoundedStrokedShape(elements[i]);
         }
         return shapes;
+    }
+
+    public Shape createBoundedStrokedShape(final MultiElement element) {
+        Path2D path = new Path2D.Float();
+        double totalLength = 0;
+
+        int lastX = points.getX(element.getNode(0));
+        int lastY = points.getY(element.getNode(0));
+        path.moveTo(lastX, lastY);
+
+        for (int i = 1; i < element.size(); i++) {
+            int currentX = points.getX(element.getNode(i));
+            int currentY = points.getY(element.getNode(i));
+            final double distance = Point.distance(currentX, currentY, lastX, lastY);
+
+            if (totalLength + distance >= threshold) {
+                final double s = (threshold - totalLength) / distance;
+                path.lineTo(lastX + s * (currentX - lastX), lastY + s * (currentY - lastY));
+                return stroke.createStrokedShape(path);
+            }
+
+            totalLength += distance;
+            path.lineTo(currentX, currentY);
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        return stroke.createStrokedShape(path);
     }
 
     private Cut[] createCuts(final MultiElement[] elements) {
@@ -151,7 +178,7 @@ public class Transformation {
         return cuts;
     }
 
-    private void updateCut(final Cut cut, final MultiElement path, final Point2D isect) {
+    private void updateCut(final Cut cut, final MultiElement path) {
         final Point last = new Point();
         final Point current = new Point();
 
@@ -161,19 +188,20 @@ public class Transformation {
             final long dx = current.x - last.x;
             final long dy = current.y - last.y;
             final long square = (dx * dx + dy * dy);
-            final double s = ((isect.getX() - last.x) * dx + (isect.getY() - last.y) * dy) / (double) square;
+            final double s = ((intersection[0] - last.x) * dx + (intersection[1] - last.y) * dy) / (double) square;
             if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0
-                    && isNearEnough(last.x + s * dx, last.y + s * dy, isect)) {
-                // TODO epsilon comparison?
+                    && isNearEnough(last.x + s * dx, last.y + s * dy)) {
                 cut.setSegment(node);
                 cut.setOffset(s);
             }
             last.setLocation(current);
         }
+
     }
 
-    private boolean isNearEnough(final double plumbX, final double plumbY, final Point2D isect) {
-        return wayWidthSq - Point.distanceSq(plumbX, plumbY, isect.getX(), isect.getY()) > -IntersectionUtil.EPSILON;
+    private boolean isNearEnough(final double plumbX, final double plumbY) {
+        return wayWidthSq
+                - Point.distanceSq(plumbX, plumbY, intersection[0], intersection[1]) > -IntersectionUtil.EPSILON;
     }
 
     private void appendCut(final Cut cut, final CutInfo info, final int pathsize, final boolean reverse) {
@@ -213,98 +241,17 @@ public class Transformation {
         }
     }
 
-    private void capCuts(final MultiElement[] elements, final Cut[] cuts) {
-        for (int i = 0; i < cuts.length; ++i) {
-            final Cut cut = cuts[i];
-            final MultiElement element = elements[i];
-            capCut(cut, element);
-        }
-    }
-
-    private void capCut(final Cut cut, final MultiElement element) {
-        final int endNode = cut.getSegment();
-
-        double totalLength = 0;
-        int lastX = points.getX(element.getNode(0));
-        int lastY = points.getY(element.getNode(0));
-        for (int node = 1; node <= endNode; node++) {
-            int currentX = points.getX(element.getNode(node));
-            int currentY = points.getY(element.getNode(node));
-            double length = Point.distance(currentX, currentY, lastX, lastY);
-            if (totalLength + length - threshold > -IntersectionUtil.EPSILON) {
-                final double missingLength = threshold - totalLength;
-                final double offset = missingLength / length;
-
-                cut.setOffset(offset);
-                cut.setSegment(node - 1);
-                return;
-            }
-            lastX = currentX;
-            lastY = currentY;
-            totalLength += length;
-        }
-
-        int currentX = points.getX(element.getNode(endNode + 1));
-        int currentY = points.getY(element.getNode(endNode + 1));
-        double length = Point.distance(currentX, currentY, lastX, lastY);
-        if (totalLength + cut.getOffset() * length - threshold > -IntersectionUtil.EPSILON) {
-            final double missingLength = threshold - totalLength;
-            final double offset = missingLength / length;
-            cut.setOffset(Math.min(offset, cut.getOffset()));
-            return;
-        }
-    }
-
     private void updatePoints(final MultiElement[] elements, final Cut[] cuts) {
         for (int i = 0; i < cuts.length; ++i) {
             final Cut cut = cuts[i];
             final MultiElement element = elements[i];
             final int segment = cut.getSegment();
-            // TODO fix one point elements!
-            final int nextSegment = cut.getSegment() < element.size() - 1 ? segment + 1 : segment;
             final double offset = cut.getOffset();
             final int x1 = points.getX(element.getNode(segment));
             final int y1 = points.getY(element.getNode(segment));
-            final int x2 = points.getX(element.getNode(nextSegment));
-            final int y2 = points.getY(element.getNode(nextSegment));
+            final int x2 = points.getX(element.getNode(segment + 1));
+            final int y2 = points.getY(element.getNode(segment + 1));
             points.setPoint(cut.getPoint(), (int) (x1 + offset * (x2 - x1)), (int) (y1 + offset * (y2 - y1)));
-        }
-    }
-
-    private static class SegmentIterator {
-        private final Point2D begin;
-        private final Line2D segment;
-        private final float[] coords;
-        private final PathIterator iterator;
-
-        public SegmentIterator(final Shape shape) {
-            this.begin = new Point2D.Float();
-            this.segment = new Line2D.Float();
-            this.iterator = shape.getPathIterator(null);
-            this.coords = new float[2];
-        }
-
-        public Line2D next() {
-            final int type = iterator.currentSegment(coords);
-            iterator.next();
-            switch (type) {
-                case PathIterator.SEG_LINETO:
-                    segment.setLine(segment.getX2(), segment.getY2(), coords[0], coords[1]);
-                    break;
-                case PathIterator.SEG_MOVETO:
-                    begin.setLocation(coords[0], coords[1]);
-                    segment.setLine(0, 0, coords[0], coords[1]);
-                    next();
-                    break;
-                case PathIterator.SEG_CLOSE:
-                    segment.setLine(segment.getX2(), segment.getY2(), begin.getX(), begin.getY());
-                    break;
-            }
-            return segment;
-        }
-
-        public boolean hasNext() {
-            return !iterator.isDone();
         }
     }
 

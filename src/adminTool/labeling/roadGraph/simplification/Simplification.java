@@ -18,20 +18,14 @@ public class Simplification {
     private final int maxWayCoordWidth;
     private final List<MultiElement> paths;
     private UnboundedPointAccess points;
-    private final HullCreator hullCreator;
     private final HullSimplifier hullSimplifier;
-    private final Triangulator triangulator;
-    private final PathFormer pathFormer;
     private final PathSimplifier pathSimplifier;
     private final VisvalingamWhyatt simplifier;
 
     public Simplification(final int maxWayCoordWidth, final int simplifyThreshold) {
         this.paths = new ArrayList<MultiElement>();
         this.simplifier = new VisvalingamWhyatt(simplifyThreshold);
-        this.hullCreator = new HullCreator();
         this.hullSimplifier = new HullSimplifier(5);// simplifyThreshold);
-        this.triangulator = new Triangulator();
-        this.pathFormer = new PathFormer();
         this.pathSimplifier = new PathSimplifier(simplifyThreshold);
         this.maxWayCoordWidth = maxWayCoordWidth;
     }
@@ -48,18 +42,43 @@ public class Simplification {
         this.points = points;
         int equalWayNr = 0;
 
+        final PathFormer pathFormer = new PathFormer();
+        final Triangulator triangulator = new Triangulator();
+        final HullCreator hullCreator = new HullCreator();
+        long hullCreateTime = 0;
+        long hullSimplifyTime = 0;
+        long triangulationTime = 0;
+        long pathTime = 0;
+        long pathSimplifyTime = 0;
         for (final List<Way> equalWays : identifiedWays) {
             if (equalWays.size() > 1) {
+                long t0 = System.currentTimeMillis();
                 hullCreator.createHulls(equalWays, points, maxWayCoordWidth);
+                long t1 = System.currentTimeMillis();
+                hullCreateTime += t1 - t0;
 
+                if (equalWays.get(0).getName().equals("Rond-Point Canton")) {
+                    System.out.println(equalWays.size() + ", " + hullCreator.getHulls().size());
+                }
                 if (hullCreator.getHulls().size() == equalWays.size()) {
                     appendOriginalPaths(equalWays, points, equalWayNr);
                 } else {
                     hullSimplifier.simplify(hullCreator.getHulls());
+                    long t2 = System.currentTimeMillis();
+                    hullSimplifyTime += t2 - t1;
+
                     triangulator.triangulate(hullSimplifier.getPoints(), hullSimplifier.getOutlines(),
                             hullSimplifier.getHoles());
+                    long t3 = System.currentTimeMillis();
+                    triangulationTime += t3 - t2;
+
                     pathFormer.formPaths(triangulator.getTriangulation(), maxWayCoordWidth);
+                    long t4 = System.currentTimeMillis();
+                    pathTime += t4 - t3;
+
                     pathSimplifier.simplify(pathFormer.getPaths(), pathFormer.getPoints());
+                    long t5 = System.currentTimeMillis();
+                    pathSimplifyTime += t5 - t4;
 
                     appendSimplifiedPaths(equalWayNr);
                 }
@@ -70,8 +89,8 @@ public class Simplification {
             ++equalWayNr;
 
             if (equalWayNr % 1000 == 0)
-                System.out.println(
-                        "ways: " + equalWayNr + ", points: " + this.points.getPoints() + ", paths: " + paths.size());
+                System.out.println(equalWayNr + ", " + hullCreateTime + ", " + hullSimplifyTime + ", "
+                        + triangulationTime + ", " + pathTime + ", " + pathSimplifyTime);
 
         }
     }

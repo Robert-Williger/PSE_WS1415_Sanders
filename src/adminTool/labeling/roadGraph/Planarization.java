@@ -61,15 +61,14 @@ public class Planarization {
         final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
         countNodes(paths);
 
-        // int count = 0;
         final Quadtree quadtree = createQuadtree(paths, points, size);
         final Iterator<List<Cut>> cutIterator = createCutList(paths, size, quadtree).iterator();
         for (final Iterator<? extends MultiElement> pathIterator = paths.iterator(); pathIterator.hasNext();) {
             final List<Cut> cuts = cutIterator.next();
-            final List<MultiElement> elements = cutPerformer.performCuts(pathIterator.next(), cuts);
+            final MultiElement element = pathIterator.next();
+            final List<MultiElement> elements = cutPerformer.performCuts(element, cuts);
             final Iterator<MultiElement> iterator = elements.iterator();
 
-            // int sizeD = processedPaths.size();
             tryAppendEnd(iterator.next());
             if (iterator.hasNext()) {
                 for (int j = 0; j < elements.size() - 2; ++j) {
@@ -77,19 +76,6 @@ public class Planarization {
                 }
                 tryAppendEnd(iterator.next());
             }
-
-            // if (count == 132) {
-            // System.out.println(cuts);
-            // for (final MultiElement element : elements) {
-            // String output = "";
-            // for (int i = 0; i < element.size(); ++i) {
-            // output += element.getNode(i) + (i != elements.size() - 1 ? ", " : "");
-            // }
-            // System.out.println(output);
-            // }
-            // System.out.println(processedPaths.size() - sizeD);
-            // }
-            // ++count;
         }
     }
 
@@ -118,7 +104,7 @@ public class Planarization {
         for (int i = 0; i < paths.size(); ++i) {
             ret.add(new ArrayList<Cut>());
         }
-        final FuzzyPointMap map = new FuzzyPointMap(mapSize, mapSize, 50);
+        final FuzzyPointMap map = new FuzzyPointMap(mapSize, mapSize, 25);
         intersectRec(ret, quadtree, map, 0, 0, mapSize);
         return ret;
     }

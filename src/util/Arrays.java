@@ -38,7 +38,11 @@ public final class Arrays {
     }
 
     public static PrimitiveIterator.OfInt iterator(final int[] array, final int from, final int size) {
-        return new Itr(array, from, size);
+        return new PrimitiveArrayIterator(array, from, size);
+    }
+
+    public static PrimitiveIterator.OfInt descendingIterator(final int[] array) {
+        return new ReversedPrimitiveIterator(array);
     }
 
     public static <T> void reverse(final T[] array) {
@@ -97,7 +101,6 @@ public final class Arrays {
         public T next() {
             return array[count--];
         }
-
     }
 
     private static class SubarrayIterator<T> implements Iterator<T> {
@@ -159,12 +162,33 @@ public final class Arrays {
 
     }
 
-    private static class Itr implements PrimitiveIterator.OfInt {
+    private static class ReversedPrimitiveIterator implements PrimitiveIterator.OfInt {
+
+        private final int[] array;
+        private int cursor;
+
+        public ReversedPrimitiveIterator(final int[] array) {
+            this.array = array;
+            this.cursor = array.length - 1;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor >= 0;
+        }
+
+        @Override
+        public int nextInt() {
+            return array[cursor--];
+        }
+    }
+
+    private static class PrimitiveArrayIterator implements PrimitiveIterator.OfInt {
         private int cursor; // index of next element to return
         private final int size;
         private final int[] array;
 
-        public Itr(final int[] array, final int cursor, final int size) {
+        public PrimitiveArrayIterator(final int[] array, final int cursor, final int size) {
             this.cursor = cursor;
             this.size = size;
             this.array = array;

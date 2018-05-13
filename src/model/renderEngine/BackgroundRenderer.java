@@ -1,5 +1,6 @@
 package model.renderEngine;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -24,6 +25,9 @@ public class BackgroundRenderer extends AbstractRenderer {
 
     public long nonGraphicsTime;
     public long graphicsTime;
+
+    private int roadSegments;
+    private int junctionSegments;
 
     public BackgroundRenderer(final IMapManager manager, final ColorScheme colorScheme) {
         super(manager);
@@ -50,6 +54,9 @@ public class BackgroundRenderer extends AbstractRenderer {
 
     @Override
     protected void render(final Image image) {
+        roadSegments = 0;
+        junctionSegments = 0;
+
         long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
         g.addRenderingHints(hints);
@@ -61,6 +68,10 @@ public class BackgroundRenderer extends AbstractRenderer {
         drawBuildings();
         drawWays();
 
+        g.setColor(Color.BLACK);
+        g.drawString("roads: " + roadSegments + ", junctions: " + junctionSegments, 10, 10);
+        g.setStroke(new BasicStroke(1));
+        g.drawRect(0, 0, 256, 256);
         start = System.currentTimeMillis();
         g.dispose();
         graphicsTime += (System.currentTimeMillis() - start);
@@ -220,6 +231,10 @@ public class BackgroundRenderer extends AbstractRenderer {
                 final int size = accessor.size();
 
                 if (type == 24 || type == 25) {
+                    if (type == 25)
+                        ++roadSegments;
+                    else
+                        ++junctionSegments;
                     final int offset = (zoom - 9) / 3;
                     final int dotSize = 2 * offset + 1;
                     g.setColor(new Color(0, 0, 0, 60));
