@@ -15,7 +15,6 @@ public class TriangleAdapter {
         try {
             process.waitFor();
         } catch (final InterruptedException e) {
-            // should not happen
             e.printStackTrace();
         }
     }

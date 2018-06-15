@@ -18,10 +18,6 @@ public class MultiElement implements Typeable {
         return indices.length;
     }
 
-    public void setNode(final int index, final int node) {
-        indices[index] = node;
-    }
-
     public int getNode(int index) {
         return indices[index];
     }

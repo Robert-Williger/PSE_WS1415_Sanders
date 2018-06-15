@@ -47,8 +47,8 @@ public class AreaQuadtreePolicy extends BoundingBoxQuadtreePolicy {
 
     private static List<Rectangle> calculateBounds(final List<MultiElement> elements, final IPointAccess points) {
         final List<Rectangle> bounds = new ArrayList<Rectangle>(elements.size());
-        for (int i = 0; i < elements.size(); i++) {
-            bounds.add(IntersectionUtil.getBounds(elements.get(i), points));
+        for (final MultiElement element : elements) {
+            bounds.add(IntersectionUtil.getBounds(element, points));
         }
         return bounds;
     }

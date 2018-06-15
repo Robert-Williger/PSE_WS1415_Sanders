@@ -12,17 +12,29 @@ import java.util.PrimitiveIterator;
 
 import adminTool.IPointAccess;
 import adminTool.elements.Way;
+import adminTool.labeling.roadGraph.DrawInfo;
 import util.IntList;
 
 public class HullCreator {
 
+    private final DrawInfo info;
     private List<Area> hulls;
 
-    public void createHulls(final List<Way> ways, final IPointAccess points, final float lineWidth) {
-        final BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+    public HullCreator(final DrawInfo info) {
+        this.info = info;
+    }
+
+    public void createHulls(final List<Way> ways, final IPointAccess points) {
+        if (ways.isEmpty()) {
+            hulls = new ArrayList<Area>(0);
+            return;
+        }
+
+        final float strokeWidth = info.getStrokeWidth(ways.get(0).getType());
+        final BasicStroke stroke = new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
 
         final Area[] areas = createAreas(createShapes(ways, points, stroke));
-        final IntList[] graph = createIntersectionGraph(areas);
+        final IntList[] graph = createIntersectionGraph(ways, areas);
 
         hulls = createHulls(areas, graph);
     }
@@ -42,14 +54,21 @@ public class HullCreator {
         return hulls;
     }
 
-    private IntList[] createIntersectionGraph(final Area[] areas) {
+    private IntList[] createIntersectionGraph(final List<Way> ways, final Area[] areas) {
         IntList[] intersectionGraph = new IntList[areas.length];
         for (int u = 0; u < areas.length; ++u) {
             intersectionGraph[u] = new IntList();
         }
         for (int u = 0; u < areas.length; ++u) {
+            final Way uWay = ways.get(u);
             for (int v = u + 1; v < areas.length; ++v) {
-                if (areas[u].intersects(areas[v].getBounds2D())) {
+                final Way vWay = ways.get(v);
+                if (uWay.getNode(0) == vWay.getNode(0) || uWay.getNode(uWay.size() - 1) == vWay.getNode(0)
+                        || uWay.getNode(0) == vWay.getNode(vWay.size() - 1)
+                        || uWay.getNode(uWay.size() - 1) == vWay.getNode(vWay.size() - 1)) {
+                    intersectionGraph[u].add(v);
+                    intersectionGraph[v].add(u);
+                } else if (areas[u].intersects(areas[v].getBounds2D())) {
                     final Area uArea = new Area(areas[u]);
                     uArea.intersect(areas[v]);
                     if (!uArea.isEmpty()) {

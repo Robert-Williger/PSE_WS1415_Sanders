@@ -6,13 +6,14 @@ import java.util.List;
 
 import adminTool.BoundedPointAccess;
 import adminTool.elements.Way;
+import adminTool.labeling.roadGraph.DrawInfo;
 import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
 import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;
 import adminTool.labeling.roadGraph.simplification.triangulation.PolyWriter;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangleAdapter;
 
 public class SimplificationMain {
-    private static float pathWidth = 40;
+    private static int pathWidth = 40;
     private static int threshold = 50;
 
     public static void main(final String[] args) {
@@ -20,9 +21,9 @@ public class SimplificationMain {
         final BoundedPointAccess points = createPoints();
         final List<Way> ways = createWays();
 
-        final HullCreator hullCreator = new HullCreator();
+        final HullCreator hullCreator = new HullCreator(new DrawInfo(new int[] { pathWidth }, new int[] { 5 }));
         final HullSimplifier hullSimplifier = new HullSimplifier(threshold);
-        hullCreator.createHulls(ways, points, pathWidth);
+        hullCreator.createHulls(ways, points);
 
         hullSimplifier.simplify(hullCreator.getHulls());
         try {
@@ -54,11 +55,22 @@ public class SimplificationMain {
         points.setPoint(12, 360, 115);
         points.setPoint(13, 110, 210);
         points.setPoint(14, 80, 260);
-
-        /*
-         * points.setPoint(0, 100, 100); points.setPoint(1, 150, 100); points.setPoint(2, 150, 150); points.setPoint(3,
-         * 100, 150); points.setPoint(4, 100, 100);
-         */
+        // points.setPoint(0, 50, 100);
+        // points.setPoint(1, 100, 101);
+        // points.setPoint(2, 150, 99);
+        // points.setPoint(3, 200, 100);
+        // points.setPoint(4, 250, 101);
+        // points.setPoint(5, 300, 100);
+        // points.setPoint(6, 350, 99);
+        // points.setPoint(7, 400, 100);
+        //
+        // points.setPoint(8, 50, 140);
+        // points.setPoint(9, 100, 139);
+        // points.setPoint(10, 150, 140);
+        // points.setPoint(11, 200, 141);
+        // points.setPoint(12, 250, 140);
+        // points.setPoint(13, 300, 139);
+        // points.setPoint(14, 400, 141);
 
         return points;
     }

@@ -97,7 +97,7 @@ public class AdminApplication {
             }
 
             IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, alignment.getPoints(),
-                    zipOutput);
+                    alignment.getSize(), zipOutput);
             mapManagerWriter = null;
             boundaries = null;
 

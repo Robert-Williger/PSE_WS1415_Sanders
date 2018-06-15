@@ -30,6 +30,17 @@ public final class ShapeUtil {
         return totalLength;
     }
 
+    public static Shape createShape(final IPointAccess points, final MultiElement element) {
+        final Path2D.Float path = new Path2D.Float(Path2D.WIND_EVEN_ODD, element.size() + 1); // + 1 for the closePath..
+        path.moveTo(points.getX(element.getNode(0)), points.getY(element.getNode(0)));
+        for (int j = 1; j < element.size(); ++j) {
+            final int point = element.getNode(j);
+            path.lineTo(points.getX(point), points.getY(point));
+        }
+        path.closePath();
+        return path;
+    }
+
     public static Shape createStrokedShape(final IPointAccess points, final MultiElement element, final float wayWidth,
             final int cap, final int join) {
         return createStrokedShape(points, element, new BasicStroke(wayWidth, cap, join));

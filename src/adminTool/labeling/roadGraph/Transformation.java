@@ -14,25 +14,23 @@ import java.util.List;
 
 import adminTool.UnboundedPointAccess;
 import adminTool.elements.MultiElement;
+import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.util.IntersectionUtil;
-import util.IntList;
 
 public class Transformation {
-    private final int wayWidthSq;
-    private final int threshold;
+    private final ITypeMap map;
+    private final IDrawInfo info;
     private final CutPerformer cutPerformer;
-    private final Stroke stroke;
+    private final int junctionThreshold;
     private UnboundedPointAccess points;
     private List<MultiElement> processedPaths;
-    private final float[] intersection;
 
-    public Transformation(final int wayWidth, final int junctionThreshold) {
-        this.wayWidthSq = wayWidth * wayWidth;
-        this.threshold = junctionThreshold;
+    public Transformation(final ITypeMap map, final IDrawInfo info, final int junctionThreshold) {
+        this.map = map;
+        this.info = info;
+        this.junctionThreshold = junctionThreshold;
         this.cutPerformer = new CutPerformer();
-        this.stroke = new BasicStroke(wayWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
-        this.intersection = new float[2];
     }
 
     public List<MultiElement> getProcessedPaths() {
@@ -43,45 +41,43 @@ public class Transformation {
         this.points = points;
         this.processedPaths = new ArrayList<MultiElement>(paths.size());
 
-        final HashMap<Integer, IntList> map = createOccuranceMap(paths);
-        final CutInfo[] cuts = createCuts(paths, map);
+        final CutInfo[] cuts = createCutInfos(paths);
 
         final Iterator<? extends MultiElement> pathIterator = paths.iterator();
         for (final CutInfo cut : cuts) {
-            appendPaths(map, pathIterator.next(), cut);
+            appendPaths(pathIterator.next(), cut);
         }
     }
 
-    private HashMap<Integer, IntList> createOccuranceMap(final List<? extends MultiElement> paths) {
-        HashMap<Integer, IntList> map = new HashMap<>();
+    private HashMap<Integer, List<IndexedWay>> createOccuranceMap(final List<? extends MultiElement> paths) {
+        HashMap<Integer, List<IndexedWay>> map = new HashMap<>();
         for (int i = 0; i < paths.size(); ++i) {
             final MultiElement element = paths.get(i);
-            appendOccurance(map, element.getNode(0), i);
-            appendOccurance(map, element.getNode(element.size() - 1), i);
+            appendOccurance(map, element.getNode(0), element, i);
+            appendOccurance(map, element.getNode(element.size() - 1), element.reverse(), i);
         }
         return map;
     }
 
-    private void appendOccurance(final HashMap<Integer, IntList> map, final int node, final int i) {
-        IntList list = map.get(node);
+    private void appendOccurance(final HashMap<Integer, List<IndexedWay>> map, final int node,
+            final MultiElement element, final int index) {
+        List<IndexedWay> list = map.get(node);
         if (list == null) {
-            list = new IntList();
+            list = new ArrayList<IndexedWay>();
             map.put(node, list);
         }
-        list.add(i);
+        list.add(new IndexedWay(element, index));
     }
 
-    private CutInfo[] createCuts(final List<? extends MultiElement> paths, final HashMap<Integer, IntList> map) {
-        final CutInfo[] cutArray = createInitialCuts(paths);
+    private CutInfo[] createCutInfos(final List<? extends MultiElement> paths) {
+        final CutInfo[] cutArray = createIntialCutInfos(paths);
+        final HashMap<Integer, List<IndexedWay>> map = createOccuranceMap(paths);
+        final float[] isect = new float[2];
 
-        for (final HashMap.Entry<Integer, IntList> entry : map.entrySet()) {
-            final int node = entry.getKey();
-            final IntList list = entry.getValue();
-
+        for (final List<IndexedWay> list : map.values()) {
             if (list.size() > 1) {
-                final MultiElement[] elements = createDirectedPaths(paths, entry);
-                final Shape[] shapes = createShapes(elements);
-                final Cut[] cuts = createCuts(elements);
+                final Shape[] shapes = createShapes(list);
+                final Cut[] cuts = createInitialCuts(list);
 
                 for (int u = 0; u < shapes.length - 1; ++u) {
                     for (int v = u + 1; v < shapes.length; ++v) {
@@ -89,21 +85,19 @@ public class Transformation {
                         intersect.intersect(new Area(shapes[v]));
                         if (!intersect.isEmpty()) {
                             for (final PathIterator iterator = intersect.getPathIterator(null); !iterator.isDone();) {
-                                iterator.currentSegment(intersection);
+                                iterator.currentSegment(isect);
                                 iterator.next();
-                                updateCut(cuts[u], elements[u]);
-                                updateCut(cuts[v], elements[v]);
+                                update(isect, cuts[u], list.get(u).element);
+                                update(isect, cuts[v], list.get(v).element);
                             }
                         }
                     }
                 }
 
-                updatePoints(elements, cuts);
-
                 for (int i = 0; i < cuts.length; ++i) {
-                    final int index = list.get(i);
+                    final int index = list.get(i).index;
                     final MultiElement path = paths.get(index);
-                    appendCut(cuts[i], cutArray[index], path.size(), path.getNode(0) != node);
+                    appendCut(cuts[i], cutArray[index], path.size(), path != list.get(i).element);
                 }
             }
 
@@ -113,7 +107,7 @@ public class Transformation {
 
     }
 
-    private CutInfo[] createInitialCuts(final List<? extends MultiElement> paths) {
+    private CutInfo[] createIntialCutInfos(final List<? extends MultiElement> paths) {
         final CutInfo[] cutList = new CutInfo[paths.size()];
         for (int i = 0; i < paths.size(); ++i) {
             cutList[i] = new CutInfo();
@@ -121,27 +115,17 @@ public class Transformation {
         return cutList;
     }
 
-    private MultiElement[] createDirectedPaths(final List<? extends MultiElement> paths,
-            final HashMap.Entry<Integer, IntList> entry) {
-        final int node = entry.getKey();
-        final IntList list = entry.getValue();
-        final MultiElement[] elements = new MultiElement[list.size()];
-        for (int i = 0; i < elements.length; ++i) {
-            final MultiElement element = paths.get(list.get(i));
-            elements[i] = element.getNode(0) != node ? element.reverse() : element;
-        }
-        return elements;
-    }
-
-    private Shape[] createShapes(final MultiElement[] elements) {
-        final Shape[] shapes = new Shape[elements.length];
+    private Shape[] createShapes(final List<IndexedWay> elements) {
+        final Shape[] shapes = new Shape[elements.size()];
         for (int i = 0; i < shapes.length; ++i) {
-            shapes[i] = createBoundedStrokedShape(elements[i]);
+            final MultiElement element = elements.get(i).element;
+            shapes[i] = createBoundedStrokedShape(element, info.getStrokeWidth(map.getType(element.getType())));
         }
         return shapes;
     }
 
-    public Shape createBoundedStrokedShape(final MultiElement element) {
+    public Shape createBoundedStrokedShape(final MultiElement element, final float width) {
+        final Stroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
         Path2D path = new Path2D.Float();
         double totalLength = 0;
 
@@ -154,8 +138,8 @@ public class Transformation {
             int currentY = points.getY(element.getNode(i));
             final double distance = Point.distance(currentX, currentY, lastX, lastY);
 
-            if (totalLength + distance >= threshold) {
-                final double s = (threshold - totalLength) / distance;
+            if (totalLength + distance >= junctionThreshold) {
+                final double s = (junctionThreshold - totalLength) / distance;
                 path.lineTo(lastX + s * (currentX - lastX), lastY + s * (currentY - lastY));
                 return stroke.createStrokedShape(path);
             }
@@ -169,39 +153,50 @@ public class Transformation {
         return stroke.createStrokedShape(path);
     }
 
-    private Cut[] createCuts(final MultiElement[] elements) {
-        final Cut[] cuts = new Cut[elements.length];
+    private Cut[] createInitialCuts(final List<IndexedWay> elements) {
+        final Cut[] cuts = new Cut[elements.size()];
         for (int i = 0; i < cuts.length; ++i) {
             cuts[i] = new Cut(points.getPoints(), 0, 0);
-            points.addPoint(0, 0);
+            final MultiElement element = elements.get(i).element;
+            points.addPoint(points.getX(element.getNode(0)), points.getY(element.getNode(0)));
         }
         return cuts;
     }
 
-    private void updateCut(final Cut cut, final MultiElement path) {
+    private void update(final float[] isect, final Cut cut, final MultiElement path) {
         final Point last = new Point();
         final Point current = new Point();
+        final int type = map.getType(path.getType());
+        final double wayWidthSq = info.getStrokeWidth(type) * info.getStrokeWidth(type);
+        boolean found = false;
 
         last.setLocation(points.getX(path.getNode(0)), points.getY(path.getNode(0)));
         for (int node = 0; node < path.size() - 1; ++node) {
             current.setLocation(points.getX(path.getNode(node + 1)), points.getY(path.getNode(node + 1)));
-            final long dx = current.x - last.x;
-            final long dy = current.y - last.y;
-            final long square = (dx * dx + dy * dy);
-            final double s = ((intersection[0] - last.x) * dx + (intersection[1] - last.y) * dy) / (double) square;
-            if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0
-                    && isNearEnough(last.x + s * dx, last.y + s * dy)) {
-                cut.setSegment(node);
-                cut.setOffset(s);
+            final int dx = current.x - last.x;
+            final int dy = current.y - last.y;
+            final double s = (((double) isect[0] - last.x) * dx + (isect[1] - last.y) * dy) / (dx * dx + dy * dy);
+            final double plumbX = last.x + s * dx;
+            final double plumbY = last.y + s * dy;
+
+            if (isInWayShape(isect, plumbX, plumbY, wayWidthSq)) {
+                found = true;
+                if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0) {
+                    cut.setSegment(node);
+                    cut.setOffset(s);
+                    points.setPoint(cut.getPoint(), (int) (last.x + s * dx), (int) (last.y + s * dy));
+                }
+            } else if (found) {
+                break;
             }
             last.setLocation(current);
         }
 
     }
 
-    private boolean isNearEnough(final double plumbX, final double plumbY) {
-        return wayWidthSq
-                - Point.distanceSq(plumbX, plumbY, intersection[0], intersection[1]) > -IntersectionUtil.EPSILON;
+    private boolean isInWayShape(final float[] isect, final double plumbX, final double plumbY,
+            final double wayWidthSq) {
+        return wayWidthSq - Point.distanceSq(plumbX, plumbY, isect[0], isect[1]) > -IntersectionUtil.EPSILON;
     }
 
     private void appendCut(final Cut cut, final CutInfo info, final int pathsize, final boolean reverse) {
@@ -222,7 +217,7 @@ public class Transformation {
         }
     }
 
-    private void appendPaths(final HashMap<Integer, IntList> map, final MultiElement path, final CutInfo cutInfo) {
+    private void appendPaths(final MultiElement path, final CutInfo cutInfo) {
         final List<MultiElement> paths = cutPerformer.performCuts(path, cutInfo.getCuts());
         final Iterator<MultiElement> iterator = paths.iterator();
 
@@ -238,20 +233,6 @@ public class Transformation {
             final MultiElement element = iterator.next();
             element.setType(-1);
             processedPaths.add(element);
-        }
-    }
-
-    private void updatePoints(final MultiElement[] elements, final Cut[] cuts) {
-        for (int i = 0; i < cuts.length; ++i) {
-            final Cut cut = cuts[i];
-            final MultiElement element = elements[i];
-            final int segment = cut.getSegment();
-            final double offset = cut.getOffset();
-            final int x1 = points.getX(element.getNode(segment));
-            final int y1 = points.getY(element.getNode(segment));
-            final int x2 = points.getX(element.getNode(segment + 1));
-            final int y2 = points.getY(element.getNode(segment + 1));
-            points.setPoint(cut.getPoint(), (int) (x1 + offset * (x2 - x1)), (int) (y1 + offset * (y2 - y1)));
         }
     }
 
@@ -294,6 +275,16 @@ public class Transformation {
 
         public List<Cut> getCuts() {
             return cuts;
+        }
+    }
+
+    private static class IndexedWay {
+        private final MultiElement element;
+        private final int index;
+
+        public IndexedWay(final MultiElement element, final int index) {
+            this.element = element;
+            this.index = index;
         }
     }
 }

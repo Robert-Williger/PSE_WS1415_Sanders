@@ -28,6 +28,7 @@ public class BackgroundRenderer extends AbstractRenderer {
 
     private int roadSegments;
     private int junctionSegments;
+    private int blockeckSegments;
 
     public BackgroundRenderer(final IMapManager manager, final ColorScheme colorScheme) {
         super(manager);
@@ -56,6 +57,7 @@ public class BackgroundRenderer extends AbstractRenderer {
     protected void render(final Image image) {
         roadSegments = 0;
         junctionSegments = 0;
+        blockeckSegments = 0;
 
         long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
@@ -69,7 +71,8 @@ public class BackgroundRenderer extends AbstractRenderer {
         drawWays();
 
         g.setColor(Color.BLACK);
-        g.drawString("roads: " + roadSegments + ", junctions: " + junctionSegments, 10, 10);
+        g.drawString("roads: " + roadSegments + ", junctions: " + junctionSegments + ", blocked: " + blockeckSegments,
+                10, 10);
         g.setStroke(new BasicStroke(1));
         g.drawRect(0, 0, 256, 256);
         start = System.currentTimeMillis();
@@ -224,17 +227,20 @@ public class BackgroundRenderer extends AbstractRenderer {
             accessor.setID(id);
             final int type = accessor.getType();
 
-            if (styles[type].isVisible(zoom)) {
-                rendered = true;
-                final float x = tileAccessor.getX();
-                final float y = tileAccessor.getY();
-                final int size = accessor.size();
+            final float x = tileAccessor.getX();
+            final float y = tileAccessor.getY();
+            final int size = accessor.size();
 
-                if (type == 24 || type == 25) {
-                    if (type == 25)
-                        ++roadSegments;
-                    else
-                        ++junctionSegments;
+            if (type == 24 || type == 25 || type == 26) {
+                if (type == 25)
+                    ++roadSegments;
+                else if (type == 24)
+                    ++junctionSegments;
+                else
+                    ++blockeckSegments;
+
+                if (styles[type].isVisible(zoom)) {
+                    rendered = true;
                     final int offset = (zoom - 9) / 3;
                     final int dotSize = 2 * offset + 1;
                     g.setColor(new Color(0, 0, 0, 60));

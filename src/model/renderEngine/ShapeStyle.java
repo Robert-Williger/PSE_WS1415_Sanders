@@ -39,7 +39,6 @@ public class ShapeStyle {
 
         this.mainColor = mainColor;
         this.outlineColor = outlineColor;
-
         mainStrokes = createMainStrokes(mainWidth, cap, join);
         if (mainColor != null) {
             outlineStrokes = createOutlineStrokes(outlineWidth, mainWidth, cap, join);
@@ -48,15 +47,15 @@ public class ShapeStyle {
         }
     }
 
-    private Stroke[] createMainStrokes(final float[] mainWidth, final int cap, final int join) {
-        final Stroke[] mainStroke;
+    private BasicStroke[] createMainStrokes(final float[] mainWidth, final int cap, final int join) {
+        final BasicStroke[] mainStroke;
         if (mainColor != null) {
-            mainStroke = new Stroke[mainWidth.length];
+            mainStroke = new BasicStroke[mainWidth.length];
             for (int i = 0; i < mainWidth.length; i++) {
                 mainStroke[i] = new BasicStroke(mainWidth[i], cap, join);
             }
         } else {
-            mainStroke = new Stroke[1];
+            mainStroke = new BasicStroke[1];
         }
         return mainStroke;
     }

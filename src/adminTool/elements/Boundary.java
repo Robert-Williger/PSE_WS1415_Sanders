@@ -1,6 +1,6 @@
 package adminTool.elements;
 
-public class Boundary {
+public class Boundary implements Typeable {
 
     private static int count;
     private final int id;
@@ -37,5 +37,10 @@ public class Boundary {
 
     public int getID() {
         return id;
+    }
+
+    @Override
+    public int getType() {
+        return outlines[0].getType();
     }
 }

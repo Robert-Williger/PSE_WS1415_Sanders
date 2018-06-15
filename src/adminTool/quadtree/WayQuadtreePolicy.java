@@ -13,21 +13,26 @@ import java.util.List;
 public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
 
     private final List<? extends MultiElement> ways;
-    private final int[] maxWayCoordWidths;
+    private final IWayWidthInfo widthInfo;
     private final IPointAccess points;
 
     public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
-            final int[] maxWayCoordWidths) {
+            final IWayWidthInfo widthInfo) {
         super(calculateBounds(ways, points));
         this.ways = ways;
-        this.maxWayCoordWidths = maxWayCoordWidths;
+        this.widthInfo = widthInfo;
         this.points = points;
+    }
+
+    public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
+            final int[] maxWayCoordWidths) {
+        this(ways, points, (index, height) -> maxWayCoordWidths[height]);
     }
 
     @Override
     public boolean intersects(final int index, final int height, final int x, final int y, final int size) {
         // respect way width by appending offset to tile borders
-        final int maxWayCoordWidth = maxWayCoordWidths[height];
+        final int maxWayCoordWidth = widthInfo.getWidth(index, height);
         final int rectX = x - maxWayCoordWidth / 2;
         final int rectY = y - maxWayCoordWidth / 2;
         final int rectSize = size + maxWayCoordWidth;
@@ -57,5 +62,10 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy {
             bounds.add(bb);
         }
         return bounds;
+    }
+
+    @FunctionalInterface
+    public interface IWayWidthInfo {
+        int getWidth(final int index, final int height);
     }
 }

@@ -38,7 +38,7 @@ public class HullSimplifier {
         outlines = new ArrayList<IntList>();
         points = new UnboundedPointAccess();
 
-        final float[] segments = new float[2];
+        final float[] coords = new float[2];
 
         int from = 0;
         for (final Area area : areas) {
@@ -46,23 +46,18 @@ public class HullSimplifier {
 
             int startHoles = holes.size();
             while (!pathIterator.isDone()) {
-                int seg = pathIterator.currentSegment(segments);
+                int seg = pathIterator.currentSegment(coords);
                 switch (seg) {
                     case PathIterator.SEG_MOVETO:
                     case PathIterator.SEG_LINETO:
-                        points.addPoint((int) segments[0], (int) segments[1]);
+                        points.addPoint((int) coords[0], (int) coords[1]);
                         break;
                     case PathIterator.SEG_CLOSE:
-                        IntList list = new IntList();
-                        for (int i = from; i < points.getPoints(); ++i) {
-                            list.add(i);
-                        }
-                        final int to = points.getPoints();
-                        final IntList hole = simplifier.simplifyPolygon(points, from, to - from);
+                        final IntList hole = simplifier.simplifyPolygon(points, from, points.getPoints() - from);
+                        from = points.getPoints();
                         if (!hole.isEmpty()) {
                             holes.add(hole);
                         }
-                        from = to;
                         break;
                 }
                 pathIterator.next();

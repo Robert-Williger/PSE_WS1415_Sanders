@@ -1,7 +1,9 @@
 package adminTool;
 
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,10 +17,17 @@ import java.util.Set;
 import adminTool.elements.Boundary;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Street;
+import adminTool.quadtree.BoundaryQuadtreePolicy;
+import adminTool.quadtree.IQuadtree;
+import adminTool.quadtree.IQuadtreePolicy;
+import adminTool.quadtree.Quadtree;
 import adminTool.util.IntersectionUtil;
 import util.IntList;
 
 public class IndexWriter extends AbstractMapFileWriter {
+    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
+    private static final int DEFAULT_MAX_HEIGHT = 20;
+
     private Rectangle[] bounds;
     private Sorting<Street> streets;
     private Collection<Boundary> boundaries;
@@ -26,9 +35,11 @@ public class IndexWriter extends AbstractMapFileWriter {
     private int cityId;
     private final IPointAccess points;
 
+    private final List<IQuadtree> quadtrees;
+
     // TODO speedup
     public IndexWriter(final Collection<Boundary> boundaries, final Sorting<Street> streets, final IPointAccess points,
-            final ZipOutputStream zipOutput) {
+            final Dimension mapSize, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
@@ -36,13 +47,11 @@ public class IndexWriter extends AbstractMapFileWriter {
         this.cityMap = new LinkedHashMap<>();
         this.cityId = -1;
         this.points = points;
+        this.quadtrees = createQuadtrees(boundaries, points, mapSize);
     }
 
     @Override
     public void write() throws IOException {
-        // orderBoundaries();
-
-        bounds = calculateBounds();
         AssociatedStreet[][][] streets = orderStreets();
 
         putNextEntry("index");
@@ -52,56 +61,30 @@ public class IndexWriter extends AbstractMapFileWriter {
 
     }
 
-    private Rectangle[] calculateBounds() {
-        int maxId = 0;
+    private List<IQuadtree> createQuadtrees(final Collection<Boundary> boundaries, final IPointAccess points,
+            final Dimension mapSize) {
+        int maxType = 0;
         for (final Boundary boundary : boundaries) {
-            maxId = Math.max(maxId, boundary.getID());
-
+            maxType = Math.max(maxType, boundary.getType());
         }
-        final Rectangle[] bounds = new Rectangle[maxId + 1];
+        final ArrayList<IQuadtree> quadtrees = new ArrayList<>(maxType + 1);
+
+        final List<List<Boundary>> sortedBoundaries = new ArrayList<>(maxType + 1);
+        for (int i = 0; i <= maxType; ++i) {
+            sortedBoundaries.add(new ArrayList<>());
+        }
         for (final Boundary boundary : boundaries) {
-            bounds[boundary.getID()] = getBounds(boundary);
+            sortedBoundaries.get(boundary.getType()).add(boundary);
         }
-        return bounds;
-    }
-
-    private Rectangle getBounds(final Boundary boundary) {
-        int minX = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-
-        for (int b = 0; b < boundary.getOutlines(); ++b) {
-            final MultiElement element = boundary.getOutline(b);
-
-            for (int i = 0; i < element.size(); ++i) {
-                minX = Math.min(minX, points.getX(element.getNode(i)));
-                maxX = Math.max(maxX, points.getX(element.getNode(i)));
-                minY = Math.min(minY, points.getY(element.getNode(i)));
-                maxY = Math.max(maxY, points.getY(element.getNode(i)));
-            }
+        final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
+        for (int i = 0; i <= maxType; ++i) {
+            final IQuadtreePolicy policy = new BoundaryQuadtreePolicy(sortedBoundaries.get(i), points);
+            final IQuadtree quadtree = new Quadtree(sortedBoundaries.size(), policy, size, DEFAULT_MAX_HEIGHT,
+                    DEFAULT_MAX_ELEMENTS_PER_TILE);
+            quadtrees.add(quadtree);
         }
 
-        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
-    }
-
-    private boolean contains(final Boundary boundary, final Rectangle bounds, final double x, final double y) {
-        if (!bounds.contains(x, y)) {
-            return false;
-        }
-        for (int i = 0; i < boundary.getHoles(); ++i) {
-            if (IntersectionUtil.polygonContainsPoint(boundary.getHole(i), points, x, y)) {
-                return false;
-            }
-        }
-
-        for (int i = 0; i < boundary.getOutlines(); ++i) {
-            if (IntersectionUtil.polygonContainsPoint(boundary.getOutline(i), points, x, y)) {
-                return true;
-            }
-        }
-
-        return false;
+        return quadtrees;
     }
 
     // orderStreets(...)[i][j][k]:
@@ -168,13 +151,14 @@ public class IndexWriter extends AbstractMapFileWriter {
     }
 
     private int getCityId(final Street street) {
-        for (int i = 0; i < 5; i++) {
-            for (final Boundary boundary : boundaries.get(9 - i)) {
-                final int node = street.getNode(street.size() / 2);
-                if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {
-                    return generateCityId(boundary.getName());
-                }
-            }
+        for (int i = quadtrees.size() - 1; i >= 0; --i) {
+            final IQuadtree quadtree = quadtrees.get(i);
+            final int node = street.getNode(street.size() / 2);
+
+            // if (quadtree.get)
+            // if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {
+            // return generateCityId(boundary.getName());
+            // }
         }
 
         return -1;
@@ -209,6 +193,10 @@ public class IndexWriter extends AbstractMapFileWriter {
         for (final Entry<String, Integer> entry : cityMap.entrySet()) {
             dataOutput.writeUTF(entry.getKey());
         }
+    }
+
+    private final double log2(final double value) {
+        return (Math.log(value) / Math.log(2));
     }
 
     private static class AssociatedStreet implements Comparable<AssociatedStreet> {

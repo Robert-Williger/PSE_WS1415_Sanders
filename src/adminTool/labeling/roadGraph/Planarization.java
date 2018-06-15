@@ -24,9 +24,10 @@ public class Planarization {
     private final int maxElementsPerTile;
     private final int maxHeight;
     private final CutPerformer cutPerformer;
-    private final int stubThreshold;
 
-    private final int tBias;
+    private final int stubThreshold;
+    private final int fuzzyThreshold;
+    private final int tThreshold;
 
     private int[] nodeCounts;
     private List<? extends MultiElement> originalPaths;
@@ -36,20 +37,22 @@ public class Planarization {
     private final double[] offsets;
 
     public Planarization() {
-        this(0, 0);
+        this(0, 0, 0);
     }
 
-    public Planarization(final int stubThreshold, final int tBias) {
-        this(stubThreshold, tBias, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_MAX_HEIGHT);
+    public Planarization(final int stubThreshold, final int tThreshold, final int fuzzyThreshold) {
+        this(stubThreshold, tThreshold, fuzzyThreshold, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_MAX_HEIGHT);
     }
 
-    public Planarization(final int stubThreshold, final int tBias, final int maxElementsPerTile, final int maxHeight) {
+    public Planarization(final int stubThreshold, final int tThreshold, final int fuzzyThreshold,
+            final int maxElementsPerTile, final int maxHeight) {
         this.maxElementsPerTile = maxElementsPerTile;
         this.maxHeight = maxHeight;
         this.offsets = new double[2];
         this.cutPerformer = new CutPerformer();
         this.stubThreshold = stubThreshold;
-        this.tBias = tBias;
+        this.fuzzyThreshold = fuzzyThreshold;
+        this.tThreshold = tThreshold;
     }
 
     public void planarize(final List<? extends MultiElement> paths, final UnboundedPointAccess points,
@@ -104,7 +107,7 @@ public class Planarization {
         for (int i = 0; i < paths.size(); ++i) {
             ret.add(new ArrayList<Cut>());
         }
-        final FuzzyPointMap map = new FuzzyPointMap(mapSize, mapSize, 25);
+        final FuzzyPointMap map = new FuzzyPointMap(mapSize, mapSize, fuzzyThreshold);
         intersectRec(ret, quadtree, map, 0, 0, mapSize);
         return ret;
     }
@@ -112,35 +115,7 @@ public class Planarization {
     private void intersectRec(final ArrayList<List<Cut>> cuts, final Quadtree quadtree, final FuzzyPointMap map,
             final int x, final int y, final int size) {
         if (quadtree.isLeaf()) {
-            final IntList elements = quadtree.getElements();
-            for (int i = 0; i < elements.size() - 1; ++i) {
-                final MultiElement u = originalPaths.get(elements.get(i));
-                for (int ui = 0; ui < u.size() - 1; ++ui) {
-                    for (int j = i + 1; j < elements.size(); ++j) {
-                        final MultiElement v = originalPaths.get(elements.get(j));
-                        if (u.getType() != v.getType()) {
-                            for (int vi = 0; vi < v.size() - 1; ++vi) {
-                                if (intersectsBiased(u, v, ui, vi)) {
-                                    int intX = (int) (getX(u, ui) + offsets[0] * (getX(u, ui + 1) - getX(u, ui)));
-                                    int intY = (int) (getY(u, ui) + offsets[0] * (getY(u, ui + 1) - getY(u, ui)));
-                                    if (IntersectionUtil.rectangleContainsPoint(x, y, x + size, y + size, intX, intY)) {
-                                        int point = map.getPoint(intX, intY);
-                                        if (point != -1) {
-                                            point += nodeCounts.length;
-                                        } else {
-                                            map.addPoint(intX, intY);
-                                            point = points.getPoints();
-                                            points.addPoint(intX, intY);
-                                        }
-                                        cuts.get(elements.get(i)).add(new Cut(point, ui, offsets[0]));
-                                        cuts.get(elements.get(j)).add(new Cut(point, vi, offsets[1]));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            cutSegments(cuts, quadtree, map, x, y, size);
         } else {
             final int hs = size / 2;
             for (int i = 0; i < IQuadtree.NUM_CHILDREN; ++i) {
@@ -148,6 +123,52 @@ public class Planarization {
                         y + IQuadtree.getYOffset(i) * hs, hs);
             }
         }
+    }
+
+    private void cutSegments(final ArrayList<List<Cut>> cuts, final Quadtree quadtree, final FuzzyPointMap map,
+            final int x, final int y, final int size) {
+        final IntList elements = quadtree.getElements();
+        for (int i = 0; i < elements.size() - 1; ++i) {
+            final MultiElement u = originalPaths.get(elements.get(i));
+            for (int ui = 0; ui < u.size() - 1; ++ui) {
+                if (!segmentInTile(x, y, size, u, ui))
+                    continue;
+
+                for (int j = i + 1; j < elements.size(); ++j) {
+                    final MultiElement v = originalPaths.get(elements.get(j));
+                    if (u.getType() != v.getType()) {
+                        for (int vi = 0; vi < v.size() - 1; ++vi) {
+                            if (segmentInTile(x, y, size, v, vi) && intersectsBiased(u, v, ui, vi)) {
+                                int intX = (int) (getX(u, ui) + offsets[0] * (getX(u, ui + 1) - getX(u, ui)));
+                                int intY = (int) (getY(u, ui) + offsets[0] * (getY(u, ui + 1) - getY(u, ui)));
+                                if (IntersectionUtil.rectangleContainsPoint(x, y, x + size, y + size, intX, intY)) {
+                                    int point = getFuzzyPoint(map, intX, intY);
+                                    cuts.get(elements.get(i)).add(new Cut(point, ui, offsets[0]));
+                                    cuts.get(elements.get(j)).add(new Cut(point, vi, offsets[1]));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean segmentInTile(final int x, final int y, final int size, final MultiElement u, int ui) {
+        return IntersectionUtil.rectangleIntersectsSegment(x, y, size, size, getX(u, ui), getY(u, ui), getX(u, ui + 1),
+                getY(u, ui + 1));
+    }
+
+    private int getFuzzyPoint(final FuzzyPointMap map, int intX, int intY) {
+        int point = map.getPoint(intX, intY);
+        if (point != -1) {
+            return point + nodeCounts.length;
+        }
+
+        map.addPoint(intX, intY);
+        point = points.getPoints();
+        points.addPoint(intX, intY);
+        return point;
     }
 
     private final int getX(final MultiElement e, final int index) {
@@ -175,11 +196,10 @@ public class Planarization {
 
     private double getExtendedOffset(final MultiElement e, final int i) {
         final double length = Point.distance(getX(e, i), getY(e, i), getX(e, i + 1), getY(e, i + 1));
-        return tBias / length;
+        return tThreshold / length;
     }
 
     private void tryAppendInner(final MultiElement element) {
-        // TODO use 1 instead of size() - 1
         if (element.size() > 3 || element.getNode(0) != element.getNode(element.size() - 1)) {
             processedPaths.add(element);
         }
@@ -192,12 +212,12 @@ public class Planarization {
         }
     }
 
-    private boolean isLongEnough(final MultiElement element) {
-        return ShapeUtil.getLength(element, points) > stubThreshold - IntersectionUtil.EPSILON;
-    }
-
     private boolean isOriginalJunction(final int node) {
         return isOriginalNode(node) && getNodeCount(node) > 1;
+    }
+
+    private boolean isLongEnough(final MultiElement element) {
+        return ShapeUtil.getLength(element, points) > stubThreshold - IntersectionUtil.EPSILON;
     }
 
     private int getNodeCount(final int node) {

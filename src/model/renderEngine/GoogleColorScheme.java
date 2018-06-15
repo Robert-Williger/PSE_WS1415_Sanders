@@ -10,8 +10,8 @@ public class GoogleColorScheme extends ColorScheme {
     }
 
     private static WayStyle[] createWayStyles() {
-        WayStyle[] wayStyles = new WayStyle[26];
-        int[] wayMinZoomstep = new int[26];
+        WayStyle[] wayStyles = new WayStyle[27];
+        int[] wayMinZoomstep = new int[27];
 
         // pedestrian / living street / residential / unclassified (white +
         // light gray outline)
@@ -135,22 +135,28 @@ public class GoogleColorScheme extends ColorScheme {
         wayMinZoomstep[23] = 15;
         wayStyles[23] = new WayStyle(wayMinZoomstep[23], new float[] { 1f, 1.5f, 2f, 2.5f }, new Color(174, 209, 160));
 
-        // road graph (black)
+        // junction (red)
         wayMinZoomstep[24] = 13;
         wayStyles[24] = new WayStyle(wayMinZoomstep[24], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
                 Color.RED);
 
+        // road section (blue)
         wayMinZoomstep[25] = 13;
         wayStyles[25] = new WayStyle(wayMinZoomstep[25], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
                 Color.BLUE);
+
+        // blocked section (yellow)
+        wayMinZoomstep[26] = 13;
+        wayStyles[26] = new WayStyle(wayMinZoomstep[26], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
+                Color.ORANGE);
 
         return wayStyles;
     }
 
     private static int[][] createWayOrder() {
         return new int[][] { { 10 }, { 11 }, { 19 }, { 17 }, { 18 }, { 12 }, { 22 }, { 23 }, { 0, 1 }, { 3 }, { 2 },
-                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 24 },
-                { 25 } };
+                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 26 },
+                { 24 }, { 25 } };
     }
 
     private static ShapeStyle[] createAreaStyles() {

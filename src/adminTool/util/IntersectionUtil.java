@@ -208,6 +208,10 @@ public class IntersectionUtil {
     }
 
     public static boolean inIntervall(final double value, final double from, final double to) {
-        return value >= -EPSILON + from && value <= to + EPSILON;
+        return inIntervall(value, from, to, EPSILON);
+    }
+
+    public static boolean inIntervall(final double value, final double from, final double to, final double epsilon) {
+        return value >= -epsilon + from && value <= to + epsilon;
     }
 }

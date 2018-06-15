@@ -22,7 +22,7 @@ public class PlanarizationVisualizer extends JFrame {
 
         final UnboundedPointAccess points = createPoints();
         final List<? extends MultiElement> ways = createWays();
-        final Planarization planarization = new Planarization(20, 5);
+        final Planarization planarization = new Planarization(20, 5, 0);
         planarization.planarize(ways, points, new Dimension(615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, ways);

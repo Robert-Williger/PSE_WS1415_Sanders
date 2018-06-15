@@ -9,25 +9,28 @@ import adminTool.UnboundedPointAccess;
 import adminTool.VisvalingamWhyatt;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Way;
+import adminTool.labeling.roadGraph.DrawInfo;
+import adminTool.labeling.roadGraph.ITypeMap;
 import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
 import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;
 import adminTool.labeling.roadGraph.simplification.triangulation.Triangulator;
 import util.IntList;
 
 public class Simplification {
-    private final int maxWayCoordWidth;
-    private final List<MultiElement> paths;
+    private List<MultiElement> paths;
     private UnboundedPointAccess points;
+    private IntList types;
+    private final DrawInfo info;
     private final HullSimplifier hullSimplifier;
     private final PathSimplifier pathSimplifier;
     private final VisvalingamWhyatt simplifier;
 
-    public Simplification(final int maxWayCoordWidth, final int simplifyThreshold) {
-        this.paths = new ArrayList<MultiElement>();
-        this.simplifier = new VisvalingamWhyatt(simplifyThreshold);
-        this.hullSimplifier = new HullSimplifier(5);// simplifyThreshold);
-        this.pathSimplifier = new PathSimplifier(simplifyThreshold);
-        this.maxWayCoordWidth = maxWayCoordWidth;
+    public Simplification(final DrawInfo info, final int simplificationThreshold) {
+        this.simplifier = new VisvalingamWhyatt(simplificationThreshold);
+        // TODO own parameter for the 5 ?
+        this.hullSimplifier = new HullSimplifier(5);// simplificationThreshold);
+        this.pathSimplifier = new PathSimplifier(simplificationThreshold);
+        this.info = info;
     }
 
     public UnboundedPointAccess getPoints() {
@@ -38,64 +41,52 @@ public class Simplification {
         return paths;
     }
 
-    public void simplify(final Collection<List<Way>> identifiedWays, final UnboundedPointAccess points) {
-        this.points = points;
-        int equalWayNr = 0;
+    public ITypeMap getTypeMap() {
+        return new ITypeMap() {
+            @Override
+            public int getType(final int id) {
+                return types.get(id);
+            }
+        };
+    }
+
+    public void simplify(final Collection<List<Way>> identifiedWays, final IPointAccess points) {
+        this.points = new UnboundedPointAccess();
+        this.paths = new ArrayList<MultiElement>();
+        this.types = new IntList();
 
         final PathFormer pathFormer = new PathFormer();
         final Triangulator triangulator = new Triangulator();
-        final HullCreator hullCreator = new HullCreator();
-        long hullCreateTime = 0;
-        long hullSimplifyTime = 0;
-        long triangulationTime = 0;
-        long pathTime = 0;
-        long pathSimplifyTime = 0;
+        final HullCreator hullCreator = new HullCreator(info);
+        final PathJoiner pathJoiner = new PathJoiner();
+        int equalWayNr = 0;
         for (final List<Way> equalWays : identifiedWays) {
+            if (equalWays.isEmpty() || info.getStrokeWidth(equalWays.get(0).getType()) == 0)
+                continue;
             if (equalWays.size() > 1) {
-                long t0 = System.currentTimeMillis();
-                hullCreator.createHulls(equalWays, points, maxWayCoordWidth);
-                long t1 = System.currentTimeMillis();
-                hullCreateTime += t1 - t0;
+                final int type = equalWays.get(0).getType();
+                pathJoiner.join(equalWays);
 
-                if (equalWays.get(0).getName().equals("Rond-Point Canton")) {
-                    System.out.println(equalWays.size() + ", " + hullCreator.getHulls().size());
-                }
-                if (hullCreator.getHulls().size() == equalWays.size()) {
-                    appendOriginalPaths(equalWays, points, equalWayNr);
+                hullCreator.createHulls(pathJoiner.getProcessedPaths(), points);
+                if (hullCreator.getHulls().size() == pathJoiner.getProcessedPaths().size()) {
+                    appendOriginalPaths(pathJoiner.getProcessedPaths(), points, equalWayNr);
                 } else {
                     hullSimplifier.simplify(hullCreator.getHulls());
-                    long t2 = System.currentTimeMillis();
-                    hullSimplifyTime += t2 - t1;
-
                     triangulator.triangulate(hullSimplifier.getPoints(), hullSimplifier.getOutlines(),
                             hullSimplifier.getHoles());
-                    long t3 = System.currentTimeMillis();
-                    triangulationTime += t3 - t2;
-
-                    pathFormer.formPaths(triangulator.getTriangulation(), maxWayCoordWidth);
-                    long t4 = System.currentTimeMillis();
-                    pathTime += t4 - t3;
-
+                    pathFormer.formPaths(triangulator.getTriangulation(), info.getStrokeWidth(type));
                     pathSimplifier.simplify(pathFormer.getPaths(), pathFormer.getPoints());
-                    long t5 = System.currentTimeMillis();
-                    pathSimplifyTime += t5 - t4;
-
-                    appendSimplifiedPaths(equalWayNr);
+                    appendSimplifiedPaths(equalWayNr, type);
                 }
             } else {
                 appendOriginalPaths(equalWays, points, equalWayNr);
             }
 
             ++equalWayNr;
-
-            if (equalWayNr % 1000 == 0)
-                System.out.println(equalWayNr + ", " + hullCreateTime + ", " + hullSimplifyTime + ", "
-                        + triangulationTime + ", " + pathTime + ", " + pathSimplifyTime);
-
         }
     }
 
-    private void appendSimplifiedPaths(final int equalWayNr) {
+    private void appendSimplifiedPaths(final int equalWayNr, final int type) {
         final IPointAccess pathPoints = pathSimplifier.getPoints();
         final int offset = points.getPoints();
         for (final IntList path : pathSimplifier.getPaths()) {
@@ -104,22 +95,33 @@ public class Simplification {
                 final int index = path.get(i);
                 indices[i] = index + offset;
             }
-            this.paths.add(new MultiElement(indices, equalWayNr));
+            paths.add(new MultiElement(indices, equalWayNr));
         }
         for (int i = 0; i < pathPoints.getPoints(); ++i) {
-            this.points.addPoint(pathPoints.getX(i), pathPoints.getY(i));
+            points.addPoint(pathPoints.getX(i), pathPoints.getY(i));
         }
+
+        types.add(type);
     }
 
     private void appendOriginalPaths(final List<Way> ways, final IPointAccess origPoints, final int equalWayNr) {
         for (final Way way : ways) {
             final IntList list = simplifier.simplifyMultiline(origPoints, way.iterator());
             final int[] indices = new int[list.size()];
-            for (int i = 0; i < indices.length; ++i) {
+            for (int i = 0; i < indices.length - 1; ++i) {
                 indices[i] = points.getPoints();
                 points.addPoint(origPoints.getX(list.get(i)), origPoints.getY(list.get(i)));
             }
-            this.paths.add(new MultiElement(indices, equalWayNr));
+            if (list.get(0) != list.get(list.size() - 1)) {
+                indices[indices.length - 1] = points.getPoints();
+                points.addPoint(origPoints.getX(list.get(list.size() - 1)), origPoints.getY(list.get(list.size() - 1)));
+            } else {
+                indices[indices.length - 1] = indices[0];
+            }
+            paths.add(new MultiElement(indices, equalWayNr));
         }
+
+        types.add(!ways.isEmpty() ? ways.get(0).getType() : 0); // TODO fix this
     }
+
 }
