@@ -4,8 +4,8 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-import adminTool.IPointAccess;
-import adminTool.UnboundedPointAccess;
+import adminTool.elements.IPointAccess;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.labeling.roadGraph.simplification.triangulation.Triangulation;
 import util.IntList;
 

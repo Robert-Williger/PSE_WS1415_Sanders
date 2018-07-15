@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import adminTool.IPointAccess;
-import adminTool.UnboundedPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
+import adminTool.elements.UnboundedPointAccess;
+import util.IntList;
 
 public final class PersistenceUtil {
 
@@ -55,10 +56,11 @@ public final class PersistenceUtil {
     }
 
     public static MultiElement readElement(final DataInputStream input) throws IOException {
-        final int[] indices = new int[input.readInt()];
+        final int size = input.readInt();
+        final IntList indices = new IntList(size);
         final int type = input.readInt();
-        for (int i = 0; i < indices.length; ++i) {
-            indices[i] = input.readInt();
+        for (int i = 0; i < size; ++i) {
+            indices.add(input.readInt());
         }
         return new MultiElement(indices, type);
     }

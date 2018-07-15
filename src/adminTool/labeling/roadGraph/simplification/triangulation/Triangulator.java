@@ -3,7 +3,7 @@ package adminTool.labeling.roadGraph.simplification.triangulation;
 import java.io.IOException;
 import java.util.List;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import util.IntList;
 
 public class Triangulator {

@@ -2,24 +2,24 @@ package adminTool.elements;
 
 import java.util.PrimitiveIterator;
 
-import util.Arrays;
+import util.IntList;
 
 public class MultiElement implements Typeable {
 
-    private final int[] indices;
+    private final IntList indices;
     private int type;
 
-    public MultiElement(final int[] indices, final int type) {
+    public MultiElement(final IntList indices, final int type) {
         this.indices = indices;
         this.type = type;
     }
 
     public int size() {
-        return indices.length;
+        return indices.size();
     }
 
     public int getNode(int index) {
-        return indices[index];
+        return indices.get(index);
     }
 
     @Override
@@ -36,21 +36,20 @@ public class MultiElement implements Typeable {
     }
 
     public MultiElement reverse() {
-        final int[] indices = new int[this.indices.length];
-        System.arraycopy(this.indices, 0, indices, 0, indices.length);
-        Arrays.reverse(indices);
-        return new MultiElement(indices, type);
+        final IntList list = new IntList(indices);
+        list.reverse();
+        return new MultiElement(list, type);
     }
 
     public PrimitiveIterator.OfInt iterator() {
-        return Arrays.iterator(indices);
+        return indices.iterator();
     }
 
     private static class SubElement extends MultiElement {
         private final int from;
         private final int size;
 
-        public SubElement(final int[] indices, final int type, final int from, final int to) {
+        public SubElement(final IntList indices, final int type, final int from, final int to) {
             super(indices, type);
             this.from = from;
             this.size = to - from;

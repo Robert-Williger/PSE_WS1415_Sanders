@@ -11,14 +11,18 @@ import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.Building;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.Street;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.labeling.roadGraph.DrawInfo;
+import adminTool.labeling.roadGraph.Road;
 import adminTool.labeling.roadGraph.RoadGraphCreator;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
+import util.IntList;
 
 public class CreateTest {
     public static void main(final String[] args) {
@@ -70,18 +74,17 @@ public class CreateTest {
             final Aligner aligner = new Aligner(projector.getPoints());
             aligner.performAlignment(streets, areas);
 
-            final int zoom = 16;
+            final int zoom = 17;
             final int zoomOffset = 21 - zoom;
             final int maxWayWidth = 18;
 
             final int fuzzyThreshold = 1 << zoomOffset;
-            final int simplificationThreshold = 25 << zoomOffset;
             final int tThreshold = 2 << zoomOffset;
             final int stubThreshold = maxWayWidth << zoomOffset;
             final int junctionThreshold = 2 * maxWayWidth << zoomOffset;
 
-            RoadGraphCreator roadGraphCreator = new RoadGraphCreator(new DrawInfo(), simplificationThreshold,
-                    stubThreshold, tThreshold, fuzzyThreshold, junctionThreshold);
+            RoadGraphCreator roadGraphCreator = new RoadGraphCreator(new DrawInfo(), stubThreshold, tThreshold,
+                    fuzzyThreshold, junctionThreshold);
             roadGraphCreator.createRoadGraph(parser.getWays(), aligner.getPoints(), aligner.getSize());
 
             addRoadGraph(streets, aligner.getPoints(), roadGraphCreator);
@@ -123,14 +126,14 @@ public class CreateTest {
 
     private void addRoadGraph(final List<Street> streets, final UnboundedPointAccess alignedPoints,
             final RoadGraphCreator roadGraphCreator) {
-        for (final MultiElement element : roadGraphCreator.getPaths()) {
-            final int[] indices = new int[element.size()];
-            for (int i = 0; i < indices.length; ++i) {
-                indices[i] = element.getNode(i) + alignedPoints.getPoints();
+        for (final Road element : roadGraphCreator.getRoads()) {
+            final IntList indices = new IntList(element.size());
+            for (int i = 0; i < element.size(); ++i) {
+                indices.add(element.getNode(i) + alignedPoints.getPoints());
             }
-            final int type = element.getType() == -1 ? 24 : element.getType() == -2 ? 26 : 25;
-            final String name = element.getType() == -1 ? "junction edge"
-                    : element.getType() == -2 ? "blocked section" : "road section";
+            final int type = element.getRoadId() == -1 ? 24 : element.getRoadId() == -2 ? 26 : 25;
+            final String name = element.getRoadId() == -1 ? "junction edge"
+                    : element.getRoadId() == -2 ? "blocked section" : "road section";
             streets.add(new Street(indices, type, name, -1));
         }
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PrimitiveIterator;
 
+import adminTool.elements.IPointAccess;
 import util.AddressableBinaryHeap;
 import util.IAddressablePriorityQueue;
 import util.IntList;

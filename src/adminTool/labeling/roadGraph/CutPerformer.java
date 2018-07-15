@@ -5,14 +5,18 @@ import java.util.Collections;
 import java.util.List;
 
 import adminTool.elements.MultiElement;
+import adminTool.util.IntersectionUtil;
+import util.IntList;
 
 public class CutPerformer {
+    public List<IntList> performCuts(final MultiElement path, final List<Cut> cuts) {
+        Collections.sort(cuts);
+        return performSortedCuts(path, cuts);
+    }
 
-    public List<MultiElement> performCuts(final MultiElement path, final List<Cut> cuts) {
-        final List<MultiElement> resultList = new ArrayList<MultiElement>(cuts.size() + 1);
+    public List<IntList> performSortedCuts(final MultiElement path, final List<Cut> cuts) {
+        final List<IntList> resultList = new ArrayList<>(cuts.size() + 1);
         if (!cuts.isEmpty()) {
-            Collections.sort(cuts);
-
             Cut last = new Cut(path.getNode(0), 0, 0);
             for (int i = 0; i < cuts.size(); ++i) {
                 final Cut current = cuts.get(i);
@@ -22,22 +26,56 @@ public class CutPerformer {
 
             resultList.add(performCut(path, last, new Cut(path.getNode(path.size() - 1), path.size() - 2, 1)));
         } else {
-            resultList.add(path);
+            final IntList list = new IntList(path.size());
+            for (int i = 0; i < path.size(); ++i) {
+                list.add(path.getNode(i));
+            }
+            resultList.add(list);
         }
         return resultList;
     }
 
-    private static MultiElement performCut(final MultiElement path, final Cut previous, final Cut current) {
-        int[] indices = new int[current.getSegment() - previous.getSegment() + 2];
-        indices[0] = previous.getPoint();
-        for (int i = 1; i < indices.length - 1; ++i) {
-            indices[i] = path.getNode(previous.getSegment() + i);
+    private static IntList performCut(final MultiElement path, final Cut previous, final Cut current) {
+        final int size = current.getSegment() - previous.getSegment() + 2;
+        IntList ret = new IntList(size);
+        ret.add(previous.getPoint());
+        for (int i = 1; i < size - 1; ++i) {
+            ret.add(path.getNode(previous.getSegment() + i));
         }
-        indices[indices.length - 1] = current.getPoint();
-        return new MultiElement(indices, path.getType());
+        ret.add(current.getPoint());
+        return ret;
     }
 
     public static class Cut implements Comparable<Cut> {
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            long temp = Double.doubleToLongBits(offset);
+            result = prime * result + (int) (temp ^ (temp >>> 32));
+            result = prime * result + segment;
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            return equals((Cut) obj);
+        }
+
+        public boolean equals(final Cut other) {
+            return equals(other.getSegment(), other.getOffset());
+        }
+
+        public boolean equals(final int segment, final double offset) {
+            return Math.abs(this.offset - offset + this.segment - segment) <= IntersectionUtil.EPSILON;
+        }
+
         private double offset;
         private int segment;
         private int point;

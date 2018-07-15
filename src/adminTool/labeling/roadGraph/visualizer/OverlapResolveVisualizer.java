@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.visualizer;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,10 +8,11 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.UnboundedPointAccess;
-import adminTool.elements.MultiElement;
-import adminTool.elements.Way;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.labeling.IDrawInfo;
+import adminTool.labeling.roadGraph.OverlapResolve;
+import adminTool.labeling.roadGraph.Road;
+import util.IntList;
 
 public class OverlapResolveVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -23,14 +24,8 @@ public class OverlapResolveVisualizer extends JFrame {
         setTitle("Overlap-Resolve Visualizer");
 
         final UnboundedPointAccess points = createPoints();
-        final List<? extends MultiElement> ways = createWays();
+        final List<Road> ways = createRoads();
 
-        final ITypeMap map = new ITypeMap() {
-            @Override
-            public int getType(final int id) {
-                return id;
-            }
-        };
         final IDrawInfo info = new IDrawInfo() {
 
             @Override
@@ -44,11 +39,11 @@ public class OverlapResolveVisualizer extends JFrame {
             }
         };
 
-        final OverlapResolve resolve = new OverlapResolve(map, info, 0);
+        final OverlapResolve resolve = new OverlapResolve(info);
         resolve.resolve(ways, points, new Dimension(615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, ways);
-        final JPanel cutPaths = new WayVisualizer(points, resolve.getProcessedPaths());
+        final JPanel cutPaths = new WayVisualizer(points, resolve.getProcessedRoads());
 
         origPaths.setLocation(20, 10);
         cutPaths.setLocation(850, 10);
@@ -88,26 +83,26 @@ public class OverlapResolveVisualizer extends JFrame {
         points.addPoint(500, 200);
 
         // points.addPoint(100, 250);
-        points.addPoint(200, 250);
+        points.addPoint(100, 200);
         // points.addPoint(300, 250);
         points.addPoint(400, 250);
         // points.addPoint(500, 250);
         return points;
     }
 
-    private static List<Way> createWays() {
-        final List<Way> ways = new ArrayList<Way>();
-        final int[] indices0 = new int[2];
-        for (int i = 0; i < indices0.length; ++i) {
-            indices0[i] = i;
+    private static List<Road> createRoads() {
+        final List<Road> ways = new ArrayList<>();
+        final IntList indices0 = new IntList(2);
+        for (int i = 0; i < 2; ++i) {
+            indices0.add(i);
         }
 
-        final int[] indices1 = new int[2];
-        for (int i = 0; i < indices1.length; ++i) {
-            indices1[i] = i + indices0.length;
+        final IntList indices1 = new IntList(2);
+        for (int i = 0; i < 2; ++i) {
+            indices1.add(i + 2);
         }
-        ways.add(new Way(indices0, 0, "Testweg0", true));
-        ways.add(new Way(indices1, 1, "Testweg1", true));
+        ways.add(new Road(indices0, 0, "Testweg0", 1));
+        ways.add(new Road(indices1, 1, "Testweg1", 1));
 
         return ways;
     }

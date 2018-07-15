@@ -7,13 +7,13 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.labeling.roadGraph.PathVisualizer;
-import adminTool.labeling.roadGraph.WayVisualizer;
 import adminTool.labeling.roadGraph.simplification.triangulation.PolyVisualizer;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangulationReader;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangulationVisualizer;
+import adminTool.labeling.roadGraph.visualizer.WayVisualizer;
 
 public class SimplificationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;

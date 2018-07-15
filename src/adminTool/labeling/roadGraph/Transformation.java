@@ -12,38 +12,37 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import adminTool.UnboundedPointAccess;
 import adminTool.elements.MultiElement;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.util.IntersectionUtil;
+import util.IntList;
 
 public class Transformation {
-    private final ITypeMap map;
     private final IDrawInfo info;
     private final CutPerformer cutPerformer;
     private final int junctionThreshold;
     private UnboundedPointAccess points;
-    private List<MultiElement> processedPaths;
+    private List<Road> processedPaths;
 
-    public Transformation(final ITypeMap map, final IDrawInfo info, final int junctionThreshold) {
-        this.map = map;
+    public Transformation(final IDrawInfo info, final int junctionThreshold) {
         this.info = info;
         this.junctionThreshold = junctionThreshold;
         this.cutPerformer = new CutPerformer();
     }
 
-    public List<MultiElement> getProcessedPaths() {
+    public List<Road> getProcessedRoads() {
         return processedPaths;
     }
 
-    public void transform(final List<? extends MultiElement> paths, final UnboundedPointAccess points) {
+    public void transform(final List<Road> paths, final UnboundedPointAccess points) {
         this.points = points;
-        this.processedPaths = new ArrayList<MultiElement>(paths.size());
+        this.processedPaths = new ArrayList<>(paths.size());
 
         final CutInfo[] cuts = createCutInfos(paths);
 
-        final Iterator<? extends MultiElement> pathIterator = paths.iterator();
+        final Iterator<Road> pathIterator = paths.iterator();
         for (final CutInfo cut : cuts) {
             appendPaths(pathIterator.next(), cut);
         }
@@ -119,7 +118,7 @@ public class Transformation {
         final Shape[] shapes = new Shape[elements.size()];
         for (int i = 0; i < shapes.length; ++i) {
             final MultiElement element = elements.get(i).element;
-            shapes[i] = createBoundedStrokedShape(element, info.getStrokeWidth(map.getType(element.getType())));
+            shapes[i] = createBoundedStrokedShape(element, info.getStrokeWidth(element.getType()));
         }
         return shapes;
     }
@@ -166,8 +165,7 @@ public class Transformation {
     private void update(final float[] isect, final Cut cut, final MultiElement path) {
         final Point last = new Point();
         final Point current = new Point();
-        final int type = map.getType(path.getType());
-        final double wayWidthSq = info.getStrokeWidth(type) * info.getStrokeWidth(type);
+        final double wayWidthSq = info.getStrokeWidth(path.getType()) * info.getStrokeWidth(path.getType());
         boolean found = false;
 
         last.setLocation(points.getX(path.getNode(0)), points.getY(path.getNode(0)));
@@ -184,7 +182,8 @@ public class Transformation {
                 if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0) {
                     cut.setSegment(node);
                     cut.setOffset(s);
-                    points.setPoint(cut.getPoint(), (int) (last.x + s * dx), (int) (last.y + s * dy));
+                    points.setPoint(cut.getPoint(), (int) Math.round(last.x + s * dx),
+                            (int) Math.round(last.y + s * dy));
                 }
             } else if (found) {
                 break;
@@ -217,22 +216,18 @@ public class Transformation {
         }
     }
 
-    private void appendPaths(final MultiElement path, final CutInfo cutInfo) {
-        final List<MultiElement> paths = cutPerformer.performCuts(path, cutInfo.getCuts());
-        final Iterator<MultiElement> iterator = paths.iterator();
+    private void appendPaths(final Road path, final CutInfo cutInfo) {
+        final List<IntList> paths = cutPerformer.performCuts(path, cutInfo.getCuts());
+        final Iterator<IntList> iterator = paths.iterator();
 
         if (cutInfo.hasFirstJunction()) {
-            final MultiElement element = iterator.next();
-            element.setType(-1);
-            processedPaths.add(element);
+            processedPaths.add(new Road(iterator.next(), path.getType(), path.getName(), -1));
         }
         if (cutInfo.hasRoadSection()) {
-            processedPaths.add(iterator.next());
+            processedPaths.add(new Road(iterator.next(), path.getType(), path.getName(), path.getRoadId()));
         }
         if (cutInfo.hasSecondJunction()) {
-            final MultiElement element = iterator.next();
-            element.setType(-1);
-            processedPaths.add(element);
+            processedPaths.add(new Road(iterator.next(), path.getType(), path.getName(), -1));
         }
     }
 

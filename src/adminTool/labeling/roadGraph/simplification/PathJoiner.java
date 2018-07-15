@@ -62,7 +62,7 @@ public class PathJoiner {
                 }
             }
 
-            processedPaths.add(new Way(join.toArray(), way.getType(), name, false));
+            processedPaths.add(new Way(join, way.getType(), name, false));
         }
     }
 

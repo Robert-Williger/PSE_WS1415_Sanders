@@ -1,6 +1,6 @@
 package adminTool.quadtree;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.util.IntersectionUtil;
 
 public class SquareQuadtreePolicy implements IQuadtreePolicy {

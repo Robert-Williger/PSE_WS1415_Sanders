@@ -3,8 +3,8 @@ package adminTool.labeling.roadGraph;
 import java.awt.Point;
 import java.util.PrimitiveIterator;
 
-import adminTool.IPointAccess;
-import adminTool.UnboundedPointAccess;
+import adminTool.elements.IPointAccess;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.quadtree.DynamicQuadtree;
 import adminTool.quadtree.DynamicQuadtreeAccess;
 import adminTool.quadtree.IQuadtreePolicy;

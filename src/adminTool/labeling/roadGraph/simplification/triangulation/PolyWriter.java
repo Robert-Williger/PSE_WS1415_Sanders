@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.PrimitiveIterator;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import util.IntList;
 
 public class PolyWriter {

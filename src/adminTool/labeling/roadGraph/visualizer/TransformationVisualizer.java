@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.visualizer;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -7,10 +7,10 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.UnboundedPointAccess;
-import adminTool.elements.MultiElement;
-import adminTool.elements.Way;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.labeling.IDrawInfo;
+import adminTool.labeling.roadGraph.Road;
+import adminTool.labeling.roadGraph.Transformation;
 
 public class TransformationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -24,16 +24,9 @@ public class TransformationVisualizer extends JFrame {
         setTitle("Transformation Visualizer");
 
         final UnboundedPointAccess points = createPoints();
-        final List<? extends MultiElement> ways = createWays();
+        final List<Road> roads = createRoads();
 
-        final JPanel origPaths = new WayVisualizer(points, ways);
-
-        final ITypeMap map = new ITypeMap() {
-            @Override
-            public int getType(int id) {
-                return 0;
-            }
-        };
+        final JPanel origPaths = new WayVisualizer(points, roads);
         final IDrawInfo info = new IDrawInfo() {
 
             @Override
@@ -46,9 +39,9 @@ public class TransformationVisualizer extends JFrame {
                 return WAY_WIDTH;
             }
         };
-        final Transformation transformation = new Transformation(map, info, THRESHOLD);
-        transformation.transform(ways, points);
-        final JPanel cutPaths = new WayVisualizer(points, transformation.getProcessedPaths());
+        final Transformation transformation = new Transformation(info, THRESHOLD);
+        transformation.transform(roads, points);
+        final JPanel cutPaths = new WayVisualizer(points, transformation.getProcessedRoads());
 
         origPaths.setLocation(20, 10);
         cutPaths.setLocation(850, 10);
@@ -84,19 +77,19 @@ public class TransformationVisualizer extends JFrame {
         return points;
     }
 
-    private static List<Way> createWays() {
-        final List<Way> ways = new ArrayList<Way>();
+    private static List<Road> createRoads() {
+        final List<Road> ways = new ArrayList<>();
 
         final int[] indices0 = new int[9];
         for (int i = 0; i < indices0.length - 1; ++i) {
             indices0[i] = i;
         }
-        ways.add(new Way(indices0, 0, "Testweg0", true));
+        ways.add(new Road(indices0, 0, "Testweg0", 1));
 
         final int[] indices1 = new int[2];
         indices1[0] = 0;
         indices1[1] = 9;
-        ways.add(new Way(indices1, 1, "Testweg1", true));
+        ways.add(new Road(indices1, 1, "Testweg1", 2));
 
         // final int[] indices0 = new int[2];
         // indices0[0] = 0;

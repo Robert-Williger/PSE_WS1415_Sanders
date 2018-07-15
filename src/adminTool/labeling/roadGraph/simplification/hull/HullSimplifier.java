@@ -5,9 +5,9 @@ import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import adminTool.IPointAccess;
-import adminTool.UnboundedPointAccess;
 import adminTool.VisvalingamWhyatt;
+import adminTool.elements.IPointAccess;
+import adminTool.elements.UnboundedPointAccess;
 import util.IntList;
 
 public class HullSimplifier {

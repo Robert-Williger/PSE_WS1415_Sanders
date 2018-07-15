@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import adminTool.IPointAccess;
-import adminTool.UnboundedPointAccess;
 import adminTool.VisvalingamWhyatt;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
+import adminTool.elements.UnboundedPointAccess;
 import adminTool.elements.Way;
 import adminTool.labeling.roadGraph.DrawInfo;
 import adminTool.labeling.roadGraph.ITypeMap;
@@ -90,10 +90,10 @@ public class Simplification {
         final IPointAccess pathPoints = pathSimplifier.getPoints();
         final int offset = points.getPoints();
         for (final IntList path : pathSimplifier.getPaths()) {
-            final int[] indices = new int[path.size()];
-            for (int i = 0; i < indices.length; ++i) {
+            final IntList indices = new IntList(path.size());
+            for (int i = 0; i < path.size(); ++i) {
                 final int index = path.get(i);
-                indices[i] = index + offset;
+                indices.add(index + offset);
             }
             paths.add(new MultiElement(indices, equalWayNr));
         }
@@ -107,16 +107,16 @@ public class Simplification {
     private void appendOriginalPaths(final List<Way> ways, final IPointAccess origPoints, final int equalWayNr) {
         for (final Way way : ways) {
             final IntList list = simplifier.simplifyMultiline(origPoints, way.iterator());
-            final int[] indices = new int[list.size()];
-            for (int i = 0; i < indices.length - 1; ++i) {
-                indices[i] = points.getPoints();
+            final IntList indices = new IntList(list.size());
+            for (int i = 0; i < list.size() - 1; ++i) {
+                indices.add(points.getPoints());
                 points.addPoint(origPoints.getX(list.get(i)), origPoints.getY(list.get(i)));
             }
             if (list.get(0) != list.get(list.size() - 1)) {
-                indices[indices.length - 1] = points.getPoints();
+                indices.add(points.getPoints());
                 points.addPoint(origPoints.getX(list.get(list.size() - 1)), origPoints.getY(list.get(list.size() - 1)));
             } else {
-                indices[indices.length - 1] = indices[0];
+                indices.add(indices.get(0));
             }
             paths.add(new MultiElement(indices, equalWayNr));
         }

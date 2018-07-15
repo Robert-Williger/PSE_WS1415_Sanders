@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import util.IntList;
 

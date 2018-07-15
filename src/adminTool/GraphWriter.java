@@ -87,7 +87,7 @@ public class GraphWriter extends AbstractMapFileWriter {
             final int id1 = generateID(way.getNode(lastCut));
             final int id2 = generateID(way.getNode(currentCut));
 
-            final int[] indices = new int[currentCut - lastCut + 1];
+            final IntList indices = new IntList(currentCut - lastCut + 1);
 
             double weight = 0;
             for (int j = lastCut; j < currentCut; j++) {
@@ -96,7 +96,7 @@ public class GraphWriter extends AbstractMapFileWriter {
             }
 
             for (int j = lastCut; j <= currentCut; j++) {
-                indices[j - lastCut] = way.getNode(j);
+                indices.add(way.getNode(j));
             }
 
             edges.add(new WeightedEdge(id1, id2, (int) weight));

@@ -1,6 +1,6 @@
 package adminTool.labeling.roadGraph.simplification.triangulation;
 
-import adminTool.BoundedPointAccess;
+import adminTool.elements.BoundedPointAccess;
 
 public class Triangulation extends BoundedPointAccess {
     private int[] triangles;

@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import adminTool.BoundedPointAccess;
+import adminTool.elements.BoundedPointAccess;
 import adminTool.elements.Way;
 import adminTool.labeling.roadGraph.DrawInfo;
 import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
 import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;
 import adminTool.labeling.roadGraph.simplification.triangulation.PolyWriter;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangleAdapter;
+import util.IntList;
 
 public class SimplificationMain {
     private static int pathWidth = 40;
@@ -77,14 +78,14 @@ public class SimplificationMain {
 
     private static List<Way> createWays() {
         final List<Way> ways = new ArrayList<Way>();
-        final int[] indices1 = new int[8];
-        for (int i = 0; i < indices1.length; ++i) {
-            indices1[i] = i;
+        final IntList indices1 = new IntList();
+        for (int i = 0; i < 8; ++i) {
+            indices1.add(i);
         }
         ways.add(new Way(indices1, 0, "Testweg", true));
-        final int[] indices2 = new int[7];
-        for (int i = 0; i < indices2.length; ++i) {
-            indices2[i] = indices1.length + i;
+        final IntList indices2 = new IntList();
+        for (int i = 0; i < 7; ++i) {
+            indices2.add(8 + i);
         }
         ways.add(new Way(indices2, 0, "Testweg2", true));
         return ways;

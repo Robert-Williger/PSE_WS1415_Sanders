@@ -4,8 +4,8 @@ import java.awt.geom.Area;
 import java.util.ArrayList;
 import java.util.List;
 
-import adminTool.IPointAccess;
 import adminTool.elements.Boundary;
+import adminTool.elements.IPointAccess;
 import adminTool.util.ShapeUtil;
 
 public class BoundaryQuadtreePolicy implements IQuadtreePolicy {

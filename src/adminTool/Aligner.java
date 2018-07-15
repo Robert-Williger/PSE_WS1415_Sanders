@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import adminTool.elements.MultiElement;
 import adminTool.elements.Street;
+import adminTool.elements.UnboundedPointAccess;
 
 public class Aligner {
     private final UnboundedPointAccess points;

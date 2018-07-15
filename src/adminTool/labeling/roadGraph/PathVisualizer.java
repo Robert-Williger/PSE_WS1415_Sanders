@@ -12,7 +12,7 @@ import java.util.PrimitiveIterator;
 
 import javax.swing.JPanel;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import util.IntList;
 
 public class PathVisualizer extends JPanel {

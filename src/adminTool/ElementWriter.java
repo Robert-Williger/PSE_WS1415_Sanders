@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Building;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.Street;

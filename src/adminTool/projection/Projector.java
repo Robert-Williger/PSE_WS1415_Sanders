@@ -1,7 +1,7 @@
 package adminTool.projection;
 
 import adminTool.NodeAccess;
-import adminTool.UnboundedPointAccess;
+import adminTool.elements.UnboundedPointAccess;
 
 public class Projector {
 

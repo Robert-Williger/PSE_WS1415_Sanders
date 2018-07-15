@@ -1,16 +1,18 @@
 package adminTool.elements;
 
+import util.IntList;
+
 public abstract class Building extends MultiElement {
 
-    public static Building create(final int[] indices) {
+    public static Building create(final IntList indices) {
         return new EmptyBuilding(indices);
     }
 
-    public static Building create(final int[] indices, final String street) {
+    public static Building create(final IntList indices, final String street) {
         return new HalfAddressedBuilding(indices, street);
     }
 
-    public static Building create(final int[] indices, final String street, final String number, final String name) {
+    public static Building create(final IntList indices, final String street, final String number, final String name) {
         if (name != null) {
             return new NamedBuilding(indices, street, number, name);
         }
@@ -25,7 +27,7 @@ public abstract class Building extends MultiElement {
         return new EmptyBuilding(indices);
     }
 
-    protected Building(final int[] indices) {
+    protected Building(final IntList indices) {
         super(indices, 0);
     }
 
@@ -37,7 +39,7 @@ public abstract class Building extends MultiElement {
 
     private static class EmptyBuilding extends Building {
 
-        public EmptyBuilding(final int[] indices) {
+        public EmptyBuilding(final IntList indices) {
             super(indices);
         }
 
@@ -60,7 +62,7 @@ public abstract class Building extends MultiElement {
     private static class NamedBuilding extends AddressedBuilding {
         private final String name;
 
-        public NamedBuilding(final int[] indices, final String street, final String number, final String name) {
+        public NamedBuilding(final IntList indices, final String street, final String number, final String name) {
             super(indices, street, number);
             this.name = name;
         }
@@ -74,7 +76,7 @@ public abstract class Building extends MultiElement {
     private static class AddressedBuilding extends HalfAddressedBuilding {
         private final String number;
 
-        public AddressedBuilding(final int[] indices, final String street, final String number) {
+        public AddressedBuilding(final IntList indices, final String street, final String number) {
             super(indices, street);
             this.number = number;
         }
@@ -88,7 +90,7 @@ public abstract class Building extends MultiElement {
     private static class HalfAddressedBuilding extends EmptyBuilding {
         private final String street;
 
-        public HalfAddressedBuilding(final int[] indices, final String street) {
+        public HalfAddressedBuilding(final IntList indices, final String street) {
             super(indices);
             this.street = street;
         }

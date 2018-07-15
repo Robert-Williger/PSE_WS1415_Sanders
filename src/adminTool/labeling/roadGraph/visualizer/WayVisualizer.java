@@ -1,4 +1,4 @@
-package adminTool.labeling.roadGraph;
+package adminTool.labeling.roadGraph.visualizer;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 
 public class WayVisualizer extends JPanel {

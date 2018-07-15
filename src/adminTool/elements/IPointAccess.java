@@ -1,4 +1,4 @@
-package adminTool;
+package adminTool.elements;
 
 public interface IPointAccess {
 

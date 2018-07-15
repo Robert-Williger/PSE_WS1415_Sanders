@@ -1,6 +1,6 @@
 package adminTool.quadtree;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.util.IntersectionUtil;
 

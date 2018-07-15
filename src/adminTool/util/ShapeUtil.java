@@ -6,12 +6,27 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Path2D;
 
-import adminTool.IPointAccess;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import util.IntList;
 
 public final class ShapeUtil {
-    private ShapeUtil() {
+    private ShapeUtil() {}
+
+    public static double getLength(final IntList element, final IPointAccess points) {
+        double totalLength = 0;
+
+        int lastX = points.getX(element.get(0));
+        int lastY = points.getY(element.get(0));
+        for (int i = 1; i < element.size(); i++) {
+            int currentX = points.getX(element.get(i));
+            int currentY = points.getY(element.get(i));
+            totalLength += Point.distance(currentX, currentY, lastX, lastY);
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        return totalLength;
     }
 
     public static double getLength(final MultiElement element, final IPointAccess points) {

@@ -119,7 +119,7 @@ public class OSMParser implements IOSMParser {
         private int nodeId;
         private Map<Long, Integer> nodeMap;
         private Map<Integer, Byte> areaMap;
-        private Map<Integer, int[]> wayMap;
+        private Map<Integer, IntList> wayMap;
 
         private int[] pointMap;
 
@@ -327,15 +327,14 @@ public class OSMParser implements IOSMParser {
                     }
                 }
 
-                final int[] nodes = new int[w.getRefsList().size()];
+                final IntList nodes = new IntList(w.getRefsList().size());
                 long lastRef = 0;
-                int count = 0;
                 for (final Long ref : w.getRefsList()) {
                     lastRef += ref;
-                    nodes[count++] = nodeMap.get(lastRef);
+                    nodes.add(nodeMap.get(lastRef));
                 }
 
-                if (nodes.length > 1) {
+                if (nodes.size() > 1) {
                     wayMap.put((int) w.getId(), nodes);
                     int type;
 
@@ -347,7 +346,7 @@ public class OSMParser implements IOSMParser {
                         if (terrainType >= 0) {
                             areaMap.put((int) w.getId(), (byte) terrainType);
                             // TODO equals instead of == ?
-                            if (nodes[0] == nodes[nodes.length - 1]) {
+                            if (nodes.get(0) == nodes.get(nodes.size() - 1)) {
                                 areaList.add(new MultiElement(nodes, terrainType));
                                 area = true;
                             }
@@ -427,20 +426,20 @@ public class OSMParser implements IOSMParser {
                     }
 
                     for (final IntList list : maps.get(0).values()) {
-                        buildingList.add(Building.create(list.toArray(), address, housenumber, name));
+                        buildingList.add(Building.create(list, address, housenumber, name));
                     }
                     for (final IntList list : maps.get(1).values()) {
-                        buildingList.add(Building.create(list.toArray()));
+                        buildingList.add(Building.create(list));
                     }
                 } else {
                     for (final IntList list : maps.get(0).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new MultiElement(list.toArray(), areaType));
+                        areaList.add(new MultiElement(list, areaType));
                         // }
                     }
                     for (final IntList list : maps.get(1).values()) {
                         // if (list.get(0) == list.get(list.size() - 1)) {
-                        areaList.add(new MultiElement(list.toArray(), areaType));
+                        areaList.add(new MultiElement(list, areaType));
                         // }
                     }
                 }
@@ -477,12 +476,12 @@ public class OSMParser implements IOSMParser {
 
                     int count = -1;
                     for (final Entry<Integer, IntList> entry : maps.get(0).entrySet()) {
-                        outer[++count] = new MultiElement(entry.getValue().toArray(), level);
+                        outer[++count] = new MultiElement(entry.getValue(), level);
                     }
 
                     count = -1;
                     for (final Entry<Integer, IntList> entry : maps.get(1).entrySet()) {
-                        inner[++count] = new MultiElement(entry.getValue().toArray(), level);
+                        inner[++count] = new MultiElement(entry.getValue(), level);
                     }
 
                     boundaryList.add(new Boundary(outer, inner, name));
@@ -505,10 +504,7 @@ public class OSMParser implements IOSMParser {
                     if (wayMap.containsKey((int) id)) {
                         // TODO save as small parts of ways may
                         // reduce disc space
-                        IntList my = new IntList(wayMap.get((int) id).length);
-                        for (final int node : wayMap.get((int) id)) {
-                            my.add(node);
-                        }
+                        IntList my = new IntList(wayMap.get((int) id));
 
                         int index = role.equals("inner") ? 1 : 0;
                         final HashMap<Integer, IntList> map = maps.get(index);

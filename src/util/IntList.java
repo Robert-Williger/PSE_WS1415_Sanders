@@ -20,6 +20,12 @@ public class IntList {
         this.data = new int[initialCapacity];
     }
 
+    public IntList(final IntList list) {
+        this.data = new int[list.data.length];
+        System.arraycopy(list.data, 0, data, 0, data.length);
+        this.size = list.size;
+    }
+
     public IntList() {
         this(DEFAULT_CAPACITY);
     }
@@ -146,6 +152,7 @@ public class IntList {
         int numMoved = size - index - 1;
         if (numMoved > 0)
             System.arraycopy(data, index + 1, data, index, numMoved);
+        --size;
 
         return oldValue;
     }

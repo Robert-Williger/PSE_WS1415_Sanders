@@ -50,7 +50,7 @@ public class WayStyle extends ShapeStyle {
         middleLineStrokes = createMiddleLineStrokes(middleLineWidth, dash, dashSpacing);
 
         float max = 0.f;
-        final int zoom = 16;
+        final int zoom = 17;
         if (minZoomStep <= zoom) {
             max = Math.max(max, mainWidth[Math.min(mainWidth.length - 1, zoom - minZoomStep)]);
             max = Math.max(max, outlineWidth[Math.min(outlineWidth.length - 1, zoom - minZoomStep)]);

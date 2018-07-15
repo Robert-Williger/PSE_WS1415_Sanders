@@ -15,6 +15,7 @@ import java.util.zip.ZipOutputStream;
 import java.util.Set;
 
 import adminTool.elements.Boundary;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Street;
 import adminTool.quadtree.BoundaryQuadtreePolicy;
