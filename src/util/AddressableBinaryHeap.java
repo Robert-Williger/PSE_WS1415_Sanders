@@ -14,9 +14,9 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     }
 
     @Override
-    public void addAll(final List<T> elements, final List<Integer> priority) {
+    public void addAll(final List<T> elements, final List<Double> priority) {
         for (int i = 0; i < elements.size(); i++) {
-            int key;
+            double key;
             if (priority == null || i >= priority.size()) {
                 key = Integer.MAX_VALUE;
             } else {
@@ -45,7 +45,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     }
 
     @Override
-    public void insert(final T element, final int key) {
+    public void insert(final T element, final double key) {
         final Entry<T> entry = new Entry<>(element, Integer.MAX_VALUE, key);
         add(entry);
         siftUp(getLastIndex());
@@ -93,7 +93,7 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     }
 
     @Override
-    public void changeKey(final T element, final int key) {
+    public void changeKey(final T element, final double key) {
         final Entry<T> entry = mapping.get(element);
         if (entry != null) {
             if (entry.priority > key) {
@@ -190,9 +190,9 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
     private static class Entry<T> {
         private final T content;
         private int index;
-        private int priority;
+        private double priority;
 
-        private Entry(final T content, final int index, final int priority) {
+        private Entry(final T content, final int index, final double priority) {
             this.content = content;
             this.index = index;
             this.priority = priority;
@@ -202,10 +202,9 @@ public class AddressableBinaryHeap<T> implements IAddressablePriorityQueue<T> {
             this.index = index;
         }
 
-        public void setPriority(final int priority) {
+        public void setPriority(final double priority) {
             this.priority = priority;
         }
-
     }
 
     @Override

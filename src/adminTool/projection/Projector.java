@@ -1,29 +1,22 @@
 package adminTool.projection;
 
-import adminTool.NodeAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.IPointAccess;
 
 public class Projector {
 
     private final IProjection projection;
-    private UnboundedPointAccess points;
 
     public Projector(final IProjection projection) {
         this.projection = projection;
     }
 
-    public void performProjection(final NodeAccess nodes) {
-        points = new UnboundedPointAccess(nodes.size());
-        for (int i = 0; i < nodes.size(); ++i) {
-            double lat = nodes.getLat(i);
-            double lon = nodes.getLon(i);
-            int x = projection.getX(lat, lon);
-            int y = projection.getY(lat, lon);
-            points.addPoint(x, y);
+    public void performProjection(final IPointAccess points) {
+        for (int i = 0; i < points.size(); ++i) {
+            double lat = points.getX(i);
+            double lon = points.getY(i);
+            double x = projection.getX(lat, lon);
+            double y = projection.getY(lat, lon);
+            points.set(i, x, y);
         }
-    }
-
-    public UnboundedPointAccess getPoints() {
-        return points;
     }
 }

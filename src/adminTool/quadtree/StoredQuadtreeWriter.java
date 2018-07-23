@@ -9,7 +9,7 @@ import adminTool.AbstractMapFileWriter;
 import util.IntList;
 
 public class StoredQuadtreeWriter extends AbstractMapFileWriter {
-    private final int mapSize;
+    private final double mapSize;
     private final int elements;
     private final String name;
     private final int maxHeight;
@@ -17,7 +17,7 @@ public class StoredQuadtreeWriter extends AbstractMapFileWriter {
     private final IQuadtreePolicy policy;
 
     public StoredQuadtreeWriter(final IQuadtreePolicy policy, final ZipOutputStream zipOutput, final String name,
-            final int elements, final int maxHeight, final int maxElementsPerTile, final int mapSize) {
+            final int elements, final int maxHeight, final int maxElementsPerTile, final double mapSize) {
         super(zipOutput);
 
         this.policy = policy;
@@ -59,8 +59,8 @@ public class StoredQuadtreeWriter extends AbstractMapFileWriter {
         return indices;
     }
 
-    private void distribute(final IntList data, final IntList[] elements, final int x, final int y, final int height)
-            throws IOException {
+    private void distribute(final IntList data, final IntList[] elements, final double x, final double y,
+            final int height) throws IOException {
         final IntList cElements = elements[height];
         final int startIndex = data.size();
         final int nHeight = height + 1;
@@ -73,12 +73,12 @@ public class StoredQuadtreeWriter extends AbstractMapFileWriter {
         data.add(-1);
 
         if (cElements.size() > maxElementsPerTile && nHeight < maxHeight) {
-            final int nSize = mapSize >> nHeight;
+            final double nSize = mapSize / (1 << nHeight);
             final IntList nElements = elements[nHeight];
 
             for (int i = 0; i < 4; i++) {
-                final int nx = x + (i % 2) * nSize;
-                final int ny = y + (i / 2) * nSize;
+                final double nx = x + (i % 2) * nSize;
+                final double ny = y + (i / 2) * nSize;
                 nElements.clear();
                 for (final PrimitiveIterator.OfInt iterator = cElements.iterator(); iterator.hasNext();) {
                     final int element = iterator.nextInt();

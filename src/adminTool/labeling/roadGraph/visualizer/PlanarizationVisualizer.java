@@ -8,7 +8,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.Planarization;
 import adminTool.labeling.roadGraph.Road;
 
@@ -20,7 +20,7 @@ public class PlanarizationVisualizer extends JFrame {
         getContentPane().setBackground(Color.white);
         setTitle("Planarization Visualizer");
 
-        final UnboundedPointAccess points = createPoints();
+        final PointAccess points = createPoints();
         final List<Road> roads = createRoads();
         final Planarization planarization = new Planarization(10, 5, 1);
         planarization.planarize(roads, points, new Dimension(615, 270));
@@ -44,8 +44,8 @@ public class PlanarizationVisualizer extends JFrame {
         setVisible(true);
     }
 
-    private static UnboundedPointAccess createPoints() {
-        final UnboundedPointAccess points = new UnboundedPointAccess();
+    private static PointAccess createPoints() {
+        final PointAccess points = new PointAccess();
         // points.addPoint(50, 200);
         // points.addPoint(100, 195);
         // points.addPoint(280, 170);

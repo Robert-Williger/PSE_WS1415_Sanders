@@ -9,14 +9,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.elements.Boundary;
 import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.Street;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.DrawInfo;
 import adminTool.labeling.roadGraph.Road;
 import adminTool.labeling.roadGraph.RoadGraphCreator;
@@ -52,7 +51,8 @@ public class CreateTest {
             System.out.println("OSM read time: " + (System.currentTimeMillis() - start) / 1000 + "s");
             start = System.currentTimeMillis();
 
-            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getNodes(), zipOutput);
+            final IPointAccess points = parser.getPoints();
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), points, zipOutput);
             try {
                 graphWriter.write();
             } catch (IOException e) {
@@ -62,17 +62,18 @@ public class CreateTest {
             System.out.println("graph creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             Projector projector = new Projector(new MercatorProjection());
-            projector.performProjection(parser.getNodes());
+            projector.performProjection(points);
+
+            Aligner aligner = new Aligner();
+            aligner.performAlignment(points, parser.getWays(), parser.getAreas());
+
             final List<Street> streets = graphWriter.getStreets();
             final Collection<Label> labels = parser.getLabels();
             final Collection<POI> pois = parser.getPOIs();
             final Collection<Building> buildings = parser.getBuildings();
-            final Collection<MultiElement> areas = parser.getTerrain();
+            final Collection<MultiElement> areas = parser.getAreas();
 
             graphWriter = null;
-
-            final Aligner aligner = new Aligner(projector.getPoints());
-            aligner.performAlignment(streets, areas);
 
             final int zoom = 17;
             final int zoomOffset = 21 - zoom;
@@ -83,16 +84,16 @@ public class CreateTest {
             final int stubThreshold = maxWayWidth << zoomOffset;
             final int junctionThreshold = 2 * maxWayWidth << zoomOffset;
 
-            RoadGraphCreator roadGraphCreator = new RoadGraphCreator(new DrawInfo(), stubThreshold, tThreshold,
-                    fuzzyThreshold, junctionThreshold);
-            roadGraphCreator.createRoadGraph(parser.getWays(), aligner.getPoints(), aligner.getSize());
-
-            addRoadGraph(streets, aligner.getPoints(), roadGraphCreator);
+            // RoadGraphCreator roadGraphCreator = new RoadGraphCreator(new DrawInfo(), stubThreshold, tThreshold,
+            // fuzzyThreshold, junctionThreshold);
+            // roadGraphCreator.createRoadGraph(parser.getWays(), points, aligner.getSize());
+            //
+            // addRoadGraph(streets, points, roadGraphCreator);
 
             start = System.currentTimeMillis();
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, pois, labels,
-                    aligner.getPoints(), aligner.getSize(), zipOutput);
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, pois, labels, points,
+                    aligner.getSize(), zipOutput);
 
             try {
                 mapManagerWriter.write();
@@ -124,12 +125,12 @@ public class CreateTest {
         }
     }
 
-    private void addRoadGraph(final List<Street> streets, final UnboundedPointAccess alignedPoints,
+    private void addRoadGraph(final List<Street> streets, final PointAccess alignedPoints,
             final RoadGraphCreator roadGraphCreator) {
         for (final Road element : roadGraphCreator.getRoads()) {
             final IntList indices = new IntList(element.size());
             for (int i = 0; i < element.size(); ++i) {
-                indices.add(element.getNode(i) + alignedPoints.getPoints());
+                indices.add(element.getNode(i) + alignedPoints.size());
             }
             final int type = element.getRoadId() == -1 ? 24 : element.getRoadId() == -2 ? 26 : 25;
             final String name = element.getRoadId() == -1 ? "junction edge"
@@ -138,8 +139,8 @@ public class CreateTest {
         }
 
         IPointAccess points = roadGraphCreator.getPoints();
-        for (int i = 0; i < points.getPoints(); ++i) {
-            alignedPoints.addPoint(points.getX(i), points.getY(i));
+        for (int i = 0; i < points.size(); ++i) {
+            alignedPoints.addPoint((int) points.getX(i), (int) points.getY(i));
         }
     }
 }

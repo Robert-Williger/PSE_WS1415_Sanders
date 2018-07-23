@@ -4,7 +4,7 @@ import java.awt.Point;
 import java.util.PrimitiveIterator;
 
 import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.quadtree.DynamicQuadtree;
 import adminTool.quadtree.DynamicQuadtreeAccess;
 import adminTool.quadtree.IQuadtreePolicy;
@@ -15,7 +15,7 @@ public class FuzzyPointMap {
     private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 32;
     private final long maxDistanceSq;
     private final DynamicQuadtreeAccess access;
-    private final UnboundedPointAccess points;
+    private final PointAccess.OfDouble points;
 
     public FuzzyPointMap(final int maxX, final int maxY, final int maxDistance) {
         this(maxX, maxY, maxDistance, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS_PER_TILE);
@@ -24,14 +24,14 @@ public class FuzzyPointMap {
     public FuzzyPointMap(final int maxX, final int maxY, final int maxDistance, final int maxHeight,
             final int maxElementsPerTile) {
         this.maxDistanceSq = maxDistance * maxDistance;
-        this.points = new UnboundedPointAccess();
+        this.points = new PointAccess.OfDouble();
 
         final IQuadtreePolicy policy = new SquareQuadtreePolicy(points, maxDistance);
         final int size = 1 << (int) Math.ceil(log2(Math.max(maxX, maxY)));
         this.access = new DynamicQuadtreeAccess(policy, maxHeight, maxElementsPerTile, size);
     }
 
-    public int getPoint(final int x, final int y) {
+    public int getPoint(final double x, final double y) {
         int ret = -1;
 
         DynamicQuadtree tree = access.getRoot();
@@ -60,9 +60,9 @@ public class FuzzyPointMap {
         return ret;
     }
 
-    public void addPoint(final int x, final int y) {
+    public void addPoint(final double x, final double y) {
         points.addPoint(x, y);
-        access.add(points.getPoints() - 1);
+        access.add(points.size() - 1);
     }
 
     public IPointAccess getPoints() {

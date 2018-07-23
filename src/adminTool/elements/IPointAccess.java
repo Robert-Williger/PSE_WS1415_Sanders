@@ -2,9 +2,11 @@ package adminTool.elements;
 
 public interface IPointAccess {
 
-    int getPoints();
+    int size();
 
-    int getX(int index);
+    double getX(int index);
 
-    int getY(int index);
+    double getY(int index);
+
+    void set(int index, final double x, final double y);
 }

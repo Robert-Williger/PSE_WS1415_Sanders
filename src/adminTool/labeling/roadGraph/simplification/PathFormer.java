@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.simplification.triangulation.Triangulation;
 import util.IntList;
 
@@ -15,14 +15,14 @@ public class PathFormer {
     private static final int UNASSIGNED = -1;
 
     private Triangulation triangulation;
-    private UnboundedPointAccess points;
+    private PointAccess points;
     private int[] triangleToMidpoint;
     private int[] validPaths;
     private int[] visited;
     private List<IntList> paths;
     private double minDistSq;
 
-    public IPointAccess getPoints() {
+    public PointAccess getPoints() {
         return points;
     }
 
@@ -33,7 +33,7 @@ public class PathFormer {
     public void formPaths(final Triangulation triangulation, final float lineWidth) {
         this.minDistSq = 0.9 * 0.9 * lineWidth * lineWidth;
         this.triangulation = triangulation;
-        this.points = new UnboundedPointAccess();
+        this.points = new PointAccess();
 
         paths = new ArrayList<IntList>();
         triangleToMidpoint = new int[triangulation.getTriangles()];
@@ -168,7 +168,7 @@ public class PathFormer {
                     + triangulation.getY(triangulation.getPoint(triangle, index[i][1]))) / 2;
 
             points.addPoint(ex, ey);
-            return points.getPoints() - 1;
+            return points.size() - 1;
         }
 
         return -1;
@@ -181,7 +181,7 @@ public class PathFormer {
                 + triangulation.getY(triangulation.getPoint(triangle, index[i][1]))) / 2;
 
         points.addPoint(ex, ey);
-        return points.getPoints() - 1;
+        return points.size() - 1;
     }
 
     private int getMidpoint(final int triangle) {
@@ -193,7 +193,7 @@ public class PathFormer {
                     + triangulation.getY(triangulation.getPoint(triangle, 1))
                     + triangulation.getY(triangulation.getPoint(triangle, 2))) / 3.f);
             points.addPoint(mx, my);
-            triangleToMidpoint[triangle] = points.getPoints() - 1;
+            triangleToMidpoint[triangle] = points.size() - 1;
         }
         return triangleToMidpoint[triangle];
     }

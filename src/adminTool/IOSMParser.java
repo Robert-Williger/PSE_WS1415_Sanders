@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.Building;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Way;
@@ -16,7 +17,7 @@ public interface IOSMParser {
 
     Collection<Way> getWays();
 
-    Collection<MultiElement> getTerrain();
+    Collection<MultiElement> getAreas();
 
     Collection<POI> getPOIs();
 
@@ -26,5 +27,5 @@ public interface IOSMParser {
 
     Collection<Boundary> getBoundaries();
 
-    NodeAccess getNodes();
+    IPointAccess getPoints();
 }

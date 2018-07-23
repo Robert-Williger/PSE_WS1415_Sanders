@@ -1,10 +1,9 @@
 package adminTool;
 
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
 
-    // number of tiles in lowest zoom step
+    // number of tiles in lowest zoom step per dimension
     private static final int MIN_TILES = 1;
 
     private static final int TILE_LENGTH_BITS = 8;
@@ -54,15 +53,16 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<Label> labels;
     private Collection<POI> pois;
 
-    private final Dimension size;
+    private final Dimension2D size;
     private final IPointAccess points;
+    private IntConversion conversion;
 
     // TODO improve this!
     public Sorting<Street> streetSorting;
 
     public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
             final Collection<Building> buildings, final Collection<POI> pois, final Collection<Label> labels,
-            final IPointAccess points, final Dimension size, final ZipOutputStream zipOutput) {
+            final IPointAccess points, final Dimension2D size, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
@@ -76,8 +76,14 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
     @Override
     public void write() throws IOException {
-        final int zoomOffset = (int) Math.ceil(log2(Math.max(size.getWidth(), size.getHeight()) / MIN_TILES));
-        final int coordMapSize = (1 << zoomOffset);
+        // final int coordBits = Math.getExponent(Math.max(size.getWidth(), size.getHeight())) + 1;
+        // final int shiftBits = Integer.SIZE - 1 - coordBits;
+        final double shift = 1 << 29; // TODO improve this!
+        conversion = (value) -> (int) Math.round(value * shift);
+
+        final int zoomOffset = (int) Math.ceil(
+                log2(Math.max(conversion.convert(size.getWidth()), conversion.convert(size.getHeight())) / MIN_TILES));
+        final double coordMapSize = (1 << zoomOffset) / shift;
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
         final int maxZoomStep = Math.min(MAX_ZOOM_STEP, minZoomStep + MAX_ZOOM_STEPS - 1);
@@ -102,16 +108,17 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         pois = null;
 
         ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, buildingSorting, labelSorting,
-                poiSorting, points, zipOutput);
+                poiSorting, points, conversion, zipOutput);
         elementWriter.write();
 
         //
         //
         //
 
-        final int[] maxWayWidths = new int[zoomSteps];
+        final double[] maxWayWidths = new double[zoomSteps];
         for (int zoom = minZoomStep; zoom <= maxZoomStep; ++zoom) {
-            maxWayWidths[zoom - minZoomStep] = MAX_WAY_PIXEL_WIDTH << (conversionBits - zoom);
+            maxWayWidths[zoom - minZoomStep] = (MAX_WAY_PIXEL_WIDTH << (conversionBits - zoom)) / shift; // TODO improve
+                                                                                                         // this!
         }
 
         final String[] names = new String[] { "area", "street", "building" };
@@ -145,23 +152,25 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     }
 
     private CollisionlessQuadtree createLabelQuadtree(final Label[] labels, final int minZoomStep, final int zoomSteps,
-            final int mapSize, final int conversionBits) {
+            final double mapSize, final int conversionBits) {
         final Font font = new Font("TimesRoman", Font.PLAIN, 18);
         final FontRenderContext c = new FontRenderContext(new AffineTransform(), true, true);
-        final List<List<Rectangle>> labelBounds = new ArrayList<List<Rectangle>>(zoomSteps);
+        final List<List<Rectangle2D>> labelBounds = new ArrayList<>(zoomSteps);
 
         for (int h = 0; h < zoomSteps; h++) {
-            labelBounds.add(new ArrayList<Rectangle>(labels.length));
+            labelBounds.add(new ArrayList<>(labels.length));
         }
+
+        final double shift = 1 << 29;
         for (int i = 0; i < labels.length; i++) {
             final Label label = labels[i];
             final Rectangle2D stringBounds = font.getStringBounds(label.getName(), c);
-            final int pw = (int) Math.ceil(stringBounds.getWidth());
-            final int ph = (int) Math.ceil(stringBounds.getHeight());
+            final double pw = stringBounds.getWidth();
+            final double ph = stringBounds.getHeight();
             for (int h = 0; h < zoomSteps; h++) {
-                final int cw = pw << (conversionBits - (h + minZoomStep));
-                final int ch = ph << (conversionBits - (h + minZoomStep));
-                labelBounds.get(h).add(new Rectangle(points.getX(label.getNode()) - cw / 2,
+                final double cw = pw * (1 << (conversionBits - (h + minZoomStep))) / shift;
+                final double ch = ph * (1 << (conversionBits - (h + minZoomStep))) / shift;
+                labelBounds.get(h).add(new Rectangle2D.Double(points.getX(label.getNode()) - cw / 2,
                         points.getY(label.getNode()) - ch / 2, cw, ch));
             }
         }
@@ -173,16 +182,17 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     }
 
     private CollisionlessQuadtree createPOIQuadtree(final POI[] pois, final int minZoomStep, final int zoomSteps,
-            final int mapSize, final int conversionBits) {
-        final List<List<Rectangle>> poiBounds = new ArrayList<List<Rectangle>>(zoomSteps);
+            final double mapSize, final int conversionBits) {
+        final List<List<Rectangle2D>> poiBounds = new ArrayList<>(zoomSteps);
 
+        final double shift = 1 << 29;
         for (int h = 0; h < zoomSteps; h++) {
-            final List<Rectangle> bounds = new ArrayList<Rectangle>(pois.length);
-            final int size = MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep));
+            final List<Rectangle2D> bounds = new ArrayList<>(pois.length);
+            final double size = (MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep))) / shift;
             for (int i = 0; i < pois.length; i++) {
                 final POI poi = pois[i];
-                bounds.add(new Rectangle(points.getX(poi.getNode()) - size / 2, points.getY(poi.getNode()) - size / 2,
-                        size, size));
+                bounds.add(new Rectangle2D.Double(points.getX(poi.getNode()) - size / 2,
+                        points.getY(poi.getNode()) - size / 2, size, size));
             }
             poiBounds.add(bounds);
         }
@@ -207,8 +217,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         putNextEntry("header");
 
         dataOutput.writeInt(conversionBits);
-        dataOutput.writeInt(size.width);
-        dataOutput.writeInt(size.height);
+        dataOutput.writeInt(conversion.convert(size.getWidth()));
+        dataOutput.writeInt(conversion.convert(size.getHeight()));
         dataOutput.writeInt(minZoomStep);
         dataOutput.writeInt(maxZoomStep);
         dataOutput.writeInt(TILE_LENGTH);

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
+import adminTool.elements.IPointAccess;
 import adminTool.elements.Street;
 import adminTool.elements.Way;
 import util.IntList;
@@ -19,9 +20,9 @@ public class GraphWriter extends AbstractMapFileWriter {
     private List<WeightedEdge> edges;
     private final List<Street> streets;
     private Collection<Way> ways;
-    private final NodeAccess nodes;
+    private final IPointAccess nodes;
 
-    public GraphWriter(final Collection<Way> ways, final NodeAccess nodes, final ZipOutputStream zipOutput) {
+    public GraphWriter(final Collection<Way> ways, final IPointAccess nodes, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.ways = ways;
@@ -91,8 +92,8 @@ public class GraphWriter extends AbstractMapFileWriter {
 
             double weight = 0;
             for (int j = lastCut; j < currentCut; j++) {
-                weight += getWeight(nodes.getLat(way.getNode(j)), nodes.getLon(way.getNode(j)),
-                        nodes.getLat(way.getNode(j + 1)), nodes.getLon(way.getNode(j + 1)));
+                weight += getWeight(nodes.getX(way.getNode(j)), nodes.getY(way.getNode(j)),
+                        nodes.getX(way.getNode(j + 1)), nodes.getY(way.getNode(j + 1)));
             }
 
             for (int j = lastCut; j <= currentCut; j++) {

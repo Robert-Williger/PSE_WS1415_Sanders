@@ -9,10 +9,10 @@ import javax.swing.JPanel;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.labeling.roadGraph.PathVisualizer;
 import adminTool.labeling.roadGraph.simplification.triangulation.PolyVisualizer;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangulationReader;
 import adminTool.labeling.roadGraph.simplification.triangulation.TriangulationVisualizer;
+import adminTool.labeling.roadGraph.visualizer.PathVisualizer;
 import adminTool.labeling.roadGraph.visualizer.WayVisualizer;
 
 public class SimplificationVisualizer extends JFrame {

@@ -8,7 +8,7 @@ public class Quadtree implements IQuadtree {
     private final Quadtree[] children;
     private final IntList elements;
 
-    public Quadtree(final int elements, final IQuadtreePolicy policy, final int size, final int maxHeight,
+    public Quadtree(final int elements, final IQuadtreePolicy policy, final double size, final int maxHeight,
             final int maxElementsPerTile) {
         this.elements = new IntList(elements);
         for (int i = 0; i < elements; i++) {
@@ -18,8 +18,8 @@ public class Quadtree implements IQuadtree {
         children = createChildren(this.elements, policy, 0, 0, 0, size, maxHeight, maxElementsPerTile);
     }
 
-    private Quadtree(final IntList elements, final IQuadtreePolicy policy, final int x, final int y, final int height,
-            final int size, final int maxHeight, final int maxElementsPerTile) {
+    private Quadtree(final IntList elements, final IQuadtreePolicy policy, final double x, final double y,
+            final int height, final double size, final int maxHeight, final int maxElementsPerTile) {
         this.elements = new IntList();
 
         for (final OfInt iterator = elements.iterator(); iterator.hasNext();) {
@@ -47,11 +47,11 @@ public class Quadtree implements IQuadtree {
         return elements;
     }
 
-    private Quadtree[] createChildren(final IntList list, final IQuadtreePolicy policy, final int x, final int y,
-            final int height, final int size, final int maxHeight, final int maxElementsPerTile) {
+    private Quadtree[] createChildren(final IntList list, final IQuadtreePolicy policy, final double x, final double y,
+            final int height, final double size, final int maxHeight, final int maxElementsPerTile) {
         final Quadtree[] children;
         if (elements.size() > maxElementsPerTile && height + 1 < maxHeight) {
-            final int halfSize = size / 2;
+            final double halfSize = size / 2;
             children = new Quadtree[NUM_CHILDREN];
             for (int i = 0; i < children.length; i++) {
                 children[i] = new Quadtree(elements, policy, x + IQuadtree.getXOffset(i) * halfSize,

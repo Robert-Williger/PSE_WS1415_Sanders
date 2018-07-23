@@ -7,7 +7,7 @@ import java.util.List;
 
 import adminTool.VisvalingamWhyatt;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import util.IntList;
 
 public class HullSimplifier {
@@ -18,7 +18,7 @@ public class HullSimplifier {
 
     private List<IntList> holes;
     private List<IntList> outlines;
-    private UnboundedPointAccess points;
+    private PointAccess points;
 
     public HullSimplifier() {
         this(0, DEFAULT_FLATNESS);
@@ -36,7 +36,7 @@ public class HullSimplifier {
     public void simplify(final List<Area> areas) {
         holes = new ArrayList<IntList>();
         outlines = new ArrayList<IntList>();
-        points = new UnboundedPointAccess();
+        points = new PointAccess();
 
         final float[] coords = new float[2];
 
@@ -53,8 +53,8 @@ public class HullSimplifier {
                         points.addPoint((int) coords[0], (int) coords[1]);
                         break;
                     case PathIterator.SEG_CLOSE:
-                        final IntList hole = simplifier.simplifyPolygon(points, from, points.getPoints() - from);
-                        from = points.getPoints();
+                        final IntList hole = simplifier.simplifyPolygon(points, from, points.size() - from);
+                        from = points.size();
                         if (!hole.isEmpty()) {
                             holes.add(hole);
                         }

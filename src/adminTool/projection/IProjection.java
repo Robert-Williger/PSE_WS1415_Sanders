@@ -1,6 +1,7 @@
 package adminTool.projection;
 
 public interface IProjection {
-    int getX(double lat, double lon);
-    int getY(double lat, double lon);
+    double getX(double lat, double lon);
+
+    double getY(double lat, double lon);
 }

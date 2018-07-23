@@ -6,12 +6,12 @@ import java.util.PrimitiveIterator;
 
 import adminTool.VisvalingamWhyatt;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import util.IntList;
 
 public class PathSimplifier {
     private final VisvalingamWhyatt simplifier;
-    private UnboundedPointAccess simplifiedPoints;
+    private PointAccess simplifiedPoints;
     private List<IntList> simplifiedPaths;
     private int[] map;
 
@@ -19,7 +19,7 @@ public class PathSimplifier {
         simplifier = new VisvalingamWhyatt(threshold);
     }
 
-    public IPointAccess getPoints() {
+    public PointAccess getPoints() {
         return simplifiedPoints;
     }
 
@@ -27,13 +27,13 @@ public class PathSimplifier {
         return simplifiedPaths;
     }
 
-    public void simplify(final List<IntList> paths, final IPointAccess points) {
+    public void simplify(final List<IntList> paths, final PointAccess points) {
         createMap(points);
-        simplifiedPoints = new UnboundedPointAccess();
+        simplifiedPoints = new PointAccess();
         simplifiedPaths = new ArrayList<>(paths.size());
 
         for (final IntList path : paths) {
-            final IntList simplifiedPath = simplifier.simplifyMultiline(points, path.iterator());
+            final IntList simplifiedPath = simplifier.simplifyMultiline(points, path.iterator(), path.size());
             final IntList mappedPath = new IntList(simplifiedPath.size());
             final PrimitiveIterator.OfInt iterator = simplifiedPath.iterator();
             addShared(iterator.nextInt(), mappedPath, points);
@@ -46,22 +46,22 @@ public class PathSimplifier {
     }
 
     private void createMap(final IPointAccess points) {
-        map = new int[points.getPoints()];
+        map = new int[points.size()];
         for (int i = 0; i < map.length; ++i) {
             map[i] = -1;
         }
     }
 
-    private void addShared(final int index, final IntList mappedPath, final IPointAccess points) {
+    private void addShared(final int index, final IntList mappedPath, final PointAccess points) {
         if (map[index] == -1) {
-            map[index] = simplifiedPoints.getPoints();
+            map[index] = simplifiedPoints.size();
             simplifiedPoints.addPoint(points.getX(index), points.getY(index));
         }
         mappedPath.add(map[index]);
     }
 
-    private void addUnshared(final int index, final IntList mappedPath, final IPointAccess points) {
-        mappedPath.add(simplifiedPoints.getPoints());
+    private void addUnshared(final int index, final IntList mappedPath, final PointAccess points) {
+        mappedPath.add(simplifiedPoints.size());
         simplifiedPoints.addPoint(points.getX(index), points.getY(index));
     }
 

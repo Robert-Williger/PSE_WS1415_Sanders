@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import adminTool.elements.Boundary;
+import adminTool.elements.BoundedPointAccess;
 import adminTool.elements.Building;
+import adminTool.elements.IPointAccess;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
@@ -31,7 +33,7 @@ public class OSMParser implements IOSMParser {
     private final Collection<Building> buildingList;
     private final Collection<Label> labelList;
     private final Collection<Boundary> boundaryList;
-    private NodeAccess nodes;
+    private IPointAccess points;
 
     public OSMParser() {
         // TODO lists instead of sets!
@@ -55,7 +57,7 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public Collection<MultiElement> getTerrain() {
+    public Collection<MultiElement> getAreas() {
         return areaList;
     }
 
@@ -80,8 +82,8 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public NodeAccess getNodes() {
-        return nodes;
+    public IPointAccess getPoints() {
+        return points;
     }
 
     private class Preprocessor extends BinaryParser {
@@ -98,21 +100,18 @@ public class OSMParser implements IOSMParser {
         }
 
         @Override
-        protected void parseWays(final List<crosby.binary.Osmformat.Way> ways) {
-        }
+        protected void parseWays(final List<crosby.binary.Osmformat.Way> ways) {}
 
         @Override
-        protected void parseRelations(final List<Relation> rels) {
-        }
+        protected void parseRelations(final List<Relation> rels) {}
 
         @Override
         public void complete() {
-            nodes = new NodeAccess(nodeCount);
+            points = new BoundedPointAccess(nodeCount);
         }
 
         @Override
-        protected void parse(final HeaderBlock header) {
-        }
+        protected void parse(final HeaderBlock header) {}
     }
 
     private class Parser extends BinaryParser {
@@ -128,7 +127,7 @@ public class OSMParser implements IOSMParser {
             wayMap = new HashMap<>();
             areaMap = new HashMap<>();
             nodeId = 0;
-            pointMap = new int[nodes.size()];
+            pointMap = new int[points.size()];
             for (int i = 0; i < pointMap.length; ++i) {
                 pointMap[i] = -1;
             }
@@ -138,7 +137,7 @@ public class OSMParser implements IOSMParser {
         protected void parseNodes(final List<crosby.binary.Osmformat.Node> nodeList) {
             for (final crosby.binary.Osmformat.Node n : nodeList) {
                 int id = nodeId++;
-                nodes.set(id, parseLat(n.getLat()), parseLon(n.getLon()));
+                points.set(id, parseLat(n.getLat()), parseLon(n.getLon()));
                 nodeMap.put(n.getId(), id);
                 for (int i = 0; i < n.getKeysCount(); i++) {
                     final String key = getStringById(n.getKeys(i));
@@ -171,7 +170,7 @@ public class OSMParser implements IOSMParser {
                 lastLat += dNodes.getLat(i);
                 lastLon += dNodes.getLon(i);
                 int id = nodeId++;
-                nodes.set(id, parseLat(lastLat), parseLon(lastLon));
+                points.set(id, parseLat(lastLat), parseLon(lastLon));
                 nodeMap.put(lastId, id);
 
                 int keyValId;

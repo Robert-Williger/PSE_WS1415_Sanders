@@ -31,7 +31,7 @@ public class OSMParserTest {
         assertEquals(7, parser.getPOIs().size());
         // assertEquals(12, parser.getStreets().size());
         assertEquals(16, parser.getWays().size());
-        assertEquals(8, parser.getTerrain().size());
+        assertEquals(8, parser.getAreas().size());
         assertEquals(1, parser.getBuildings().size());
 
     }

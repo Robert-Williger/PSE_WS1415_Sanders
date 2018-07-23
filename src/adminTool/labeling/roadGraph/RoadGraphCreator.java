@@ -1,11 +1,13 @@
 package adminTool.labeling.roadGraph;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import adminTool.elements.IIntPointAccess;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
 
 public class RoadGraphCreator {
@@ -18,7 +20,7 @@ public class RoadGraphCreator {
     private final int fuzzyThreshold;
 
     private List<Road> roads;
-    private UnboundedPointAccess points;
+    private PointAccess.OfDouble points;
 
     public RoadGraphCreator(final DrawInfo info, final int stubThreshold, final int tThreshold,
             final int fuzzyThreshold, final int junctionThreshold) {
@@ -37,21 +39,23 @@ public class RoadGraphCreator {
         return points;
     }
 
-    public void createRoadGraph(final Collection<Way> ways, final IPointAccess origPoints, final Dimension mapSize) {
+    public void createRoadGraph(final Collection<Way> ways, final IIntPointAccess origPoints, final Dimension mapSize) {
+        points = new PointAccess.OfDouble();
+        roads = new ArrayList<>();
         identify(ways, origPoints);
         planarize(mapSize);
         resolve(mapSize);
-        // transform();
+        transform();
         System.out.println("road graph creation done");
     }
 
-    private void identify(final Collection<Way> ways, final IPointAccess origPoints) {
+    private void identify(final Collection<Way> ways, final IIntPointAccess origPoints) {
         long start = System.currentTimeMillis();
 
         Identification identification = new Identification();
         identification.identify(ways, origPoints);
         roads = identification.getRoads();
-        points = identification.getPoints();
+        points = identification.size();
 
         double time = (System.currentTimeMillis() - start) / 1000.;
         System.out.println("identify: " + time + "s");

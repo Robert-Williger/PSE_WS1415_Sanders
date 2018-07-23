@@ -10,11 +10,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+
 import java.util.List;
 import java.util.Set;
 
 import adminTool.elements.MultiElement;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.quadtree.IQuadtree;
@@ -34,7 +35,7 @@ public class OverlapResolve {
     private List<List<Overlap>> overlaps;
     private float[] isect;
 
-    private UnboundedPointAccess points;
+    private PointAccess.OfDouble points;
     private List<Road> paths;
     private List<Road> processedPaths;
 
@@ -50,17 +51,20 @@ public class OverlapResolve {
         return processedPaths;
     }
 
-    public void resolve(final List<Road> paths, final UnboundedPointAccess points, final Dimension mapSize) {
+    public void resolve(final List<Road> paths, final PointAccess.OfDouble points, final Dimension mapSize) {
         this.points = points;
         this.paths = paths;
         this.processedPaths = new ArrayList<>(paths.size());
         this.sets = new ArrayList<>(paths.size());
         this.overlaps = new ArrayList<>(paths.size());
         this.areas = new ArrayList<>(paths.size());
+
+        final ElementAdapter element = new ElementAdapter(points);
         for (final Road path : paths) {
             sets.add(new HashSet<>());
             overlaps.add(new ArrayList<>());
-            areas.add(new Area(ShapeUtil.createStrokedShape(points, path, info.getStrokeWidth(path.getType()),
+            element.setMultiElement(path);
+            areas.add(new Area(ShapeUtil.createStrokedPath(element, info.getStrokeWidth(path.getType()),
                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL)));
         }
 
@@ -185,16 +189,16 @@ public class OverlapResolve {
     private Overlap createSection(final CoordCut cut) {
         final Overlap ret = new Overlap();
 
-        ret.from = new Cut(points.getPoints(), cut.getSegment(), cut.getOffset());
+        ret.from = new Cut(points.size(), cut.getSegment(), cut.getOffset());
         points.addPoint(cut.x, cut.y);
-        ret.to = new Cut(points.getPoints(), cut.getSegment(), cut.getOffset());
+        ret.to = new Cut(points.size(), cut.getSegment(), cut.getOffset());
         points.addPoint(cut.x, cut.y);
 
         return ret;
     }
 
     private CoordCut calculatePlumb(final float[] point, final MultiElement path) {
-        final CoordCut ret = new CoordCut(points.getPoints(), -1, 0);
+        final CoordCut ret = new CoordCut(points.size(), -1, 0);
 
         final Point last = new Point();
         final Point current = new Point();
@@ -215,7 +219,7 @@ public class OverlapResolve {
                 minDistSq = distanceSq;
                 ret.setOffset(s);
                 ret.setSegment(node);
-                ret.setLocation((int) plumbX, (int) plumbY);
+                ret.setLocation(plumbX, plumbY);
             }
             last.setLocation(current);
         }
@@ -237,10 +241,10 @@ public class OverlapResolve {
             super(point, segment, offset);
         }
 
-        private int x;
-        private int y;
+        private double x;
+        private double y;
 
-        public void setLocation(final int x, final int y) {
+        public void setLocation(final double x, final double y) {
             this.x = x;
             this.y = y;
         }

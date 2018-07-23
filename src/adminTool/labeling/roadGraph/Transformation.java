@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import adminTool.elements.MultiElement;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.util.IntersectionUtil;
@@ -23,7 +23,7 @@ public class Transformation {
     private final IDrawInfo info;
     private final CutPerformer cutPerformer;
     private final int junctionThreshold;
-    private UnboundedPointAccess points;
+    private PointAccess.OfDouble points;
     private List<Road> processedPaths;
 
     public Transformation(final IDrawInfo info, final int junctionThreshold) {
@@ -36,7 +36,7 @@ public class Transformation {
         return processedPaths;
     }
 
-    public void transform(final List<Road> paths, final UnboundedPointAccess points) {
+    public void transform(final List<Road> paths, final PointAccess.OfDouble points) {
         this.points = points;
         this.processedPaths = new ArrayList<>(paths.size());
 
@@ -128,13 +128,13 @@ public class Transformation {
         Path2D path = new Path2D.Float();
         double totalLength = 0;
 
-        int lastX = points.getX(element.getNode(0));
-        int lastY = points.getY(element.getNode(0));
+        double lastX = points.getX(element.getNode(0));
+        double lastY = points.getY(element.getNode(0));
         path.moveTo(lastX, lastY);
 
         for (int i = 1; i < element.size(); i++) {
-            int currentX = points.getX(element.getNode(i));
-            int currentY = points.getY(element.getNode(i));
+            double currentX = points.getX(element.getNode(i));
+            double currentY = points.getY(element.getNode(i));
             final double distance = Point.distance(currentX, currentY, lastX, lastY);
 
             if (totalLength + distance >= junctionThreshold) {
@@ -155,7 +155,7 @@ public class Transformation {
     private Cut[] createInitialCuts(final List<IndexedWay> elements) {
         final Cut[] cuts = new Cut[elements.size()];
         for (int i = 0; i < cuts.length; ++i) {
-            cuts[i] = new Cut(points.getPoints(), 0, 0);
+            cuts[i] = new Cut(points.size(), 0, 0);
             final MultiElement element = elements.get(i).element;
             points.addPoint(points.getX(element.getNode(0)), points.getY(element.getNode(0)));
         }
@@ -182,8 +182,7 @@ public class Transformation {
                 if (IntersectionUtil.inIntervall(s, 0, 1) && cut.compareTo(node, s) < 0) {
                     cut.setSegment(node);
                     cut.setOffset(s);
-                    points.setPoint(cut.getPoint(), (int) Math.round(last.x + s * dx),
-                            (int) Math.round(last.y + s * dy));
+                    points.setPoint(cut.getPoint(), last.x + s * dx, last.y + s * dy);
                 }
             } else if (found) {
                 break;

@@ -50,7 +50,7 @@ public class TriangulationVisualizer extends JPanel {
         g2.fillRect(0, 0, 1000, 1000);
 
         g2.setColor(Color.BLACK);
-        for (int i = 0; i < triangulation.getPoints(); ++i) {
+        for (int i = 0; i < triangulation.size(); ++i) {
             g2.fillOval(triangulation.getX(i) - 3, triangulation.getY(i) - 3, 6, 6);
         }
         for (int i = 0; i < triangulation.getTriangles(); ++i) {

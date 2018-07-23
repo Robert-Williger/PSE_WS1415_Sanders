@@ -81,8 +81,7 @@ public class HeapTest {
         queue.remove(16);
 
         for (int i = 0; i < queue.size(); i++) {
-            if (i == 16 || i == 10) {
-            } else {
+            if (i == 16 || i == 10) {} else {
                 if (i != queue.deleteMin()) {
                     failed = true;
                 }
@@ -101,11 +100,13 @@ public class HeapTest {
     @Test
     public void testAddAll() {
         boolean failed = false;
-        final List<Integer> list = new ArrayList<>();
+        final List<Double> priorities = new ArrayList<>();
+        final List<Integer> values = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            list.add(i);
+            priorities.add((double) i);
+            values.add(i);
         }
-        queue.addAll(list, list);
+        queue.addAll(values, priorities);
 
         for (int i = 0; i < queue.size(); i++) {
 

@@ -131,12 +131,12 @@ public class AddressableBinaryBlockingHeap<T> extends AddressableBinaryHeap<T> i
     }
 
     @Override
-    public synchronized void insert(final T element, final int key) {
+    public synchronized void insert(final T element, final double key) {
         super.insert(element, key);
     }
 
     @Override
-    public synchronized void changeKey(final T element, final int key) {
+    public synchronized void changeKey(final T element, final double key) {
         super.changeKey(element, key);
     }
 

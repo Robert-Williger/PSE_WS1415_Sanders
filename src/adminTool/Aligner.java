@@ -1,55 +1,96 @@
 package adminTool;
 
-import java.awt.Dimension;
+import java.awt.geom.Dimension2D;
 import java.util.Collection;
 
+import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.elements.Street;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.Way;
 
 public class Aligner {
-    private final UnboundedPointAccess points;
-    private final AABB aabb;
+    private IPointAccess points;
+    private Range2D range;
 
-    public Aligner(final UnboundedPointAccess points) {
+    public void performAlignment(final IPointAccess points, final Collection<Way> ways,
+            final Collection<MultiElement> areas) {
         this.points = points;
-        aabb = new AABB(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-    }
-
-    public void performAlignment(final Collection<Street> ways, final Collection<MultiElement> areas) {
-        updateAABB(ways);
-        updateAABB(areas);
+        range = new Range2D(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        updateRange(ways);
+        updateRange(areas);
         updatePoints();
     }
 
-    public UnboundedPointAccess getPoints() {
-        return points;
+    public Dimension getSize() {
+        return range.toDimension();
     }
 
-    public Dimension getSize() {
-        return new Dimension(aabb.getMaxX() - aabb.getMinX(), aabb.getMaxY() - aabb.getMinY());
+    private void updateRange(final Collection<? extends MultiElement> elements) {
+        for (final MultiElement element : elements) {
+            updateRange(element);
+        }
+    }
+
+    private void updateRange(final MultiElement element) {
+        for (int i = 0; i < element.size(); ++i) {
+            final int node = element.getNode(i);
+            range.add(points.getX(node), points.getY(node));
+        }
     }
 
     private void updatePoints() {
-        for (int i = 0; i < points.getPoints(); ++i) {
-            points.setPoint(i, points.getX(i) - aabb.getMinX(), points.getY(i) - aabb.getMinY());
+        for (int i = 0; i < points.size(); ++i) {
+            points.set(i, points.getX(i) - range.minX, points.getY(i) - range.minY);
         }
     }
 
-    private void updateAABB(final Collection<? extends MultiElement> elements) {
-        for (final MultiElement element : elements) {
-            updateAABB(element);
+    private static class Range2D {
+        private double minX;
+        private double minY;
+        private double maxX;
+        private double maxY;
+
+        public Range2D(double minX, double minY, double maxX, double maxY) {
+            this.minX = minX;
+            this.minY = minY;
+            this.maxX = maxX;
+            this.maxY = maxY;
+        }
+
+        public void add(final double x, final double y) {
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+        }
+
+        public Dimension toDimension() {
+            return new Dimension(maxX - minX, maxY - minY);
         }
     }
 
-    private void updateAABB(final MultiElement element) {
-        for (int i = 0; i < element.size(); ++i) {
-            final int node = element.getNode(i);
-            aabb.setMinX(Math.min(aabb.getMinX(), points.getX(node)));
-            aabb.setMinY(Math.min(aabb.getMinY(), points.getY(node)));
-            aabb.setMaxX(Math.max(aabb.getMaxX(), points.getX(node)));
-            aabb.setMaxY(Math.max(aabb.getMaxY(), points.getY(node)));
-        }
-    }
+    private static class Dimension extends Dimension2D {
+        private double width;
+        private double height;
 
+        public Dimension(final double width, final double height) {
+            setSize(width, height);
+        }
+
+        @Override
+        public double getWidth() {
+            return width;
+        }
+
+        @Override
+        public double getHeight() {
+            return height;
+        }
+
+        @Override
+        public void setSize(double width, double height) {
+            this.width = width;
+            this.height = height;
+        }
+
+    }
 }

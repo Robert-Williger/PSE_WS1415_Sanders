@@ -66,7 +66,7 @@ public class AdminApplication {
         }
 
         if (zipOutput != null) {
-            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getNodes(), zipOutput);
+            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getPoints(), zipOutput);
             try {
                 graphWriter.write();
             } catch (final IOException e) {
@@ -74,13 +74,13 @@ public class AdminApplication {
             }
 
             Projector projector = new Projector(new MercatorProjection());
-            projector.performProjection(parser.getNodes());
+            projector.performProjection(parser.getPoints());
 
             Aligner alignment = new Aligner(projector.getPoints());
             List<Street> streets = graphWriter.getStreets();
             graphWriter = null;
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getTerrain(),
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getAreas(),
                     parser.getBuildings(), parser.getPOIs(), parser.getLabels(), alignment.getPoints(),
                     alignment.getSize(), zipOutput);
 

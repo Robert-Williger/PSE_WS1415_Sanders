@@ -5,9 +5,8 @@ import java.util.Collection;
 import java.util.List;
 
 import adminTool.VisvalingamWhyatt;
-import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
 import adminTool.labeling.roadGraph.DrawInfo;
 import adminTool.labeling.roadGraph.ITypeMap;
@@ -18,7 +17,7 @@ import util.IntList;
 
 public class Simplification {
     private List<MultiElement> paths;
-    private UnboundedPointAccess points;
+    private PointAccess points;
     private IntList types;
     private final DrawInfo info;
     private final HullSimplifier hullSimplifier;
@@ -33,7 +32,7 @@ public class Simplification {
         this.info = info;
     }
 
-    public UnboundedPointAccess getPoints() {
+    public PointAccess getPoints() {
         return points;
     }
 
@@ -50,8 +49,8 @@ public class Simplification {
         };
     }
 
-    public void simplify(final Collection<List<Way>> identifiedWays, final IPointAccess points) {
-        this.points = new UnboundedPointAccess();
+    public void simplify(final Collection<List<Way>> identifiedWays, final PointAccess points) {
+        this.points = new PointAccess();
         this.paths = new ArrayList<MultiElement>();
         this.types = new IntList();
 
@@ -87,8 +86,8 @@ public class Simplification {
     }
 
     private void appendSimplifiedPaths(final int equalWayNr, final int type) {
-        final IPointAccess pathPoints = pathSimplifier.getPoints();
-        final int offset = points.getPoints();
+        final PointAccess pathPoints = pathSimplifier.getPoints();
+        final int offset = points.size();
         for (final IntList path : pathSimplifier.getPaths()) {
             final IntList indices = new IntList(path.size());
             for (int i = 0; i < path.size(); ++i) {
@@ -97,23 +96,24 @@ public class Simplification {
             }
             paths.add(new MultiElement(indices, equalWayNr));
         }
-        for (int i = 0; i < pathPoints.getPoints(); ++i) {
+        for (int i = 0; i < pathPoints.size(); ++i) {
             points.addPoint(pathPoints.getX(i), pathPoints.getY(i));
         }
 
         types.add(type);
     }
 
-    private void appendOriginalPaths(final List<Way> ways, final IPointAccess origPoints, final int equalWayNr) {
+    private void appendOriginalPaths(final List<Way> ways, final PointAccess origPoints,
+            final int equalWayNr) {
         for (final Way way : ways) {
-            final IntList list = simplifier.simplifyMultiline(origPoints, way.iterator());
+            final IntList list = simplifier.simplifyMultiline(origPoints, way.iterator(), way.size());
             final IntList indices = new IntList(list.size());
             for (int i = 0; i < list.size() - 1; ++i) {
-                indices.add(points.getPoints());
+                indices.add(points.size());
                 points.addPoint(origPoints.getX(list.get(i)), origPoints.getY(list.get(i)));
             }
             if (list.get(0) != list.get(list.size() - 1)) {
-                indices.add(points.getPoints());
+                indices.add(points.size());
                 points.addPoint(origPoints.getX(list.get(list.size() - 1)), origPoints.getY(list.get(list.size() - 1)));
             } else {
                 indices.add(indices.get(0));

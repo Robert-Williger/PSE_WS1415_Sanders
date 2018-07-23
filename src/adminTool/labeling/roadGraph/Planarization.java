@@ -7,9 +7,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import adminTool.VisvalingamWhyatt;
 import adminTool.elements.MultiElement;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
 import adminTool.quadtree.IQuadtree;
 import adminTool.quadtree.IQuadtreePolicy;
@@ -26,7 +25,6 @@ public class Planarization {
     private final int maxElementsPerTile;
     private final int maxHeight;
     private final CutPerformer cutPerformer;
-    private final VisvalingamWhyatt simplifier;
 
     private final int stubThreshold;
     private final int fuzzyThreshold;
@@ -35,9 +33,10 @@ public class Planarization {
     private int[] nodeCounts;
     private List<Road> originalPaths;
     private List<Road> processedPaths;
-    private UnboundedPointAccess points;
+    private PointAccess.OfDouble points;
 
     private final double[] offsets;
+    private ElementAdapter adapter;
 
     public Planarization() {
         this(0, 0, 0);
@@ -56,14 +55,14 @@ public class Planarization {
         this.stubThreshold = stubThreshold;
         this.fuzzyThreshold = fuzzyThreshold;
         this.tThreshold = tThreshold;
-        this.simplifier = new VisvalingamWhyatt(tThreshold);
     }
 
-    public void planarize(final List<Road> paths, final UnboundedPointAccess points, final Dimension mapSize) {
-        this.nodeCounts = new int[points.getPoints()];
+    public void planarize(final List<Road> paths, final PointAccess.OfDouble points, final Dimension mapSize) {
+        this.nodeCounts = new int[points.size()];
         this.originalPaths = paths;
         this.points = points;
         this.processedPaths = new ArrayList<>(paths.size());
+        this.adapter = new ElementAdapter(points);
         final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
         countNodes(paths);
 
@@ -75,13 +74,13 @@ public class Planarization {
             final List<IntList> elements = cutPerformer.performCuts(element, cuts);
             final Iterator<IntList> iterator = elements.iterator();
 
-            tryAppendEnd(iterator.next(), 0, !cuts.isEmpty() && cuts.get(0).equals(0, 0.), element);
+            tryAppendEnd(createRoad(iterator.next(), element), 0, !cuts.isEmpty() && cuts.get(0).equals(0, 0.));
             if (iterator.hasNext()) {
                 for (int j = 0; j < elements.size() - 2; ++j) {
-                    tryAppendInner(iterator.next(), element);
+                    tryAppendInner(createRoad(iterator.next(), element));
                 }
-                final IntList last = iterator.next();
-                tryAppendEnd(last, last.size() - 1, cuts.get(cuts.size() - 1).equals(element.size() - 2, 1.), element);
+                final Road road = createRoad(iterator.next(), element);
+                tryAppendEnd(road, road.size() - 1, cuts.get(cuts.size() - 1).equals(element.size() - 2, 1.));
             }
         }
     }
@@ -90,11 +89,14 @@ public class Planarization {
         return processedPaths;
     }
 
-    private Quadtree createQuadtree(final List<? extends MultiElement> paths, final UnboundedPointAccess points,
-            final int size) {
+    private Quadtree createQuadtree(final List<? extends MultiElement> paths,
+            final PointAccess.OfDouble points, final int size) {
         final int[] maxWayCoordWidths = new int[maxHeight]; // use paths without any width
+        System.out.println("1");
         final IQuadtreePolicy policy = new WayQuadtreePolicy(paths, points, maxWayCoordWidths);
+        System.out.println("2");
         final Quadtree quadtree = new Quadtree(paths.size(), policy, size, maxHeight, maxElementsPerTile);
+        System.out.println("3");
         return quadtree;
     }
 
@@ -142,8 +144,8 @@ public class Planarization {
                     final MultiElement v = originalPaths.get(elements.get(j));
                     for (int vi = 0; vi < v.size() - 1; ++vi) {
                         if (segmentInTile(x, y, size, v, vi) && intersectsBiased(u, v, ui, vi)) {
-                            int intX = (int) (getX(u, ui) + offsets[0] * (getX(u, ui + 1) - getX(u, ui)));
-                            int intY = (int) (getY(u, ui) + offsets[0] * (getY(u, ui + 1) - getY(u, ui)));
+                            double intX = getX(u, ui) + offsets[0] * (getX(u, ui + 1) - getX(u, ui));
+                            double intY = getY(u, ui) + offsets[0] * (getY(u, ui + 1) - getY(u, ui));
                             if (IntersectionUtil.rectangleContainsPoint(x, y, x + size, y + size, intX, intY)) {
                                 int point = getFuzzyPoint(map, intX, intY);
                                 cuts.get(elements.get(i)).add(new Cut(point, ui, offsets[0]));
@@ -161,14 +163,14 @@ public class Planarization {
                 getY(u, ui + 1));
     }
 
-    private int getFuzzyPoint(final FuzzyPointMap map, int intX, int intY) {
+    private int getFuzzyPoint(final FuzzyPointMap map, double intX, double intY) {
         int point = map.getPoint(intX, intY);
         if (point != -1) {
             return point + nodeCounts.length;
         }
 
         map.addPoint(intX, intY);
-        point = points.getPoints();
+        point = points.size();
         points.addPoint(intX, intY);
         return point;
     }
@@ -189,11 +191,11 @@ public class Planarization {
 
     }
 
-    private final int getX(final MultiElement e, final int index) {
+    private final double getX(final MultiElement e, final int index) {
         return points.getX(e.getNode(index));
     }
 
-    private final int getY(final MultiElement e, final int index) {
+    private final double getY(final MultiElement e, final int index) {
         return points.getY(e.getNode(index));
     }
 
@@ -217,29 +219,29 @@ public class Planarization {
         return tThreshold / length;
     }
 
-    private void tryAppendInner(final IntList list, final Road element) {
-        if (list.size() > 3 || list.get(0) != list.get(list.size() - 1)) {
-            appendRoad(list, element);
+    private void tryAppendInner(final Road element) {
+        if (element.size() > 3 || element.getNode(0) != element.getNode(element.size() - 1)) {
+            processedPaths.add(element);
         }
     }
 
-    private void tryAppendEnd(final IntList list, final int lastIdx, final boolean duplicate, final Road element) {
-        if (isLongEnough(list) || (!duplicate && !isOriginalDeadEnd(list.get(lastIdx)))) {
-            appendRoad(list, element);
+    private void tryAppendEnd(final Road element, final int lastIdx, final boolean duplicate) {
+        if (isLongEnough(element) || (!duplicate && !isOriginalDeadEnd(element.getNode(lastIdx)))) {
+            processedPaths.add(element);
         }
     }
 
-    private void appendRoad(final IntList list, final Road element) {
-        final IntList simplified = simplifier.simplifyMultiline(points, list.iterator());
-        processedPaths.add(new Road(simplified, element.getType(), element.getName(), element.getRoadId()));
+    private Road createRoad(final IntList list, final Road element) {
+        return new Road(list, element.getType(), element.getName(), element.getRoadId());
     }
 
     private boolean isOriginalDeadEnd(final int endNode) {
         return isOriginalNode(endNode) && getNodeCount(endNode) == 1;
     }
 
-    private boolean isLongEnough(final IntList element) {
-        return ShapeUtil.getLength(element, points) > stubThreshold - IntersectionUtil.EPSILON;
+    private boolean isLongEnough(final Road element) {
+        adapter.setMultiElement(element);
+        return ShapeUtil.getLength(adapter) > stubThreshold - IntersectionUtil.EPSILON;
     }
 
     private int getNodeCount(final int node) {

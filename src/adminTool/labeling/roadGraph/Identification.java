@@ -5,16 +5,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import adminTool.elements.IPointAccess;
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.IIntPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
 import util.IntList;
 
 public class Identification {
     private List<Road> roads;
-    private UnboundedPointAccess points;
+    private PointAccess.OfDouble points;
 
-    public void identify(final Collection<Way> ways, final IPointAccess origPoints) {
+    public void identify(final Collection<Way> ways, final IIntPointAccess origPoints) {
         HashMap<String, List<Way>> wayMap = new HashMap<>();
 
         for (final Way way : ways) {
@@ -28,9 +28,9 @@ public class Identification {
             equalWays.add(way);
         }
 
-        points = new UnboundedPointAccess(origPoints.getPoints());
+        points = new PointAccess.OfDouble(origPoints.size());
         roads = new ArrayList<>(ways.size());
-        for (int i = 0; i < origPoints.getPoints(); ++i) {
+        for (int i = 0; i < origPoints.size(); ++i) {
             points.addPoint(origPoints.getX(i), origPoints.getY(i));
         }
 
@@ -45,7 +45,7 @@ public class Identification {
         }
     }
 
-    public UnboundedPointAccess getPoints() {
+    public PointAccess.OfDouble size() {
         return points;
     }
 

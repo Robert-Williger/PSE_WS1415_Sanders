@@ -7,7 +7,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.Road;
 import adminTool.labeling.roadGraph.Transformation;
@@ -23,7 +23,7 @@ public class TransformationVisualizer extends JFrame {
         getContentPane().setBackground(Color.white);
         setTitle("Transformation Visualizer");
 
-        final UnboundedPointAccess points = createPoints();
+        final PointAccess points = createPoints();
         final List<Road> roads = createRoads();
 
         final JPanel origPaths = new WayVisualizer(points, roads);
@@ -55,8 +55,8 @@ public class TransformationVisualizer extends JFrame {
         setVisible(true);
     }
 
-    private static UnboundedPointAccess createPoints() {
-        final UnboundedPointAccess points = new UnboundedPointAccess();
+    private static PointAccess createPoints() {
+        final PointAccess points = new PointAccess();
         // points.addPoint(100, 90);
         // points.addPoint(245, 100);
         // points.addPoint(260, 100);

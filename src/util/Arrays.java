@@ -6,8 +6,7 @@ import java.util.PrimitiveIterator;
 
 public final class Arrays {
 
-    private Arrays() {
-    }
+    private Arrays() {}
 
     public static <T> Iterator<T> iterator() {
         return new EmptyIterator<>();
@@ -38,7 +37,43 @@ public final class Arrays {
     }
 
     public static PrimitiveIterator.OfInt iterator(final int[] array, final int from, final int size) {
-        return new PrimitiveArrayIterator(array, from, size);
+        return new IntegerArrayIterator(array, from, size);
+    }
+
+    public static PrimitiveIterator.OfLong iterator(final long[] array) {
+        return iterator(array, 0, array.length);
+    }
+
+    public static PrimitiveIterator.OfLong iterator(final long[] array, final int size) {
+        return iterator(array, 0, size);
+    }
+
+    public static PrimitiveIterator.OfLong iterator(final long[] array, final int from, final int size) {
+        return new LongArrayIterator(array, from, size);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final double[] array) {
+        return iterator(array, 0, array.length);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final double[] array, final int size) {
+        return iterator(array, 0, size);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final double[] array, final int from, final int size) {
+        return new DoubleArrayIterator(array, from, size);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final float[] array) {
+        return iterator(array, 0, array.length);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final float[] array, final int size) {
+        return iterator(array, 0, size);
+    }
+
+    public static PrimitiveIterator.OfDouble iterator(final float[] array, final int from, final int size) {
+        return new FloatArrayIterator(array, from, size);
     }
 
     public static PrimitiveIterator.OfInt descendingIterator(final int[] array) {
@@ -183,12 +218,12 @@ public final class Arrays {
         }
     }
 
-    private static class PrimitiveArrayIterator implements PrimitiveIterator.OfInt {
+    private static class IntegerArrayIterator implements PrimitiveIterator.OfInt {
         private int cursor; // index of next element to return
         private final int size;
         private final int[] array;
 
-        public PrimitiveArrayIterator(final int[] array, final int cursor, final int size) {
+        public IntegerArrayIterator(final int[] array, final int cursor, final int size) {
             this.cursor = cursor;
             this.size = size;
             this.array = array;
@@ -201,6 +236,81 @@ public final class Arrays {
 
         @Override
         public int nextInt() {
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            return array[cursor++];
+        }
+    }
+
+    private static class LongArrayIterator implements PrimitiveIterator.OfLong {
+        private int cursor; // index of next element to return
+        private final int size;
+        private final long[] array;
+
+        public LongArrayIterator(final long[] array, final int cursor, final int size) {
+            this.cursor = cursor;
+            this.size = size;
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor != size;
+        }
+
+        @Override
+        public long nextLong() {
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            return array[cursor++];
+        }
+    }
+
+    private static class DoubleArrayIterator implements PrimitiveIterator.OfDouble {
+        private int cursor; // index of next element to return
+        private final int size;
+        private final double[] array;
+
+        public DoubleArrayIterator(final double[] array, final int cursor, final int size) {
+            this.cursor = cursor;
+            this.size = size;
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor != size;
+        }
+
+        @Override
+        public double nextDouble() {
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            return array[cursor++];
+        }
+    }
+
+    private static class FloatArrayIterator implements PrimitiveIterator.OfDouble {
+        private int cursor; // index of next element to return
+        private final int size;
+        private final float[] array;
+
+        public FloatArrayIterator(final float[] array, final int cursor, final int size) {
+            this.cursor = cursor;
+            this.size = size;
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor != size;
+        }
+
+        @Override
+        public double nextDouble() {
             if (cursor >= size) {
                 throw new NoSuchElementException();
             }

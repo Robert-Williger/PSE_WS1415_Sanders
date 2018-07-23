@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface IAddressablePriorityQueue<T> {
 
-    void addAll(List<T> elements, List<Integer> key);
+    void addAll(List<T> elements, List<Double> key);
 
     void addAll(List<T> elements);
 
@@ -12,7 +12,7 @@ public interface IAddressablePriorityQueue<T> {
 
     int size();
 
-    void insert(T element, int key);
+    void insert(T element, double key);
 
     void insert(T element);
 
@@ -22,7 +22,7 @@ public interface IAddressablePriorityQueue<T> {
 
     boolean remove(T element);
 
-    void changeKey(T element, int key);
+    void changeKey(T element, double key);
 
     void merge(IAddressablePriorityQueue<T> queue);
 

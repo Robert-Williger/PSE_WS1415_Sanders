@@ -8,7 +8,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.elements.UnboundedPointAccess;
+import adminTool.elements.FloatPointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.OverlapResolve;
 import adminTool.labeling.roadGraph.Road;
@@ -23,7 +23,7 @@ public class OverlapResolveVisualizer extends JFrame {
         getContentPane().setBackground(Color.white);
         setTitle("Overlap-Resolve Visualizer");
 
-        final UnboundedPointAccess points = createPoints();
+        final FloatPointAccess points = createPoints();
         final List<Road> ways = createRoads();
 
         final IDrawInfo info = new IDrawInfo() {
@@ -57,8 +57,8 @@ public class OverlapResolveVisualizer extends JFrame {
         setVisible(true);
     }
 
-    private static UnboundedPointAccess createPoints() {
-        final UnboundedPointAccess points = new UnboundedPointAccess();
+    private static FloatPointAccess createPoints() {
+        final FloatPointAccess points = new FloatPointAccess();
         // points.addPoint(50, 200);
         // points.addPoint(100, 195);
         // points.addPoint(280, 170);

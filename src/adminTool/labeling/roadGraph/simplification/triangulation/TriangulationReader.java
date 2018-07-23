@@ -32,7 +32,7 @@ public class TriangulationReader {
     }
 
     private void readNodes(final BufferedReader nodeReader) throws IOException {
-        for (int i = 0; i < triangulation.getPoints(); ++i) {
+        for (int i = 0; i < triangulation.size(); ++i) {
             String[] data = nodeReader.readLine().trim().replaceAll("\\s+", " ").split(" ");
             triangulation.setPoint(i, (int) Double.parseDouble(data[1]), (int) Double.parseDouble(data[2]));
         }

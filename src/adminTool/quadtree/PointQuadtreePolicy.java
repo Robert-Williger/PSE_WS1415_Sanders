@@ -11,7 +11,7 @@ public class PointQuadtreePolicy implements IQuadtreePolicy {
     }
 
     @Override
-    public boolean intersects(final int index, final int height, final int x, final int y, final int size) {
+    public boolean intersects(final int index, final int height, final double x, final double y, final double size) {
         return IntersectionUtil.rectangleContainsPoint(x, y, x + size, y + size, points.getX(index),
                 points.getY(index));
     }

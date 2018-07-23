@@ -1,12 +1,10 @@
 package adminTool.util;
 
-import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
-import adminTool.elements.IPointAccess;
-import adminTool.elements.MultiElement;
-import util.IntList;
+import adminTool.IElement;
 
 public class IntersectionUtil {
     public static double EPSILON = 1E-5;
@@ -16,88 +14,68 @@ public class IntersectionUtil {
     private static final int OUT_RIGHT = 0b0100;
     private static final int OUT_BOTTOM = 0b1000;
 
-    public static Rectangle getBounds(final MultiElement element, final IPointAccess points) {
-        int minX = points.getX(element.getNode(0));
-        int maxX = minX;
-        int minY = points.getY(element.getNode(0));
-        int maxY = minY;
+    public static Rectangle2D getBounds(final IElement element) {
+        double minX = element.getX(0);
+        double maxX = minX;
+        double minY = element.getY(0);
+        double maxY = minY;
 
         for (int i = 1; i < element.size(); i++) {
-            minX = Math.min(minX, points.getX(element.getNode(i)));
-            maxX = Math.max(maxX, points.getX(element.getNode(i)));
-            minY = Math.min(minY, points.getY(element.getNode(i)));
-            maxY = Math.max(maxY, points.getY(element.getNode(i)));
+            minX = Math.min(minX, element.getX(i));
+            maxX = Math.max(maxX, element.getX(i));
+            minY = Math.min(minY, element.getY(i));
+            maxY = Math.max(maxY, element.getY(i));
         }
 
-        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        return new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
     }
 
     // test whether rectangle [1] contains rectangle [2]
-    public static boolean rectangleContainsRectangle(final int minX1, final int minY1, final int maxX1, final int maxY1,
-            final int minX2, final int minY2, final int maxX2, final int maxY2) {
+    public static boolean rectangleContainsRectangle(final double minX1, final double minY1, final double maxX1,
+            final double maxY1, final double minX2, final double minY2, final double maxX2, final double maxY2) {
         return minX1 <= minX2 && minY1 <= minY2 && maxX1 >= maxX2 && maxY1 >= maxY2;
     }
 
-    public static boolean rectangleContainsPoint(final int minX, final int minY, final int maxX, final int maxY,
-            final int x, final int y) {
+    public static boolean rectangleContainsPoint(final double minX, final double minY, final double maxX,
+            final double maxY, final double x, final double y) {
         return x >= minX && x < maxX && y >= minY && y < maxY;
     }
 
-    public static boolean polygonContainsPoint(final MultiElement element, final IPointAccess points, final double x,
-            final double y) {
+    public static boolean polygonContainsPoint(final IElement element, final double x, final double y) {
         boolean ret = false;
         for (int i = 0, j = element.size() - 1; i < element.size(); j = i++) {
-            if (((points.getY(element.getNode(i)) > y) != (points.getY(element.getNode(j)) > y))
-                    && (x < (points.getX(element.getNode(j)) - points.getX(element.getNode(i)))
-                            * (y - points.getY(element.getNode(i)))
-                            / (points.getY(element.getNode(j)) - points.getY(element.getNode(i)))
-                            + points.getX(element.getNode(i))))
+            if (((element.getY(i) > y) != (element.getY(j) > y)) && (x < (element.getX(j) - element.getX(i))
+                    * (y - element.getY(i)) / (element.getY(j) - element.getY(i)) + element.getX(i)))
                 ret = !ret;
         }
 
         return ret;
     }
 
-    public static boolean polygonContainsPoint(final IntList indices, final IPointAccess points, final double x,
-            final double y) {
-        boolean ret = false;
-        for (int i = 0, j = indices.size() - 1; i < indices.size(); j = i++) {
-            if (((points.getY(indices.get(i)) > y) != (points.getY(indices.get(j)) > y))
-                    && (x < (points.getX(indices.get(j)) - points.getX(indices.get(i)))
-                            * (y - points.getY(indices.get(i)))
-                            / (points.getY(indices.get(j)) - points.getY(indices.get(i)))
-                            + points.getX(indices.get(i))))
-                ret = !ret;
-        }
-
-        return ret;
-    }
-
-    public static Point2D calculatePointInPolygon(final IntList poly, final IPointAccess points) {
-        for (int i = 0; i < poly.size(); ++i) {
-            final int i2 = (i + 1) % poly.size();
-            final int i3 = (i + 2) % poly.size();
-            double x = (points.getX(poly.get(i)) + points.getX(poly.get(i2)) + points.getX(poly.get(i3))) / 3.;
-            double y = (points.getY(poly.get(i)) + points.getY(poly.get(i2)) + points.getY(poly.get(i3))) / 3.;
-            if (polygonContainsPoint(poly, points, x, y)) {
+    public static Point2D calculatePointInPolygon(final IElement element) {
+        for (int i1 = 0; i1 < element.size(); ++i1) {
+            final int i2 = (i1 + 1) % element.size();
+            final int i3 = (i1 + 2) % element.size();
+            double x = (element.getX(i1) + element.getX(i2) + element.getX(i3)) / 3.;
+            double y = (element.getY(i1) + element.getY(i2) + element.getY(i3)) / 3.;
+            if (polygonContainsPoint(element, x, y)) {
                 return new Point2D.Double(x, y);
             }
         }
         return null;
     }
 
-    public static boolean polygonBBContainsPoint(final int[] indices, final IPointAccess points, final double x,
-            final double y) {
-        int minX = points.getX(indices[0]);
-        int maxX = minX;
-        int minY = points.getY(indices[0]);
-        int maxY = minY;
+    public static boolean polygonBBContainsPoint(final IElement element, final double x, final double y) {
+        double minX = element.getX(0);
+        double maxX = minX;
+        double minY = element.getY(0);
+        double maxY = minY;
 
-        for (int i = 1; i < indices.length; i++) {
-            minX = Math.min(minX, points.getX(indices[i]));
-            maxX = Math.max(maxX, points.getX(indices[i]));
-            minY = Math.min(minY, points.getY(indices[i]));
-            maxY = Math.max(maxY, points.getY(indices[i]));
+        for (int i = 1; i < element.size(); i++) {
+            minX = Math.min(minX, element.getX(i));
+            maxX = Math.max(maxX, element.getX(i));
+            minY = Math.min(minY, element.getY(i));
+            maxY = Math.max(maxY, element.getY(i));
         }
 
         return x >= minX && x <= maxX && y >= minY && y <= maxY;
@@ -214,4 +192,5 @@ public class IntersectionUtil {
     public static boolean inIntervall(final double value, final double from, final double to, final double epsilon) {
         return value >= -epsilon + from && value <= to + epsilon;
     }
+
 }

@@ -13,11 +13,11 @@ public class SquareQuadtreePolicy implements IQuadtreePolicy {
     }
 
     @Override
-    public boolean intersects(final int index, final int height, final int x, final int y, final int size) {
+    public boolean intersects(final int index, final int height, final double x, final double y, final double size) {
         // respect radius by appending offset to tile borders
-        final int rectX = x - length;
-        final int rectY = y - length;
-        final int rectSize = size + 2 * length;
+        final double rectX = x - length;
+        final double rectY = y - length;
+        final double rectSize = size + 2 * length;
 
         return IntersectionUtil.rectangleContainsPoint(rectX, rectY, rectX + rectSize, rectY + rectSize,
                 points.getX(index), points.getY(index));

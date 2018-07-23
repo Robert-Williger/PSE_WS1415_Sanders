@@ -24,10 +24,11 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<POI> pois;
 
     private IPointAccess pointAccess;
+    private IntConversion conversion;
 
     public ElementWriter(final Sorting<MultiElement> areas, final Sorting<Street> streets,
             final Sorting<Building> buildings, final Sorting<Label> labels, final Sorting<POI> pois,
-            final IPointAccess pointAccess, final ZipOutputStream zipOutput) {
+            final IPointAccess pointAccess, final IntConversion conversion, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.areas = areas;
@@ -36,6 +37,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         this.labels = labels;
         this.pois = pois;
         this.pointAccess = pointAccess;
+        this.conversion = conversion;
     }
 
     public void write() {
@@ -265,8 +267,8 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     private void writePoint(final int point) throws IOException {
-        dataOutput.writeInt(pointAccess.getX(point));
-        dataOutput.writeInt(pointAccess.getY(point));
+        dataOutput.writeInt(conversion.convert(pointAccess.getX(point)));
+        dataOutput.writeInt(conversion.convert(pointAccess.getY(point)));
     }
 
     private int writeMultiElement(final MultiElement element) throws IOException {
