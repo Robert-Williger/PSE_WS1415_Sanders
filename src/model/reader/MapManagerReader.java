@@ -11,11 +11,10 @@ import model.map.IElementIterator;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.IPixelConverter;
-import model.map.LinkedQuadtree;
 import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
-import model.map.StoredQuadtree;
+import model.map.Quadtree;
 import model.map.accessors.BuildingAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
@@ -40,11 +39,10 @@ class MapManagerReader {
     public void readMapManager(final ReaderContext readerContext) throws IOException {
         final IMapState state = readMapState(readerContext);
         final String[] strings = readStrings(readerContext);
-        final int[] nodes = readNodes(readerContext);
         final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
         final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
         final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
-        readElements(readerContext, nodes, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
+        readElements(readerContext, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
 
         final IFactory<ITileAccessor> tileFactory = () -> new TileAccessor(elementIteratorMap, state);
 
@@ -71,20 +69,6 @@ class MapManagerReader {
         return new MapState(1, 1, 0, 1, 1, new PixelConverter(1));
     }
 
-    private int[] readNodes(final ReaderContext readerContext) throws IOException {
-        final DataInputStream stream = readerContext.createInputStream("nodes");
-        if (stream != null) {
-            final int[] points = new int[stream.readInt() << 1]; // even/odd indices for x/y coords
-            for (int count = 0; count < points.length; count++) {
-                points[count] = stream.readInt();
-            }
-            stream.close();
-            return points;
-        }
-
-        return new int[0];
-    }
-
     private String[] readStrings(final ReaderContext readerContext) throws IOException {
         final DataInputStream stream = readerContext.createInputStream("strings");
         if (stream != null) {
@@ -100,8 +84,8 @@ class MapManagerReader {
         return new String[0];
     }
 
-    private void readElements(final ReaderContext readerContext, final int[] nodes,
-            final Map<String, IElementIterator> elementIteratorMap, Map<String, IFactory<IPointAccessor>> pointMap,
+    private void readElements(final ReaderContext readerContext, final Map<String, IElementIterator> elementIteratorMap,
+            Map<String, IFactory<IPointAccessor>> pointMap,
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep) throws IOException {
         // TODO handle missing entries!
         final String[] names = { "street", "area", "building", "label", "poi" };
@@ -115,36 +99,34 @@ class MapManagerReader {
 
         // TODO improve this
         final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[4];
-        accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0], nodes) {
+        accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0]) {
             @Override
             public ICollectiveAccessor create() {
-                return new StreetAccessor(distribution, data, addresses, points);
+                return new StreetAccessor(distribution, data, addresses);
             }
         };
-        accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1], nodes);
-        accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2], nodes) {
+        accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1]);
+        accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2]) {
             @Override
             public ICollectiveAccessor create() {
-                return new BuildingAccessor(distribution, data, addresses, points);
+                return new BuildingAccessor(distribution, data, addresses);
             }
         };
         for (int i = 0; i < 3; i++) {
             collectiveMap.put(names[i], accessors[i]);
             accessors[i].setData(readIntArray(readerContext, names[i] + "s"));
-            int[] elementData = readIntArray(readerContext, names[i] + "Data");
             int[] treeData = readIntArray(readerContext, names[i] + "Tree");
-            //elementIteratorMap.put(names[i], new LinkedQuadtree(treeData, elementData, minZoomStep));
-            elementIteratorMap.put(names[i], new StoredQuadtree(treeData, minZoomStep));
+            elementIteratorMap.put(names[i], new Quadtree(treeData, minZoomStep));
         }
         final int[] labelData = readIntArray(readerContext, names[3] + "s");
         pointMap.put(names[3], () -> new LabelAccessor(distributions[3], labelData, 3));
         elementIteratorMap.put(names[3],
-                new StoredQuadtree(readIntArray(readerContext, names[3] + "Tree"), minZoomStep));
+                new Quadtree(readIntArray(readerContext, names[3] + "Tree"), minZoomStep));
 
         final int[] poiData = readIntArray(readerContext, names[4] + "s");
         pointMap.put(names[4], () -> new POIAccessor(distributions[4], poiData, 2));
         elementIteratorMap.put(names[4],
-                new StoredQuadtree(readIntArray(readerContext, names[4] + "Tree"), minZoomStep));
+                new Quadtree(readIntArray(readerContext, names[4] + "Tree"), minZoomStep));
     }
 
     private int[] readIntArray(final ReaderContext readerContext, final String entryName) throws IOException {

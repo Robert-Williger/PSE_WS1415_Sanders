@@ -7,7 +7,7 @@ import java.awt.geom.Rectangle2D;
 import adminTool.IElement;
 
 public class IntersectionUtil {
-    public static double EPSILON = 1E-5;
+    public static double EPSILON = 1E-7;
 
     private static final int OUT_LEFT = 0b0001;
     private static final int OUT_TOP = 0b0010;

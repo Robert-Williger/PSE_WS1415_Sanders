@@ -8,7 +8,7 @@ public class TreeLabeler2 {
 
     private static int UNCALCULATED = -1;
 
-    public TreeLabeler2(final SubdivisionGraph graph) {
+    public TreeLabeler2(final RoadGraph graph) {
         this.graph = graph;
         this.values = new int[2][graph.numNodes()];
         init(graph.getRoot());
@@ -149,7 +149,7 @@ public class TreeLabeler2 {
         return maxValue;
     }
 
-    private final SubdivisionGraph graph;
+    private final RoadGraph graph;
     private final int[][] values;
     private int[] labelLengths;
 }

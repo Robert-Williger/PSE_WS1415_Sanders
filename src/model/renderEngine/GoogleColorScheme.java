@@ -10,8 +10,8 @@ public class GoogleColorScheme extends ColorScheme {
     }
 
     private static WayStyle[] createWayStyles() {
-        WayStyle[] wayStyles = new WayStyle[27];
-        int[] wayMinZoomstep = new int[27];
+        WayStyle[] wayStyles = new WayStyle[31];
+        int[] wayMinZoomstep = new int[31];
 
         // pedestrian / living street / residential / unclassified (white +
         // light gray outline)
@@ -135,28 +135,48 @@ public class GoogleColorScheme extends ColorScheme {
         wayMinZoomstep[23] = 15;
         wayStyles[23] = new WayStyle(wayMinZoomstep[23], new float[] { 1f, 1.5f, 2f, 2.5f }, new Color(174, 209, 160));
 
-        // junction (red)
+        // road section (black)
         wayMinZoomstep[24] = 13;
         wayStyles[24] = new WayStyle(wayMinZoomstep[24], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.RED);
+                Color.BLACK);
 
-        // road section (blue)
+        // junction (light gray)
         wayMinZoomstep[25] = 13;
         wayStyles[25] = new WayStyle(wayMinZoomstep[25], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.BLUE);
+                Color.LIGHT_GRAY);
 
-        // blocked section (yellow)
+        // overlapped section (red)
         wayMinZoomstep[26] = 13;
         wayStyles[26] = new WayStyle(wayMinZoomstep[26], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
+                Color.RED);
+
+        // bad shaped section (green)
+        wayMinZoomstep[27] = 13;
+        wayStyles[27] = new WayStyle(wayMinZoomstep[27], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
+                Color.GREEN);
+
+        // unconnected junction section (orange)
+        wayMinZoomstep[28] = 13;
+        wayStyles[28] = new WayStyle(wayMinZoomstep[28], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
                 Color.ORANGE);
+
+        // stub (blue)
+        wayMinZoomstep[29] = 13;
+        wayStyles[29] = new WayStyle(wayMinZoomstep[29], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
+                Color.BLUE);
+
+        // cycle junction section (magenta)
+        wayMinZoomstep[30] = 13;
+        wayStyles[30] = new WayStyle(wayMinZoomstep[30], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
+                Color.MAGENTA);
 
         return wayStyles;
     }
 
     private static int[][] createWayOrder() {
         return new int[][] { { 10 }, { 11 }, { 19 }, { 17 }, { 18 }, { 12 }, { 22 }, { 23 }, { 0, 1 }, { 3 }, { 2 },
-                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 26 },
-                { 24 }, { 25 } };
+                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 28 },
+                { 26 }, { 24 }, { 25 }, { 27 }, { 29 } };
     }
 
     private static ShapeStyle[] createAreaStyles() {

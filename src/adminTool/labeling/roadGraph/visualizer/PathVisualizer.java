@@ -20,14 +20,14 @@ public class PathVisualizer extends JPanel {
 
     private final BufferedImage image;
 
-    public PathVisualizer(final IPointAccess.OfDouble points, final List<IntList> paths) {
+    public PathVisualizer(final IPointAccess points, final List<IntList> paths) {
         image = new BufferedImage(800, 320, BufferedImage.TYPE_INT_ARGB);
         setSize(800, 320);
         setOpaque(false);
         draw(points, paths);
     }
 
-    private void draw(final IPointAccess.OfDouble points, final List<IntList> paths) {
+    private void draw(final IPointAccess points, final List<IntList> paths) {
         Map<RenderingHints.Key, Object> hints = new HashMap<>();
         hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -52,10 +52,11 @@ public class PathVisualizer extends JPanel {
             while (it.hasNext()) {
                 int cur = it.nextInt();
                 g2.setColor(Color.blue);
-                g2.drawLine(points.getX(last), points.getY(last), points.getX(cur), points.getY(cur));
+                g2.drawLine((int) points.getX(last), (int) points.getY(last), (int) points.getX(cur),
+                        (int) points.getY(cur));
                 last = cur;
                 g2.setColor(Color.BLACK);
-                g2.fillOval(points.getX(last) - 3, points.getY(last) - 3, 6, 6);
+                g2.fillOval((int) points.getX(last) - 3, (int) points.getY(last) - 3, 6, 6);
             }
         }
 

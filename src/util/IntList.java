@@ -26,6 +26,16 @@ public class IntList {
         this.size = list.size;
     }
 
+    // list[from,to)
+    public IntList(final IntList list, final int from, final int to) {
+        if (to < from)
+            throw new IllegalArgumentException("Illegal Interval: [" + from + ", " + to + ")");
+        this.size = to - from;
+        this.data = new int[size];
+        System.arraycopy(list.data, from, data, 0, data.length);
+
+    }
+
     public IntList() {
         this(DEFAULT_CAPACITY);
     }

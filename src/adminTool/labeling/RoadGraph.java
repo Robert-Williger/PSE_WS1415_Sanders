@@ -1,6 +1,6 @@
 package adminTool.labeling;
 
-public class SubdivisionGraph {
+public class RoadGraph {
     public int getRoot() {
         return 0;
     }

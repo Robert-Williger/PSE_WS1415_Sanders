@@ -4,9 +4,8 @@ import java.util.PrimitiveIterator.OfInt;
 
 import util.IntList;
 
-public class Quadtree implements IQuadtree {
+public class Quadtree extends AbstractQuadtree implements IQuadtree {
     private final Quadtree[] children;
-    private final IntList elements;
 
     public Quadtree(final int elements, final IQuadtreePolicy policy, final double size, final int maxHeight,
             final int maxElementsPerTile) {
@@ -15,13 +14,12 @@ public class Quadtree implements IQuadtree {
             this.elements.add(i);
         }
 
-        children = createChildren(this.elements, policy, 0, 0, 0, size, maxHeight, maxElementsPerTile);
+        children = createChildren(policy, 0, 0, 0, size, maxHeight, maxElementsPerTile);
     }
 
     private Quadtree(final IntList elements, final IQuadtreePolicy policy, final double x, final double y,
             final int height, final double size, final int maxHeight, final int maxElementsPerTile) {
         this.elements = new IntList();
-
         for (final OfInt iterator = elements.iterator(); iterator.hasNext();) {
             final int element = iterator.nextInt();
             if (policy.intersects(element, height, x, y, size)) {
@@ -29,26 +27,11 @@ public class Quadtree implements IQuadtree {
             }
         }
 
-        children = createChildren(this.elements, policy, x, y, height, size, maxHeight, maxElementsPerTile);
+        children = createChildren(policy, x, y, height, size, maxHeight, maxElementsPerTile);
     }
 
-    @Override
-    public boolean isLeaf() {
-        return children == null;
-    }
-
-    @Override
-    public Quadtree getChild(final int child) {
-        return children[child];
-    }
-
-    @Override
-    public IntList getElements() {
-        return elements;
-    }
-
-    private Quadtree[] createChildren(final IntList list, final IQuadtreePolicy policy, final double x, final double y,
-            final int height, final double size, final int maxHeight, final int maxElementsPerTile) {
+    private Quadtree[] createChildren(final IQuadtreePolicy policy, final double x, final double y, final int height,
+            final double size, final int maxHeight, final int maxElementsPerTile) {
         final Quadtree[] children;
         if (elements.size() > maxElementsPerTile && height + 1 < maxHeight) {
             final double halfSize = size / 2;
@@ -62,5 +45,15 @@ public class Quadtree implements IQuadtree {
         }
 
         return children;
+    }
+
+    @Override
+    public boolean isLeaf() {
+        return children == null;
+    }
+
+    @Override
+    public Quadtree getChild(final int child) {
+        return children[child];
     }
 }

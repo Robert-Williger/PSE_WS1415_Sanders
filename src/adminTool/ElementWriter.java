@@ -12,9 +12,7 @@ import adminTool.elements.POI;
 import adminTool.elements.Street;
 import adminTool.elements.Label;
 
-//TODO compress
 public class ElementWriter extends AbstractMapFileWriter {
-    private LinkedHashMap<Integer, Integer> nodeMap;
     private LinkedHashMap<String, Integer> stringMap;
 
     private Sorting<MultiElement> areas;
@@ -41,13 +39,6 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     public void write() {
-        nodeMap = createNodeMap();
-        try {
-            writeNodes();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-
         stringMap = createStringMap();
 
         try {
@@ -62,31 +53,6 @@ public class ElementWriter extends AbstractMapFileWriter {
         }
 
         stringMap = null;
-        nodeMap = null;
-    }
-
-    private LinkedHashMap<Integer, Integer> createNodeMap() {
-        final LinkedHashMap<Integer, Integer> nodeMap = new LinkedHashMap<>();
-
-        int id = -1;
-        id = putNodes(nodeMap, streets.elements, id);
-        id = putNodes(nodeMap, buildings.elements, id);
-        putNodes(nodeMap, areas.elements, id);
-
-        return nodeMap;
-    }
-
-    private int putNodes(final LinkedHashMap<Integer, Integer> nodeMap, final MultiElement[] elements, int nodeCount) {
-        for (final MultiElement element : elements) {
-            for (int i = 0; i < element.size(); ++i) {
-                int node = element.getNode(i);
-                if (!nodeMap.containsKey(node)) {
-                    nodeMap.put(node, ++nodeCount);
-                }
-            }
-        }
-
-        return nodeCount;
     }
 
     private LinkedHashMap<String, Integer> createStringMap() {
@@ -125,17 +91,6 @@ public class ElementWriter extends AbstractMapFileWriter {
         }
 
         return stringMap;
-    }
-
-    private void writeNodes() throws IOException {
-        putNextEntry("nodes");
-        dataOutput.writeInt(nodeMap.size());
-
-        for (final Entry<Integer, Integer> entry : nodeMap.entrySet()) {
-            writePoint(entry.getKey());
-        }
-
-        closeEntry();
     }
 
     private void writeStrings() throws IOException {
@@ -276,8 +231,10 @@ public class ElementWriter extends AbstractMapFileWriter {
         int ret = 1;
 
         for (int i = 0; i < element.size(); ++i) {
-            dataOutput.writeInt(nodeMap.get(element.getNode(i)));
-            ++ret;
+            final int node = element.getNode(i);
+            dataOutput.writeInt(conversion.convert(pointAccess.getX(node)));
+            dataOutput.writeInt(conversion.convert(pointAccess.getY(node)));
+            ret += 2;
         }
 
         return ret;

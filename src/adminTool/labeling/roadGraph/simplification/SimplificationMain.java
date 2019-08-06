@@ -6,7 +6,7 @@ import java.util.List;
 
 import adminTool.elements.BoundedPointAccess;
 import adminTool.elements.Way;
-import adminTool.labeling.roadGraph.DrawInfo;
+import adminTool.labeling.DrawInfo;
 import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
 import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;
 import adminTool.labeling.roadGraph.simplification.triangulation.PolyWriter;

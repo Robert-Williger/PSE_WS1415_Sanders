@@ -12,6 +12,10 @@ public interface IQuadtree {
 
     IntList getElements();
 
+    // void bfs(TreeConsumer consumer);
+
+    void traverse(double size, ElementConsumer consumer);
+
     default IQuadtree getChild(final int xOffset, final int yOffset) {
         return getChild(getChildIndex(xOffset, yOffset));
     }
@@ -26,5 +30,10 @@ public interface IQuadtree {
 
     static int getChildIndex(final int xOffset, final int yOffset) {
         return (yOffset << 1) | xOffset;
+    }
+
+    @FunctionalInterface
+    static interface ElementConsumer {
+        void consume(final IntList elements, final double x, final double y, final double size);
     }
 }

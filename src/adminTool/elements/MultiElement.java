@@ -9,9 +9,18 @@ public class MultiElement implements Typeable {
     private final IntList indices;
     private int type;
 
+    public MultiElement(final MultiElement element, final int type) {
+        this.indices = element.indices;
+        this.type = type;
+    }
+
     public MultiElement(final IntList indices, final int type) {
         this.indices = indices;
         this.type = type;
+    }
+
+    public IntList toList() {
+        return new IntList(indices);
     }
 
     public int size() {
@@ -31,10 +40,6 @@ public class MultiElement implements Typeable {
         this.type = type;
     }
 
-    public MultiElement subElement(final int from, final int to) {
-        return new SubElement(indices, type, from, to);
-    }
-
     public MultiElement reverse() {
         final IntList list = new IntList(indices);
         list.reverse();
@@ -43,25 +48,6 @@ public class MultiElement implements Typeable {
 
     public PrimitiveIterator.OfInt iterator() {
         return indices.iterator();
-    }
-
-    private static class SubElement extends MultiElement {
-        private final int from;
-        private final int size;
-
-        public SubElement(final IntList indices, final int type, final int from, final int to) {
-            super(indices, type);
-            this.from = from;
-            this.size = to - from;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public int getNode(int index) {
-            return super.getNode(index + from);
-        }
     }
 
 }

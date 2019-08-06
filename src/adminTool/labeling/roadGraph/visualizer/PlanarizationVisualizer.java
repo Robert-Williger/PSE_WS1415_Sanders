@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.Planarization;
 import adminTool.labeling.roadGraph.Road;
+import util.IntList;
 
 public class PlanarizationVisualizer extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -26,10 +27,10 @@ public class PlanarizationVisualizer extends JFrame {
         planarization.planarize(roads, points, new Dimension(615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, roads);
-        final JPanel cutPaths = new WayVisualizer(points, planarization.getProcessedRoads());
-        System.out.println(planarization.getProcessedRoads().size());
-        for (final Road road : planarization.getProcessedRoads()) {
-            System.out.println(road.size());
+        final JPanel cutPaths = new WayVisualizer(points, planarization.getRoads());
+
+        for (final Road road : planarization.getRoads()) {
+            System.out.println(road.toList());
         }
 
         origPaths.setLocation(20, 10);
@@ -46,54 +47,22 @@ public class PlanarizationVisualizer extends JFrame {
 
     private static PointAccess createPoints() {
         final PointAccess points = new PointAccess();
-        // points.addPoint(50, 200);
-        // points.addPoint(100, 195);
-        // points.addPoint(280, 170);
-        // points.addPoint(420, 20);
-        // points.addPoint(670, 300);
-        //
-        // points.addPoint(500, 80);
-        // points.addPoint(500, 210);
-        // points.addPoint(595, 100);
-        //
-        // points.addPoint(615, 270);
-        // points.addPoint(595, 210);
-        // points.addPoint(580, 140);
-        // points.addPoint(470, 100);
-        // points.addPoint(360, 115);
-        // points.addPoint(110, 210);
-        // points.addPoint(80, 260);
         points.addPoint(200, 200);
-        points.addPoint(300, 200);
         points.addPoint(400, 200);
+        points.addPoint(400, 300);
 
-        points.addPoint(300, 100);
-        points.addPoint(300, 200);
         points.addPoint(300, 300);
-
-        // points.addPoint(615, 270);
-        // points.addPoint(595, 210);
-        // points.addPoint(580, 140);
-        // points.addPoint(470, 100);
-        // points.addPoint(360, 115);
-        // points.addPoint(110, 210);
-        // points.addPoint(80, 260);
+        points.addPoint(300, 100);
         return points;
     }
 
     private static List<Road> createRoads() {
         final List<Road> ways = new ArrayList<>();
-        final int[] indices0 = new int[3];
-        for (int i = 0; i < indices0.length; ++i) {
-            indices0[i] = i;
+        final IntList indices0 = new IntList();
+        for (int i = 0; i < 5; ++i) {
+            indices0.add(i);
         }
-        ways.add(new Road(indices0, 0, "Testweg0", 1));
-
-        final int[] indices1 = new int[3];
-        for (int i = 0; i < indices1.length; ++i) {
-            indices1[i] = i + 3;
-        }
-        ways.add(new Road(indices1, 1, "Testweg1", 2));
+        ways.add(new Road(indices0, 0, 1));
 
         return ways;
     }

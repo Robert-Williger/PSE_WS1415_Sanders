@@ -8,7 +8,7 @@ import adminTool.VisvalingamWhyatt;
 import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
-import adminTool.labeling.roadGraph.DrawInfo;
+import adminTool.labeling.DrawInfo;
 import adminTool.labeling.roadGraph.ITypeMap;
 import adminTool.labeling.roadGraph.simplification.hull.HullCreator;
 import adminTool.labeling.roadGraph.simplification.hull.HullSimplifier;

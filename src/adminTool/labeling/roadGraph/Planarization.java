@@ -1,39 +1,40 @@
 package adminTool.labeling.roadGraph;
 
-import java.awt.Dimension;
+import static adminTool.util.IntersectionUtil.rectangleContainsPoint;
+import static adminTool.util.IntersectionUtil.rectangleIntersectsSegment;
+import static adminTool.util.IntersectionUtil.lineIntersectsline;
+import static adminTool.util.IntersectionUtil.inIntervall;
+import static adminTool.util.IntersectionUtil.EPSILON;
+
 import java.awt.Point;
+import java.awt.geom.Dimension2D;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.labeling.roadGraph.CutPerformer.Cut;
-import adminTool.quadtree.IQuadtree;
 import adminTool.quadtree.IQuadtreePolicy;
 import adminTool.quadtree.Quadtree;
 import adminTool.quadtree.WayQuadtreePolicy;
-import adminTool.util.IntersectionUtil;
-import adminTool.util.ShapeUtil;
+import adminTool.quadtree.IQuadtree.ElementConsumer;
 import util.IntList;
 
 public class Planarization {
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 4;
-    private static final int DEFAULT_MAX_HEIGHT = 20;
+    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
+    private static final int DEFAULT_MAX_HEIGHT = 15;
 
     private final int maxElementsPerTile;
     private final int maxHeight;
-    private final CutPerformer cutPerformer;
+    private FuzzyPointMap fuzzyMap;
 
-    private final int stubThreshold;
-    private final int fuzzyThreshold;
-    private final int tThreshold;
+    private final double stubThreshold;
+    private final double fuzzyThreshold;
+    private final double tCrossThreshold;
 
     private int[] nodeCounts;
-    private List<Road> originalPaths;
-    private List<Road> processedPaths;
-    private PointAccess.OfDouble points;
+    private List<Road> processedRoads;
+    private PointAccess points;
 
     private final double[] offsets;
     private ElementAdapter adapter;
@@ -42,197 +43,207 @@ public class Planarization {
         this(0, 0, 0);
     }
 
-    public Planarization(final int stubThreshold, final int tThreshold, final int fuzzyThreshold) {
-        this(stubThreshold, tThreshold, fuzzyThreshold, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_MAX_HEIGHT);
+    public Planarization(final double stubThreshold, final double tCrossThreshold, final double fuzzyThreshold) {
+        this(stubThreshold, tCrossThreshold, fuzzyThreshold, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_MAX_HEIGHT);
     }
 
-    public Planarization(final int stubThreshold, final int tThreshold, final int fuzzyThreshold,
+    public Planarization(final double stubThreshold, final double tCrossThreshold, final double fuzzyThreshold,
             final int maxElementsPerTile, final int maxHeight) {
         this.maxElementsPerTile = maxElementsPerTile;
         this.maxHeight = maxHeight;
         this.offsets = new double[2];
-        this.cutPerformer = new CutPerformer();
         this.stubThreshold = stubThreshold;
         this.fuzzyThreshold = fuzzyThreshold;
-        this.tThreshold = tThreshold;
+        this.tCrossThreshold = tCrossThreshold;
     }
 
-    public void planarize(final List<Road> paths, final PointAccess.OfDouble points, final Dimension mapSize) {
-        this.nodeCounts = new int[points.size()];
-        this.originalPaths = paths;
+    public List<Road> getRoads() {
+        return processedRoads;
+    }
+
+    public void planarize(final List<Road> roads, final PointAccess points, final Dimension2D mapSize) {
+        final double size = Math.max(mapSize.getWidth(), mapSize.getHeight());
+        planarize(roads, points, size);
+    }
+
+    public void planarize(final List<Road> roads, final PointAccess points, final double size) {
+        this.processedRoads = new ArrayList<>(roads.size());
         this.points = points;
-        this.processedPaths = new ArrayList<>(paths.size());
         this.adapter = new ElementAdapter(points);
-        final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
-        countNodes(paths);
+        countNodes(roads);
+        mapEndNodes(roads, size);
 
-        final Quadtree quadtree = createQuadtree(paths, points, size);
-        final Iterator<ArrayList<Cut>> cutIterator = createCutList(paths, size, quadtree).iterator();
-        for (final Iterator<Road> pathIterator = paths.iterator(); pathIterator.hasNext();) {
-            final ArrayList<Cut> cuts = deduplicate(cutIterator.next());
-            final Road element = pathIterator.next();
-            final List<IntList> elements = cutPerformer.performCuts(element, cuts);
-            final Iterator<IntList> iterator = elements.iterator();
+        final Quadtree quadtree = createQuadtree(roads, size);
+        final ArrayList<List<Cut>> cuts = createInitialCutList(roads);
+        quadtree.traverse(size, createElementConsumer(roads, cuts));
 
-            tryAppendEnd(createRoad(iterator.next(), element), 0, !cuts.isEmpty() && cuts.get(0).equals(0, 0.));
-            if (iterator.hasNext()) {
-                for (int j = 0; j < elements.size() - 2; ++j) {
-                    tryAppendInner(createRoad(iterator.next(), element));
-                }
-                final Road road = createRoad(iterator.next(), element);
-                tryAppendEnd(road, road.size() - 1, cuts.get(cuts.size() - 1).equals(element.size() - 2, 1.));
-            }
+        cutRoads(roads, cuts);
+    }
+
+    private void countNodes(final List<Road> roads) {
+        nodeCounts = new int[points.size()];
+        for (final Road road : roads) {
+            ++nodeCounts[road.getNode(0)];
+            ++nodeCounts[road.getNode(road.size() - 1)];
         }
     }
 
-    public List<Road> getProcessedRoads() {
-        return processedPaths;
+    private void mapEndNodes(final List<Road> roads, final double mapSize) {
+        fuzzyMap = new FuzzyPointMap(mapSize, mapSize, fuzzyThreshold);
+        for (final Road road : roads) {
+            putNode(road.getNode(0));
+            putNode(road.getNode(road.size() - 1));
+        }
     }
 
-    private Quadtree createQuadtree(final List<? extends MultiElement> paths,
-            final PointAccess.OfDouble points, final int size) {
-        final int[] maxWayCoordWidths = new int[maxHeight]; // use paths without any width
-        System.out.println("1");
-        final IQuadtreePolicy policy = new WayQuadtreePolicy(paths, points, maxWayCoordWidths);
-        System.out.println("2");
-        final Quadtree quadtree = new Quadtree(paths.size(), policy, size, maxHeight, maxElementsPerTile);
-        System.out.println("3");
+    private Quadtree createQuadtree(final List<Road> roads, final double size) {
+        final IQuadtreePolicy policy = new WayQuadtreePolicy(roads, points, (index, height) -> 0);
+        final Quadtree quadtree = new Quadtree(roads.size(), policy, size, maxHeight, maxElementsPerTile);
         return quadtree;
     }
 
-    private void countNodes(final List<? extends MultiElement> paths) {
-        for (final MultiElement path : paths) {
-            ++nodeCounts[path.getNode(0)];
-            ++nodeCounts[path.getNode(path.size() - 1)];
-        }
+    private ArrayList<List<Cut>> createInitialCutList(final List<Road> roads) {
+        final ArrayList<List<Cut>> cutList = new ArrayList<>(roads.size());
+        for (int i = 0; i < roads.size(); ++i)
+            cutList.add(new ArrayList<>());
+        return cutList;
     }
 
-    private List<ArrayList<Cut>> createCutList(final List<? extends MultiElement> paths, final int mapSize,
-            final Quadtree quadtree) {
-        final ArrayList<ArrayList<Cut>> ret = new ArrayList<>(paths.size());
-        for (int i = 0; i < paths.size(); ++i) {
-            ret.add(new ArrayList<Cut>());
-        }
-        final FuzzyPointMap map = new FuzzyPointMap(mapSize, mapSize, fuzzyThreshold);
-        intersectRec(ret, quadtree, map, 0, 0, mapSize);
-        return ret;
+    private void putNode(final int node) {
+        int v = fuzzyMap.get(points.getX(node), points.getY(node));
+        if (v == -1)
+            fuzzyMap.put(points.getX(node), points.getY(node), node);
     }
 
-    private void intersectRec(final ArrayList<ArrayList<Cut>> cuts, final Quadtree quadtree, final FuzzyPointMap map,
-            final int x, final int y, final int size) {
-        if (quadtree.isLeaf()) {
-            cutSegments(cuts, quadtree, map, x, y, size);
-        } else {
-            final int hs = size / 2;
-            for (int i = 0; i < IQuadtree.NUM_CHILDREN; ++i) {
-                intersectRec(cuts, quadtree.getChild(i), map, x + IQuadtree.getXOffset(i) * hs,
-                        y + IQuadtree.getYOffset(i) * hs, hs);
-            }
-        }
-    }
+    private ElementConsumer createElementConsumer(final List<Road> roads, final ArrayList<List<Cut>> cuts) {
+        return (elements, tileX, tileY, tileSize) -> {
+            for (int u = 0; u < elements.size(); ++u) {
+                final int eu = elements.get(u);
+                final Road ru = roads.get(eu);
+                for (int su = -1; (su = nextSegmentInTile(tileX, tileY, tileSize, su, ru)) != -1;) {
+                    for (int v = u + 1; v < elements.size(); ++v) {
+                        final int ev = elements.get(v);
+                        final Road rv = roads.get(ev);
+                        for (int sv = -1; (sv = nextSegmentInTile(tileX, tileY, tileSize, sv, rv)) != -1;) {
 
-    private void cutSegments(final ArrayList<ArrayList<Cut>> cuts, final Quadtree quadtree, final FuzzyPointMap map,
-            final int x, final int y, final int size) {
-        final IntList elements = quadtree.getElements();
-        for (int i = 0; i < elements.size() - 1; ++i) {
-            final MultiElement u = originalPaths.get(elements.get(i));
-            for (int ui = 0; ui < u.size() - 1; ++ui) {
-                if (!segmentInTile(x, y, size, u, ui))
-                    continue;
-
-                for (int j = i + 1; j < elements.size(); ++j) {
-                    final MultiElement v = originalPaths.get(elements.get(j));
-                    for (int vi = 0; vi < v.size() - 1; ++vi) {
-                        if (segmentInTile(x, y, size, v, vi) && intersectsBiased(u, v, ui, vi)) {
-                            double intX = getX(u, ui) + offsets[0] * (getX(u, ui + 1) - getX(u, ui));
-                            double intY = getY(u, ui) + offsets[0] * (getY(u, ui + 1) - getY(u, ui));
-                            if (IntersectionUtil.rectangleContainsPoint(x, y, x + size, y + size, intX, intY)) {
-                                int point = getFuzzyPoint(map, intX, intY);
-                                cuts.get(elements.get(i)).add(new Cut(point, ui, offsets[0]));
-                                cuts.get(elements.get(j)).add(new Cut(point, vi, offsets[1]));
-                            }
+                            if (intersectsBiased(ru, rv, su, sv))
+                                update(tileX, tileY, tileSize, cuts.get(eu), cuts.get(ev), su, sv, ru);
                         }
+                    }
+
+                    // check for self intersections
+                    int next = nextSegmentInTile(tileX, tileY, tileSize, su, ru);
+
+                    if (next == -1)
+                        continue;
+
+                    for (int sv = next; (sv = nextSegmentInTile(tileX, tileY, tileSize, sv, ru)) != -1;) {
+                        if (intersectsBiased(ru, ru, su, sv))
+                            update(tileX, tileY, tileSize, cuts.get(eu), cuts.get(eu), su, sv, ru);
                     }
                 }
             }
+        };
+    }
+
+    private void cutRoads(final List<Road> roads, final ArrayList<List<Cut>> cutList) {
+        final CutPerformer cutPerformer = new CutPerformer();
+        final Iterator<List<Cut>> cutIterator = cutList.iterator();
+        for (final Iterator<Road> pathIterator = roads.iterator(); pathIterator.hasNext();) {
+            final List<Cut> cuts = cutIterator.next();
+            if (cuts.isEmpty())
+                processedRoads.add(pathIterator.next());
+            else {
+                final Road element = pathIterator.next();
+                final List<IntList> elements = cutPerformer.performCuts(element, cuts);
+                final Iterator<IntList> iterator = elements.iterator();
+
+                tryAppendOuter(createRoad(iterator.next(), element), 0, cuts.get(0).equals(0, 0.));
+
+                for (int j = 0; j < elements.size() - 2; ++j) {
+                    tryAppend(createRoad(iterator.next(), element));
+                }
+
+                final Road road = createRoad(iterator.next(), element);
+                tryAppendOuter(road, road.size() - 1, cuts.get(cuts.size() - 1).equals(element.size() - 2, 1.));
+            }
         }
     }
 
-    private boolean segmentInTile(final int x, final int y, final int size, final MultiElement u, int ui) {
-        return IntersectionUtil.rectangleIntersectsSegment(x, y, size, size, getX(u, ui), getY(u, ui), getX(u, ui + 1),
-                getY(u, ui + 1));
+    private int nextSegmentInTile(final double x, final double y, final double size, final int s, final Road r) {
+        for (int ret = s + 1; ret < r.size() - 1; ++ret)
+            if (segmentInTile(x, y, size, r, ret))
+                return ret;
+        return -1;
     }
 
-    private int getFuzzyPoint(final FuzzyPointMap map, double intX, double intY) {
-        int point = map.getPoint(intX, intY);
+    private boolean segmentInTile(final double x, final double y, final double size, final Road road, int segment) {
+        return rectangleIntersectsSegment(x, y, size, size, x(road, segment), y(road, segment), x(road, segment + 1),
+                y(road, segment + 1));
+    }
+
+    private void update(double tileX, double tileY, double size, List<Cut> cu, List<Cut> cv, int su, int sv, Road ru) {
+        double x = x(ru, su) + offsets[0] * (x(ru, su + 1) - x(ru, su));
+        double y = y(ru, su) + offsets[0] * (y(ru, su + 1) - y(ru, su));
+        if (rectangleContainsPoint(tileX, tileY, tileX + size, tileY + size, x, y)) {
+            final int point = getPoint(x, y);
+            cu.add(new Cut(point, su, offsets[0]));
+            cv.add(new Cut(point, sv, offsets[1]));
+        }
+    }
+
+    private int getPoint(final double x, final double y) {
+        int point = fuzzyMap.get(x, y);
         if (point != -1) {
-            return point + nodeCounts.length;
+            return point;
         }
 
-        map.addPoint(intX, intY);
         point = points.size();
-        points.addPoint(intX, intY);
+        fuzzyMap.put(x, y, point);
+        points.addPoint(x, y);
         return point;
     }
 
-    private ArrayList<Cut> deduplicate(final ArrayList<Cut> cuts) {
-        Collections.sort(cuts);
-
-        final ArrayList<Cut> ret = new ArrayList<Cut>(cuts.size());
-
-        Cut last = new Cut(0, -1, 0);
-        for (final Cut current : cuts) {
-            if (!last.equals(current) && last.getPoint() != current.getPoint())
-                ret.add(current);
-            last = current;
-        }
-
-        return ret;
-
-    }
-
-    private final double getX(final MultiElement e, final int index) {
+    private final double x(final Road e, final int index) {
         return points.getX(e.getNode(index));
     }
 
-    private final double getY(final MultiElement e, final int index) {
+    private final double y(final Road e, final int index) {
         return points.getY(e.getNode(index));
     }
 
-    private final boolean intersectsBiased(final MultiElement u, final MultiElement v, final int ui, final int vi) {
-        final boolean intersect = IntersectionUtil.lineIntersectsline(getX(u, ui), getY(u, ui), getX(u, ui + 1),
-                getY(u, ui + 1), getX(v, vi), getY(v, vi), getX(v, vi + 1), getY(v, vi + 1), offsets);
-        return intersect && IntersectionUtil.inIntervall(offsets[0], getLowerOffset(u, ui), getUpperOffset(u, ui))
-                && IntersectionUtil.inIntervall(offsets[1], getLowerOffset(v, vi), getUpperOffset(v, vi));
+    private final boolean intersectsBiased(final Road u, final Road v, final int su, final int sv) {
+        final boolean intersect = lineIntersectsline(x(u, su), y(u, su), x(u, su + 1), y(u, su + 1), x(v, sv), y(v, sv),
+                x(v, sv + 1), y(v, sv + 1), offsets);
+        return intersect && inIntervall(offsets[0], getLowerOffset(u, su), getUpperOffset(u, su))
+                && inIntervall(offsets[1], getLowerOffset(v, sv), getUpperOffset(v, sv));
     }
 
-    private double getUpperOffset(final MultiElement e, final int i) {
+    private double getUpperOffset(final Road e, final int i) {
         return i != e.size() - 2 ? 1 : 1 + getExtendedOffset(e, i);
     }
 
-    private double getLowerOffset(final MultiElement e, final int i) {
+    private double getLowerOffset(final Road e, final int i) {
         return i != 0 ? 0 : -getExtendedOffset(e, i);
     }
 
-    private double getExtendedOffset(final MultiElement e, final int i) {
-        final double length = Point.distance(getX(e, i), getY(e, i), getX(e, i + 1), getY(e, i + 1));
-        return tThreshold / length;
+    private double getExtendedOffset(final Road e, final int i) {
+        final double length = Point.distance(x(e, i), y(e, i), x(e, i + 1), y(e, i + 1));
+        return tCrossThreshold / length;
     }
 
-    private void tryAppendInner(final Road element) {
-        if (element.size() > 3 || element.getNode(0) != element.getNode(element.size() - 1)) {
-            processedPaths.add(element);
-        }
+    private void tryAppend(final Road element) {
+        if (element.size() > 3 || element.getNode(0) != element.getNode(element.size() - 1))
+            processedRoads.add(element);
     }
 
-    private void tryAppendEnd(final Road element, final int lastIdx, final boolean duplicate) {
-        if (isLongEnough(element) || (!duplicate && !isOriginalDeadEnd(element.getNode(lastIdx)))) {
-            processedPaths.add(element);
-        }
+    private void tryAppendOuter(final Road element, final int lastIdx, final boolean duplicate) {
+        if (isLongEnough(element) || (!duplicate && !isOriginalDeadEnd(element.getNode(lastIdx))))
+            tryAppend(element);
     }
 
     private Road createRoad(final IntList list, final Road element) {
-        return new Road(list, element.getType(), element.getName(), element.getRoadId());
+        return new Road(list, element.getType(), element.getRoadId());
     }
 
     private boolean isOriginalDeadEnd(final int endNode) {
@@ -241,7 +252,7 @@ public class Planarization {
 
     private boolean isLongEnough(final Road element) {
         adapter.setMultiElement(element);
-        return ShapeUtil.getLength(adapter) > stubThreshold - IntersectionUtil.EPSILON;
+        return adapter.getLength() > stubThreshold - EPSILON;
     }
 
     private int getNodeCount(final int node) {
@@ -250,9 +261,5 @@ public class Planarization {
 
     private boolean isOriginalNode(final int node) {
         return node < nodeCounts.length;
-    }
-
-    private final double log2(final double value) {
-        return (Math.log(value) / Math.log(2));
     }
 }

@@ -4,13 +4,11 @@ public class CollectiveAccessor extends ElementAccessor implements ICollectiveAc
 
     private final int[] addresses;
     protected final int[] data;
-    private final int[] points;
 
-    public CollectiveAccessor(final int[] distribution, final int[] data, final int[] addresses, final int[] points) {
+    public CollectiveAccessor(final int[] distribution, final int[] data, final int[] addresses) {
         super(distribution);
         this.addresses = addresses;
         this.data = data;
-        this.points = points;
     }
 
     protected int getOffset() {
@@ -19,12 +17,12 @@ public class CollectiveAccessor extends ElementAccessor implements ICollectiveAc
 
     @Override
     public int getX(final int index) {
-        return points[data[getOffset() + getAddress() + index + 1] << 1];
+        return data[getOffset() + getAddress() + (index << 1) + 1];
     }
 
     @Override
     public int getY(final int index) {
-        return points[(data[getOffset() + getAddress() + index + 1] << 1) + 1];
+        return data[getOffset() + getAddress() + (index << 1) + 1 + 1];
     }
 
     @Override

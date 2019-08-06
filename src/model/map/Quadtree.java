@@ -3,12 +3,12 @@ package model.map;
 import java.util.PrimitiveIterator.OfLong;
 import java.util.function.LongConsumer;
 
-public class StoredQuadtree implements IElementIterator {
+public class Quadtree implements IElementIterator {
 
     private final int[] data;
     private final int zoomOffset;
 
-    public StoredQuadtree(final int[] data, final int zoomOffset) {
+    public Quadtree(final int[] data, final int zoomOffset) {
         this.data = data;
         this.zoomOffset = zoomOffset;
     }

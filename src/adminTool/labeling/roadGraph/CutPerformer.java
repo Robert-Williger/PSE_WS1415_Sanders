@@ -1,5 +1,6 @@
 package adminTool.labeling.roadGraph;
 
+import static adminTool.util.IntersectionUtil.EPSILON;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,8 +15,8 @@ public class CutPerformer {
         return performSortedCuts(path, cuts);
     }
 
-    public List<IntList> performSortedCuts(final MultiElement path, final List<Cut> cuts) {
-        final List<IntList> resultList = new ArrayList<>(cuts.size() + 1);
+    public ArrayList<IntList> performSortedCuts(final MultiElement path, final List<Cut> cuts) {
+        final ArrayList<IntList> resultList = new ArrayList<>(cuts.size() + 1);
         if (!cuts.isEmpty()) {
             Cut last = new Cut(path.getNode(0), 0, 0);
             for (int i = 0; i < cuts.size(); ++i) {
@@ -25,28 +26,35 @@ public class CutPerformer {
             }
 
             resultList.add(performCut(path, last, new Cut(path.getNode(path.size() - 1), path.size() - 2, 1)));
-        } else {
-            final IntList list = new IntList(path.size());
-            for (int i = 0; i < path.size(); ++i) {
-                list.add(path.getNode(i));
-            }
-            resultList.add(list);
-        }
+        } else
+            resultList.add(path.toList());
+
         return resultList;
     }
 
     private static IntList performCut(final MultiElement path, final Cut previous, final Cut current) {
-        final int size = current.getSegment() - previous.getSegment() + 2;
+        final int prevSegment = previous.getSegment() + (int) Math.min(1, Math.max(0, previous.getOffset() + EPSILON));
+        final int size = current.getSegment() - prevSegment + 2;
         IntList ret = new IntList(size);
         ret.add(previous.getPoint());
         for (int i = 1; i < size - 1; ++i) {
-            ret.add(path.getNode(previous.getSegment() + i));
+            ret.add(path.getNode(prevSegment + i));
         }
         ret.add(current.getPoint());
         return ret;
     }
 
     public static class Cut implements Comparable<Cut> {
+        private double offset;
+        private int segment;
+        private int point;
+
+        public Cut(final int point, final int segment, final double offset) {
+            this.point = point;
+            this.offset = offset;
+            this.segment = segment;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -74,16 +82,6 @@ public class CutPerformer {
 
         public boolean equals(final int segment, final double offset) {
             return Math.abs(this.offset - offset + this.segment - segment) <= IntersectionUtil.EPSILON;
-        }
-
-        private double offset;
-        private int segment;
-        private int point;
-
-        public Cut(final int point, final int segment, final double offset) {
-            this.point = point;
-            this.offset = offset;
-            this.segment = segment;
         }
 
         @Override

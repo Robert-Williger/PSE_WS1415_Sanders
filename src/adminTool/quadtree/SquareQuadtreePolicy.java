@@ -5,9 +5,9 @@ import adminTool.util.IntersectionUtil;
 
 public class SquareQuadtreePolicy implements IQuadtreePolicy {
     private final IPointAccess points;
-    private final int length;
+    private final double length;
 
-    public SquareQuadtreePolicy(final IPointAccess points, final int radius) {
+    public SquareQuadtreePolicy(final IPointAccess points, final double radius) {
         this.points = points;
         this.length = radius;
     }

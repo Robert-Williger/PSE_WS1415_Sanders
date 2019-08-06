@@ -4,11 +4,11 @@ public class DynamicQuadtreeAccess {
     private final DynamicQuadtree root;
     private final int maxHeight;
     private final int maxElementsPerTile;
-    private final int size;
+    private final double size;
     private final IQuadtreePolicy policy;
 
     public DynamicQuadtreeAccess(final IQuadtreePolicy policy, final int maxHeight, final int maxElementsPerTile,
-            final int size) {
+            final double size) {
         this.maxHeight = maxHeight;
         this.maxElementsPerTile = maxElementsPerTile;
         this.policy = policy;
@@ -24,7 +24,7 @@ public class DynamicQuadtreeAccess {
         root.add(index, maxHeight, maxElementsPerTile, policy, 0, 0, 0, size);
     }
 
-    public int getSize() {
+    public double getSize() {
         return size;
     }
 

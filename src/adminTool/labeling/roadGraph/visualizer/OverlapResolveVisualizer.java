@@ -8,7 +8,7 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import adminTool.elements.FloatPointAccess;
+import adminTool.elements.PointAccess;
 import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.roadGraph.OverlapResolve;
 import adminTool.labeling.roadGraph.Road;
@@ -23,18 +23,18 @@ public class OverlapResolveVisualizer extends JFrame {
         getContentPane().setBackground(Color.white);
         setTitle("Overlap-Resolve Visualizer");
 
-        final FloatPointAccess points = createPoints();
+        final PointAccess points = createPoints();
         final List<Road> ways = createRoads();
 
         final IDrawInfo info = new IDrawInfo() {
 
             @Override
-            public int getStrokeWidth(final int type) {
+            public double getStrokeWidth(final int type) {
                 return WAY_WIDTH;
             }
 
             @Override
-            public int getFontSize(final int type) {
+            public double getFontSize(final int type) {
                 return WAY_WIDTH;
             }
         };
@@ -43,7 +43,7 @@ public class OverlapResolveVisualizer extends JFrame {
         resolve.resolve(ways, points, new Dimension(615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, ways);
-        final JPanel cutPaths = new WayVisualizer(points, resolve.getProcessedRoads());
+        final JPanel cutPaths = new WayVisualizer(points, resolve.getRoads());
 
         origPaths.setLocation(20, 10);
         cutPaths.setLocation(850, 10);
@@ -57,8 +57,8 @@ public class OverlapResolveVisualizer extends JFrame {
         setVisible(true);
     }
 
-    private static FloatPointAccess createPoints() {
-        final FloatPointAccess points = new FloatPointAccess();
+    private static PointAccess createPoints() {
+        final PointAccess points = new PointAccess();
         // points.addPoint(50, 200);
         // points.addPoint(100, 195);
         // points.addPoint(280, 170);
@@ -101,8 +101,8 @@ public class OverlapResolveVisualizer extends JFrame {
         for (int i = 0; i < 2; ++i) {
             indices1.add(i + 2);
         }
-        ways.add(new Road(indices0, 0, "Testweg0", 1));
-        ways.add(new Road(indices1, 1, "Testweg1", 1));
+        ways.add(new Road(indices0, 0, 1));
+        ways.add(new Road(indices1, 1, 1));
 
         return ways;
     }

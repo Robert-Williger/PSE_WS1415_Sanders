@@ -15,12 +15,12 @@ public class Aligner {
             final Collection<MultiElement> areas) {
         this.points = points;
         range = new Range2D(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-        updateRange(ways);
+//        updateRange(ways);
         updateRange(areas);
         updatePoints();
     }
 
-    public Dimension getSize() {
+    public Dimension2D getSize() {
         return range.toDimension();
     }
 

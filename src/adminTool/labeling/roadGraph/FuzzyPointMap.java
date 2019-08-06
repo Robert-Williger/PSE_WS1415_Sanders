@@ -5,39 +5,45 @@ import java.util.PrimitiveIterator;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.PointAccess;
-import adminTool.quadtree.DynamicQuadtree;
 import adminTool.quadtree.DynamicQuadtreeAccess;
+import adminTool.quadtree.IQuadtree;
 import adminTool.quadtree.IQuadtreePolicy;
 import adminTool.quadtree.SquareQuadtreePolicy;
+import util.IntList;
 
 public class FuzzyPointMap {
     private static final int DEFAULT_MAX_HEIGHT = 10;
+    private static final int DEFAULT_NULL_ELEMENT = -1;
     private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 32;
-    private final long maxDistanceSq;
+    private final double maxDistanceSq;
     private final DynamicQuadtreeAccess access;
-    private final PointAccess.OfDouble points;
+    private final PointAccess points;
+    private final IntList map;
+    private final int nullElement;
 
-    public FuzzyPointMap(final int maxX, final int maxY, final int maxDistance) {
-        this(maxX, maxY, maxDistance, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS_PER_TILE);
+    public FuzzyPointMap(final double maxX, final double maxY, final double maxDistance) {
+        this(maxX, maxY, maxDistance, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_NULL_ELEMENT);
     }
 
-    public FuzzyPointMap(final int maxX, final int maxY, final int maxDistance, final int maxHeight,
-            final int maxElementsPerTile) {
+    public FuzzyPointMap(final double maxX, final double maxY, final double maxDistance, final int maxHeight,
+            final int maxElementsPerTile, final int nullElement) {
+        this.nullElement = nullElement;
         this.maxDistanceSq = maxDistance * maxDistance;
-        this.points = new PointAccess.OfDouble();
+        this.points = new PointAccess();
+        this.map = new IntList();
 
         final IQuadtreePolicy policy = new SquareQuadtreePolicy(points, maxDistance);
-        final int size = 1 << (int) Math.ceil(log2(Math.max(maxX, maxY)));
+        final double size = Math.max(maxX, maxY);
         this.access = new DynamicQuadtreeAccess(policy, maxHeight, maxElementsPerTile, size);
     }
 
-    public int getPoint(final double x, final double y) {
-        int ret = -1;
+    public int get(final double x, final double y) {
+        int ret = nullElement;
 
-        DynamicQuadtree tree = access.getRoot();
-        int qX = 0;
-        int qY = 0;
-        int qSize = access.getSize();
+        IQuadtree tree = access.getRoot();
+        double qX = 0;
+        double qY = 0;
+        double qSize = access.getSize();
         while (!tree.isLeaf()) {
             qSize /= 2;
             final int xOffset = x < qX + qSize ? 0 : 1;
@@ -53,23 +59,20 @@ public class FuzzyPointMap {
             final int index = iterator.nextInt();
             double distanceSq = Point.distanceSq(points.getX(index), points.getY(index), x, y);
             if (distanceSq < minDistanceSq) {
-                ret = index;
+                ret = map.get(index);
                 minDistanceSq = distanceSq;
             }
         }
         return ret;
     }
 
-    public void addPoint(final double x, final double y) {
+    public void put(final double x, final double y, final int value) {
         points.addPoint(x, y);
+        map.add(value);
         access.add(points.size() - 1);
     }
 
     public IPointAccess getPoints() {
         return points;
-    }
-
-    private final double log2(final double value) {
-        return (Math.log(value) / Math.log(2));
     }
 }

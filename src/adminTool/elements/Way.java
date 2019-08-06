@@ -7,8 +7,11 @@ public class Way extends MultiElement {
     private final String name;
     private final boolean oneway;
 
-    public Way(final int[] indices, final int type, final String name, final boolean oneway) {
-        this(new IntList(indices), type, name, oneway);
+    public Way(final MultiElement element, final int type, final String name, final boolean oneway) {
+        super(element, type);
+
+        this.oneway = oneway;
+        this.name = name;
     }
 
     public Way(final IntList indices, final int type, final String name, final boolean oneway) {
@@ -25,4 +28,5 @@ public class Way extends MultiElement {
     public boolean isOneway() {
         return oneway;
     }
+
 }

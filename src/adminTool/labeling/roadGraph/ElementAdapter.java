@@ -1,5 +1,7 @@
 package adminTool.labeling.roadGraph;
 
+import java.awt.Point;
+
 import adminTool.IElement;
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
@@ -29,6 +31,22 @@ public class ElementAdapter implements IElement {
     @Override
     public double getY(final int index) {
         return points.getY(element.getNode(index));
+    }
+
+    public double getLength() {
+        double totalLength = 0;
+
+        double lastX = getX(0);
+        double lastY = getY(0);
+        for (int i = 1; i < size(); i++) {
+            double currentX = getX(i);
+            double currentY = getY(i);
+            totalLength += Point.distance(currentX, currentY, lastX, lastY);
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        return totalLength;
     }
 
 }

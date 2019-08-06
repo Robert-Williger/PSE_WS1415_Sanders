@@ -22,9 +22,11 @@ import adminTool.elements.Label;
 import adminTool.elements.Typeable;
 import adminTool.quadtree.AreaQuadtreePolicy;
 import adminTool.quadtree.MultipleBoundingBoxQuadtreePolicy;
-import adminTool.quadtree.StoredQuadtreeWriter;
+import adminTool.quadtree.Quadtree;
+import adminTool.quadtree.QuadtreeWriter;
 import adminTool.quadtree.CollisionlessQuadtree;
 import adminTool.quadtree.ICollisionPolicy;
+import adminTool.quadtree.IQuadtree;
 import adminTool.quadtree.IQuadtreePolicy;
 import adminTool.quadtree.WayQuadtreePolicy;
 
@@ -79,10 +81,11 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         // final int coordBits = Math.getExponent(Math.max(size.getWidth(), size.getHeight())) + 1;
         // final int shiftBits = Integer.SIZE - 1 - coordBits;
         final double shift = 1 << 29; // TODO improve this!
+        // final double shift = Math.pow(2, shiftBits);
         conversion = (value) -> (int) Math.round(value * shift);
 
-        final int zoomOffset = (int) Math.ceil(
-                log2(Math.max(conversion.convert(size.getWidth()), conversion.convert(size.getHeight())) / MIN_TILES));
+        final int zoomOffset = (int) Math.ceil(log2(
+                Math.max(conversion.convert(size.getWidth()), conversion.convert(size.getHeight())) / (int) MIN_TILES));
         final double coordMapSize = (1 << zoomOffset) / shift;
 
         final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
@@ -131,8 +134,9 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         policies[2] = new AreaQuadtreePolicy(Arrays.asList(buildingSorting.elements), points);
 
         for (int i = 0; i < names.length; i++) {
-            new StoredQuadtreeWriter(policies[i], zipOutput, names[i], elements[i], zoomSteps, MAX_ELEMENTS_PER_TILE,
-                    coordMapSize).write();
+            final IQuadtree tree = new Quadtree(elements[i], policies[i], coordMapSize, zoomSteps,
+                    MAX_ELEMENTS_PER_TILE);
+            new QuadtreeWriter(tree, names[i], zipOutput).write();
         }
 
         putNextEntry("labelTree");

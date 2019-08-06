@@ -4,8 +4,8 @@ import model.map.accessors.CollectiveAccessor;
 
 public class StreetAccessor extends CollectiveAccessor {
 
-    public StreetAccessor(final int[] distribution, final int[] data, final int[] addresses, final int[] points) {
-        super(distribution, data, addresses, points);
+    public StreetAccessor(final int[] distribution, final int[] data, final int[] addresses) {
+        super(distribution, data, addresses);
     }
 
     @Override

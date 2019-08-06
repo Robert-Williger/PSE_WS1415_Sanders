@@ -44,15 +44,16 @@ public class WayVisualizer extends JPanel {
             int last = path.getNode(0);
 
             g2.setColor(Color.BLACK);
-            g2.fillOval(points.getX(last) - 3, points.getY(last) - 3, 6, 6);
+            g2.fillOval((int) points.getX(last) - 3, (int) points.getY(last) - 3, 6, 6);
 
             for (int i = 1; i < path.size(); ++i) {
                 int cur = path.getNode(i);
                 g2.setColor(path.getType() != -1 ? Color.blue : Color.RED);
-                g2.drawLine(points.getX(last), points.getY(last), points.getX(cur), points.getY(cur));
+                g2.drawLine((int) points.getX(last), (int) points.getY(last), (int) points.getX(cur),
+                        (int) points.getY(cur));
                 last = cur;
                 g2.setColor(Color.BLACK);
-                g2.fillOval(points.getX(last) - 3, points.getY(last) - 3, 6, 6);
+                g2.fillOval((int) points.getX(last) - 3, (int) points.getY(last) - 3, 6, 6);
             }
         }
 

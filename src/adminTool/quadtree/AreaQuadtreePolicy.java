@@ -5,18 +5,18 @@ import adminTool.elements.MultiElement;
 import adminTool.labeling.roadGraph.ElementAdapter;
 import adminTool.util.ShapeUtil;
 
-import java.awt.geom.Area;
+import java.awt.Shape;
 import java.util.List;
 
 public class AreaQuadtreePolicy implements IQuadtreePolicy {
-    private final Area[] areas;
+    private final Shape[] areas;
 
     public AreaQuadtreePolicy(final List<MultiElement> areas, final IPointAccess points) {
-        this.areas = new Area[areas.size()];
+        this.areas = new Shape[areas.size()];
         final ElementAdapter element = new ElementAdapter(points);
         for (int i = 0; i < areas.size(); ++i) {
             element.setMultiElement(areas.get(i));
-            this.areas[i] = new Area(ShapeUtil.createClosedPath(element));
+            this.areas[i] = ShapeUtil.createClosedPath(element);
         }
     }
 

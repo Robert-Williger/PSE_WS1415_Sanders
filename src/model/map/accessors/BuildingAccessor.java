@@ -2,8 +2,8 @@ package model.map.accessors;
 
 public class BuildingAccessor extends CollectiveAccessor {
 
-    public BuildingAccessor(final int[] distribution, final int[] data, final int[] addresses, final int[] points) {
-        super(distribution, data, addresses, points);
+    public BuildingAccessor(final int[] distribution, final int[] data, final int[] addresses) {
+        super(distribution, data, addresses);
     }
 
     @Override

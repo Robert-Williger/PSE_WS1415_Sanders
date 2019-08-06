@@ -12,7 +12,7 @@ import java.util.PrimitiveIterator;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.Way;
-import adminTool.labeling.roadGraph.DrawInfo;
+import adminTool.labeling.DrawInfo;
 import util.IntList;
 
 public class HullCreator {
