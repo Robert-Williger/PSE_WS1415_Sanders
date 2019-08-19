@@ -6,5 +6,8 @@
 	<classpathentry kind="lib" path="vendor/osmpbf.jar"/>
 	<classpathentry kind="lib" path="vendor/protobuf.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="D:/Studium/3. Semester/Praxis der Softwareentwicklung/Implementierung/PSE_WS1415_Sanders/pse-tsp/SCPSolver.jar" sourcepath="doc/scpsolver-src-20130227.zip"/>
+	<classpathentry kind="lib" path="D:/Studium/3. Semester/Praxis der Softwareentwicklung/Implementierung/PSE_WS1415_Sanders/pse-tsp/LPSOLVESolverPack.jar"/>
+	<classpathentry kind="lib" path="D:/Studium/3. Semester/Praxis der Softwareentwicklung/Implementierung/PSE_WS1415_Sanders/pse-tsp/GLPKSolverPack.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

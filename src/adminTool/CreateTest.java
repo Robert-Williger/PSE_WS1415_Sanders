@@ -16,16 +16,12 @@ import adminTool.elements.IPointAccess;
 import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
-import adminTool.elements.PointAccess;
 import adminTool.elements.Street;
 import adminTool.elements.Way;
-import adminTool.labeling.DrawInfo;
-import adminTool.labeling.QualityMeasure;
-import adminTool.labeling.StringWidthInfo;
-import adminTool.labeling.roadGraph.Road;
-import adminTool.labeling.roadGraph.RoadGraphCreator;
-import adminTool.labeling.roadGraph.filter.ForestFilter;
-import adminTool.labeling.roadGraph.filter.QualityFilter;
+import adminTool.labeling.INameInfo;
+import adminTool.labeling.RoadLabelCreator;
+import adminTool.labeling.roadMap.LabelSection;
+import adminTool.metrics.PixelToCoordDistanceMap;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
 import util.IntList;
@@ -84,41 +80,23 @@ public class CreateTest {
 
             Aligner aligner = new Aligner();
             aligner.performAlignment(points, ways, areas);
-            final Dimension2D size = aligner.getSize();
+            final Dimension2D mapSize = aligner.getSize();
             aligner = null;
 
-            final int zoom = 17;
-            final int zoomOffset = 21 - zoom;
-            final double shift = 1 << 29;
-
-            final double maxWayWidth = (18 << zoomOffset) / shift;
-            final double fuzzyThreshold = (1 << zoomOffset) / shift;
-            final double tThreshold = (2 << zoomOffset) / shift;
-            final double lengthThreshold = (350 << zoomOffset) / shift;
-            final double lMax = (20 << zoomOffset) / shift;
-            final double stubThreshold = maxWayWidth;
-            final double junctionThreshold = 2 * maxWayWidth;
-
-            final double alphaMax = 22.5 / 180 * Math.PI; // 22.5°
-
-            RoadGraphCreator roadGraphCreator = new RoadGraphCreator(new DrawInfo(), new StringWidthInfo(),
-                    stubThreshold, tThreshold, fuzzyThreshold, junctionThreshold, lMax, alphaMax, lengthThreshold);
-            roadGraphCreator.createRoadGraph(ways, points, size);
-            List<Road> roads = roadGraphCreator.getRoads();
-            points = roadGraphCreator.getPoints();
-
-            ForestFilter forestFilter = new ForestFilter(points.size());
-            forestFilter.filter(roads);
-            roads = forestFilter.getRoads();
-
-            addRoads(streets, roads);
+            RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
+            labelCreator.createLabels(new PixelToCoordDistanceMap(17));
+            for (final adminTool.labeling.Label label : labelCreator.getLabeling()) {
+                streets.add(new Street(label, 26, label.getName(), 0));
+            }
+            points = labelCreator.getPoints();
+            System.out.println("label creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             start = System.currentTimeMillis();
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, Collections.emptyList(),
-                    Collections.emptyList(), Collections.emptyList(), labels, points, size, zipOutput);
+                    Collections.emptyList(), Collections.emptyList(), labels, points, mapSize, zipOutput);
             // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, pois, labels, points,
-            // aligner.getSize(), zipOutput);
+            // size, zipOutput);
 
             try {
                 mapManagerWriter.write();
@@ -150,18 +128,24 @@ public class CreateTest {
         }
     }
 
-    private void addRoads(final List<Street> streets, final List<Road> roads) {
-        streets.clear();
-        for (final Road element : roads) {
-            final IntList indices = new IntList(element.size());
-            for (int i = 0; i < element.size(); ++i) {
-                indices.add(element.getNode(i));
+    private void addRoadMap(final List<Street> streets, final List<LabelSection> roadSections,
+            final List<LabelSection> junctionSections, final INameInfo info) {
+        for (final LabelSection roadSection : roadSections) {
+            final IntList indices = new IntList(roadSection.size());
+            for (int i = 0; i < roadSection.size(); ++i) {
+                indices.add(roadSection.getPoint(i));
             }
-            final int type = element.getRoadType().getIndex() + 24;
-            final String name = element.getRoadId() == -1 ? "junction edge"
-                    : element.getRoadId() == -2 ? "blocked section" : "road section";
-            streets.add(
-                    new Street(indices, type, name + "(" + element.getType() + ", " + element.getRoadId() + ")", -1));
+            streets.add(new Street(indices, 24,
+                    "road section (" + roadSection.getRoadId() + ", " + info.getName(roadSection.getRoadId()) + ")",
+                    -1));
+        }
+        for (final LabelSection junctionSection : junctionSections) {
+            final IntList indices = new IntList(junctionSection.size());
+            for (int i = 0; i < junctionSection.size(); ++i) {
+                indices.add(junctionSection.getPoint(i));
+            }
+            streets.add(new Street(indices, 25, "junction section (" + junctionSection.getRoadId() + ", "
+                    + info.getName(junctionSection.getRoadId()) + ")", -1));
         }
     }
 }

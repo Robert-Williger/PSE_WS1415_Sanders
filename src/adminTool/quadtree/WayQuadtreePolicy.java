@@ -2,7 +2,7 @@ package adminTool.quadtree;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.labeling.roadGraph.ElementAdapter;
+import adminTool.util.ElementAdapter;
 import adminTool.util.IntersectionUtil;
 
 import java.awt.geom.Rectangle2D;
@@ -43,9 +43,9 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy implements IQua
         final Rectangle2D rectangle = new Rectangle2D.Double(rectX, rectY, rectSize, rectSize);
         final MultiElement way = ways.get(index);
 
-        int last = way.getNode(0);
+        int last = way.getPoint(0);
         for (int i = 1; i < way.size(); ++i) {
-            final int current = way.getNode(i);
+            final int current = way.getPoint(i);
             if (rectangle.intersectsLine(points.getX(last), points.getY(last), points.getX(current),
                     points.getY(current)))
                 return true;

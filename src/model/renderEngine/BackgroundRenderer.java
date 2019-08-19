@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,14 +30,6 @@ public class BackgroundRenderer extends AbstractRenderer {
     public long nonGraphicsTime;
     public long graphicsTime;
 
-    private int roadSegments;
-    private int junctionSegments;
-    private int blockeckSegments;
-
-    private IntWrapper streets;
-    private IntWrapper areas;
-    private IntWrapper buildings;
-
     private ArrayList<String> names;
 
     public BackgroundRenderer(final IMapManager manager, final ColorScheme colorScheme) {
@@ -50,11 +43,6 @@ public class BackgroundRenderer extends AbstractRenderer {
         for (int i = 0; i < paths.length; i++) {
             paths[i] = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         }
-
-        streets = new IntWrapper();
-        areas = new IntWrapper();
-        buildings = new IntWrapper();
-
     }
 
     static {
@@ -69,14 +57,6 @@ public class BackgroundRenderer extends AbstractRenderer {
     @Override
     protected void render(final Image image) {
         names = new ArrayList<>();
-
-        roadSegments = 0;
-        junctionSegments = 0;
-        blockeckSegments = 0;
-
-        streets.value = 0;
-        areas.value = 0;
-        buildings.value = 0;
 
         long start = System.currentTimeMillis();
         g = (Graphics2D) image.getGraphics();
@@ -94,18 +74,21 @@ public class BackgroundRenderer extends AbstractRenderer {
         // for (int i = 0; i < names.size(); ++i) {
         // g.drawString(names.get(i), 10, 10 * i + 10);
         // }
-        g.drawString("roads: " + roadSegments + ", junctions: " + junctionSegments + ", blocked: " + blockeckSegments,
-                10, 10);
+        // g.drawString("roads: " + roadSegments + ", junctions: " + junctionSegments + ", labels: " + labels, 10, 10);
         // g.drawString("streets: " + streets.value + ", areas: " + areas.value + ", buildings: " + buildings.value, 10,
         // 10);
-        g.setStroke(new BasicStroke(1));
-        g.drawRect(0, 0, 256, 256);
+        // g.setStroke(new BasicStroke(1));
+        // g.drawRect(0, 0, 256, 256);
         start = System.currentTimeMillis();
         g.dispose();
         graphicsTime += (System.currentTimeMillis() - start);
 
         if (rendered) {
             fireChange();
+            RunLengthEncoding encoding = new RunLengthEncoding();
+            encoding.encode((BufferedImage) image);
+            System.out.println((encoding.colorDict().length + encoding.colors().length / 2 + encoding.runs().length / 4)
+                    + ", " + 256 * 256);
         }
     }
 
@@ -131,7 +114,7 @@ public class BackgroundRenderer extends AbstractRenderer {
         final ShapeStyle[] areaStyles = colorScheme.getAreaStyles();
         clearPaths(paths, areaStyles.length);
 
-        tileAccessor.forEach("area", createConsumer(zoom, areaAccessor, areaStyles, areas));
+        tileAccessor.forEach("area", createConsumer(zoom, areaAccessor, areaStyles));
 
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
@@ -158,7 +141,7 @@ public class BackgroundRenderer extends AbstractRenderer {
 
         // TODO improve this!
 
-        tileAccessor.forEach("street", createConsumer(zoom, streetAccessor, wayStyles, streets));
+        tileAccessor.forEach("street", createConsumer(zoom, streetAccessor, wayStyles));
 
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
@@ -198,7 +181,7 @@ public class BackgroundRenderer extends AbstractRenderer {
         }
 
         clearPaths(paths, buildingStyles.length);
-        tileAccessor.forEach("building", createConsumer(zoom, buildingAccessor, buildingStyles, buildings));
+        tileAccessor.forEach("building", createConsumer(zoom, buildingAccessor, buildingStyles));
 
         nonGraphicsTime += (System.currentTimeMillis() - start);
         start = System.currentTimeMillis();
@@ -230,14 +213,12 @@ public class BackgroundRenderer extends AbstractRenderer {
         }
     }
 
-    private LongConsumer createConsumer(final int zoom, final ICollectiveAccessor accessor, final ShapeStyle[] styles,
-            final IntWrapper wrapper) {
+    private LongConsumer createConsumer(final int zoom, final ICollectiveAccessor accessor, final ShapeStyle[] styles) {
         LongConsumer ret = (id) -> {
             accessor.setID(id);
             final int type = accessor.getType();
 
             if (styles[type].isVisible(zoom)) {
-                ++wrapper.value;
                 rendered = true;
                 final Path2D path = paths[type];
                 appendPath(path, accessor);
@@ -260,31 +241,21 @@ public class BackgroundRenderer extends AbstractRenderer {
             final int size = accessor.size();
 
             if (type >= 24) {
-                if (type == 24)
-                    ++roadSegments;
-                else if (type == 25)
-                    ++junctionSegments;
-                else
-                    ++blockeckSegments;
-
                 names.add(stringAccessor.getString(accessor.getAttribute("name")) + ", " + id);
                 if (styles[type].isVisible(zoom)) {
                     rendered = true;
                     final int offset = (zoom - 9) / 3;
                     final int dotSize = 2 * offset + 1;
-                    g.setColor(new Color(0, 0, 0, 60));
+                    g.setColor(new Color(0, 0, 255, 125));
                     g.fillOval((int) converter.getPixelDistance(accessor.getX(0) - x, zoom) - offset,
                             (int) converter.getPixelDistance(accessor.getY(0) - y, zoom) - offset, dotSize, dotSize);
 
+                    g.setColor(new Color(255, 0, 0, 125));
                     g.fillOval((int) converter.getPixelDistance(accessor.getX(size - 1) - x, zoom) - offset,
                             (int) converter.getPixelDistance(accessor.getY(size - 1) - y, zoom) - offset, dotSize,
                             dotSize);
                 }
             }
         };
-    }
-
-    private static class IntWrapper {
-        int value;
     }
 }

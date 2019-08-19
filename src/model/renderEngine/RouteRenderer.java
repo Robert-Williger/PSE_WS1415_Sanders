@@ -12,6 +12,7 @@ import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
 import model.map.accessors.ICollectiveAccessor;
+import util.FloatInterval;
 
 public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
 
@@ -72,7 +73,7 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
                     path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
                     break;
                 case multiPart:
-                    for (final Intervall streetPart : route.getStreetMultiPart(id)) {
+                    for (final FloatInterval streetPart : route.getStreetMultiPart(id)) {
                         path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
                     }
                     break;
@@ -99,7 +100,7 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         }
     }
 
-    private Path2D.Float createStreetPartPath(final Intervall streetPart) {
+    private Path2D.Float createStreetPartPath(final FloatInterval streetPart) {
         final Path2D.Float path = new Path2D.Float();
 
         final int x = tileAccessor.getX();

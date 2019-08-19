@@ -2,7 +2,7 @@ package adminTool.quadtree;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
-import adminTool.labeling.roadGraph.ElementAdapter;
+import adminTool.util.ElementAdapter;
 import adminTool.util.ShapeUtil;
 
 import java.awt.Shape;

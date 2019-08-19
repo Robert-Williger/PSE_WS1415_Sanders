@@ -154,7 +154,7 @@ public class IndexWriter extends AbstractMapFileWriter {
     private int getCityId(final Street street) {
         for (int i = quadtrees.size() - 1; i >= 0; --i) {
             final IQuadtree quadtree = quadtrees.get(i);
-            final int node = street.getNode(street.size() / 2);
+            final int node = street.getPoint(street.size() / 2);
 
             // if (quadtree.get)
             // if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {

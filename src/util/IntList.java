@@ -1,6 +1,7 @@
 package util;
 
 import java.util.PrimitiveIterator;
+import java.util.function.IntConsumer;
 
 public class IntList {
     private static final int DEFAULT_CAPACITY = 10;
@@ -243,4 +244,9 @@ public class IntList {
         return "Index: " + index + ", Size: " + size;
     }
 
+    public void forEach(final IntConsumer consumer) {
+        for (int i = 0; i < size; ++i) {
+            consumer.accept(data[i]);
+        }
+    }
 }

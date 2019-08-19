@@ -5,8 +5,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Path2D;
 
-import adminTool.IElement;
-
 public final class ShapeUtil {
     private ShapeUtil() {}
 

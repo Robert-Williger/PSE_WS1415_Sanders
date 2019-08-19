@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import adminTool.elements.IPointAccess;
+import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
-import adminTool.labeling.roadGraph.Road;
+import adminTool.labeling.roadMap.LabelSection;
 import adminTool.util.Vector2D;
 import util.IntList;
+import util.IntegerInterval;
 
 public class QualityMeasure {
+    private static final double ALPHA_MAX = 22.5 / 180 * Math.PI; // 22.5°
+
     private IPointAccess points;
     private final double lMax; // size of window sliding along the road
     private final double alphaMax;
@@ -23,17 +27,20 @@ public class QualityMeasure {
     private double alphaSum; // current sum of bend angles
     private int segments;
 
-    // nodeMax: maximum number of nodes for each road to be queried
-    public QualityMeasure(final IPointAccess points, final double lMax, final double alphaMax, final int nodeMax) {
+    public QualityMeasure(final IPointAccess points, final double lMax) {
+        this(points, lMax, ALPHA_MAX);
+    }
+
+    public QualityMeasure(final IPointAccess points, final double lMax, final double alphaMax) {
         this.lMax = lMax;
         this.alphaMax = alphaMax;
-        this.angles = new double[nodeMax];
-        this.distance = new double[nodeMax];
+        this.angles = new double[0];
+        this.distance = new double[0];
         this.points = points;
     }
 
-    public boolean isWellShaped(final Road road) {
-        initFields(road);
+    public boolean isWellShaped(final MultiElement element) {
+        initFields(element);
 
         do {
             moveWindow();
@@ -44,8 +51,8 @@ public class QualityMeasure {
         return true;
     }
 
-    public boolean hasWellShapedPiece(final Road road, final double destLabelLength) {
-        initFields(road);
+    public boolean hasWellShapedPiece(final MultiElement element, final double destLabelLength) {
+        initFields(element);
 
         double labelLength = 0; // length of current well shaped label
 
@@ -69,9 +76,9 @@ public class QualityMeasure {
         }
     }
 
-    public List<Interval> getWellShapedIntervals(final Road road) {
-        final List<Interval> ret = new ArrayList<>();
-        initFields(road);
+    public List<IntegerInterval> getAllMaximumWellShapedIntervals(final MultiElement element) {
+        final List<IntegerInterval> ret = new ArrayList<>();
+        initFields(element);
 
         int lls = 0;// left label border segment [rls = rws]
 
@@ -79,12 +86,12 @@ public class QualityMeasure {
             do {
                 moveWindow();
                 if (rws == segments) {
-                    ret.add(new Interval(lls, rws));
+                    ret.add(new IntegerInterval(lls, rws));
                     return ret;
                 }
             } while (alphaSum <= alphaMax);
 
-            ret.add(new Interval(lls, rws));
+            ret.add(new IntegerInterval(lls, rws));
 
             do {
                 moveWindow();
@@ -111,14 +118,19 @@ public class QualityMeasure {
         }
     }
 
-    protected void initFields(final Road road) {
-        final Vector2D last = new Vector2D(points.getX(road.getNode(0)) - points.getX(road.getNode(1)),
-                points.getY(road.getNode(0)) - points.getY(road.getNode(1)));
+    protected void initFields(final MultiElement road) {
+        if (this.angles.length < road.size()) {
+            this.angles = new double[road.size()];
+            this.distance = new double[road.size()];
+        }
+
+        final Vector2D last = new Vector2D(points.getX(road.getPoint(0)) - points.getX(road.getPoint(1)),
+                points.getY(road.getPoint(0)) - points.getY(road.getPoint(1)));
         final Vector2D current = new Vector2D();
 
         for (int i = 1; i < road.size() - 1; ++i) {
-            current.setVector(points.getX(road.getNode(i + 1)) - points.getX(road.getNode(i)),
-                    points.getY(road.getNode(i + 1)) - points.getY(road.getNode(i)));
+            current.setVector(points.getX(road.getPoint(i + 1)) - points.getX(road.getPoint(i)),
+                    points.getY(road.getPoint(i + 1)) - points.getY(road.getPoint(i)));
 
             distance[i] = distance[i - 1] + last.norm();
             angles[i] = Math.PI - Math.abs(Vector2D.angle(last, current));
@@ -135,33 +147,6 @@ public class QualityMeasure {
         segments = road.size() - 1;
     }
 
-    // represents closed interval [start, end]
-    public static class Interval {
-        private int start;
-        private int end;
-
-        public Interval(final int start, final int end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public int getStart() {
-            return start;
-        }
-
-        public int getEnd() {
-            return end;
-        }
-
-        public void setStart(final int start) {
-            this.start = start;
-        }
-
-        public void setEnd(final int end) {
-            this.end = end;
-        }
-    }
-
     public static void main(String[] args) {
         PointAccess points = new PointAccess();
         points.addPoint(0, 0);
@@ -173,14 +158,14 @@ public class QualityMeasure {
         for (int i = 0; i < points.size(); ++i) {
             indices.add(i);
         }
-        final Road road = new Road(indices, 0, 0);
+        final LabelSection road = new LabelSection(indices, 0, 0);
 
         final double alphaMax = 22.5 / 180 * Math.PI; // 22.5°
         final int lMax = 2;
-        final QualityMeasure test = new QualityMeasure(points, lMax, alphaMax, points.size());
+        final QualityMeasure test = new QualityMeasure(points, lMax, alphaMax);
 
-        final List<Interval> roads = test.getWellShapedIntervals(road);
-        for (final Interval interval : roads) {
+        final List<IntegerInterval> roads = test.getAllMaximumWellShapedIntervals(road);
+        for (final IntegerInterval interval : roads) {
             System.out.println("[" + interval.getStart() + ", " + interval.getEnd() + "]");
         }
     }

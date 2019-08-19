@@ -70,7 +70,7 @@ public class GraphWriter extends AbstractMapFileWriter {
         // Step one: count the appearance of every node in the given ways
         for (final Way s : ways) {
             for (int i = 0; i < s.size(); ++i) {
-                ++nodeCounts[s.getNode(i)];
+                ++nodeCounts[s.getPoint(i)];
             }
         }
     }
@@ -85,19 +85,19 @@ public class GraphWriter extends AbstractMapFileWriter {
         for (int i = 0; i < intersections.size(); i++) {
             final int currentCut = intersections.get(i);
 
-            final int id1 = generateID(way.getNode(lastCut));
-            final int id2 = generateID(way.getNode(currentCut));
+            final int id1 = generateID(way.getPoint(lastCut));
+            final int id2 = generateID(way.getPoint(currentCut));
 
             final IntList indices = new IntList(currentCut - lastCut + 1);
 
             double weight = 0;
             for (int j = lastCut; j < currentCut; j++) {
-                weight += getWeight(nodes.getX(way.getNode(j)), nodes.getY(way.getNode(j)),
-                        nodes.getX(way.getNode(j + 1)), nodes.getY(way.getNode(j + 1)));
+                weight += getWeight(nodes.getX(way.getPoint(j)), nodes.getY(way.getPoint(j)),
+                        nodes.getX(way.getPoint(j + 1)), nodes.getY(way.getPoint(j + 1)));
             }
 
             for (int j = lastCut; j <= currentCut; j++) {
-                indices.add(way.getNode(j));
+                indices.add(way.getPoint(j));
             }
 
             edges.add(new WeightedEdge(id1, id2, (int) weight));
@@ -117,7 +117,7 @@ public class GraphWriter extends AbstractMapFileWriter {
         // calculating the indexes of the intersections
 
         for (int i = 1; i < s.size() - 1; i++) {
-            if (nodeCounts[s.getNode(i)] > 1) {
+            if (nodeCounts[s.getPoint(i)] > 1) {
                 intersections.add(i);
             }
         }

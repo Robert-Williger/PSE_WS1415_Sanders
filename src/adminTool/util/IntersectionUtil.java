@@ -4,8 +4,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
-import adminTool.IElement;
-
 public class IntersectionUtil {
     public static double EPSILON = 1E-7;
 

@@ -10,8 +10,8 @@ public class GoogleColorScheme extends ColorScheme {
     }
 
     private static WayStyle[] createWayStyles() {
-        WayStyle[] wayStyles = new WayStyle[31];
-        int[] wayMinZoomstep = new int[31];
+        WayStyle[] wayStyles = new WayStyle[27];
+        int[] wayMinZoomstep = new int[27];
 
         // pedestrian / living street / residential / unclassified (white +
         // light gray outline)
@@ -145,38 +145,18 @@ public class GoogleColorScheme extends ColorScheme {
         wayStyles[25] = new WayStyle(wayMinZoomstep[25], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
                 Color.LIGHT_GRAY);
 
-        // overlapped section (red)
+        // label (blue)
         wayMinZoomstep[26] = 13;
-        wayStyles[26] = new WayStyle(wayMinZoomstep[26], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.RED);
-
-        // bad shaped section (green)
-        wayMinZoomstep[27] = 13;
-        wayStyles[27] = new WayStyle(wayMinZoomstep[27], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.GREEN);
-
-        // unconnected junction section (orange)
-        wayMinZoomstep[28] = 13;
-        wayStyles[28] = new WayStyle(wayMinZoomstep[28], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.ORANGE);
-
-        // stub (blue)
-        wayMinZoomstep[29] = 13;
-        wayStyles[29] = new WayStyle(wayMinZoomstep[29], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.BLUE);
-
-        // cycle junction section (magenta)
-        wayMinZoomstep[30] = 13;
-        wayStyles[30] = new WayStyle(wayMinZoomstep[30], new float[] { 0.5f, 0.625f, 0.75f, 1, 1.125f, 1.25f },
-                Color.MAGENTA);
+        wayStyles[26] = new WayStyle(wayMinZoomstep[26], new float[] { 0.75f, 1.5f, 3f, 5f, 6.5f, 7f, 7.5f },
+                new Color(100, 255, 0));
 
         return wayStyles;
     }
 
     private static int[][] createWayOrder() {
         return new int[][] { { 10 }, { 11 }, { 19 }, { 17 }, { 18 }, { 12 }, { 22 }, { 23 }, { 0, 1 }, { 3 }, { 2 },
-                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 28 },
-                { 26 }, { 24 }, { 25 }, { 27 }, { 29 } };
+                { 4 }, { 16 }, { 14 }, { 13 }, { 15 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 20 }, { 21 }, { 26 },
+                { 24 }, { 25 } };
     }
 
     private static ShapeStyle[] createAreaStyles() {

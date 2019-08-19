@@ -231,7 +231,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         int ret = 1;
 
         for (int i = 0; i < element.size(); ++i) {
-            final int node = element.getNode(i);
+            final int node = element.getPoint(i);
             dataOutput.writeInt(conversion.convert(pointAccess.getX(node)));
             dataOutput.writeInt(conversion.convert(pointAccess.getY(node)));
             ret += 2;

@@ -32,7 +32,7 @@ public class Aligner {
 
     private void updateRange(final MultiElement element) {
         for (int i = 0; i < element.size(); ++i) {
-            final int node = element.getNode(i);
+            final int node = element.getPoint(i);
             range.add(points.getX(node), points.getY(node));
         }
     }

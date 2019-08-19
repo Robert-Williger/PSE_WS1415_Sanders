@@ -3,13 +3,15 @@ package model.renderEngine;
 import java.awt.Rectangle;
 import java.util.Collection;
 
+import util.FloatInterval;
+
 public interface IRenderRoute {
 
     StreetUse getStreetUse(int id);
 
-    Intervall getStreetPart(int id);
+    FloatInterval getStreetPart(int id);
 
-    Collection<Intervall> getStreetMultiPart(int id);
+    Collection<FloatInterval> getStreetMultiPart(int id);
 
     int getLength();
 

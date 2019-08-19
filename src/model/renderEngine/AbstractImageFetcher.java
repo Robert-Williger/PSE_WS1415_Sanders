@@ -88,8 +88,8 @@ public abstract class AbstractImageFetcher extends AbstractModel implements IIma
 
         final Graphics2D g = (Graphics2D) ret.getGraphics();
         g.setComposite(AlphaComposite.Src);
-        g.setColor(new Color(255, 255, 255, 0));
-        g.fillRect(0, 0, imageSize, imageSize);
+        g.setColor(new Color(0, 0, 0, 0));
+        g.fillRect(-1, -1, imageSize + 1, imageSize + 1);
         g.dispose();
 
         return ret;

@@ -11,6 +11,11 @@ public class Street extends Way {
         this.id = id;
     }
 
+    public Street(final MultiElement element, final int type, final String name, final int id) {
+        super(element, type, name, false); // TODO fix this
+        this.id = id;
+    }
+
     public int getId() {
         return id;
     }

@@ -147,42 +147,47 @@ public class LabelRenderer extends AbstractRenderer {
 
             final LabelStyle style = styles[labelAccessor.getType()];
             if (style != null && style.isVisible(zoom)) {
+                final double angle = labelAccessor.getAttribute("rotation");
                 final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
-                final float angle = labelAccessor.getAttribute("rotation");
-                final double sin = Math.sin(angle);
-                final double cos = Math.cos(angle);
-                // TODO FontMetrics in stlye avoids object creation.
-                final FontMetrics fontMetrics = g.getFontMetrics(style.getFont(zoom));
-                final int width = fontMetrics.stringWidth(name);
-                final int height = fontMetrics.getHeight();
-                final int descent = fontMetrics.getDescent();
-                final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
-                final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
-
-                final double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
-                final double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
-
-                g.translate(transX, transY);
-                g.rotate(angle);
-
-                if (style.outlineStroke(g, zoom)) {
-                    g.drawString(name, -1, 0);
-                    g.drawString(name, 0, -1);
-                    g.drawString(name, 1, 0);
-                    g.drawString(name, 0, 1);
-                }
-                if (style.mainStroke(g, zoom)) {
-                    g.drawString(name, 0, 0);
-                }
-
-                g.rotate(-angle);
-                g.translate(-transX, -transY);
+                drawStringPart(style, zoom, x, y, angle, name);
 
                 rendered = true;
             }
         };
 
         tileAccessor.forEach("label", consumer);
+    }
+
+    private void drawStringPart(final LabelStyle style, final int zoom, final int x, final int y, final double angle,
+            String part) {
+        final double sin = Math.sin(angle);
+        final double cos = Math.cos(angle);
+        // TODO FontMetrics in stlye avoids object creation.
+        final FontMetrics fontMetrics = g.getFontMetrics(style.getFont(zoom));
+        final int width = fontMetrics.stringWidth(part);
+        final int height = fontMetrics.getHeight();
+        final int descent = fontMetrics.getDescent();
+        final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
+        final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
+
+        final double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
+        final double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
+
+        g.translate(transX, transY);
+        g.rotate(angle);
+
+        if (style.outlineStroke(g, zoom)) {
+            g.drawString(part, -1, 0);
+            g.drawString(part, 0, -1);
+            g.drawString(part, 1, 0);
+            g.drawString(part, 0, 1);
+        }
+        if (style.mainStroke(g, zoom)) {
+            g.drawString(part, 0, 0);
+        }
+
+        g.rotate(-angle);
+        g.translate(-transX, -transY);
     }
 
     private void drawBuildingNamesAndNumbers() {

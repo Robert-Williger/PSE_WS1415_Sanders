@@ -27,7 +27,7 @@ public class MultiElement implements Typeable {
         return indices.size();
     }
 
-    public int getNode(int index) {
+    public int getPoint(int index) {
         return indices.get(index);
     }
 

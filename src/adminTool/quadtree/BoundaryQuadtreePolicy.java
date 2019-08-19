@@ -7,7 +7,7 @@ import java.util.List;
 
 import adminTool.elements.Boundary;
 import adminTool.elements.IPointAccess;
-import adminTool.labeling.roadGraph.ElementAdapter;
+import adminTool.util.ElementAdapter;
 import adminTool.util.ShapeUtil;
 
 public class BoundaryQuadtreePolicy implements IQuadtreePolicy {

@@ -6,10 +6,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import util.FloatInterval;
+
 public class RenderRoute implements IRenderRoute {
     private final int length;
     private final Map<Integer, StreetPart> map;
-    private final Map<Integer, Collection<Intervall>> multiPartMap;
+    private final Map<Integer, Collection<FloatInterval>> multiPartMap;
     private final Rectangle bounds;
 
     public RenderRoute(final int length, final Rectangle bounds) {
@@ -25,12 +27,12 @@ public class RenderRoute implements IRenderRoute {
     }
 
     public void addStreetPart(final int edge, final float startIN, final float endIN) {
-        Intervall intervall;
+        FloatInterval intervall;
 
         if (startIN > endIN) {
-            intervall = new Intervall(endIN, startIN);
+            intervall = new FloatInterval(endIN, startIN);
         } else {
-            intervall = new Intervall(startIN, endIN);
+            intervall = new FloatInterval(startIN, endIN);
         }
 
         final int edgeID = getEdgeID(edge);
@@ -81,7 +83,7 @@ public class RenderRoute implements IRenderRoute {
             // }
 
             // create multiPart
-            final Collection<Intervall> multiMapEntry = new LinkedList<>();
+            final Collection<FloatInterval> multiMapEntry = new LinkedList<>();
             multiMapEntry.add(mapEntry.intervall);
             multiMapEntry.add(intervall);
             multiPartMap.put(edgeID, multiMapEntry);
@@ -103,7 +105,7 @@ public class RenderRoute implements IRenderRoute {
     }
 
     @Override
-    public Intervall getStreetPart(final int id) {
+    public FloatInterval getStreetPart(final int id) {
         int edgeID = getEdgeID(id);
         if (map.containsKey(edgeID)) {
             return map.get(edgeID).intervall;
@@ -113,7 +115,7 @@ public class RenderRoute implements IRenderRoute {
     }
 
     @Override
-    public Collection<Intervall> getStreetMultiPart(final int id) {
+    public Collection<FloatInterval> getStreetMultiPart(final int id) {
         return multiPartMap.get(getEdgeID(id));
     }
 
@@ -134,9 +136,9 @@ public class RenderRoute implements IRenderRoute {
 
     private static class StreetPart {
         StreetUse useage;
-        Intervall intervall;
+        FloatInterval intervall;
 
-        public StreetPart(final StreetUse useage, final Intervall intervall) {
+        public StreetPart(final StreetUse useage, final FloatInterval intervall) {
             this.useage = useage;
             this.intervall = intervall;
         }
