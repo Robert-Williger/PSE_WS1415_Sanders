@@ -17,11 +17,13 @@ import model.map.IMapManager;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
+import util.Vector2D;
 
 public class LabelRenderer extends AbstractRenderer {
     private Graphics2D g;
 
-    private IPointAccessor labelAccessor;
+    private IPointAccessor pointLabelAccessor;
+    private ICollectiveAccessor lineLabelAccessor;
     private ICollectiveAccessor buildingAccessor;
     private IStringAccessor stringAccessor;
 
@@ -50,6 +52,7 @@ public class LabelRenderer extends AbstractRenderer {
         styles[8] = new LabelStyle(13, 16, new int[] { 11, 12, 13, 14, 14 },
                 new Color[] { Color.GRAY, Color.GRAY, Color.GRAY, Color.DARK_GRAY, Color.DARK_GRAY }, true);
 
+        styles[10] = new LabelStyle(13, 21, new int[] { 8, 8, 9, 10, 10, 10, 10, 10, 10, 10 }, Color.black, false);
         styles[30] = new LabelStyle(10, 20, new int[] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 }, Color.black,
                 false);
 
@@ -132,7 +135,8 @@ public class LabelRenderer extends AbstractRenderer {
     public void setMapManager(final IMapManager manager) {
         super.setMapManager(manager);
 
-        labelAccessor = manager.createPointAccessor("label");
+        pointLabelAccessor = manager.createPointAccessor("pointLabel");
+        lineLabelAccessor = manager.createCollectiveAccessor("lineLabel");
         buildingAccessor = manager.createCollectiveAccessor("building");
         stringAccessor = manager.createStringAccessor();
     }
@@ -142,24 +146,76 @@ public class LabelRenderer extends AbstractRenderer {
         final int x = tileAccessor.getX();
         final int y = tileAccessor.getY();
 
-        final LongConsumer consumer = label -> {
-            labelAccessor.setID(label);
+        drawPointLabels(zoom, x, y);
+        drawLineLabels(zoom, x, y);
+    }
 
-            final LabelStyle style = styles[labelAccessor.getType()];
+    private void drawPointLabels(final int zoom, final int x, final int y) {
+        final LongConsumer consumer = label -> {
+            pointLabelAccessor.setID(label);
+
+            final LabelStyle style = styles[pointLabelAccessor.getType()];
             if (style != null && style.isVisible(zoom)) {
-                final double angle = labelAccessor.getAttribute("rotation");
-                final String name = stringAccessor.getString(labelAccessor.getAttribute("name"));
-                drawStringPart(style, zoom, x, y, angle, name);
+                final String name = stringAccessor.getString(pointLabelAccessor.getAttribute("name"));
+                drawStringPart(style, zoom, x, y, pointLabelAccessor.getX(), pointLabelAccessor.getY(), 0, name);
 
                 rendered = true;
             }
         };
 
-        tileAccessor.forEach("label", consumer);
+        tileAccessor.forEach("pointLabel", consumer);
     }
 
-    private void drawStringPart(final LabelStyle style, final int zoom, final int x, final int y, final double angle,
-            String part) {
+    private void drawLineLabels(final int zoom, final int x, final int y) {
+        final LongConsumer consumer = label -> {
+            lineLabelAccessor.setID(label);
+
+            final LabelStyle style = styles[10];
+            if (lineLabelAccessor.getAttribute("zoom") == zoom && style != null && style.isVisible(zoom)) {
+                String name = stringAccessor.getString(lineLabelAccessor.getAttribute("name"));
+
+                final Point last = new Point(lineLabelAccessor.getX(0), lineLabelAccessor.getY(0));
+                final Point current = new Point();
+                final Vector2D horizontal = new Vector2D(1, 0);
+                final FontMetrics fontMetrics = g.getFontMetrics(style.getFont(zoom));
+
+                double length = 0;
+                for (int i = 1; i < lineLabelAccessor.size() && !name.isEmpty(); ++i) {
+                    current.setLocation(lineLabelAccessor.getX(i), lineLabelAccessor.getY(i));
+                    Vector2D vector = new Vector2D(current.getX() - last.getX(), current.getY() - last.getY());
+                    length += converter.getPixelDistance(vector.norm(), zoom);
+                    if (length < 0)
+                        continue;
+
+                    int stringPos = 0;
+                    while (true) {
+                        final double charWidth = fontMetrics.charWidth(name.charAt(stringPos));
+                        length -= charWidth;
+                        ++stringPos;
+                        if (length < 0 || stringPos == name.length()) {
+                            break;
+                        }
+                    }
+
+                    final float angle = (float) Vector2D.angle(horizontal, vector);
+                    final int midX = last.x + (current.x - last.x) / 2;
+                    final int midY = last.y + (current.y - last.y) / 2;
+                    drawStringPart(style, zoom, x, y, midX, midY, angle, name.substring(0, stringPos));
+
+                    name = name.substring(stringPos);
+                    last.setLocation(current);
+                }
+
+                rendered = true;
+            }
+        };
+
+        tileAccessor.forEach("lineLabel", consumer);
+
+    }
+
+    private void drawStringPart(final LabelStyle style, final int zoom, final int x, final int y, final int midX,
+            final int midY, final double angle, String part) {
         final double sin = Math.sin(angle);
         final double cos = Math.cos(angle);
         // TODO FontMetrics in stlye avoids object creation.
@@ -170,8 +226,8 @@ public class LabelRenderer extends AbstractRenderer {
         final double xOffset = -cos * width / 2 - sin * height / 2 + sin * descent;
         final double yOffset = cos * height / 2 - sin * width / 2 - cos * descent;
 
-        final double transX = converter.getPixelDistance(labelAccessor.getX() - x, zoom) + xOffset;
-        final double transY = converter.getPixelDistance(labelAccessor.getY() - y, zoom) + yOffset;
+        final double transX = converter.getPixelDistance(midX - x, zoom) + xOffset;
+        final double transY = converter.getPixelDistance(midY - y, zoom) + yOffset;
 
         g.translate(transX, transY);
         g.rotate(angle);
@@ -182,6 +238,7 @@ public class LabelRenderer extends AbstractRenderer {
             g.drawString(part, 1, 0);
             g.drawString(part, 0, 1);
         }
+
         if (style.mainStroke(g, zoom)) {
             g.drawString(part, 0, 0);
         }

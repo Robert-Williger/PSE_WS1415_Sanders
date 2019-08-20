@@ -1,6 +1,7 @@
 package adminTool.quadtree;
 
 import java.util.PrimitiveIterator.OfInt;
+import java.util.function.IntFunction;
 
 import util.IntList;
 
@@ -9,12 +10,17 @@ public class CollisionlessQuadtree {
     private CollisionlessQuadtree[] children;
     private final IntList elements;
 
-    public CollisionlessQuadtree(final int elements, final int maxHeight, final IQuadtreePolicy qp,
-            final ICollisionPolicy cp, final double size) {
+    public CollisionlessQuadtree(final int elements, final IQuadtreePolicy qp, final ICollisionPolicy cp,
+            final double size, final int maxHeight) {
+        this(elements, qp, cp, size, e -> maxHeight);
+    }
+
+    public CollisionlessQuadtree(final int elements, final IQuadtreePolicy qp, final ICollisionPolicy cp,
+            final double size, final IntFunction<Integer> maxElementHeight) {
         this.elements = new IntList();
 
         for (int element = 0; element < elements; element++) {
-            add(element, maxHeight, qp, cp, 0, 0, 0, size);
+            add(element, maxElementHeight.apply(element), qp, cp, 0, 0, 0, size);
         }
     }
 

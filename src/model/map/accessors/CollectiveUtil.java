@@ -10,6 +10,10 @@ public class CollectiveUtil {
     public static int getLength(final ICollectiveAccessor accessor, final long id) {
         accessor.setID(id);
 
+        return getLength(accessor);
+    }
+
+    public static int getLength(final ICollectiveAccessor accessor) {
         float totalLength = 0f;
 
         int lastX = accessor.getX(0);

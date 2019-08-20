@@ -6,10 +6,10 @@ import java.util.Collection;
 import adminTool.elements.Boundary;
 import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.Way;
 import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 
 public interface IOSMParser {
 
@@ -23,7 +23,7 @@ public interface IOSMParser {
 
     Collection<Building> getBuildings();
 
-    Collection<Label> getLabels();
+    Collection<PointLabel> getPointLabels();
 
     Collection<Boundary> getBoundaries();
 

@@ -9,8 +9,9 @@ import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
-import adminTool.elements.Label;
+import adminTool.elements.LineLabel;
 
 public class ElementWriter extends AbstractMapFileWriter {
     private LinkedHashMap<String, Integer> stringMap;
@@ -18,22 +19,25 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<MultiElement> areas;
     private Sorting<Street> streets;
     private Sorting<Building> buildings;
-    private Sorting<Label> labels;
+    private Sorting<LineLabel> lineLabels;
     private Sorting<POI> pois;
+    private Sorting<PointLabel> pointLabels;
 
     private IPointAccess pointAccess;
     private IntConversion conversion;
 
     public ElementWriter(final Sorting<MultiElement> areas, final Sorting<Street> streets,
-            final Sorting<Building> buildings, final Sorting<Label> labels, final Sorting<POI> pois,
-            final IPointAccess pointAccess, final IntConversion conversion, final ZipOutputStream zipOutput) {
+            final Sorting<Building> buildings, final Sorting<LineLabel> lineLabels, final Sorting<POI> pois,
+            final Sorting<PointLabel> pointLabels, final IPointAccess pointAccess, final IntConversion conversion,
+            final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.areas = areas;
         this.streets = streets;
         this.buildings = buildings;
-        this.labels = labels;
+        this.lineLabels = lineLabels;
         this.pois = pois;
+        this.pointLabels = pointLabels;
         this.pointAccess = pointAccess;
         this.conversion = conversion;
     }
@@ -42,11 +46,14 @@ public class ElementWriter extends AbstractMapFileWriter {
         stringMap = createStringMap();
 
         try {
+            writeElementHeaders(new String[] { "street", "building", "area", "lineLabel" },
+                    new String[] { "poi", "pointLabel" });
             writeStreets();
             writeAreas();
             writeBuildings();
-            writeLabels();
+            writeLineLabels();
             writePOIs();
+            writePointLabels();
             writeStrings();
         } catch (final IOException e) {
             e.printStackTrace();
@@ -83,7 +90,13 @@ public class ElementWriter extends AbstractMapFileWriter {
                 stringMap.put(name, ++id);
             }
         }
-        for (final Label label : labels.elements) {
+        for (final LineLabel label : lineLabels.elements) {
+            final String name = label.getName();
+            if (!stringMap.containsKey(name)) {
+                stringMap.put(name, ++id);
+            }
+        }
+        for (final PointLabel label : pointLabels.elements) {
             final String name = label.getName();
             if (!stringMap.containsKey(name)) {
                 stringMap.put(name, ++id);
@@ -91,6 +104,23 @@ public class ElementWriter extends AbstractMapFileWriter {
         }
 
         return stringMap;
+    }
+
+    private void writeElementHeaders(final String[] collectiveElements, final String[] pointElements)
+            throws IOException {
+        putNextEntry("pointElements");
+
+        dataOutput.writeInt(pointElements.length);
+        for (final String element : pointElements)
+            dataOutput.writeUTF(element);
+        closeEntry();
+
+        putNextEntry("collectiveElements");
+
+        dataOutput.writeInt(collectiveElements.length);
+        for (final String element : collectiveElements)
+            dataOutput.writeUTF(element);
+        closeEntry();
     }
 
     private void writeStrings() throws IOException {
@@ -108,7 +138,7 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     private void writeStreets() throws IOException {
-        putNextEntry("streets");
+        putNextEntry("streetData");
 
         final int[] addresses = new int[streets.elements.length];
 
@@ -130,11 +160,13 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         writeAddresses("street", addresses);
         writeDistribution("street", streets.distribution);
+        writeAttributes("street", new String[] { "id", "name" });
+
         streets = null;
     }
 
     private void writeBuildings() throws IOException {
-        putNextEntry("buildings");
+        putNextEntry("buildingData");
 
         final int[] addresses = new int[buildings.elements.length];
 
@@ -160,11 +192,13 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         writeAddresses("building", addresses);
         writeDistribution("building", buildings.distribution);
+        writeAttributes("building", new String[] { "street", "number", "name" });
+
         buildings = null;
     }
 
     private void writeAreas() throws IOException {
-        putNextEntry("areas");
+        putNextEntry("areaData");
 
         final int[] addresses = new int[areas.elements.length];
 
@@ -180,45 +214,64 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         writeAddresses("area", addresses);
         writeDistribution("area", areas.distribution);
+        writeAttributes("area", new String[] {});
         areas = null;
     }
 
+    private void writeLineLabels() throws IOException {
+        putNextEntry("lineLabelData");
+
+        final int[] addresses = new int[lineLabels.elements.length];
+
+        int address = 0;
+        int index = -1;
+        for (final LineLabel label : lineLabels.elements) {
+            addresses[++index] = address;
+
+            dataOutput.writeInt(stringMap.get(label.getName()));
+            ++address;
+
+            dataOutput.writeInt(label.getZoom());
+            ++address;
+
+            address += writeMultiElement(label);
+        }
+
+        closeEntry();
+
+        writeAddresses("lineLabel", addresses);
+        writeDistribution("lineLabel", lineLabels.distribution);
+        writeAttributes("lineLabel", new String[] { "name", "zoom" });
+        lineLabels = null;
+    }
+
     private void writePOIs() throws IOException {
-        putNextEntry("pois");
+        putNextEntry("poiData");
 
         for (final POI poi : pois.elements) {
-            writePoint(poi.getNode());
+            writePoint(poi.getPoint());
         }
 
         closeEntry();
 
         writeDistribution("poi", pois.distribution);
+        writeAttributes("poi", new String[] {});
         pois = null;
     }
 
-    private void writeLabels() throws IOException {
-        putNextEntry("labels");
+    private void writePointLabels() throws IOException {
+        putNextEntry("pointLabelData");
 
-        // final int[] addresses = new int[labels.elements.length];
-        //
-        // int address = 0;
-        // int index = -1;
-        for (final Label label : labels.elements) {
-            // addresses[++index] = address;
-
-            writePoint(label.getNode());
-            // address += 2;
-
+        for (final PointLabel label : pointLabels.elements) {
             dataOutput.writeInt(stringMap.get(label.getName()));
-            // ++address;
+            writePoint(label.getPoint());
         }
 
         closeEntry();
 
-        // TODO not necessary while labels got same memory size atm..
-        // writeAddresses("label", addresses);
-        writeDistribution("label", labels.distribution);
-        labels = null;
+        writeDistribution("pointLabel", pointLabels.distribution);
+        writeAttributes("pointLabel", new String[] { "name" });
+        pointLabels = null;
     }
 
     private void writePoint(final int point) throws IOException {
@@ -245,6 +298,17 @@ public class ElementWriter extends AbstractMapFileWriter {
 
         for (final int address : addresses) {
             dataOutput.writeInt(address);
+        }
+
+        closeEntry();
+    }
+
+    private void writeAttributes(final String name, final String[] attributes) throws IOException {
+        putNextEntry(name + "Attributes");
+
+        dataOutput.writeInt(attributes.length);
+        for (final String attribute : attributes) {
+            dataOutput.writeUTF(attribute);
         }
 
         closeEntry();

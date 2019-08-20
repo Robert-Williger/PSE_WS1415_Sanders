@@ -10,9 +10,9 @@ import util.IntList;
 
 public class VisvalingamWhyatt {
 
-    private final int threshold;
+    private final double threshold;
 
-    public VisvalingamWhyatt(final int threshold) {
+    public VisvalingamWhyatt(final double threshold) {
         this.threshold = threshold;
     }
 

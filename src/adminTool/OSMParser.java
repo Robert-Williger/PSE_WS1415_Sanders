@@ -14,9 +14,9 @@ import adminTool.elements.Boundary;
 import adminTool.elements.BoundedPointAccess;
 import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.Label;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 import adminTool.elements.Way;
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat.DenseNodes;
@@ -31,7 +31,7 @@ public class OSMParser implements IOSMParser {
     private final Collection<MultiElement> areaList;
     private final Collection<POI> poiList;
     private final Collection<Building> buildingList;
-    private final Collection<Label> labelList;
+    private final Collection<PointLabel> labelList;
     private final Collection<Boundary> boundaryList;
     private IPointAccess points;
 
@@ -72,7 +72,7 @@ public class OSMParser implements IOSMParser {
     }
 
     @Override
-    public Collection<Label> getLabels() {
+    public Collection<PointLabel> getPointLabels() {
         return labelList;
     }
 
@@ -192,7 +192,7 @@ public class OSMParser implements IOSMParser {
                             } else {
                                 type = getPlaceType(value);
                                 if (type != -1) {
-                                    labelList.add(Label.create(id, type, tag));
+                                    labelList.add(new PointLabel(id, type, tag));
                                 }
                             }
                             break;
@@ -202,7 +202,7 @@ public class OSMParser implements IOSMParser {
                             } else {
                                 type = getPlaceType(tag);
                                 if (type != -1) {
-                                    labelList.add(Label.create(id, type, value));
+                                    labelList.add(new PointLabel(id, type, value));
                                 }
                             }
                             break;

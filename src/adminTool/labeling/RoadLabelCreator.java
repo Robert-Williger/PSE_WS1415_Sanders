@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 import adminTool.elements.IPointAccess;
+import adminTool.elements.LineLabel;
 import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
 import adminTool.labeling.algorithm.IRoadMapLabelAlgorithm;
@@ -35,7 +36,7 @@ public class RoadLabelCreator {
     private Collection<Way> ways;
     private Dimension2D mapSize;
 
-    private Collection<Label> labeling;
+    private Collection<LineLabel> labeling;
     private PointAccess points;
 
     public RoadLabelCreator(final Collection<Way> ways, final IPointAccess points, final Dimension2D mapSize) {
@@ -48,7 +49,7 @@ public class RoadLabelCreator {
         }
     }
 
-    public void createLabels(final IDistanceMap pixelsToCoords) {
+    public void createLabels(final IDistanceMap pixelsToCoords, final int zoom) {
         this.labeling = new ArrayList<>();
 
         final double fuzzyThreshold = pixelsToCoords.map(FUZZY_THRESHOLD);
@@ -81,12 +82,12 @@ public class RoadLabelCreator {
             labelingAlgorithm.calculateLabeling(roadMap);
             shifter.postprocess(roadMap, labelingAlgorithm.getLabeling(), qualityMeasure);
             spinner.postprocess(roadMap, shifter.getLabeling());
-            postprocessor.postprocess(roadMap, labelingAlgorithm.getLabeling());
+            postprocessor.postprocess(roadMap, labelingAlgorithm.getLabeling(), zoom);
             labeling.addAll(postprocessor.getLabeling());
         }
     }
 
-    public Collection<Label> getLabeling() {
+    public Collection<LineLabel> getLabeling() {
         return labeling;
     }
 

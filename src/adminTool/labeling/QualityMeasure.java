@@ -7,9 +7,9 @@ import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.labeling.roadMap.LabelSection;
-import adminTool.util.Vector2D;
 import util.IntList;
 import util.IntegerInterval;
+import util.Vector2D;
 
 public class QualityMeasure {
     private static final double ALPHA_MAX = 22.5 / 180 * Math.PI; // 22.5°

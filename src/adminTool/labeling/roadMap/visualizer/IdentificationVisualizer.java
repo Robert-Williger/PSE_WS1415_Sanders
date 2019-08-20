@@ -25,10 +25,10 @@ public class IdentificationVisualizer extends JFrame {
         final PointAccess points = createPoints();
         final List<Way> ways = createWays();
         final Identification identification = new Identification();
-        identification.identify(ways, points);
+        identification.identify(ways);
 
         final JPanel origPaths = new WayVisualizer(points, ways);
-        final JPanel identifiedPaths = new WayVisualizer(identification.getPoints(), identification.getRoads());
+        final JPanel identifiedPaths = new WayVisualizer(points, identification.getRoads());
 
         origPaths.setLocation(20, 10);
         identifiedPaths.setLocation(850, 10);

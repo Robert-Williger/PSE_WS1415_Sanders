@@ -1,7 +1,7 @@
 package adminTool;
 
-import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.geom.Dimension2D;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class IndexWriter extends AbstractMapFileWriter {
 
     // TODO speedup
     public IndexWriter(final Collection<Boundary> boundaries, final Sorting<Street> streets, final IPointAccess points,
-            final Dimension mapSize, final ZipOutputStream zipOutput) {
+            final Dimension2D mapSize, final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
@@ -63,7 +63,7 @@ public class IndexWriter extends AbstractMapFileWriter {
     }
 
     private List<IQuadtree> createQuadtrees(final Collection<Boundary> boundaries, final IPointAccess points,
-            final Dimension mapSize) {
+            final Dimension2D mapSize) {
         int maxType = 0;
         for (final Boundary boundary : boundaries) {
             maxType = Math.max(maxType, boundary.getType());
@@ -156,7 +156,7 @@ public class IndexWriter extends AbstractMapFileWriter {
             final IQuadtree quadtree = quadtrees.get(i);
             final int node = street.getPoint(street.size() / 2);
 
-            // if (quadtree.get)
+            // if (quadtree)
             // if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {
             // return generateCityId(boundary.getName());
             // }

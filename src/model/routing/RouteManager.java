@@ -52,10 +52,11 @@ public class RouteManager extends AbstractModel implements IRouteManager {
             final float offset = point.getAddressPoint().getOffset();
             final int street = point.getAddressPoint().getStreet();
             streetAccessor.setID(street);
-            final int edge = streetAccessor.getAttribute("graphId");
-            final boolean isOneway = streetAccessor.getAttribute("oneway") != 0;
 
             // TODO own instance for corresponding-edge-mapping?
+            final int id = streetAccessor.getAttribute("id");
+            final int edge = id & 0x7FFFFFFF;
+            final boolean isOneway = (id >>> 31) != 0;
             interNodeList.add(isOneway ? new InterNode(edge, offset) : new InterNode(edge, edge | 0x80000000, offset));
         }
 

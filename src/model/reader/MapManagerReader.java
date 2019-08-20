@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import model.IFactory;
-import model.map.CollectiveAccessorFactory;
 import model.map.IElementIterator;
 import model.map.IMapManager;
 import model.map.IMapState;
@@ -15,13 +14,11 @@ import model.map.MapManager;
 import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Quadtree;
-import model.map.accessors.BuildingAccessor;
+import model.map.accessors.CollectiveAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.ITileAccessor;
-import model.map.accessors.LabelAccessor;
 import model.map.accessors.POIAccessor;
-import model.map.accessors.StreetAccessor;
 import model.map.accessors.TileAccessor;
 import model.reader.Reader.ReaderContext;
 
@@ -88,45 +85,39 @@ class MapManagerReader {
             Map<String, IFactory<IPointAccessor>> pointMap,
             final Map<String, IFactory<ICollectiveAccessor>> collectiveMap, final int minZoomStep) throws IOException {
         // TODO handle missing entries!
-        final String[] names = { "street", "area", "building", "label", "poi" };
-        final int[][] distributions = new int[names.length][];
-        final int[][] addresses = new int[names.length][];
 
-        for (int i = 0; i < names.length; i++) {
-            distributions[i] = readIntArray(readerContext, names[i] + "Distribution");
-            addresses[i] = readIntArray(readerContext, names[i] + "Addresses");
+        for (final String name : readStringArray(readerContext, "collectiveElements")) {
+            String[] attributes = readStringArray(readerContext, name + "Attributes");
+            int[] distribution = readIntArray(readerContext, name + "Distribution");
+            int[] address = readIntArray(readerContext, name + "Addresses");
+            int[] data = readIntArray(readerContext, name + "Data");
+            int[] tree = readIntArray(readerContext, name + "Tree");
+            elementIteratorMap.put(name, new Quadtree(tree, minZoomStep));
+            collectiveMap.put(name, () -> new CollectiveAccessor(attributes, distribution, data, address));
         }
 
-        // TODO improve this
-        final CollectiveAccessorFactory[] accessors = new CollectiveAccessorFactory[4];
-        accessors[0] = new CollectiveAccessorFactory(distributions[0], addresses[0]) {
-            @Override
-            public ICollectiveAccessor create() {
-                return new StreetAccessor(distribution, data, addresses);
-            }
-        };
-        accessors[1] = new CollectiveAccessorFactory(distributions[1], addresses[1]);
-        accessors[2] = new CollectiveAccessorFactory(distributions[2], addresses[2]) {
-            @Override
-            public ICollectiveAccessor create() {
-                return new BuildingAccessor(distribution, data, addresses);
-            }
-        };
-        for (int i = 0; i < 3; i++) {
-            collectiveMap.put(names[i], accessors[i]);
-            accessors[i].setData(readIntArray(readerContext, names[i] + "s"));
-            int[] treeData = readIntArray(readerContext, names[i] + "Tree");
-            elementIteratorMap.put(names[i], new Quadtree(treeData, minZoomStep));
+        for (final String name : readStringArray(readerContext, "pointElements")) {
+            String[] attributes = readStringArray(readerContext, name + "Attributes");
+            int[] distribution = readIntArray(readerContext, name + "Distribution");
+            int[] data = readIntArray(readerContext, name + "Data");
+            int[] tree = readIntArray(readerContext, name + "Tree");
+            pointMap.put(name, () -> new POIAccessor(attributes, distribution, data));
+            elementIteratorMap.put(name, new Quadtree(tree, minZoomStep));
         }
-        final int[] labelData = readIntArray(readerContext, names[3] + "s");
-        pointMap.put(names[3], () -> new LabelAccessor(distributions[3], labelData, 3));
-        elementIteratorMap.put(names[3],
-                new Quadtree(readIntArray(readerContext, names[3] + "Tree"), minZoomStep));
+    }
 
-        final int[] poiData = readIntArray(readerContext, names[4] + "s");
-        pointMap.put(names[4], () -> new POIAccessor(distributions[4], poiData, 2));
-        elementIteratorMap.put(names[4],
-                new Quadtree(readIntArray(readerContext, names[4] + "Tree"), minZoomStep));
+    private String[] readStringArray(final ReaderContext readerContext, final String entryName) throws IOException {
+        final DataInputStream stream = readerContext.createInputStream(entryName);
+        if (stream == null)
+            return new String[0];
+
+        final String[] ret = new String[stream.readInt()];
+        for (int i = 0; i < ret.length; ++i)
+            ret[i] = stream.readUTF();
+
+        stream.close();
+        return ret;
+
     }
 
     private int[] readIntArray(final ReaderContext readerContext, final String entryName) throws IOException {

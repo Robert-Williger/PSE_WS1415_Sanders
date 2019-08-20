@@ -8,7 +8,7 @@ import adminTool.labeling.Embedding;
 import adminTool.labeling.LabelPath;
 import adminTool.labeling.roadMap.RoadMap;
 import adminTool.util.ElementAdapter;
-import adminTool.util.Vector2D;
+import util.Vector2D;
 
 public class LabelSpinner {
 

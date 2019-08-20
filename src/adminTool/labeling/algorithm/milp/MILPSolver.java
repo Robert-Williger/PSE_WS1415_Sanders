@@ -22,8 +22,6 @@ import util.DoubleInterval;
 import util.IntList;
 
 public class MILPSolver implements IRoadMapLabelAlgorithm {
-    private static int run = 0;
-
     private final LinearProgramSolver solver;
     private final QualityMeasure measure;
 
@@ -45,13 +43,10 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
 
     @Override
     public void calculateLabeling(RoadMap roadMap) {
-        System.out.println(run);
-        ++run;
         init(roadMap);
         createCandidates();
         if (!findTrivialSolution()) {
             createProgram();
-            System.out.println(candidates.size());
             retrieveSolution();
         }
     }
@@ -324,11 +319,6 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
 
     private void retrieveSolution() {
         final LPSolution lpSolution = lpw.solve(solver);
-        int usedLabels = 0;
-        for (int labelIdx = 0; labelIdx < candidates.size(); ++labelIdx) {
-            usedLabels += lpSolution.getBoolean(labelUseVar(labelIdx)) ? 1 : 0;
-        }
-        System.out.println(lpSolution.getObjectiveValue() + ", " + candidates.size() + ", " + usedLabels);
 
         for (int labelIdx = 0; labelIdx < candidates.size(); ++labelIdx) {
             if (!lpSolution.getBoolean(labelUseVar(labelIdx)))

@@ -11,15 +11,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.PrimitiveIterator.OfInt;
+import java.util.function.IntFunction;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
-import adminTool.elements.Label;
+import adminTool.elements.LineLabel;
 import adminTool.elements.Typeable;
+import adminTool.metrics.IDistanceMap;
+import adminTool.metrics.PixelToCoordDistanceMap;
 import adminTool.quadtree.AreaQuadtreePolicy;
 import adminTool.quadtree.MultipleBoundingBoxQuadtreePolicy;
 import adminTool.quadtree.Quadtree;
@@ -52,8 +56,9 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<Street> streets;
     private Collection<MultiElement> areas;
     private Collection<Building> buildings;
-    private Collection<Label> labels;
+    private Collection<LineLabel> lineLabels;
     private Collection<POI> pois;
+    private Collection<PointLabel> pointLabels;
 
     private final Dimension2D size;
     private final IPointAccess points;
@@ -63,15 +68,17 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     public Sorting<Street> streetSorting;
 
     public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
-            final Collection<Building> buildings, final Collection<POI> pois, final Collection<Label> labels,
-            final IPointAccess points, final Dimension2D size, final ZipOutputStream zipOutput) {
+            final Collection<Building> buildings, final Collection<LineLabel> lineLabels, final Collection<POI> pois,
+            final Collection<PointLabel> pointLabels, final IPointAccess points, final Dimension2D size,
+            final ZipOutputStream zipOutput) {
         super(zipOutput);
 
         this.streets = streets;
         this.areas = terrain;
         this.buildings = buildings;
-        this.labels = labels;
+        this.lineLabels = lineLabels;
         this.pois = pois;
+        this.pointLabels = pointLabels;
         this.points = points;
         this.size = size;
     }
@@ -104,14 +111,17 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         final Sorting<Building> buildingSorting = sort(buildings, new Building[buildings.size()]);
         buildings = null;
 
-        final Sorting<Label> labelSorting = sort(labels, new Label[labels.size()]);
-        labels = null;
+        final Sorting<LineLabel> lineLabelSorting = sort(lineLabels, new LineLabel[lineLabels.size()]);
+        lineLabels = null;
 
         final Sorting<POI> poiSorting = sort(pois, new POI[pois.size()]);
         pois = null;
 
-        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, buildingSorting, labelSorting,
-                poiSorting, points, conversion, zipOutput);
+        final Sorting<PointLabel> pointLabelSorting = sort(pointLabels, new PointLabel[pointLabels.size()]);
+        lineLabels = null;
+
+        ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, buildingSorting, lineLabelSorting,
+                poiSorting, pointLabelSorting, points, conversion, zipOutput);
         elementWriter.write();
 
         //
@@ -124,24 +134,33 @@ public class MapManagerWriter extends AbstractMapFileWriter {
                                                                                                          // this!
         }
 
-        final String[] names = new String[] { "area", "street", "building" };
-        final IQuadtreePolicy[] policies = new IQuadtreePolicy[names.length];
+        final String[] collectiveNames = new String[] { "area", "street", "building", "lineLabel" };
+        final IQuadtreePolicy[] policies = new IQuadtreePolicy[collectiveNames.length];
         final int[] elements = new int[] { areaSorting.elements.length, streetSorting.elements.length,
-                buildingSorting.elements.length };
+                buildingSorting.elements.length, lineLabelSorting.elements.length };
 
         policies[0] = new AreaQuadtreePolicy(Arrays.asList(areaSorting.elements), points);
         policies[1] = new WayQuadtreePolicy(Arrays.asList(streetSorting.elements), points, maxWayWidths);
         policies[2] = new AreaQuadtreePolicy(Arrays.asList(buildingSorting.elements), points);
+        policies[3] = new WayQuadtreePolicy(Arrays.asList(lineLabelSorting.elements), points, maxWayWidths);
 
-        for (int i = 0; i < names.length; i++) {
+        for (int i = 0; i < collectiveNames.length; i++) {
             final IQuadtree tree = new Quadtree(elements[i], policies[i], coordMapSize, zoomSteps,
                     MAX_ELEMENTS_PER_TILE);
-            new QuadtreeWriter(tree, names[i], zipOutput).write();
+            new QuadtreeWriter(tree, collectiveNames[i], zipOutput).write();
         }
 
-        putNextEntry("labelTree");
-        CollisionlessQuadtree tree = createLabelQuadtree(labelSorting.elements, minZoomStep, zoomSteps, coordMapSize,
-                conversionBits);
+        // putNextEntry("lineLabelTree");
+        // CollisionlessQuadtree tree = createLineLabelQuadtree(lineLabelSorting.elements, minZoomStep, coordMapSize,
+        // maxWayWidths);
+        // for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
+        // dataOutput.writeInt(iterator.nextInt());
+        // }
+        // closeEntry();
+
+        putNextEntry("pointLabelTree");
+        CollisionlessQuadtree tree = createPointLabelQuadtree(pointLabelSorting.elements, minZoomStep, zoomSteps,
+                coordMapSize, conversionBits);
         for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
             dataOutput.writeInt(iterator.nextInt());
         }
@@ -155,34 +174,40 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         closeEntry();
     }
 
-    private CollisionlessQuadtree createLabelQuadtree(final Label[] labels, final int minZoomStep, final int zoomSteps,
-            final double mapSize, final int conversionBits) {
+    // private CollisionlessQuadtree createLineLabelQuadtree(final LineLabel[] labels, final int minZoomStep,
+    // final double mapSize, final double[] maxWayWidths) {
+    // final ICollisionPolicy cp = (e1, e2, height) -> labels[e1].getZoom() > height + minZoomStep;
+    // final IQuadtreePolicy qp = new WayQuadtreePolicy(Arrays.asList(labels), points, maxWayWidths);
+    // final IntFunction<Integer> maxElementHeights = e -> labels[e].getZoom() - minZoomStep;
+    //
+    // return new CollisionlessQuadtree(labels.length, qp, cp, mapSize, maxElementHeights);
+    // }
+
+    private CollisionlessQuadtree createPointLabelQuadtree(final PointLabel[] labels, final int minZoomStep,
+            final int zoomSteps, final double mapSize, final int conversionBits) {
         final Font font = new Font("TimesRoman", Font.PLAIN, 18);
         final FontRenderContext c = new FontRenderContext(new AffineTransform(), true, true);
         final List<List<Rectangle2D>> labelBounds = new ArrayList<>(zoomSteps);
 
         for (int h = 0; h < zoomSteps; h++) {
-            labelBounds.add(new ArrayList<>(labels.length));
-        }
+            final IDistanceMap pixelToCoord = new PixelToCoordDistanceMap(h + minZoomStep);
+            final List<Rectangle2D> bounds = new ArrayList<>(labels.length);
+            for (int i = 0; i < labels.length; i++) {
+                final PointLabel label = labels[i];
+                final Rectangle2D stringBounds = font.getStringBounds(label.getName(), c);
+                final double cw = pixelToCoord.map(stringBounds.getWidth());
+                final double ch = pixelToCoord.map(stringBounds.getHeight());
 
-        final double shift = 1 << 29;
-        for (int i = 0; i < labels.length; i++) {
-            final Label label = labels[i];
-            final Rectangle2D stringBounds = font.getStringBounds(label.getName(), c);
-            final double pw = stringBounds.getWidth();
-            final double ph = stringBounds.getHeight();
-            for (int h = 0; h < zoomSteps; h++) {
-                final double cw = pw * (1 << (conversionBits - (h + minZoomStep))) / shift;
-                final double ch = ph * (1 << (conversionBits - (h + minZoomStep))) / shift;
-                labelBounds.get(h).add(new Rectangle2D.Double(points.getX(label.getNode()) - cw / 2,
-                        points.getY(label.getNode()) - ch / 2, cw, ch));
+                bounds.add(new Rectangle2D.Double(points.getX(label.getPoint()) - cw / 2,
+                        points.getY(label.getPoint()) - ch / 2, cw, ch));
             }
+            labelBounds.add(bounds);
         }
         final ICollisionPolicy cp = (e1, e2, height) -> labelBounds.get(height).get(e1)
                 .intersects(labelBounds.get(height).get(e2));
         final IQuadtreePolicy qp = new MultipleBoundingBoxQuadtreePolicy(labelBounds);
 
-        return new CollisionlessQuadtree(labels.length, zoomSteps, qp, cp, mapSize);
+        return new CollisionlessQuadtree(labels.length, qp, cp, mapSize, zoomSteps);
     }
 
     private CollisionlessQuadtree createPOIQuadtree(final POI[] pois, final int minZoomStep, final int zoomSteps,
@@ -195,8 +220,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
             final double size = (MAX_POI_PIXEL_WIDTH << (conversionBits - (h + minZoomStep))) / shift;
             for (int i = 0; i < pois.length; i++) {
                 final POI poi = pois[i];
-                bounds.add(new Rectangle2D.Double(points.getX(poi.getNode()) - size / 2,
-                        points.getY(poi.getNode()) - size / 2, size, size));
+                bounds.add(new Rectangle2D.Double(points.getX(poi.getPoint()) - size / 2,
+                        points.getY(poi.getPoint()) - size / 2, size, size));
             }
             poiBounds.add(bounds);
         }
@@ -204,7 +229,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
                 .intersects(poiBounds.get(height).get(e2));
         final IQuadtreePolicy qp = new MultipleBoundingBoxQuadtreePolicy(poiBounds);
 
-        return new CollisionlessQuadtree(pois.length, zoomSteps, qp, cp, mapSize);
+        return new CollisionlessQuadtree(pois.length, qp, cp, mapSize, zoomSteps);
     }
 
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {

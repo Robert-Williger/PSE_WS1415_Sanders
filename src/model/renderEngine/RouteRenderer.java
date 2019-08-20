@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 import java.util.function.LongConsumer;
 
 import model.map.IMapManager;
+import model.map.accessors.CollectiveUtil;
 import model.map.accessors.ICollectiveAccessor;
 import util.FloatInterval;
 
@@ -60,20 +61,22 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         final LongConsumer consumer = (street) -> {
             streetAccessor.setID(street);
 
-            final int id = streetAccessor.getAttribute("graphId");
+            // TODO own instance for id to edge mapping
+            final int id = streetAccessor.getAttribute("id");
+            final int edge = id & 0x7FFFFFFF;
 
             // TODO optimize this --> no switch case needed
 
             boolean rendered = true;
-            switch (route.getStreetUse(id)) {
+            switch (route.getStreetUse(edge)) {
                 case full:
                     path.append(drawLines().getPathIterator(null), false);
                     break;
                 case part:
-                    path.append(createStreetPartPath(route.getStreetPart(id)).getPathIterator(null), false);
+                    path.append(createStreetPartPath(route.getStreetPart(edge)).getPathIterator(null), false);
                     break;
                 case multiPart:
-                    for (final FloatInterval streetPart : route.getStreetMultiPart(id)) {
+                    for (final FloatInterval streetPart : route.getStreetMultiPart(edge)) {
                         path.append(createStreetPartPath(streetPart).getPathIterator(null), false);
                     }
                     break;
@@ -107,8 +110,8 @@ public class RouteRenderer extends AbstractRenderer implements IRouteRenderer {
         final int y = tileAccessor.getY();
         final int zoom = tileAccessor.getZoom();
         final int size = streetAccessor.size();
-        // TODO use collective util?
-        final int length = streetAccessor.getAttribute("length");
+
+        final int length = CollectiveUtil.getLength(streetAccessor);
 
         float currentLength = 0f;
 

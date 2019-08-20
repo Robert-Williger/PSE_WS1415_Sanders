@@ -2,27 +2,27 @@ package model.map.accessors;
 
 public class POIAccessor extends ElementAccessor implements IPointAccessor {
 
-    protected final int[] data;
-    private final int elementSize;
+    public POIAccessor(final int[] distribution, final int[] data) {
+        this(new String[0], distribution, data);
+    }
 
-    public POIAccessor(final int[] distribution, final int[] data, final int elementSize) {
-        super(distribution);
-        this.data = data;
-        this.elementSize = elementSize;
+    public POIAccessor(final String[] attributes, final int[] distribution, final int[] data) {
+        super(attributes, distribution, data);
     }
 
     @Override
     public int getX() {
-        return data[getAddress()];
+        return data[address() + offset()];
     }
 
     @Override
     public int getY() {
-        return data[getAddress() + 1];
+        return data[address() + offset() + 1];
     }
 
-    protected int getAddress() {
-        return elementSize * (int) getID();
+    @Override
+    protected int address() {
+        return (offset() + 2) * (int) getID();
     }
 
 }

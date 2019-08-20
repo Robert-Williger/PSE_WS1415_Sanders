@@ -1,4 +1,4 @@
-package adminTool.util;
+package util;
 
 public class Vector2D {
 

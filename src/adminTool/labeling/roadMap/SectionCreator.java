@@ -93,7 +93,7 @@ public class SectionCreator {
 
         double[] lengths = new double[roadIds];
         for (int roadId = 0; roadId < roadIds; ++roadId)
-            lengths[roadId] = stringWidthInfo.getStringWidth(nameInfo.getName(roadId));
+            lengths[roadId] = stringWidthInfo.getStringWidth(nameInfo.getName(roadId) + "WWW");
         labelInfo = roadId -> lengths[roadId];
     }
 

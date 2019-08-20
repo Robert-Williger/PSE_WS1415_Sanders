@@ -1,5 +1,6 @@
 package adminTool;
 
+import java.awt.geom.Dimension2D;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,8 +10,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
-import adminTool.elements.Boundary;
+import adminTool.elements.Building;
+import adminTool.elements.IPointAccess;
+import adminTool.elements.LineLabel;
+import adminTool.elements.MultiElement;
+import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
+import adminTool.elements.Way;
+import adminTool.labeling.RoadLabelCreator;
+import adminTool.metrics.IDistanceMap;
+import adminTool.metrics.PixelToCoordDistanceMap;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
 
@@ -32,7 +42,7 @@ public class AdminApplication {
 
         if (outputPath.getName().equals("")) {
             outFileName = "default";
-            outputPath = new File("default.tsk");
+            outputPath = new File("default.map");
         } else {
             if (outFileName.endsWith(".osm.pbf")) {
                 outFileName = outFileName.substring(0, outFileName.length() - 8);
@@ -60,49 +70,52 @@ public class AdminApplication {
 
         ZipOutputStream zipOutput = null;
         try {
-            zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("default.map")));
+            zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputPath)));
         } catch (final FileNotFoundException e) {
             e.printStackTrace();
         }
 
         if (zipOutput != null) {
-            GraphWriter graphWriter = new GraphWriter(parser.getWays(), parser.getPoints(), zipOutput);
+            final Collection<Way> ways = parser.getWays();
+            final Collection<POI> pois = parser.getPOIs();
+            final Collection<PointLabel> pointLabels = parser.getPointLabels();
+            final Collection<Building> buildings = parser.getBuildings();
+            final Collection<MultiElement> areas = parser.getAreas();
+            IPointAccess points = parser.getPoints();
+            parser = null;
+
+            GraphWriter graphWriter = new GraphWriter(ways, points, zipOutput);
             try {
                 graphWriter.write();
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            Projector projector = new Projector(new MercatorProjection());
-            projector.performProjection(parser.getPoints());
-
-            Aligner alignment = new Aligner(projector.getPoints());
-            List<Street> streets = graphWriter.getStreets();
+            final List<Street> streets = graphWriter.getStreets();
             graphWriter = null;
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, parser.getAreas(),
-                    parser.getBuildings(), parser.getPOIs(), parser.getLabels(), alignment.getPoints(),
-                    alignment.getSize(), zipOutput);
+            Projector projector = new Projector(new MercatorProjection());
+            projector.performProjection(points);
+            projector = null;
 
-            // TODO take street list of mapManagerCreator instead of graph creator
-            // [already sorted]
+            Aligner aligner = new Aligner();
+            aligner.performAlignment(points, ways, areas);
+            final Dimension2D mapSize = aligner.getSize();
+            aligner = null;
 
-            Collection<Boundary> boundaries = parser.getBoundaries();
-            parser = null;
+            RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
+            final int zoom = 17;
+            final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
+            labelCreator.createLabels(pixelsToCoords, zoom);
+            points = labelCreator.getPoints();
+
+            Collection<LineLabel> lineLabels = labelCreator.getLabeling();
+
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels, pois,
+                    pointLabels, points, mapSize, zipOutput);
 
             try {
                 mapManagerWriter.write();
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-
-            IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, alignment.getPoints(),
-                    alignment.getSize(), zipOutput);
-            mapManagerWriter = null;
-            boundaries = null;
-
-            try {
-                indexWriter.write();
             } catch (final IOException e) {
                 e.printStackTrace();
             }

@@ -5,21 +5,21 @@ import model.map.accessors.CollectiveAccessor;
 import model.map.accessors.ICollectiveAccessor;
 
 public class CollectiveAccessorFactory implements IFactory<ICollectiveAccessor> {
+    protected final String[] attributes;
     protected final int[] distribution;
     protected final int[] addresses;
-    protected int[] data;
+    protected final int[] data;
 
-    public CollectiveAccessorFactory(final int[] distribution, final int[] addresses) {
+    public CollectiveAccessorFactory(final String[] attributes, final int[] distribution, final int[] addresses,
+            final int[] data) {
+        this.attributes = attributes;
         this.distribution = distribution;
         this.addresses = addresses;
-    }
-
-    public void setData(final int[] data) {
         this.data = data;
     }
 
     @Override
     public ICollectiveAccessor create() {
-        return new CollectiveAccessor(distribution, data, addresses);
+        return new CollectiveAccessor(attributes, distribution, data, addresses);
     }
 }

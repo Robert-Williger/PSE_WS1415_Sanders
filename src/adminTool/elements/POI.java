@@ -15,7 +15,7 @@ public class POI implements Typeable {
         return type;
     }
 
-    public int getNode() {
+    public int getPoint() {
         return index;
     }
 

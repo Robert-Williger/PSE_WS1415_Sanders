@@ -6,12 +6,12 @@ import java.util.PrimitiveIterator;
 
 import adminTool.PointLocator;
 import adminTool.elements.CutPerformer;
+import adminTool.elements.LineLabel;
 import adminTool.elements.CutPerformer.Cut;
 import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.labeling.Embedding;
 import adminTool.labeling.INameInfo;
-import adminTool.labeling.Label;
 import adminTool.labeling.LabelPath;
 import adminTool.labeling.roadMap.LabelSection;
 import adminTool.labeling.roadMap.RoadMap;
@@ -38,7 +38,7 @@ public class LabelCreator {
             this.cuts.add(new Cut(0, 0, 0));
     }
 
-    public Label createLabel(final LabelPath path) {
+    public LineLabel createLabel(final LabelPath path, final int zoom) {
         final IntList fullPath = new IntList();
 
         final IntList edgePath = path.getEdgePath();
@@ -57,7 +57,7 @@ public class LabelCreator {
         }
 
         final LabelSection section = embedding.getSection(path.getEdgePath().get(0));
-        return new Label(fullPath, section.getType(), nameInfo.getName(section.getRoadId()));
+        return new LineLabel(fullPath, section.getType(), nameInfo.getName(section.getRoadId()), zoom);
     }
 
     private IntList createPartialPath(final int edge, final double length, final int piece) {

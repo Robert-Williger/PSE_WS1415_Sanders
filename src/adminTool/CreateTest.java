@@ -11,16 +11,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
+import adminTool.elements.Boundary;
 import adminTool.elements.Building;
 import adminTool.elements.IPointAccess;
-import adminTool.elements.Label;
+import adminTool.elements.LineLabel;
 import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
+import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
 import adminTool.elements.Way;
 import adminTool.labeling.INameInfo;
 import adminTool.labeling.RoadLabelCreator;
 import adminTool.labeling.roadMap.LabelSection;
+import adminTool.metrics.IDistanceMap;
 import adminTool.metrics.PixelToCoordDistanceMap;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
@@ -54,8 +57,8 @@ public class CreateTest {
             }
 
             final Collection<Way> ways = parser.getWays();
-            final Collection<Label> labels = parser.getLabels();
             final Collection<POI> pois = parser.getPOIs();
+            final Collection<PointLabel> pointLabels = parser.getPointLabels();
             final Collection<Building> buildings = parser.getBuildings();
             final Collection<MultiElement> areas = parser.getAreas();
             IPointAccess points = parser.getPoints();
@@ -84,18 +87,21 @@ public class CreateTest {
             aligner = null;
 
             RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
-            labelCreator.createLabels(new PixelToCoordDistanceMap(17));
-            for (final adminTool.labeling.Label label : labelCreator.getLabeling()) {
-                streets.add(new Street(label, 26, label.getName(), 0));
-            }
+            final int zoom = 17;
+            final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
+            labelCreator.createLabels(pixelsToCoords, zoom);
             points = labelCreator.getPoints();
+
+            Collection<LineLabel> lineLabels = labelCreator.getLabeling();
             System.out.println("label creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             start = System.currentTimeMillis();
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, Collections.emptyList(),
-                    Collections.emptyList(), Collections.emptyList(), labels, points, mapSize, zipOutput);
-            // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, pois, labels, points,
+                    Collections.emptyList(), lineLabels, Collections.emptyList(), pointLabels, points, mapSize,
+                    zipOutput);
+            // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels,pois,
+            // labels, points,
             // size, zipOutput);
 
             try {
@@ -110,8 +116,7 @@ public class CreateTest {
             // Collection<Boundary> boundaries = parser.getBoundaries();
             // parser = null;
             //
-            // IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting,
-            // aligner.getPoints(),
+            // IndexWriter indexWriter = new IndexWriter(boundaries, mapManagerWriter.streetSorting, points, mapSize,
             // zipOutput);
             // try {
             // indexWriter.write();
@@ -126,6 +131,7 @@ public class CreateTest {
                 e.printStackTrace();
             }
         }
+
     }
 
     private void addRoadMap(final List<Street> streets, final List<LabelSection> roadSections,

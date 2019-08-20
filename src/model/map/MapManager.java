@@ -150,7 +150,7 @@ public class MapManager implements IMapManager {
 
                 float totalLength = 0;
                 final int size = streetAccessor.size();
-                final int maxLength = streetAccessor.getAttribute("length");
+                final int maxLength = CollectiveUtil.getLength(streetAccessor);
 
                 int lastX = streetAccessor.getX(0);
                 int lastY = streetAccessor.getY(0);
