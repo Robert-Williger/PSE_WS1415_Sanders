@@ -2,6 +2,7 @@ package model.map.accessors;
 
 public interface IAccessor {
 
-    void setID(long id);
+    void setId(int id);
 
+    int getId();
 }

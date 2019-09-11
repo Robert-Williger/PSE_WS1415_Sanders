@@ -3,6 +3,7 @@ package model.renderEngine;
 import java.util.List;
 
 import model.map.IMapManager;
+import model.renderEngine.renderers.IRenderRoute;
 
 public interface IImageLoader {
 

@@ -7,8 +7,8 @@ import model.targets.AccessPoint;
 public class CollectiveUtil {
 
     // TODO
-    public static int getLength(final ICollectiveAccessor accessor, final long id) {
-        accessor.setID(id);
+    public static int getLength(final ICollectiveAccessor accessor, final int id) {
+        accessor.setId(id);
 
         return getLength(accessor);
     }
@@ -30,8 +30,8 @@ public class CollectiveUtil {
         return (int) totalLength;
     }
 
-    public static boolean contains(final ICollectiveAccessor accessor, final long id, final int x, final int y) {
-        accessor.setID(id);
+    public static boolean contains(final ICollectiveAccessor accessor, final int id, final int x, final int y) {
+        accessor.setId(id);
 
         if (!containsBB(accessor, id, x, y)) {
             return false;
@@ -47,8 +47,8 @@ public class CollectiveUtil {
         return c;
     }
 
-    public static boolean containsBB(final ICollectiveAccessor accessor, final long id, final int x, final int y) {
-        accessor.setID(id);
+    public static boolean containsBB(final ICollectiveAccessor accessor, final int id, final int x, final int y) {
+        accessor.setId(id);
 
         final int size = accessor.size();
 
@@ -70,8 +70,8 @@ public class CollectiveUtil {
         return getLocation(accessor, point.getStreet(), point.getOffset());
     }
 
-    public static Point getLocation(final ICollectiveAccessor accessor, final long id, final float offset) {
-        accessor.setID(id);
+    public static Point getLocation(final ICollectiveAccessor accessor, final int id, final float offset) {
+        accessor.setId(id);
 
         final int size = accessor.size();
 

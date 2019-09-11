@@ -63,9 +63,12 @@ public class Map extends AbstractModel implements IMap {
 
     @Override
     public void setSize(final int width, final int height) {
+        int x = getX();
+        int y = getY();
         state.setPixelSectionSize(width, height);
 
         fireResizeEvent(width, height);
+        fireMoveEvent(getX() - x, getY() - y);
     }
 
     @Override

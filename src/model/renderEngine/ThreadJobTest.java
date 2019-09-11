@@ -8,7 +8,7 @@ public abstract class ThreadJobTest<T> {
         this.id = id;
     }
 
-    public long getID() {
+    public long getId() {
         return id;
     }
 

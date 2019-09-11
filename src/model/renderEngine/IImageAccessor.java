@@ -3,7 +3,7 @@ package model.renderEngine;
 import java.awt.Image;
 
 import model.IModel;
-import model.map.IMapManager;
+import model.map.accessors.ITileConversion;
 
 public interface IImageAccessor extends IModel {
 
@@ -13,6 +13,9 @@ public interface IImageAccessor extends IModel {
 
     Image getImage(int row, int column, int zoom);
 
-    void setMapManager(IMapManager manager);
+    void setTileConversion(ITileConversion conversion);
 
+    void addTileListener(ITileListener listener);
+
+    void removeTileListener(ITileListener listener);
 }

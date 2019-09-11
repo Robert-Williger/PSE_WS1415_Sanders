@@ -5,18 +5,18 @@ import java.awt.Image;
 import javax.swing.event.ChangeListener;
 
 import model.AbstractModel;
-import model.map.IMapManager;
+import model.map.accessors.ITileConversion;
 
 public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
-    private IMapManager mapManager;
+    private ITileConversion conversion;
 
     private final IImageFetcher imageFetcher;
 
     private boolean isVisible;
 
-    public ImageAccessor(final IMapManager manager, final IImageFetcher fetcher) {
-        setMapManager(manager);
+    public ImageAccessor(final ITileConversion conversion, final IImageFetcher fetcher) {
+        setTileConversion(conversion);
         imageFetcher = fetcher;
 
         isVisible = true;
@@ -49,13 +49,23 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     @Override
     public Image getImage(final int row, final int column, final int zoom) {
-        final long tileID = mapManager.getTileID(row, column, zoom);
+        final long tileID = conversion.getId(row, column, zoom);
         return imageFetcher.getImage(tileID);
     }
 
     @Override
-    public void setMapManager(final IMapManager manager) {
-        mapManager = manager;
+    public void setTileConversion(final ITileConversion conversion) {
+        this.conversion = conversion;
+    }
+
+    @Override
+    public void addTileListener(ITileListener listener) {
+        imageFetcher.addTileListener(listener);
+    }
+
+    @Override
+    public void removeTileListener(ITileListener listener) {
+        imageFetcher.removeTileListener(listener);
     }
 
 }

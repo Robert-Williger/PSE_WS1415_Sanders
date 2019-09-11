@@ -1,6 +1,7 @@
 package adminTool;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.zip.ZipOutputStream;
@@ -11,6 +12,10 @@ import adminTool.elements.MultiElement;
 import adminTool.elements.POI;
 import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
+import adminTool.metrics.IDistanceMap;
+import adminTool.metrics.PixelToCoordDistanceMap;
+import adminTool.util.ElementAdapter;
+import util.IntList;
 import adminTool.elements.LineLabel;
 
 public class ElementWriter extends AbstractMapFileWriter {
@@ -23,7 +28,7 @@ public class ElementWriter extends AbstractMapFileWriter {
     private Sorting<POI> pois;
     private Sorting<PointLabel> pointLabels;
 
-    private IPointAccess pointAccess;
+    private IPointAccess points;
     private IntConversion conversion;
 
     public ElementWriter(final Sorting<MultiElement> areas, final Sorting<Street> streets,
@@ -38,7 +43,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         this.lineLabels = lineLabels;
         this.pois = pois;
         this.pointLabels = pointLabels;
-        this.pointAccess = pointAccess;
+        this.points = pointAccess;
         this.conversion = conversion;
     }
 
@@ -153,7 +158,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             dataOutput.writeInt(stringMap.get(street.getName()));
             ++address;
 
-            address += writeMultiElement(street);
+            address += writeMultiElements(street, false);
         }
 
         closeEntry();
@@ -185,7 +190,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             dataOutput.writeInt(stringMap.get(building.getName()));
             ++address;
 
-            address += writeMultiElement(building);
+            address += writeMultiElements(building, true);
         }
 
         closeEntry();
@@ -207,7 +212,7 @@ public class ElementWriter extends AbstractMapFileWriter {
         for (final MultiElement area : areas.elements) {
             addresses[++index] = address;
 
-            address += writeMultiElement(area);
+            address += writeMultiElements(area, true);
         }
 
         closeEntry();
@@ -234,7 +239,7 @@ public class ElementWriter extends AbstractMapFileWriter {
             dataOutput.writeInt(label.getZoom());
             ++address;
 
-            address += writeMultiElement(label);
+            address += writeMultiElements(label, false);
         }
 
         closeEntry();
@@ -275,18 +280,59 @@ public class ElementWriter extends AbstractMapFileWriter {
     }
 
     private void writePoint(final int point) throws IOException {
-        dataOutput.writeInt(conversion.convert(pointAccess.getX(point)));
-        dataOutput.writeInt(conversion.convert(pointAccess.getY(point)));
+        dataOutput.writeInt(conversion.convert(points.getX(point)));
+        dataOutput.writeInt(conversion.convert(points.getY(point)));
     }
 
-    private int writeMultiElement(final MultiElement element) throws IOException {
+    private int writeMultiElements(MultiElement element, boolean polygon) throws IOException {
+        ArrayList<MultiElement> elements = new ArrayList<>();
+        IntList zooms = new IntList();
+        elements.add(element);
+        zooms.add(Integer.MAX_VALUE);
+
+        final ElementAdapter adapter = new ElementAdapter(points);
+        adapter.setMultiElement(element);
+        for (int zoom = 19; zoom >= 6; --zoom) {
+            IDistanceMap map = new PixelToCoordDistanceMap(zoom);
+            VisvalingamWyatt simplifier = new VisvalingamWyatt(map.map(1) * map.map(1));
+            IntList indices = polygon ? simplifier.simplifyPolygon(adapter) : simplifier.simplifyMultiline(adapter);
+            if (indices.size() > element.size() / 2)
+                continue;
+
+            for (int i = 0; i < indices.size(); ++i) {
+                indices.set(i, element.getPoint(indices.get(i)));
+            }
+            element = new MultiElement(indices, element.getType());
+            adapter.setMultiElement(element);
+
+            elements.add(element);
+            zooms.add(zoom);
+        }
+
+        int ret = 0;
+
+        int address = 2 * elements.size();
+        for (int i = elements.size() - 1; i >= 0; --i) {
+            dataOutput.writeInt(zooms.get(i));
+            dataOutput.writeInt(address);
+            ret += 2;
+            address += (2 * elements.get(i).size() + 1);
+        }
+        for (int i = elements.size() - 1; i >= 0; --i) {
+            ret += writeMultiElement(elements.get(i));
+        }
+
+        return ret;
+    }
+
+    private int writeMultiElement(MultiElement element) throws IOException {
         dataOutput.writeInt(element.size());
         int ret = 1;
 
         for (int i = 0; i < element.size(); ++i) {
             final int node = element.getPoint(i);
-            dataOutput.writeInt(conversion.convert(pointAccess.getX(node)));
-            dataOutput.writeInt(conversion.convert(pointAccess.getY(node)));
+            dataOutput.writeInt(conversion.convert(points.getX(node)));
+            dataOutput.writeInt(conversion.convert(points.getY(node)));
             ret += 2;
         }
 

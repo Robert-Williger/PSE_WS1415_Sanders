@@ -61,7 +61,7 @@ public class TextProcessor implements ITextProcessor {
         maxStringLength = 0;
         for (final Entry entry : entries) {
             final int street = entry.street;
-            streetAccessor.setID(street);
+            streetAccessor.setId(street);
             final String streetName = stringAccessor.getString(streetAccessor.getAttribute("name"));
             final String cityName = entry.city;
             final String realName = streetName + " " + cityName;

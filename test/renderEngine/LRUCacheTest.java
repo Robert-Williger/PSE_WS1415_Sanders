@@ -76,7 +76,7 @@ public class LRUCacheTest {
         assertFalse(cache.contains(5));
         cache.put(5, image);
         assertTrue(cache.contains(5));
-        cache.reset();
+        cache.clear();
         assertFalse(cache.contains(5));
     }
 

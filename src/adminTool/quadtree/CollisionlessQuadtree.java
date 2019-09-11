@@ -3,12 +3,9 @@ package adminTool.quadtree;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.function.IntFunction;
 
-import util.IntList;
-
-public class CollisionlessQuadtree {
+public class CollisionlessQuadtree extends AbstractQuadtree implements IQuadtree {
 
     private CollisionlessQuadtree[] children;
-    private final IntList elements;
 
     public CollisionlessQuadtree(final int elements, final IQuadtreePolicy qp, final ICollisionPolicy cp,
             final double size, final int maxHeight) {
@@ -17,16 +14,12 @@ public class CollisionlessQuadtree {
 
     public CollisionlessQuadtree(final int elements, final IQuadtreePolicy qp, final ICollisionPolicy cp,
             final double size, final IntFunction<Integer> maxElementHeight) {
-        this.elements = new IntList();
-
         for (int element = 0; element < elements; element++) {
             add(element, maxElementHeight.apply(element), qp, cp, 0, 0, 0, size);
         }
     }
 
-    private CollisionlessQuadtree() {
-        elements = new IntList();
-    }
+    private CollisionlessQuadtree() {}
 
     private void add(final int element, final int maxHeight, final IQuadtreePolicy qp, final ICollisionPolicy cp,
             final double x, final double y, final int height, final double size) {
@@ -92,37 +85,8 @@ public class CollisionlessQuadtree {
         return children == null;
     }
 
-    public CollisionlessQuadtree[] getChildren() {
-        return children;
-    }
-
-    public IntList getElements() {
-        return elements;
-    }
-
-    public IntList toList() {
-        final IntList list = new IntList();
-        toList(list, this);
-        return list;
-    }
-
-    private void toList(final IntList data, final CollisionlessQuadtree tree) {
-        final int startIndex = data.size();
-
-        // allocate children pointer.
-        for (int i = 0; i < 4; i++) {
-            data.add(-1);
-        }
-        data.addAll(tree.getElements());
-        // end of elements
-        data.add(-1);
-
-        if (!tree.isLeaf()) {
-            final CollisionlessQuadtree[] children = tree.getChildren();
-            for (int i = 0; i < 4; i++) {
-                data.set(startIndex + i, data.size());
-                toList(data, children[i]);
-            }
-        }
+    @Override
+    public CollisionlessQuadtree getChild(int child) {
+        return children[child];
     }
 }

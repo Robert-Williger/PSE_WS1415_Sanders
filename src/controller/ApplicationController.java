@@ -160,7 +160,6 @@ public class ApplicationController {
 
     private void importMap(final File file) {
         new Thread(() -> {
-            // setPriority(Thread.MIN_PRIORITY);
             SwingUtilities.invokeLater(() -> {
                 importView.setProgress(0);
                 importView.setLocationRelativeTo(null);
@@ -191,6 +190,6 @@ public class ApplicationController {
     }
 
     protected void controllHelp() {
-        view.setHelpVisible(true);
+        view.getHelp().setVisible(true);
     }
 }

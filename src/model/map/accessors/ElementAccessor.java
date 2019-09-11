@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class ElementAccessor extends Accessor implements IElementAccessor {
+public abstract class ElementAccessor implements IElementAccessor {
     private final int[] distribution;
     protected final int[] data;
     private final Map<String, Integer> attributeMap;
@@ -25,33 +25,33 @@ public abstract class ElementAccessor extends Accessor implements IElementAccess
     protected abstract int address();
 
     @Override
-    public int getType() {
+    public final int getType() {
         // TODO implement binary search?
         int type = 0;
 
         // TODO >= ?
-        while (getID() >= distribution[type]) {
+        while (getId() >= distribution[type]) {
             ++type;
         }
         return type;
     }
 
     @Override
-    public int getAttribute(int identifier) {
+    public final int getAttribute(int identifier) {
         return data[address() + identifier];
     }
 
     @Override
-    public Set<String> getAttributes() {
+    public final Set<String> getAttributes() {
         return attributeMap.keySet();
     }
 
     @Override
-    public int getAttributeId(String attribute) {
+    public final int getAttributeId(String attribute) {
         return attributeMap.get(attribute);
     }
 
-    protected int offset() {
+    protected final int offset() {
         return attributeMap.size();
     }
 }

@@ -15,4 +15,7 @@ public interface IImageFetcher extends IModel {
 
     void setMapManager(IMapManager manager);
 
+    void addTileListener(ITileListener listener);
+
+    void removeTileListener(ITileListener listener);
 }

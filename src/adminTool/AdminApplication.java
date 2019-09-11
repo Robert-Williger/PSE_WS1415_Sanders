@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
@@ -103,13 +104,13 @@ public class AdminApplication {
             final Dimension2D mapSize = aligner.getSize();
             aligner = null;
 
-            RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
-            final int zoom = 17;
-            final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
-            labelCreator.createLabels(pixelsToCoords, zoom);
-            points = labelCreator.getPoints();
+            // RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
+            // final int zoom = 17;
+            // final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
+            // labelCreator.createLabels(pixelsToCoords, zoom);
+            // points = labelCreator.getPoints();
 
-            Collection<LineLabel> lineLabels = labelCreator.getLabeling();
+            Collection<LineLabel> lineLabels = new ArrayList<>();// labelCreator.getLabeling();
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels, pois,
                     pointLabels, points, mapSize, zipOutput);

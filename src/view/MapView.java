@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ListIterator;
 
@@ -72,10 +73,12 @@ public class MapView extends JPanel implements IMapView {
 
             @Override
             public void mapResized(final int width, final int height) {
+                repaint();
             }
 
             @Override
             public void mapMoved(final double deltaX, final double deltaY) {
+                repaint();
             }
         };
 
@@ -91,7 +94,6 @@ public class MapView extends JPanel implements IMapView {
         this.list = list;
         mapLayer.setLoader(loader);
         list.addPointListListener(pointListListener);
-        map.addChangeListener((e) -> pointLayer.repaint());
         map.addMapListener(mapListener);
 
         repaint();
@@ -141,7 +143,6 @@ public class MapView extends JPanel implements IMapView {
 
             final int tileSize = loader.getTileSize();
             for (final IImageAccessor accessor : loader.getImageAccessors()) {
-                accessor.addChangeListener((e) -> repaint());
                 add(new MapPaintingLayer(accessor, tileSize));
             }
         }
@@ -154,24 +155,32 @@ public class MapView extends JPanel implements IMapView {
         private int tileSize;
 
         public MapPaintingLayer(final IImageAccessor accessor, final int tileSize) {
+            accessor.addTileListener((img, row, column, zoom) -> {
+                if (zoomInfo.state == ZoomInfo.DEFAULT && zoom == map.getZoom()) {
+                    final int leftX = map.getX() - map.getWidth() / 2;
+                    final int leftY = map.getY() - map.getHeight() / 2;
+                    final int x = -(leftX % tileSize) + (column - leftX / tileSize) * tileSize;
+                    final int y = -(leftY % tileSize) + (row - leftY / tileSize) * tileSize;
+                    repaint(x, y, tileSize, tileSize);
+                }
+            });
             this.accessor = accessor;
             this.tileSize = tileSize;
             setOpaque(false);
         }
 
         @Override
-        public void paint(final Graphics g) {
+        public void paintComponent(final Graphics g) {
             if (accessor.isVisible()) {
                 final int zoom = map.getZoom();
 
                 final Graphics2D g2 = (Graphics2D) g;
+
                 switch (zoomInfo.state) {
-                    case ZoomInfo.ZOOMING:
-                        paint(g2, zoom + zoomInfo.zoomOffset, zoomInfo.deltaX, zoomInfo.deltaY, zoomInfo.scale);
-                        break;
                     case ZoomInfo.BLENDING:
                         paint(g2, map.getX(), map.getY(), zoom);
-                        g2.setComposite(zoomInfo.composite);
+                        g2.setComposite(zoomInfo.composite); // fall through
+                    case ZoomInfo.ZOOMING:
                         paint(g2, zoom + zoomInfo.zoomOffset, zoomInfo.deltaX, zoomInfo.deltaY, zoomInfo.scale);
                         break;
                     default:
@@ -213,12 +222,17 @@ public class MapView extends JPanel implements IMapView {
         private void paint(final Graphics2D g, final int zoom, final double xOffset, final double yOffset,
                 final int startRow, final int endRow, final int startColumn, final int endColumn) {
             g.translate(-xOffset, -yOffset);
+            Rectangle rect = g.getClipBounds();
             int x;
             int y = 0;
             for (int row = startRow; row <= endRow; row++) {
                 x = 0;
                 for (int column = startColumn; column <= endColumn; column++) {
-                    g.drawImage(accessor.getImage(row, column, zoom), x, y, this);
+                    if (rect == null || rect.intersects(x, y, tileSize, tileSize)) {
+                        final Image img = accessor.getImage(row, column, zoom);
+                        if (img != null)
+                            g.drawImage(img, x, y, null);
+                    }
                     x += tileSize;
                 }
                 y += tileSize;
@@ -305,34 +319,35 @@ public class MapView extends JPanel implements IMapView {
     private class SmoothMapMover extends Thread {
         private final int SLEEP_TIME = 10;
         private final int MAX_STEPS = 22;
+        private final int ANIMATION_STEPS = 2 * MAX_STEPS + 1;
         private double scalePerStep;
         private int currentStep;
 
-        private final Runnable[] runnables;
-        private final AlphaComposite[] composites;
+        private final Runnable[] animationSteps;
 
         public SmoothMapMover() {
-            currentStep = 2 * MAX_STEPS;
-            runnables = createRunnables();
-            composites = createComposites();
+            setPriority(MAX_PRIORITY);
+            currentStep = ANIMATION_STEPS;
+            animationSteps = createAnimationSteps();
         }
 
         @Override
         public void run() {
             while (!isInterrupted()) {
-                if (currentStep < 2 * MAX_STEPS) {
-                    SwingUtilities.invokeLater(runnables[currentStep++]);
+                if (currentStep < ANIMATION_STEPS) {
+                    animationSteps[currentStep++].run();
+                    SwingUtilities.invokeLater(() -> repaint());
                     try {
                         Thread.sleep(SLEEP_TIME);
                     } catch (final InterruptedException e) {
+                        interrupt();
                     }
                 } else {
-                    zoomInfo.state = ZoomInfo.DEFAULT;
-                    SwingUtilities.invokeLater(() -> repaint());
                     synchronized (this) {
                         try {
                             wait();
                         } catch (InterruptedException e) {
+                            interrupt();
                         }
                     }
                 }
@@ -345,52 +360,41 @@ public class MapView extends JPanel implements IMapView {
                 zoomInfo.destScale = steps > 0 ? 2 : 0.5;
                 zoomInfo.deltaX = deltaX;
                 zoomInfo.deltaY = deltaY;
-                zoomInfo.state = ZoomInfo.ZOOMING;
-                zoomInfo.scale = 1;
-                zoomInfo.s = 0;
                 // TODO respect multiple steps
-                scalePerStep = steps > 0 ? 1.0 / MAX_STEPS : -0.5 / MAX_STEPS;
+                scalePerStep = steps > 0 ? 1.0 / (MAX_STEPS - 1) : -0.5 / (MAX_STEPS - 1);
                 currentStep = 0;
-
                 notify();
             }
         }
 
-        private Runnable[] createRunnables() {
-            final Runnable[] ret = new Runnable[2 * MAX_STEPS];
+        private Runnable[] createAnimationSteps() {
+            final Runnable[] ret = new Runnable[ANIMATION_STEPS];
+
             for (int i = 0; i < MAX_STEPS; i++) {
                 final int step = i;
                 ret[i] = () -> {
-                    zoomInfo.scale = 1 + scalePerStep * (step + 1);
-                    zoomInfo.s = (double) (step + 1) / MAX_STEPS;
-                    repaint();
-                };
-                ret[i + MAX_STEPS] = () -> {
-                    zoomInfo.composite = composites[step];
-
-                    repaint();
+                    zoomInfo.state = ZoomInfo.ZOOMING;
+                    zoomInfo.scale = 1 + scalePerStep * step;
+                    zoomInfo.s = (double) step / (MAX_STEPS - 1);
                 };
             }
-            ret[MAX_STEPS] = () -> {
-                zoomInfo.state = ZoomInfo.BLENDING;
-                zoomInfo.composite = composites[0];
-
-                repaint();
+            for (int i = MAX_STEPS; i < 2 * MAX_STEPS; ++i) {
+                final int step = i - MAX_STEPS;
+                final float alpha = 1 - 1.0f / (MAX_STEPS - 1) * step;
+                final AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
+                ret[i] = () -> {
+                    zoomInfo.state = ZoomInfo.BLENDING;
+                    zoomInfo.composite = composite;
+                };
+            }
+            ret[2 * MAX_STEPS] = () -> {
+                zoomInfo.state = ZoomInfo.DEFAULT;
             };
-            return ret;
-        }
-
-        private AlphaComposite[] createComposites() {
-            final AlphaComposite[] ret = new AlphaComposite[MAX_STEPS];
-            for (int i = 0; i < MAX_STEPS; i++) {
-                final float alpha = 1 - 1.0f / MAX_STEPS * (i + 1);
-                ret[i] = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
-            }
             return ret;
         }
     }
 
-    private class ZoomInfo {
+    private static class ZoomInfo {
         private int zoomOffset;
         private double scale;
         private double destScale;
@@ -403,8 +407,8 @@ public class MapView extends JPanel implements IMapView {
         private AlphaComposite composite;
         private int state;
 
-        private static final int ZOOMING = 0;
-        private static final int BLENDING = 1;
-        private static final int DEFAULT = 2;
+        private static final int DEFAULT = 0;
+        private static final int ZOOMING = 1;
+        private static final int BLENDING = 2;
     }
 }

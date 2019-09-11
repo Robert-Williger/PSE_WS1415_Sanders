@@ -28,8 +28,8 @@ import adminTool.util.ShapeUtil;
 import util.IntList;
 
 public class OverlapResolve {
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
-    private static final int DEFAULT_MAX_HEIGHT = 20;
+    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 16;
+    private static final int DEFAULT_MAX_HEIGHT = 10;
 
     private final IDrawInfo info;
     private final CutPerformer cutPerformer;

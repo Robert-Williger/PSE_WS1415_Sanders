@@ -103,8 +103,8 @@ public class SidebarController {
                     machine.cancel();
                     break;
                 case "reset":
-                    final int result = JOptionPane.showConfirmDialog(null, "Alle Punkte unwiderruflich lÃ¶schen?",
-                            "Routenpunkte lÃ¶schen?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    final int result = JOptionPane.showConfirmDialog(null, "Alle Punkte unwiderruflich löschen?",
+                            "Routenpunkte löschen?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (result == JOptionPane.YES_OPTION) {
                         machine.resetPoints();
                     }

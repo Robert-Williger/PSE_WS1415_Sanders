@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.PrimitiveIterator.OfInt;
-import java.util.function.IntFunction;
 import java.util.zip.ZipOutputStream;
 
 import adminTool.elements.Building;
@@ -35,18 +33,13 @@ import adminTool.quadtree.IQuadtreePolicy;
 import adminTool.quadtree.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
-
-    // number of tiles in lowest zoom step per dimension
-    private static final int MIN_TILES = 1;
-
     private static final int TILE_LENGTH_BITS = 8;
     private static final int TILE_LENGTH = 1 << TILE_LENGTH_BITS;
 
-    private static final int MAX_ELEMENTS_PER_TILE = 4;
+    private static final int MAX_ELEMENTS_PER_TILE = 8;
 
     private static final int MAX_ZOOM_STEP = 19;
     private static final int MIN_ZOOM_STEP = 0;
-    private static final int MAX_ZOOM_STEPS = 15;
 
     private static final int SCALE_FACTOR_BITS = 21;
 
@@ -91,12 +84,11 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         // final double shift = Math.pow(2, shiftBits);
         conversion = (value) -> (int) Math.round(value * shift);
 
-        final int zoomOffset = (int) Math.ceil(log2(
-                Math.max(conversion.convert(size.getWidth()), conversion.convert(size.getHeight())) / (int) MIN_TILES));
+        final int zoomOffset = 29 - MIN_ZOOM_STEP;
         final double coordMapSize = (1 << zoomOffset) / shift;
 
-        final int minZoomStep = Math.max(MIN_ZOOM_STEP, SCALE_FACTOR_BITS + TILE_LENGTH_BITS - zoomOffset);
-        final int maxZoomStep = Math.min(MAX_ZOOM_STEP, minZoomStep + MAX_ZOOM_STEPS - 1);
+        final int minZoomStep = MIN_ZOOM_STEP;
+        final int maxZoomStep = MAX_ZOOM_STEP;
         final int zoomSteps = maxZoomStep - minZoomStep + 1;
         final int conversionBits = SCALE_FACTOR_BITS;
 
@@ -118,7 +110,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         pois = null;
 
         final Sorting<PointLabel> pointLabelSorting = sort(pointLabels, new PointLabel[pointLabels.size()]);
-        lineLabels = null;
+        pointLabels = null;
 
         ElementWriter elementWriter = new ElementWriter(areaSorting, streetSorting, buildingSorting, lineLabelSorting,
                 poiSorting, pointLabelSorting, points, conversion, zipOutput);
@@ -129,10 +121,8 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         //
 
         final double[] maxWayWidths = new double[zoomSteps];
-        for (int zoom = minZoomStep; zoom <= maxZoomStep; ++zoom) {
-            maxWayWidths[zoom - minZoomStep] = (MAX_WAY_PIXEL_WIDTH << (conversionBits - zoom)) / shift; // TODO improve
-                                                                                                         // this!
-        }
+        for (int zoom = minZoomStep; zoom <= maxZoomStep; ++zoom)
+            maxWayWidths[zoom - minZoomStep] = new PixelToCoordDistanceMap(zoom).map(MAX_WAY_PIXEL_WIDTH);
 
         final String[] collectiveNames = new String[] { "area", "street", "building", "lineLabel" };
         final IQuadtreePolicy[] policies = new IQuadtreePolicy[collectiveNames.length];
@@ -145,43 +135,22 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         policies[3] = new WayQuadtreePolicy(Arrays.asList(lineLabelSorting.elements), points, maxWayWidths);
 
         for (int i = 0; i < collectiveNames.length; i++) {
+            long start = System.currentTimeMillis();
             final IQuadtree tree = new Quadtree(elements[i], policies[i], coordMapSize, zoomSteps,
                     MAX_ELEMENTS_PER_TILE);
+            System.out.println(collectiveNames[i] + " creation: " + (System.currentTimeMillis() - start));
+            start = System.currentTimeMillis();
             new QuadtreeWriter(tree, collectiveNames[i], zipOutput).write();
+            System.out.println(collectiveNames[i] + " writing: " + (System.currentTimeMillis() - start));
         }
 
-        // putNextEntry("lineLabelTree");
-        // CollisionlessQuadtree tree = createLineLabelQuadtree(lineLabelSorting.elements, minZoomStep, coordMapSize,
-        // maxWayWidths);
-        // for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
-        // dataOutput.writeInt(iterator.nextInt());
-        // }
-        // closeEntry();
-
-        putNextEntry("pointLabelTree");
         CollisionlessQuadtree tree = createPointLabelQuadtree(pointLabelSorting.elements, minZoomStep, zoomSteps,
                 coordMapSize, conversionBits);
-        for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
-            dataOutput.writeInt(iterator.nextInt());
-        }
-        closeEntry();
+        new QuadtreeWriter(tree, "pointLabel", zipOutput).write();
 
-        putNextEntry("poiTree");
         tree = createPOIQuadtree(poiSorting.elements, minZoomStep, zoomSteps, coordMapSize, conversionBits);
-        for (final OfInt iterator = tree.toList().iterator(); iterator.hasNext();) {
-            dataOutput.writeInt(iterator.nextInt());
-        }
-        closeEntry();
+        new QuadtreeWriter(tree, "poi", zipOutput).write();
     }
-
-    // private CollisionlessQuadtree createLineLabelQuadtree(final LineLabel[] labels, final int minZoomStep,
-    // final double mapSize, final double[] maxWayWidths) {
-    // final ICollisionPolicy cp = (e1, e2, height) -> labels[e1].getZoom() > height + minZoomStep;
-    // final IQuadtreePolicy qp = new WayQuadtreePolicy(Arrays.asList(labels), points, maxWayWidths);
-    // final IntFunction<Integer> maxElementHeights = e -> labels[e].getZoom() - minZoomStep;
-    //
-    // return new CollisionlessQuadtree(labels.length, qp, cp, mapSize, maxElementHeights);
-    // }
 
     private CollisionlessQuadtree createPointLabelQuadtree(final PointLabel[] labels, final int minZoomStep,
             final int zoomSteps, final double mapSize, final int conversionBits) {
@@ -235,10 +204,6 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private <T extends Typeable> Sorting<T> sort(final Collection<T> elements, final T[] data) {
         TypeSorter<T> sorter = new TypeSorter<>(elements, data);
         return sorter.sort();
-    }
-
-    private double log2(final double value) {
-        return (Math.log(value) / Math.log(2));
     }
 
     private void writeHeader(final int minZoomStep, final int maxZoomStep, final int conversionBits)

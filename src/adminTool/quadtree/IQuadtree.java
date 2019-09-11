@@ -12,8 +12,6 @@ public interface IQuadtree {
 
     IntList getElements();
 
-    // void bfs(TreeConsumer consumer);
-
     void traverse(double size, ElementConsumer consumer);
 
     default IQuadtree getChild(final int xOffset, final int yOffset) {

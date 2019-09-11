@@ -132,14 +132,6 @@ public class ApplicationView extends JFrame implements IApplicationView {
         return map;
     }
 
-    @Override
-    public void setHelpVisible(final boolean visible) {
-        if (visible) {
-            help.setLocationRelativeTo(null);
-        }
-        help.setVisible(visible);
-    }
-
     private class ContentPane extends JPanel {
         private static final long serialVersionUID = 1L;
 
@@ -147,16 +139,16 @@ public class ApplicationView extends JFrame implements IApplicationView {
             super(new BorderLayout());
         }
 
-        @Override
-        public void paintComponent(final Graphics g) {
-            final float[] FRACTIONS = { 0.0f, 1.0f };
-            final Color[] FILL_COLORS = { Color.white, new Color(230, 230, 230) };
-            final Paint paint = new LinearGradientPaint(0, 0, getWidth(),
-                    (int) Math.sqrt(getHeight() * getHeight() + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS,
-                    MultipleGradientPaint.CycleMethod.REFLECT);
-            ((Graphics2D) g).setPaint(paint);
-            g.fillRect(0, 0, getWidth(), getHeight());
-        }
+        // @Override
+        // public void paintComponent(final Graphics g) {
+        // final float[] FRACTIONS = { 0.0f, 1.0f };
+        // final Color[] FILL_COLORS = { Color.white, new Color(230, 230, 230) };
+        // final Paint paint = new LinearGradientPaint(0, 0, getWidth(),
+        // (int) Math.sqrt(getHeight() * getHeight() + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS,
+        // MultipleGradientPaint.CycleMethod.REFLECT);
+        // ((Graphics2D) g).setPaint(paint);
+        // g.fillRect(0, 0, getWidth(), getHeight());
+        // }
     }
 
     private class ApplicationMenuBar extends JMenuBar {
@@ -210,6 +202,11 @@ public class ApplicationView extends JFrame implements IApplicationView {
             importItem.setEnabled(!calculating);
             exportItem.setEnabled(!calculating);
         }
+    }
+
+    @Override
+    public IHelpView getHelp() {
+        return help;
     }
 
 }

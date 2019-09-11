@@ -3,12 +3,10 @@ package model.map;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
-import model.map.accessors.ITileAccessor;
+import model.map.accessors.ITileConversion;
 import model.targets.AddressPoint;
 
 public interface IMapManager {
-
-    long getTileID(int row, int column, int zoom);
 
     AddressPoint getAddress(int x, int y);
 
@@ -22,7 +20,9 @@ public interface IMapManager {
 
     IMapState getState();
 
-    ITileAccessor createTileAccessor();
+    ITileConversion getTileConversion();
+
+    IElementIterator getElementIterator(String identifier);
 
     IStringAccessor createStringAccessor();
 

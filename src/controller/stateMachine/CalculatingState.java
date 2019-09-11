@@ -2,7 +2,7 @@ package controller.stateMachine;
 
 import java.awt.Rectangle;
 
-import model.renderEngine.IRenderRoute;
+import model.renderEngine.renderers.IRenderRoute;
 import view.ISidebarView;
 
 public class CalculatingState extends AbstractState {
@@ -49,8 +49,8 @@ public class CalculatingState extends AbstractState {
             sidebar.setRouteLength(route.getLength());
             getImageLoader().setRenderRoute(route);
             final Rectangle bounds = route.getBounds();
-            getMap().center(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
             getImageLoader().update();
+            getMap().center(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
             route = null;
         }
 

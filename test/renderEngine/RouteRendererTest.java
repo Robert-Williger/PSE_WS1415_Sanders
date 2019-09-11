@@ -10,20 +10,8 @@ import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 import model.map.MapManager;
-//import model.elements.IArea;
-//import model.elements.IBuilding;
-//import model.elements.Label;
-//import model.elements.POI;
-//import model.elements.Street;
-//import model.elements.StreetNode;
-//import model.elements.IWay;
-//import model.map.MapManager;
-//import model.map.PixelConverter;
-//import model.map.Tile;
-import model.renderEngine.RenderRoute;
-import model.renderEngine.RouteRenderer;
-//import model.targets.PointList;
-//import model.targets.RoutePoint;
+import model.renderEngine.renderers.RenderRoute;
+import model.renderEngine.renderers.RouteRenderer;
 
 import org.junit.Before;
 import org.junit.BeforeClass;

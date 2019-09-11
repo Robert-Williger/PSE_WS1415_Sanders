@@ -1,18 +1,16 @@
 package model.renderEngine;
 
-import java.awt.Image;
+public interface ICache<K, V> {
 
-public interface ICache {
-
-    void reset();
+    void clear();
 
     void setSize(int size);
 
     int getSize();
 
-    void put(long id, Image image);
+    void put(K key, V value);
 
-    Image get(long id);
+    V get(K key);
 
     boolean contains(long id);
 

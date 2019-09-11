@@ -14,15 +14,16 @@ import javax.swing.event.ChangeListener;
 import model.map.IMapManager;
 import model.map.MapManager;
 import model.renderEngine.AbstractImageFetcher;
-import model.renderEngine.IRenderer;
+import model.renderEngine.ImageFetcher;
 import model.renderEngine.SequentialImageFetcher;
+import model.renderEngine.renderers.IRenderer;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ImageFetcherTest {
-    private static AbstractImageFetcher fetcher;
+    private static ImageFetcher fetcher;
     private static volatile boolean isRendered = false;
     private static DummyRenderer renderer;
     private final long defaultID = -2;
@@ -32,16 +33,7 @@ public class ImageFetcherTest {
 
         public long lastTileID;
 
-        public DummyRenderer() {
-        }
-
-        @Override
-        public void addChangeListener(final ChangeListener listener) {
-        }
-
-        @Override
-        public void removeChangeListener(final ChangeListener listener) {
-        }
+        public DummyRenderer() {}
 
         @Override
         public boolean render(long tileID, Image image) {
@@ -67,7 +59,7 @@ public class ImageFetcherTest {
     public void setUp() {
         renderer.lastTileID = defaultID;
         isRendered = false;
-        fetcher = new SequentialImageFetcher(renderer, new MapManager());
+        fetcher = new ImageFetcher(renderer, new MapManager());
         defaultImage = fetcher.getImage(0);
     }
 
@@ -91,8 +83,7 @@ public class ImageFetcherTest {
         final long tileID = 35;
         fetcher.loadImage(tileID, 0);
 
-        while (!isRendered) {
-        }
+        while (!isRendered) {}
 
         assertEquals(tileID, renderer.lastTileID);
     }
@@ -102,8 +93,7 @@ public class ImageFetcherTest {
         final long tileID = 16;
         fetcher.loadImage(tileID, 0);
 
-        while (!isRendered) {
-        }
+        while (!isRendered) {}
 
         assertEquals(tileID, renderer.lastTileID);
         renderer.lastTileID = defaultID;

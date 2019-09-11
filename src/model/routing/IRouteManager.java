@@ -2,7 +2,7 @@ package model.routing;
 
 import model.IModel;
 import model.Progressable;
-import model.renderEngine.IRenderRoute;
+import model.renderEngine.renderers.IRenderRoute;
 import model.targets.IPointList;
 
 public interface IRouteManager extends Progressable, IModel {

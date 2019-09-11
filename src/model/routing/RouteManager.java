@@ -9,8 +9,8 @@ import model.IProgressListener;
 import model.map.IMapManager;
 import model.map.IMapState;
 import model.map.accessors.ICollectiveAccessor;
-import model.renderEngine.IRenderRoute;
-import model.renderEngine.RenderRoute;
+import model.renderEngine.renderers.IRenderRoute;
+import model.renderEngine.renderers.RenderRoute;
 import model.targets.IPointList;
 import model.targets.IRoutePoint;
 import model.targets.PointList;
@@ -51,7 +51,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         for (final IRoutePoint point : pointList) {
             final float offset = point.getAddressPoint().getOffset();
             final int street = point.getAddressPoint().getStreet();
-            streetAccessor.setID(street);
+            streetAccessor.setId(street);
 
             // TODO own instance for corresponding-edge-mapping?
             final int id = streetAccessor.getAttribute("id");

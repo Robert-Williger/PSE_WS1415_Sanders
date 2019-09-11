@@ -17,9 +17,9 @@ import model.map.Quadtree;
 import model.map.accessors.CollectiveAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
-import model.map.accessors.ITileAccessor;
+import model.map.accessors.ITileConversion;
 import model.map.accessors.POIAccessor;
-import model.map.accessors.TileAccessor;
+import model.map.accessors.TileConversion;
 import model.reader.Reader.ReaderContext;
 
 class MapManagerReader {
@@ -41,9 +41,9 @@ class MapManagerReader {
         final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
         readElements(readerContext, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
 
-        final IFactory<ITileAccessor> tileFactory = () -> new TileAccessor(elementIteratorMap, state);
+        final ITileConversion tileConversion = new TileConversion(state);
 
-        mapManager = new MapManager(pointMap, collectiveMap, tileFactory, strings, state);
+        mapManager = new MapManager(pointMap, collectiveMap, elementIteratorMap, tileConversion, strings, state);
     }
 
     private IMapState readMapState(final ReaderContext readerContext) throws IOException {

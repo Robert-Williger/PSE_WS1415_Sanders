@@ -4,6 +4,7 @@ import java.awt.geom.Dimension2D;
 import java.util.Collection;
 import java.util.List;
 
+import adminTool.VisvalingamWyatt;
 import adminTool.elements.PointAccess;
 import adminTool.elements.Way;
 import adminTool.labeling.IDrawInfo;
@@ -15,6 +16,8 @@ import adminTool.labeling.roadMap.decomposition.JunctionConnectionFilter;
 import adminTool.labeling.roadMap.decomposition.LongRoadFilter;
 import adminTool.labeling.roadMap.decomposition.RoadConnectionFilter;
 import adminTool.labeling.roadMap.decomposition.WellShapedJunctionFilter;
+import adminTool.util.ElementAdapter;
+import util.IntList;
 
 public class SectionCreator {
 
@@ -26,6 +29,7 @@ public class SectionCreator {
     private final double stubThreshold;
     private final double junctionThreshold;
     private final double fuzzyThreshold;
+    private final double simplificationThreshold;
     private final double lengthThreshold;
 
     private int roadIds;
@@ -37,7 +41,8 @@ public class SectionCreator {
 
     public SectionCreator(final IDrawInfo drawInfo, final IStringWidthInfo stringWidthInfo,
             final QualityMeasure qualityMeasure, final double stubThreshold, final double tThreshold,
-            final double fuzzyThreshold, final double junctionThreshold, final double lengthThreshold) {
+            final double fuzzyThreshold, final double simplificationThreshold, final double junctionThreshold,
+            final double lengthThreshold) {
         this.drawInfo = drawInfo;
         this.stringWidthInfo = stringWidthInfo;
         this.qualityMeasure = qualityMeasure;
@@ -46,6 +51,7 @@ public class SectionCreator {
         this.tCrossThreshold = tThreshold;
         this.junctionThreshold = junctionThreshold;
         this.fuzzyThreshold = fuzzyThreshold;
+        this.simplificationThreshold = simplificationThreshold;
         this.lengthThreshold = lengthThreshold;
     }
 
@@ -73,12 +79,21 @@ public class SectionCreator {
         long start = System.currentTimeMillis();
         this.points = points;
         identify(ways);
+        System.out.println("planarize");
         planarize(mapSize);
+        System.out.println("fuse");
         fuse();
+        System.out.println("simplify");
+        simplify();
+        System.out.println("transform");
         transform();
+        System.out.println("filter");
         filter();
+        System.out.println("resolve");
         resolve(mapSize);
+        System.out.println("subdivide");
         subdivide();
+        System.out.println("decompose");
         decompose();
         double time = (System.currentTimeMillis() - start) / 1000.;
         System.out.println("label section creation time: " + time + "s");
@@ -93,8 +108,14 @@ public class SectionCreator {
 
         double[] lengths = new double[roadIds];
         for (int roadId = 0; roadId < roadIds; ++roadId)
-            lengths[roadId] = stringWidthInfo.getStringWidth(nameInfo.getName(roadId) + "WWW");
+            lengths[roadId] = stringWidthInfo.getStringWidth(nameInfo.getName(roadId));
         labelInfo = roadId -> lengths[roadId];
+    }
+
+    private void planarize(final Dimension2D mapSize) {
+        Planarization planarization = new Planarization(stubThreshold, tCrossThreshold, fuzzyThreshold);
+        planarization.planarize(roadSections, points, mapSize);
+        roadSections = planarization.getRoads();
     }
 
     private void fuse() {
@@ -103,10 +124,18 @@ public class SectionCreator {
         roadSections = fusion.getRoads();
     }
 
-    private void planarize(final Dimension2D mapSize) {
-        Planarization planarization = new Planarization(stubThreshold, tCrossThreshold, fuzzyThreshold);
-        planarization.planarize(roadSections, points, mapSize);
-        roadSections = planarization.getRoads();
+    private void simplify() {
+        VisvalingamWyatt simplifier = new VisvalingamWyatt(simplificationThreshold);
+        ElementAdapter adapter = new ElementAdapter(points);
+        for (int i = 0; i < roadSections.size(); ++i) {
+            final LabelSection label = roadSections.get(i);
+            adapter.setMultiElement(label);
+            final IntList simplified = simplifier.simplifyMultiline(adapter);
+            for (int j = 0; j < simplified.size(); ++j) {
+                simplified.set(j, label.getPoint(simplified.get(j)));
+            }
+            roadSections.set(i, new LabelSection(simplified, label.getType(), label.getRoadId()));
+        }
     }
 
     private void transform() {

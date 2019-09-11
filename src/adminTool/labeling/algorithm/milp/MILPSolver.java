@@ -9,7 +9,6 @@ import java.util.Set;
 import adminTool.labeling.ILabelInfo;
 import adminTool.labeling.LabelPath;
 import adminTool.labeling.QualityMeasure;
-import adminTool.labeling.algorithm.HeadIntervalFinder;
 import adminTool.labeling.algorithm.IRoadMapLabelAlgorithm;
 import adminTool.labeling.roadMap.RoadGraph;
 import adminTool.labeling.roadMap.RoadMap;
@@ -18,33 +17,38 @@ import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LPSolution;
 import scpsolver.problems.LPWizard;
 import scpsolver.problems.LPWizardConstraint;
-import util.DoubleInterval;
-import util.IntList;
 
 public class MILPSolver implements IRoadMapLabelAlgorithm {
+    private static final double DEFAULT_OVERLAP_OFFSET = 0;
     private final LinearProgramSolver solver;
-    private final QualityMeasure measure;
+    private final CandidateCreator candidateCreator;
+    private final double overlapOffset;
 
     private RoadGraph graph;
     private ILabelInfo labelInfo;
     private List<LabelCandidate> candidates;
     private List<LabelPath> labeling;
-    private HeadIntervalFinder intervalFinder;
     private LPWizard lpw;
 
     public MILPSolver(final QualityMeasure measure) {
-        this(measure, SolverFactory.newDefault());
+        this(measure, DEFAULT_OVERLAP_OFFSET);
     }
 
-    public MILPSolver(final QualityMeasure measure, final LinearProgramSolver solver) {
-        this.measure = measure;
+    public MILPSolver(final QualityMeasure measure, final double overlapOffset) {
+        this(measure, overlapOffset, SolverFactory.newDefault());
+    }
+
+    public MILPSolver(final QualityMeasure measure, final double overlapOffset, final LinearProgramSolver solver) {
+        this.candidateCreator = new CandidateCreator(measure);
+        this.overlapOffset = overlapOffset;
         this.solver = solver;
     }
 
     @Override
     public void calculateLabeling(RoadMap roadMap) {
         init(roadMap);
-        createCandidates();
+        candidateCreator.createCandidates(roadMap);
+        candidates = new ArrayList<>(candidateCreator.getCandidates());
         if (!findTrivialSolution()) {
             createProgram();
             retrieveSolution();
@@ -59,77 +63,9 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
     private void init(RoadMap roadMap) {
         this.graph = roadMap.getGraph();
         this.labelInfo = roadMap.getLabelInfo();
-        this.intervalFinder = new HeadIntervalFinder(roadMap, measure);
         this.candidates = new ArrayList<>();
         this.labeling = new ArrayList<>();
         this.lpw = new LPWizard();
-    }
-
-    private void createCandidates() {
-        final LabelCandidate label = new LabelCandidate();
-        final IntList edgePath = label.getEdgePath();
-        boolean[] marked = new boolean[graph.numNodes()];
-        for (int node = 0; node < graph.numNodes(); ++node) {
-            if (graph.isJunction(node))
-                continue;
-
-            for (int edge = graph.beginEdge(node); edge < graph.endEdge(node); ++edge) {
-                final int next = graph.edgeHead(edge);
-                if (graph.isJunction(next))
-                    continue;
-
-                // edge is a road section
-                label.setHeadEdgeReversed(isReversed(node, next));
-                label.setTailEdgeReversed(isReversed(node, next));
-                label.setRoadId(graph.road(node));
-                edgePath.add(edge);
-                final double labelLength = labelInfo.getLength(graph.road(node));
-                tryAppendCandidates(label, node, next);
-                constructLabels(label, node, node, marked, labelLength);
-                edgePath.removeIndex(edgePath.size() - 1);
-            }
-        }
-    }
-
-    private void constructLabels(LabelCandidate label, int startNode, int penultimateNode, boolean[] marked,
-            double maxLength) {
-        final int lastNode = graph.edgeHead(label.getTailEdge());
-        final IntList edgePath = label.getEdgePath();
-
-        for (int nextEdge = graph.beginEdge(lastNode); nextEdge < graph.endEdge(lastNode); ++nextEdge) {
-            final int nextNode = graph.edgeHead(nextEdge);
-            if (nextNode == penultimateNode || (graph.isJunction(nextNode) && marked[nextNode])
-                    || (graph.isRegular(nextNode) && graph.road(nextNode) != label.getRoadId()))
-                continue;
-            // do not subtract road section length if it forms a cyclic label
-            final double edgeLength = nextEdge != label.getHeadEdge() ? graph.edgeLength(nextEdge) : 0;
-
-            edgePath.add(nextEdge);
-            label.setTailEdgeReversed(isReversed(lastNode, nextNode));
-            if (graph.isRoadSection(lastNode, nextNode))
-                tryAppendCandidates(label, startNode, nextNode);
-
-            if (maxLength - edgeLength >= 0) {
-                marked[nextNode] = true;
-                constructLabels(label, startNode, lastNode, marked, maxLength - edgeLength);
-                marked[nextNode] = false;
-            }
-
-            edgePath.removeIndex(edgePath.size() - 1);
-
-        }
-    }
-
-    private void tryAppendCandidates(final LabelCandidate candidate, final int startNode, final int endNode) {
-        if (startNode > endNode)
-            return;
-
-        final List<DoubleInterval> intervals = intervalFinder.findIntervals(candidate.getEdgePath(),
-                candidate.getRoadId(), candidate.isHeadEdgeReversed());
-        for (final DoubleInterval interval : intervals) {
-            candidate.setHeadInterval(interval);
-            candidates.add(new LabelCandidate(candidate));
-        }
     }
 
     private boolean findTrivialSolution() {
@@ -241,12 +177,13 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
     }
 
     private void addExternalOverlapConstraint(LabelCandidate l1, boolean l1reversed, boolean l2reversed, String ht1,
-            String ht2, int l1Idx, int l2Idx, final double m) {
+            String ht2, int l1Idx, int l2Idx, final double sectionLength) {
         final String name = "eoc" + ht1 + "-" + ht2;
         final int l1Sign = l1Sign(l1, l1reversed, l2reversed);
+        final double m = sectionLength + overlapOffset;
 
-        lpw.addConstraint(name, 2 * m, ">=").plus(ht1, l1Sign).plus(ht2, -l1Sign).plus(labelUseVar(l1Idx), m)
-                .plus(labelUseVar(l2Idx), m);
+        lpw.addConstraint(name, 2 * m - overlapOffset, ">=").plus(ht1, l1Sign).plus(ht2, -l1Sign)
+                .plus(labelUseVar(l1Idx), m).plus(labelUseVar(l2Idx), m);
     }
 
     private int l1Sign(final LabelCandidate l1, boolean l1reversed, boolean l2reversed) {
@@ -301,10 +238,6 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
         for (int i = 1; i < label.getEdgePath().size() - 1; ++i)
             internalLength += graph.edgeLength(label.getEdge(i));
         return internalLength;
-    }
-
-    private boolean isReversed(final int start, final int end) {
-        return start > end;
     }
 
     private boolean overlapInternally(final LabelCandidate l1, final LabelCandidate l2) {

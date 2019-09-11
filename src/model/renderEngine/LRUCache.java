@@ -1,31 +1,26 @@
 package model.renderEngine;
 
-import java.awt.Image;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class LRUCache implements ICache {
+public class LRUCache<K, V> implements ICache<K, V> {
 
     // for set capacity only
     private final LRULinkedHashMap unsynchronizedLRUMap;
-    private Map<Long, Image> LRUMap;
-    private final Collection<Image> freeList;
+    private Map<K, V> LRUMap;
+    private final Collection<V> freeList;
 
-    public LRUCache(final int capacity, final boolean isSynchronized, final Collection<Image> freeList) {
+    public LRUCache(final int capacity, final boolean isSynchronized, final Collection<V> freeList) {
         unsynchronizedLRUMap = new LRULinkedHashMap(capacity);
-        if (isSynchronized) {
-            LRUMap = Collections.synchronizedMap(unsynchronizedLRUMap);
-        } else {
-            LRUMap = unsynchronizedLRUMap;
-        }
+        LRUMap = isSynchronized ? Collections.synchronizedMap(unsynchronizedLRUMap) : unsynchronizedLRUMap;
 
         this.freeList = freeList;
     }
 
     @Override
-    public void reset() {
+    public void clear() {
         LRUMap.clear();
     }
 
@@ -42,13 +37,13 @@ public class LRUCache implements ICache {
     }
 
     @Override
-    public void put(final long id, final Image image) {
-        LRUMap.put(id, image);
+    public void put(final K key, final V value) {
+        LRUMap.put(key, value);
     }
 
     @Override
-    public Image get(final long id) {
-        return LRUMap.get(id);
+    public V get(final K key) {
+        return LRUMap.get(key);
     }
 
     @Override
@@ -56,7 +51,7 @@ public class LRUCache implements ICache {
         return LRUMap.containsKey(id);
     }
 
-    private class LRULinkedHashMap extends LinkedHashMap<Long, Image> {
+    private class LRULinkedHashMap extends LinkedHashMap<K, V> {
         private static final long serialVersionUID = 1L;
         private int capacity;
 
@@ -66,7 +61,7 @@ public class LRUCache implements ICache {
         }
 
         @Override
-        protected boolean removeEldestEntry(final Map.Entry<Long, Image> eldest) {
+        protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
             if (size() > capacity) {
                 freeList.add(eldest.getValue());
                 return true;

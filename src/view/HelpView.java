@@ -8,7 +8,7 @@ import java.net.URL;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
-public class HelpView extends JFrame {
+public class HelpView extends JFrame implements IHelpView {
     private static final long serialVersionUID = 1L;
 
     private BufferedImage image;
@@ -39,5 +39,11 @@ public class HelpView extends JFrame {
     @Override
     public void paint(final Graphics g) {
         g.drawImage(image, 0, 0, this);
+    }
+
+    @Override
+    public void setVisible(final boolean visible) {
+        setLocationRelativeTo(null);
+        super.setVisible(visible);
     }
 }

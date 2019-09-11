@@ -10,7 +10,7 @@ import model.map.Map;
 import model.map.MapManager;
 import model.reader.IReader;
 import model.reader.Reader;
-import model.renderEngine.DefaultImageLoader;
+import model.renderEngine.ImageLoader;
 import model.renderEngine.IImageLoader;
 import model.routing.DirectedGraph;
 import model.routing.IRouteManager;
@@ -29,7 +29,7 @@ public class Application extends AbstractModel implements IApplication {
         reader = new Reader();
 
         final IMapManager manager = new MapManager();
-        loader = new DefaultImageLoader(manager);
+        loader = new ImageLoader(manager);
         routing = new RouteManager(new DirectedGraph(), manager);
         processor = new TextProcessor();
         map = new Map(manager);

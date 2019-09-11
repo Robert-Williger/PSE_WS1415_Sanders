@@ -26,7 +26,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 
     public void add(final J job, final int priority) {
         synchronized (queue) {
-            jobs.add(job.getID());
+            jobs.add(job.getId());
             queue.insert(job, priority);
             queue.notifyAll();
         }
@@ -41,7 +41,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
 
     public boolean remove(final J job) {
         synchronized (queue) {
-            jobs.remove(job.getID());
+            jobs.remove(job.getId());
             return queue.remove(job);
         }
     }
@@ -85,7 +85,7 @@ public abstract class ThreadPoolTest<T, J extends ThreadJobTest<T>> {
                 }
                 work(job);
                 processResult(job);
-                jobs.remove(job.getID());
+                jobs.remove(job.getId());
             }
         }
     }

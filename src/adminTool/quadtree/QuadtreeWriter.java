@@ -35,15 +35,20 @@ public class QuadtreeWriter extends AbstractMapFileWriter {
 
     private void fillRec(final IQuadtree quadtree) {
         final int startIndex = addresses.size();
-        // allocate children pointer.
-        for (int i = 0; i < 4; i++) {
+        if (quadtree.isLeaf()) {
             addresses.add(-1);
-        }
-        addresses.addAll(quadtree.getElements());
-        // end of elements
-        addresses.add(-1);
+            addresses.addAll(quadtree.getElements());
+            // end of elements
+            addresses.add(-1);
+        } else {
+            // allocate children pointer.
+            for (int i = 0; i < 4; i++) {
+                addresses.add(0);
+            }
+            addresses.addAll(quadtree.getElements());
+            // end of elements
+            addresses.add(-1);
 
-        if (!quadtree.isLeaf()) {
             for (int i = 0; i < IQuadtree.NUM_CHILDREN; ++i) {
                 final IQuadtree tree = quadtree.getChild(i);
                 addresses.set(startIndex + i, addresses.size());

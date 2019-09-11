@@ -24,19 +24,22 @@ public class RoadLabelCreator {
 
     private static final double MAX_WAY_WIDTH = 18;
     private static final double FUZZY_THRESHOLD = 1;
+    private static final double SIMPLIFICATION_THRESHOLD = 4;
     private static final double T_THRESHOLD = 2;
     private static final double SECTION_LENGTH_THRESHOLD = 350;
 
-    private static final double ALPHA_MAX = 22.5 / 180 * Math.PI; // 22.5Â°
+    private static final double ALPHA_MAX = 22.5 / 180 * Math.PI; // 22.5°
     private static final double L_MAX = 20;
 
     private static final double STUB_THRESHOLD = MAX_WAY_WIDTH;
     private static final double JUNCTION_THRESHOLD = 2 * MAX_WAY_WIDTH;
 
+    private static final double OVERLAP_OFFSET = 10;
+
     private Collection<Way> ways;
     private Dimension2D mapSize;
 
-    private Collection<LineLabel> labeling;
+    private List<LineLabel> labeling;
     private PointAccess points;
 
     public RoadLabelCreator(final Collection<Way> ways, final IPointAccess points, final Dimension2D mapSize) {
@@ -49,7 +52,7 @@ public class RoadLabelCreator {
         }
     }
 
-    public void createLabels(final IDistanceMap pixelsToCoords, final int zoom) {
+    public void createLabels(final IDistanceMap pixelsToCoords, final IDrawInfo drawInfo, final int zoom) {
         this.labeling = new ArrayList<>();
 
         final double fuzzyThreshold = pixelsToCoords.map(FUZZY_THRESHOLD);
@@ -58,11 +61,14 @@ public class RoadLabelCreator {
         final double lMax = pixelsToCoords.map(L_MAX);
         final double stubThreshold = pixelsToCoords.map(STUB_THRESHOLD);
         final double junctionThreshold = pixelsToCoords.map(JUNCTION_THRESHOLD);
+        final double overlapOffset = pixelsToCoords.map(OVERLAP_OFFSET);
+        final double simplificationThreshold = Math.pow(pixelsToCoords.map(SIMPLIFICATION_THRESHOLD), 2);
 
         QualityMeasure qualityMeasure = new QualityMeasure(points, lMax, ALPHA_MAX);
 
-        SectionCreator sectionCreator = new SectionCreator(new DrawInfo(), new StringWidthInfo(pixelsToCoords),
-                qualityMeasure, stubThreshold, tThreshold, fuzzyThreshold, junctionThreshold, lengthThreshold);
+        SectionCreator sectionCreator = new SectionCreator(drawInfo, new StringWidthInfo(pixelsToCoords),
+                qualityMeasure, stubThreshold, tThreshold, fuzzyThreshold, simplificationThreshold, junctionThreshold,
+                lengthThreshold);
         sectionCreator.createSections(ways, points, mapSize);
         List<LabelSection> roadSections = sectionCreator.getRoadSections();
         List<LabelSection> junctionSections = sectionCreator.getJunctionSections();
@@ -73,7 +79,7 @@ public class RoadLabelCreator {
                 sectionCreator.getNameInfo());
         Collection<RoadMap> roadMaps = roadMapsCreator.getRoadMaps();
 
-        IRoadMapLabelAlgorithm labelingAlgorithm = new MILPSolver(qualityMeasure);
+        IRoadMapLabelAlgorithm labelingAlgorithm = new MILPSolver(qualityMeasure, overlapOffset);
 
         LabelShifter shifter = new LabelShifter();
         LabelSpinner spinner = new LabelSpinner();
@@ -82,7 +88,7 @@ public class RoadLabelCreator {
             labelingAlgorithm.calculateLabeling(roadMap);
             shifter.postprocess(roadMap, labelingAlgorithm.getLabeling(), qualityMeasure);
             spinner.postprocess(roadMap, shifter.getLabeling());
-            postprocessor.postprocess(roadMap, labelingAlgorithm.getLabeling(), zoom);
+            postprocessor.postprocess(roadMap, shifter.getLabeling(), zoom);
             labeling.addAll(postprocessor.getLabeling());
         }
     }

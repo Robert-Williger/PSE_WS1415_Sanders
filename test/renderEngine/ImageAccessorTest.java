@@ -12,6 +12,7 @@ import javax.swing.event.ChangeListener;
 import model.map.IMapManager;
 import model.map.MapManager;
 import model.renderEngine.IImageFetcher;
+import model.renderEngine.ITileListener;
 import model.renderEngine.ImageAccessor;
 
 import org.junit.Before;
@@ -26,8 +27,7 @@ public class ImageAccessorTest {
         long lastGetImageId = -1;
 
         @Override
-        public void flush() {
-        }
+        public void flush() {}
 
         @Override
         public Image getImage(final long id) {
@@ -36,12 +36,10 @@ public class ImageAccessorTest {
         }
 
         @Override
-        public void loadImage(final long id, final int priority) {
-        }
+        public void loadImage(final long id, final int priority) {}
 
         @Override
-        public void setMapManager(final IMapManager manager) {
-        }
+        public void setMapManager(final IMapManager manager) {}
 
         @Override
         public void addChangeListener(ChangeListener listener) {
@@ -50,6 +48,16 @@ public class ImageAccessorTest {
 
         @Override
         public void removeChangeListener(ChangeListener listener) {
+
+        }
+
+        @Override
+        public void addTileListener(ITileListener listener) {
+
+        }
+
+        @Override
+        public void removeTileListener(ITileListener listener) {
 
         }
     }
@@ -61,8 +69,8 @@ public class ImageAccessorTest {
     public void setUp() {
         manager = new MapManager();
         fetcher = new DummyFetcher();
-        accessor = new ImageAccessor(manager, fetcher);
-        accessor.setMapManager(manager);
+        accessor = new ImageAccessor(manager.getTileConversion(), fetcher);
+        accessor.setTileConversion(manager.getTileConversion());
         accessor.setVisible(false);
         changed = false;
     }

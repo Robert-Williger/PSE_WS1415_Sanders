@@ -1,68 +1,69 @@
 package model.map;
 
 import java.awt.Point;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.PrimitiveIterator;
-import java.util.PrimitiveIterator.OfLong;
-import java.util.function.LongPredicate;
+import java.util.PrimitiveIterator.OfInt;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 import model.IFactory;
 import model.map.accessors.CollectiveUtil;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
-import model.map.accessors.ITileAccessor;
+import model.map.accessors.ITileConversion;
 import model.map.accessors.StringAccessor;
-import model.map.accessors.TileAccessor;
+import model.map.accessors.TileConversion;
 import model.targets.AddressPoint;
 
 public class MapManager implements IMapManager {
-    private static final int COORD_BITS = 29;
-    private static final int ZOOM_BITS = Long.SIZE - 2 * COORD_BITS - 1;
-    private static final int MAX_COORD = (1 << COORD_BITS) - 1;
-    private static final int MAX_ZOOM = (1 << ZOOM_BITS) - 1;
-
     private static final int MAX_STREET_BUILDING_PIXEL_DISTANCE = 75;
     // TODO improve this
-    private static final String UNKNOWN_STREET = "Unbekannte StraÃŸe";
+    private static final String UNKNOWN_STREET = "Unbekannte Straße";
 
     private final java.util.Map<String, IFactory<IPointAccessor>> pointMap;
     private final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap;
-    private final IFactory<ITileAccessor> tileFactory;
     private final String[] strings;
 
-    private final ITileAccessor tileAccessor;
+    private final ITileConversion tileConversion;
+    private final IElementIterator streetIterator;
+    private final IElementIterator buildingIterator;
+
     private final ICollectiveAccessor buildingAccessor;
     private final ICollectiveAccessor streetAccessor;
     private final IStringAccessor stringAccessor;
     private final IMapState state;
 
+    private final java.util.Map<String, IElementIterator> map;
+
     // TODO improve this
     private final long streetBuildingCoordDistanceSq;
 
-    private static IFactory<ITileAccessor> emptyFactory() {
-        return () -> {
-            return new TileAccessor(new HashMap<String, IElementIterator>(),
-                    new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
-        };
-    }
+    private static ITileConversion defaultConversion = new TileConversion(
+            new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
 
     public MapManager() {
-        this(new HashMap<>(), new HashMap<>(), emptyFactory(), new String[0],
+        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), defaultConversion, new String[0],
                 new MapState(256, 256, 0, 1, 256, new PixelConverter(1)));
     }
 
     public MapManager(final java.util.Map<String, IFactory<IPointAccessor>> pointMap,
             final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap,
-            final IFactory<ITileAccessor> tileFactory, final String[] strings, final IMapState state) {
+            java.util.Map<String, IElementIterator> map, ITileConversion conversion, final String[] strings,
+            final IMapState state) {
         this.state = state;
 
         this.pointMap = pointMap;
         this.collectiveMap = collectiveMap;
-        this.tileFactory = tileFactory;
+        this.map = map;
+        this.tileConversion = conversion;
         this.strings = strings;
 
-        this.tileAccessor = createTileAccessor();
+        this.streetIterator = getElementIterator("street");
+        this.buildingIterator = getElementIterator("building");
         this.buildingAccessor = createCollectiveAccessor("building");
         this.streetAccessor = createCollectiveAccessor("street");
         this.stringAccessor = createStringAccessor();
@@ -76,16 +77,16 @@ public class MapManager implements IMapManager {
     public AddressPoint getAddress(final int x, final int y) {
         final Target target = new Target();
 
-        final long building = getBuildingAt(x, y);
+        final int building = getBuildingAt(x, y);
 
         final long[] tileIds = new long[4];
         final double[] tileDistanceSquares = new double[4];
 
         if (building != -1) {
-            buildingAccessor.setID(building);
+            buildingAccessor.setId(building);
             final int street = buildingAccessor.getAttribute("street");
-            final LongPredicate pred = l -> {
-                streetAccessor.setID(l);
+            final IntPredicate pred = l -> {
+                streetAccessor.setId(l);
                 final int oStreet = streetAccessor.getAttribute("name");
                 return street == -1 || oStreet == -1 || oStreet == street;
             };
@@ -93,7 +94,7 @@ public class MapManager implements IMapManager {
             if (applyLocation(x, y, tileIds, tileDistanceSquares, pred, target)
                     || applyLocation(x, y, tileIds, tileDistanceSquares, l -> true, target)) {
                 if (street == -1) {
-                    streetAccessor.setID(target.street);
+                    streetAccessor.setId(target.street);
                     target.address = getStreetName(streetAccessor.getAttribute("name"));
                 } else {
                     target.address = getBuildingAddress(street);
@@ -104,7 +105,7 @@ public class MapManager implements IMapManager {
         } else {
             if (applyLocation(x, y, tileIds, tileDistanceSquares, l -> true, target)) {
                 if (!applyAddressByBuilding(target, tileIds, tileDistanceSquares)) {
-                    streetAccessor.setID(target.street);
+                    streetAccessor.setId(target.street);
                     target.address = getStreetName(streetAccessor.getAttribute("name"));
                 }
                 return target.toAddressPoint();
@@ -118,7 +119,7 @@ public class MapManager implements IMapManager {
     }
 
     private boolean applyLocation(final int x, final int y, final long[] tileIds, final double[] tileDistanceSquares,
-            final LongPredicate pred, final Target node) {
+            final IntPredicate pred, final Target node) {
         double minDistSq = Long.MAX_VALUE;
 
         for (int zoom = state.getMaxZoom(); zoom >= state.getZoom(); zoom--) {
@@ -140,13 +141,13 @@ public class MapManager implements IMapManager {
     }
 
     private double applyLocation(final int x, final int y, double minDistanceSq, final Target target, final long id,
-            final LongPredicate pred) {
-        tileAccessor.setID(id);
-        for (OfLong iterator = tileAccessor.getElements("street"); iterator.hasNext();) {
-            long street = iterator.nextLong();
+            final IntPredicate pred) {
+        for (OfInt iterator = streetIterator.iterator(tileConversion.getRow(id), tileConversion.getColumn(id),
+                tileConversion.getZoom(id)); iterator.hasNext();) {
+            int street = iterator.nextInt();
 
             if (pred.test(street)) {
-                streetAccessor.setID(street);
+                streetAccessor.setId(street);
 
                 float totalLength = 0;
                 final int size = streetAccessor.size();
@@ -203,17 +204,16 @@ public class MapManager implements IMapManager {
         final int x = target.x;
         final int y = target.y;
 
-        tileAccessor.setID(id);
-
-        streetAccessor.setID(target.street);
+        streetAccessor.setId(target.street);
         final int name = streetAccessor.getAttribute("name");
         final String street = getStreetName(name);
 
         // TODO use lambda expression (tileAccessor.forEach).
-        final PrimitiveIterator.OfLong buildings = tileAccessor.getElements("building");
+        final PrimitiveIterator.OfInt buildings = buildingIterator.iterator(tileConversion.getRow(id),
+                tileConversion.getColumn(id), tileConversion.getZoom(id));
         while (buildings.hasNext()) {
-            final long buildingID = buildings.nextLong();
-            buildingAccessor.setID(buildingID);
+            final int buildingID = buildings.nextInt();
+            buildingAccessor.setId(buildingID);
             if (name == buildingAccessor.getAttribute("street")) {
                 final int size = buildingAccessor.size();
 
@@ -260,15 +260,14 @@ public class MapManager implements IMapManager {
         return streetName + (number != -1 ? (" " + stringAccessor.getString(number)) : "");
     }
 
-    private long getBuildingAt(final int x, final int y) {
+    private int getBuildingAt(final int x, final int y) {
         final int zoom = state.getMaxZoom();
         final int row = getRow(y, zoom);
         final int column = getColumn(x, zoom);
 
-        tileAccessor.setRCZ(row, column, zoom);
-        final PrimitiveIterator.OfLong iterator = tileAccessor.getElements("building");
+        final PrimitiveIterator.OfInt iterator = buildingIterator.iterator(row, column, zoom);
         while (iterator.hasNext()) {
-            final long building = iterator.nextLong();
+            final int building = iterator.nextInt();
             if (CollectiveUtil.contains(buildingAccessor, building, x, y)) {
                 return building;
             }
@@ -294,7 +293,7 @@ public class MapManager implements IMapManager {
 
     private void calculateTileIDs(int row, int column, final int zoom, int nRow, int nColumn, long[] tileIDs) {
         for (int i = 0; i < 4; i++) {
-            tileIDs[i] = getTileID(row + (i % 2) * nRow, column + (i / 2) * nColumn, zoom);
+            tileIDs[i] = tileConversion.getId(row + (i % 2) * nRow, column + (i / 2) * nColumn, zoom);
         }
     }
 
@@ -331,13 +330,8 @@ public class MapManager implements IMapManager {
     }
 
     @Override
-    public long getTileID(final int row, final int column, final int zoom) {
-        return isValid(row, column, zoom) ? ((((long) zoom << COORD_BITS) | row) << COORD_BITS) | column : -1;
-    }
-
-    @Override
-    public ITileAccessor createTileAccessor() {
-        return tileFactory.create();
+    public ITileConversion getTileConversion() {
+        return tileConversion;
     }
 
     @Override
@@ -377,9 +371,31 @@ public class MapManager implements IMapManager {
         return (int) (state.getCoordX() - state.getCoordSectionWidth(zoom) / 2) / state.getCoordTileSize(zoom);
     }
 
-    private boolean isValid(final int row, final int column, final int zoom) {
-        // return row > 0 && row < MAX_COORD && ...
-        return ((MAX_COORD - row) | (MAX_COORD - column) | (MAX_ZOOM - zoom) | row | column | zoom) >= 0;
+    @Override
+    public IElementIterator getElementIterator(String identifier) {
+        return map.getOrDefault(identifier, new EmptyElementIterator());
+    }
+
+    private static class EmptyElementIterator implements IElementIterator {
+
+        @Override
+        public OfInt iterator(int row, int column, int zoom) {
+            return Arrays.stream(new int[0]).iterator();
+        }
+
+        @Override
+        public void forEach(int row, int column, int zoom, IntConsumer consumer) {}
+
+        @Override
+        public IElementIterator filter(Predicate f) {
+            return this;
+        }
+
+        @Override
+        public IElementIterator sort(Comparator<Integer> idComparator) {
+            return this;
+        }
+
     }
 
     private class Target {

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +21,7 @@ import adminTool.elements.POI;
 import adminTool.elements.PointLabel;
 import adminTool.elements.Street;
 import adminTool.elements.Way;
+import adminTool.labeling.IDrawInfo;
 import adminTool.labeling.INameInfo;
 import adminTool.labeling.RoadLabelCreator;
 import adminTool.labeling.roadMap.LabelSection;
@@ -27,6 +29,7 @@ import adminTool.metrics.IDistanceMap;
 import adminTool.metrics.PixelToCoordDistanceMap;
 import adminTool.projection.MercatorProjection;
 import adminTool.projection.Projector;
+import adminTool.util.ElementAdapter;
 import util.IntList;
 
 public class CreateTest {
@@ -86,23 +89,36 @@ public class CreateTest {
             final Dimension2D mapSize = aligner.getSize();
             aligner = null;
 
+            start = System.currentTimeMillis();
+            Collection<LineLabel> lineLabels = new ArrayList<LineLabel>();
             RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
-            final int zoom = 17;
-            final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
-            labelCreator.createLabels(pixelsToCoords, zoom);
-            points = labelCreator.getPoints();
+            for (int zoom = 14; zoom < 18; ++zoom) {
+                final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
 
-            Collection<LineLabel> lineLabels = labelCreator.getLabeling();
+                labelCreator.createLabels(pixelsToCoords, new IDrawInfo() {
+
+                    @Override
+                    public double getStrokeWidth(int type) {
+                        return pixelsToCoords.map(12);
+                    }
+
+                    @Override
+                    public double getFontSize(int type) {
+                        return pixelsToCoords.map(10);
+                    }
+                }, zoom);
+                points = labelCreator.getPoints();
+                lineLabels.addAll(labelCreator.getLabeling());
+            }
+
             System.out.println("label creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             start = System.currentTimeMillis();
 
-            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, Collections.emptyList(),
-                    Collections.emptyList(), lineLabels, Collections.emptyList(), pointLabels, points, mapSize,
-                    zipOutput);
-            // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels,pois,
-            // labels, points,
-            // size, zipOutput);
+            MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels, pois,
+                    pointLabels, points, mapSize, zipOutput);
+            // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, Collections.emptyList(),
+            // Collections.emptyList(), lineLabels, pois, pointLabels, points, mapSize, zipOutput);
 
             try {
                 mapManagerWriter.write();
