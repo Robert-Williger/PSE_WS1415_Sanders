@@ -69,8 +69,8 @@ public class ImageAccessorTest {
     public void setUp() {
         manager = new MapManager();
         fetcher = new DummyFetcher();
-        accessor = new ImageAccessor(manager.getTileConversion(), fetcher);
-        accessor.setTileConversion(manager.getTileConversion());
+        accessor = new ImageAccessor(manager.getTileIdConversion(), fetcher);
+        accessor.setTileConversion(manager.getTileIdConversion());
         accessor.setVisible(false);
         changed = false;
     }

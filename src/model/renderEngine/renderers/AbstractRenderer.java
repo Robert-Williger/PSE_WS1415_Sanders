@@ -7,21 +7,21 @@ import java.awt.Image;
 import java.awt.geom.Path2D;
 
 import model.map.IMapManager;
-import model.map.IPixelConverter;
+import model.map.IPixelMapping;
 import model.map.accessors.ICollectiveAccessor;
-import model.map.accessors.ITileConversion;
+import model.map.accessors.ITileIdConversion;
 
 abstract class AbstractRenderer implements IRenderer {
 
-    protected IPixelConverter converter;
-    protected ITileConversion conversion;
+    protected IPixelMapping converter;
+    protected ITileIdConversion conversion;
     protected IMapManager manager;
 
     @Override
     public void setMapManager(final IMapManager manager) {
         this.manager = manager;
-        this.converter = manager.getState().getConverter();
-        this.conversion = manager.getTileConversion();
+        this.converter = manager.getPixelMapping();
+        this.conversion = manager.getTileIdConversion();
     }
 
     @Override
@@ -34,8 +34,9 @@ abstract class AbstractRenderer implements IRenderer {
         final int row = conversion.getRow(tileId);
         final int column = conversion.getColumn(tileId);
         final int zoom = conversion.getZoom(tileId);
-        final int x = conversion.getX(tileId);
-        final int y = conversion.getY(tileId);
+        final int coordTileSize = converter.getCoordDistance(manager.getTileState().getTileSize(), zoom);
+        final int x = column * coordTileSize;
+        final int y = row * coordTileSize;
 
         boolean ret = render(g, row, column, zoom, x, y);
         g.dispose();

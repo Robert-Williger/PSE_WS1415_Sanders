@@ -1,7 +1,7 @@
 package map;
 
 import static org.junit.Assert.assertEquals;
-import model.map.IPixelConverter;
+import model.map.IPixelMapping;
 import model.map.PixelConverter;
 
 import org.junit.Before;
@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class PixelConverterTest {
 
-    private IPixelConverter converter;
+    private IPixelMapping converter;
 
     @Before
     public void setUp() {

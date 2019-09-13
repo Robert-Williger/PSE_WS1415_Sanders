@@ -4,6 +4,10 @@ public class StringAccessor implements IStringAccessor {
 
     private final String[] strings;
 
+    public StringAccessor() {
+        this(new String[0]);
+    }
+
     public StringAccessor(final String[] strings) {
         this.strings = strings;
     }

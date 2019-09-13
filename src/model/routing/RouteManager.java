@@ -7,7 +7,7 @@ import java.util.List;
 import model.AbstractModel;
 import model.IProgressListener;
 import model.map.IMapManager;
-import model.map.IMapState;
+import model.map.IMapSection;
 import model.map.accessors.ICollectiveAccessor;
 import model.renderEngine.renderers.IRenderRoute;
 import model.renderEngine.renderers.RenderRoute;
@@ -19,7 +19,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
     private final ICollectiveAccessor streetAccessor;
     private final IDirectedGraph graph;
     private final IPointList pointList;
-    private final IMapState state;
+    private final IMapSection section;
 
     private final IRouteSolver[] routeSolvers;
     private final String[] routeSolverNames;
@@ -38,7 +38,7 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         pointList = new PointList();
 
         streetAccessor = manager.createCollectiveAccessor("street");
-        state = manager.getState();
+        section = manager.getMapSection();
     }
 
     private IRouteSolver getCurrentRouteSolver() {
@@ -71,8 +71,8 @@ public class RouteManager extends AbstractModel implements IRouteManager {
         int maxY = Integer.MIN_VALUE;
 
         for (final IRoutePoint routePoint : pointList) {
-            final int x = routePoint.getX(state.getZoom());
-            final int y = routePoint.getY(state.getZoom());
+            final int x = routePoint.getX(section.getZoom());
+            final int y = routePoint.getY(section.getZoom());
 
             minX = Math.min(minX, x);
             maxX = Math.max(maxX, x);

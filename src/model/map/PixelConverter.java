@@ -1,6 +1,6 @@
 package model.map;
 
-public class PixelConverter implements IPixelConverter {
+public class PixelConverter implements IPixelMapping {
 
     private final int conversionBits;
 

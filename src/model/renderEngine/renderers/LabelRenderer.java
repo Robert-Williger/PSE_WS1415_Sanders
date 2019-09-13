@@ -127,7 +127,7 @@ public class LabelRenderer extends AbstractRenderer implements IRenderer {
     public void setMapManager(final IMapManager manager) {
         super.setMapManager(manager);
 
-        stringAccessor = manager.createStringAccessor();
+        stringAccessor = manager.getStringAccessor();
         pointLabelIterator = manager.getElementIterator("pointLabel");
 
         ICollectiveAccessor lineLabelAccessor = manager.createCollectiveAccessor("lineLabel");

@@ -3,7 +3,6 @@ package adminTool;
 import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Dimension2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
     private Collection<POI> pois;
     private Collection<PointLabel> pointLabels;
 
-    private final Dimension2D size;
+    private final Rectangle2D bounds;
     private final IPointAccess points;
     private IntConversion conversion;
 
@@ -62,7 +61,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
 
     public MapManagerWriter(final Collection<Street> streets, final Collection<MultiElement> terrain,
             final Collection<Building> buildings, final Collection<LineLabel> lineLabels, final Collection<POI> pois,
-            final Collection<PointLabel> pointLabels, final IPointAccess points, final Dimension2D size,
+            final Collection<PointLabel> pointLabels, final IPointAccess points, final Rectangle2D bounds,
             final ZipOutputStream zipOutput) {
         super(zipOutput);
 
@@ -73,7 +72,7 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         this.pois = pois;
         this.pointLabels = pointLabels;
         this.points = points;
-        this.size = size;
+        this.bounds = bounds;
     }
 
     @Override
@@ -211,8 +210,10 @@ public class MapManagerWriter extends AbstractMapFileWriter {
         putNextEntry("header");
 
         dataOutput.writeInt(conversionBits);
-        dataOutput.writeInt(conversion.convert(size.getWidth()));
-        dataOutput.writeInt(conversion.convert(size.getHeight()));
+        dataOutput.writeInt(conversion.convert(bounds.getX()));
+        dataOutput.writeInt(conversion.convert(bounds.getY()));
+        dataOutput.writeInt(conversion.convert(bounds.getWidth()));
+        dataOutput.writeInt(conversion.convert(bounds.getHeight()));
         dataOutput.writeInt(minZoomStep);
         dataOutput.writeInt(maxZoomStep);
         dataOutput.writeInt(TILE_LENGTH);

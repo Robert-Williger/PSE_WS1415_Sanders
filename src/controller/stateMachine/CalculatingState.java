@@ -50,7 +50,7 @@ public class CalculatingState extends AbstractState {
             getImageLoader().setRenderRoute(route);
             final Rectangle bounds = route.getBounds();
             getImageLoader().update();
-            getMap().center(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
+            getMap().center(bounds.x, bounds.y, bounds.width, bounds.height);
             route = null;
         }
 

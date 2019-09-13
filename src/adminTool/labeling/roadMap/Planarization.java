@@ -7,7 +7,7 @@ import static adminTool.util.IntersectionUtil.inIntervall;
 import static adminTool.util.IntersectionUtil.EPSILON;
 
 import java.awt.Point;
-import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -64,8 +64,8 @@ public class Planarization {
         return processedRoads;
     }
 
-    public void planarize(final List<LabelSection> roads, final PointAccess points, final Dimension2D mapSize) {
-        final double size = Math.max(mapSize.getWidth(), mapSize.getHeight());
+    public void planarize(final List<LabelSection> roads, final PointAccess points, final Rectangle2D mapBounds) {
+        final double size = Math.max(mapBounds.getMaxX(), mapBounds.getMaxY());
         planarize(roads, points, size);
     }
 
@@ -173,19 +173,22 @@ public class Planarization {
         }
     }
 
-    private int nextSegmentInTile(final double x, final double y, final double size, final int s, final LabelSection r) {
+    private int nextSegmentInTile(final double x, final double y, final double size, final int s,
+            final LabelSection r) {
         for (int ret = s + 1; ret < r.size() - 1; ++ret)
             if (segmentInTile(x, y, size, r, ret))
                 return ret;
         return -1;
     }
 
-    private boolean segmentInTile(final double x, final double y, final double size, final LabelSection road, int segment) {
+    private boolean segmentInTile(final double x, final double y, final double size, final LabelSection road,
+            int segment) {
         return rectangleIntersectsSegment(x, y, size, size, x(road, segment), y(road, segment), x(road, segment + 1),
                 y(road, segment + 1));
     }
 
-    private void update(double tileX, double tileY, double size, List<Cut> cu, List<Cut> cv, int su, int sv, LabelSection ru) {
+    private void update(double tileX, double tileY, double size, List<Cut> cu, List<Cut> cv, int su, int sv,
+            LabelSection ru) {
         double x = x(ru, su) + offsets[0] * (x(ru, su + 1) - x(ru, su));
         double y = y(ru, su) + offsets[0] * (y(ru, su + 1) - y(ru, su));
         if (rectangleContainsPoint(tileX, tileY, tileX + size, tileY + size, x, y)) {

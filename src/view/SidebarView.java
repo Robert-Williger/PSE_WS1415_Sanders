@@ -14,7 +14,6 @@ import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -47,8 +46,6 @@ public class SidebarView extends JPanel implements ISidebarView {
     private final JButton startButton;
     private final JButton resetButton;
     private final JButton cancelCalcButton;
-    private final JCheckBox poiBox;
-    private final JCheckBox labelBox;
     private final JComboBox<String> routeSolverBox;
     private final SuggestionView suggestionView;
     private final PointListView listView;
@@ -71,8 +68,6 @@ public class SidebarView extends JPanel implements ISidebarView {
         startButton = new JButton("Start");
         resetButton = new JButton("Reset");
         cancelCalcButton = new JButton("Routenberechnung abbrechen");
-        poiBox = new CustomizedCheckBox("Sonderziele einblenden", "poi");
-        labelBox = new CustomizedCheckBox("Karte beschriften", "label");
         routeSolverBox = new CustomizedComboBox(manager.getRouteSolvers());
         suggestionView = new SuggestionView();
         listView = new PointListView(manager.getPointList());
@@ -138,8 +133,7 @@ public class SidebarView extends JPanel implements ISidebarView {
             }
 
             @Override
-            public void stepCommenced(final String step) {
-            }
+            public void stepCommenced(final String step) {}
         };
     }
 
@@ -152,12 +146,10 @@ public class SidebarView extends JPanel implements ISidebarView {
             }
 
             @Override
-            public void pointRemoved(final IRoutePoint point) {
-            }
+            public void pointRemoved(final IRoutePoint point) {}
 
             @Override
-            public void listCleared(int oldSize) {
-            }
+            public void listCleared(int oldSize) {}
 
         };
     }
@@ -201,7 +193,7 @@ public class SidebarView extends JPanel implements ISidebarView {
     private JPanel createTop() {
         final JPanel ret = new JPanel(new FlowLayout());
 
-        textField.setDefaultText("Ziel ausw√§hlen");
+        textField.setDefaultText("Ziel ausw‰hlen");
         textField.setPreferredSize(new Dimension(140, 21));
         textField.addKeyListener(new KeyAdapter() {
             @Override
@@ -273,20 +265,6 @@ public class SidebarView extends JPanel implements ISidebarView {
         routeSolverBox.setOpaque(false);
         ret.add(routeSolverBox);
 
-        poiBox.setMargin(new Insets(0, 0, 0, 0));
-        poiBox.setFocusable(false);
-        poiBox.setSelected(true);
-        poiBox.setOpaque(false);
-        poiBox.setMnemonic('z');
-        ret.add(poiBox);
-
-        labelBox.setMargin(new Insets(0, 0, 0, 0));
-        labelBox.setFocusable(false);
-        labelBox.setSelected(true);
-        labelBox.setOpaque(false);
-        labelBox.setMnemonic('K');
-        ret.add(labelBox);
-
         startButton.setPreferredSize(new Dimension(85, 23));
         startButton.setActionCommand("start calculation");
         startButton.setEnabled(false);
@@ -312,8 +290,8 @@ public class SidebarView extends JPanel implements ISidebarView {
         ret.add(cancelCalcButton);
 
         ret.setOpaque(false);
-        ret.setPreferredSize(new Dimension(180, 130));
-        ret.setMaximumSize(new Dimension(180, 130));
+        ret.setPreferredSize(new Dimension(180, 80));
+        ret.setMaximumSize(new Dimension(180, 80));
         ret.setAlignmentY(CENTER_ALIGNMENT);
 
         return ret;
@@ -338,8 +316,6 @@ public class SidebarView extends JPanel implements ISidebarView {
         startButton.addActionListener(listener);
         resetButton.addActionListener(listener);
         cancelCalcButton.addActionListener(listener);
-        poiBox.addActionListener(listener);
-        labelBox.addActionListener(listener);
         routeSolverBox.addActionListener(listener);
     }
 
@@ -425,22 +401,22 @@ public class SidebarView extends JPanel implements ISidebarView {
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 360));
         }
 
         @Override
         public Dimension getMaximumSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 360));
         }
 
         @Override
         public Dimension getMinimumSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 360));
         }
 
         @Override
         public Dimension getSize() {
-            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 320));
+            return new Dimension(SidebarView.this.getWidth() - 46, (SidebarView.this.getHeight() - 360));
         }
     }
 
@@ -597,28 +573,12 @@ public class SidebarView extends JPanel implements ISidebarView {
         public void setLength(final int length) {
 
             if (length == 0) {
-                setText(" Routenl√§nge: -");
+                setText(" Routenl‰nge: -");
             } else if (length > MAX_METERS) {
-                setText(" Routenl√§nge: " + String.format("%.2f", length / 1000.0) + " km");
+                setText(" Routenl‰nge: " + String.format("%.2f", length / 1000.0) + " km");
             } else {
-                setText(" Routenl√§nge: " + length + " m");
+                setText(" Routenl‰nge: " + length + " m");
             }
-        }
-    }
-
-    private class CustomizedCheckBox extends JCheckBox {
-        private static final long serialVersionUID = 1L;
-
-        private final String command;
-
-        public CustomizedCheckBox(final String text, final String command) {
-            super(text);
-            this.command = command;
-        }
-
-        @Override
-        public String getActionCommand() {
-            return command + " " + (isSelected() ? "enabled" : "disabled");
         }
     }
 
@@ -643,8 +603,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         }
 
         @Override
-        public void listIndexChanged() {
-        }
+        public void listIndexChanged() {}
 
         @Override
         public void addressChanged() {
@@ -653,8 +612,7 @@ public class SidebarView extends JPanel implements ISidebarView {
         }
 
         @Override
-        public void locationChanged() {
-        }
+        public void locationChanged() {}
 
         @Override
         public void stateChanged() {
@@ -666,7 +624,6 @@ public class SidebarView extends JPanel implements ISidebarView {
         }
 
         @Override
-        public void targetIndexChanged() {
-        }
+        public void targetIndexChanged() {}
     }
 }

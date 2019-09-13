@@ -1,16 +1,16 @@
 package model.targets;
 
-import model.map.IPixelConverter;
+import model.map.IPixelMapping;
 
 public class AddressPoint extends AccessPoint {
 
     private final String address;
     private final int x;
     private final int y;
-    private final IPixelConverter converter;
+    private final IPixelMapping converter;
 
     public AddressPoint(final String address, final int x, final int y, final int street, final float offset,
-            final IPixelConverter converter) {
+            final IPixelMapping converter) {
         super(offset, street);
         this.x = x;
         this.y = y;

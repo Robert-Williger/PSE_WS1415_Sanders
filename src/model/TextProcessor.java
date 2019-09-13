@@ -45,7 +45,7 @@ public class TextProcessor implements ITextProcessor {
 
         this.manager = manager;
         streetAccessor = manager.createCollectiveAccessor("street");
-        stringAccessor = manager.createStringAccessor();
+        stringAccessor = manager.getStringAccessor();
 
         final Tree unsortedRoot = setupIndex(entries, manager);
         distance = createDistanceArray();
@@ -251,7 +251,7 @@ public class TextProcessor implements ITextProcessor {
         final int street = tree.street;
 
         final Point location = CollectiveUtil.getLocation(streetAccessor, street, offset);
-        return new AddressPoint(tree.name, location.x, location.y, street, offset, manager.getState().getConverter());
+        return new AddressPoint(tree.name, location.x, location.y, street, offset, manager.getPixelMapping());
     }
 
     // TODO fit edit costs --> nearby keys lower costs than far away ones

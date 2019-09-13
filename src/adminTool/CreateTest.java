@@ -1,6 +1,7 @@
 package adminTool;
 
 import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -84,39 +85,39 @@ public class CreateTest {
             projector.performProjection(points);
             projector = null;
 
-            Aligner aligner = new Aligner();
-            aligner.performAlignment(points, ways, areas);
-            final Dimension2D mapSize = aligner.getSize();
-            aligner = null;
+            MapBoundsCalculator mapBoundsCalc = new MapBoundsCalculator();
+            mapBoundsCalc.calculateBounds(points, ways, areas);
+            final Rectangle2D mapBounds = mapBoundsCalc.getBounds();
+            mapBoundsCalc = null;
 
             start = System.currentTimeMillis();
             Collection<LineLabel> lineLabels = new ArrayList<LineLabel>();
-            RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapSize);
-            for (int zoom = 14; zoom < 18; ++zoom) {
-                final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
-
-                labelCreator.createLabels(pixelsToCoords, new IDrawInfo() {
-
-                    @Override
-                    public double getStrokeWidth(int type) {
-                        return pixelsToCoords.map(12);
-                    }
-
-                    @Override
-                    public double getFontSize(int type) {
-                        return pixelsToCoords.map(10);
-                    }
-                }, zoom);
-                points = labelCreator.getPoints();
-                lineLabels.addAll(labelCreator.getLabeling());
-            }
+            // RoadLabelCreator labelCreator = new RoadLabelCreator(ways, points, mapBounds);
+            // for (int zoom = 14; zoom < 18; ++zoom) {
+            // final IDistanceMap pixelsToCoords = new PixelToCoordDistanceMap(zoom);
+            //
+            // labelCreator.createLabels(pixelsToCoords, new IDrawInfo() {
+            //
+            // @Override
+            // public double getStrokeWidth(int type) {
+            // return pixelsToCoords.map(12);
+            // }
+            //
+            // @Override
+            // public double getFontSize(int type) {
+            // return pixelsToCoords.map(10);
+            // }
+            // }, zoom);
+            // points = labelCreator.getPoints();
+            // lineLabels.addAll(labelCreator.getLabeling());
+            // }
 
             System.out.println("label creation time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
             start = System.currentTimeMillis();
 
             MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, areas, buildings, lineLabels, pois,
-                    pointLabels, points, mapSize, zipOutput);
+                    pointLabels, points, mapBounds, zipOutput);
             // MapManagerWriter mapManagerWriter = new MapManagerWriter(streets, Collections.emptyList(),
             // Collections.emptyList(), lineLabels, pois, pointLabels, points, mapSize, zipOutput);
 

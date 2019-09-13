@@ -11,7 +11,7 @@ public interface IMap extends IModel {
 
     void zoom(int steps, double offsetX, double offsetY);
 
-    void move(double deltaX, double deltaY);
+    void move(int deltaX, int deltaY);
 
     AddressPoint getAddress(int x, int y);
 
@@ -26,9 +26,9 @@ public interface IMap extends IModel {
 
     int getY(int zoom);
 
-    void center(final double x, final double y, final double width, final double height);
+    void center(final int x, final int y, final int width, final int height);
 
-    void center(final double x, final double y);
+    void center(final int x, final int y);
 
     void addMapListener(IMapListener listener);
 

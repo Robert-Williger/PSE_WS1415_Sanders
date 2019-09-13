@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ListIterator;
 
@@ -32,7 +31,7 @@ public class MapView extends JPanel implements IMapView {
 
     private final ZoomInfo zoomInfo;
 
-    private final SmoothMapMover smoothMapMover;
+    private final SmoothMapZoomer smoothMapZoomer;
 
     private IMap map;
     private IPointList list;
@@ -68,7 +67,7 @@ public class MapView extends JPanel implements IMapView {
 
             @Override
             public void mapZoomed(final int steps, final double deltaX, final double deltaY) {
-                smoothMapMover.zoom(steps, deltaX, deltaY);
+                smoothMapZoomer.zoom(steps, deltaX, deltaY);
             }
 
             @Override
@@ -82,8 +81,8 @@ public class MapView extends JPanel implements IMapView {
             }
         };
 
-        smoothMapMover = new SmoothMapMover();
-        smoothMapMover.start();
+        smoothMapZoomer = new SmoothMapZoomer();
+        smoothMapZoomer.start();
 
         setModels(loader, list, map);
         initialize();
@@ -155,15 +154,7 @@ public class MapView extends JPanel implements IMapView {
         private int tileSize;
 
         public MapPaintingLayer(final IImageAccessor accessor, final int tileSize) {
-            accessor.addTileListener((img, row, column, zoom) -> {
-                if (zoomInfo.state == ZoomInfo.DEFAULT && zoom == map.getZoom()) {
-                    final int leftX = map.getX() - map.getWidth() / 2;
-                    final int leftY = map.getY() - map.getHeight() / 2;
-                    final int x = -(leftX % tileSize) + (column - leftX / tileSize) * tileSize;
-                    final int y = -(leftY % tileSize) + (row - leftY / tileSize) * tileSize;
-                    repaint(x, y, tileSize, tileSize);
-                }
-            });
+            accessor.addChangeListener(e -> repaint());
             this.accessor = accessor;
             this.tileSize = tileSize;
             setOpaque(false);
@@ -222,17 +213,14 @@ public class MapView extends JPanel implements IMapView {
         private void paint(final Graphics2D g, final int zoom, final double xOffset, final double yOffset,
                 final int startRow, final int endRow, final int startColumn, final int endColumn) {
             g.translate(-xOffset, -yOffset);
-            Rectangle rect = g.getClipBounds();
             int x;
             int y = 0;
             for (int row = startRow; row <= endRow; row++) {
                 x = 0;
                 for (int column = startColumn; column <= endColumn; column++) {
-                    if (rect == null || rect.intersects(x, y, tileSize, tileSize)) {
-                        final Image img = accessor.getImage(row, column, zoom);
-                        if (img != null)
-                            g.drawImage(img, x, y, null);
-                    }
+                    final Image img = accessor.getImage(row, column, zoom);
+                    if (img != null)
+                        g.drawImage(img, x, y, null);
                     x += tileSize;
                 }
                 y += tileSize;
@@ -316,16 +304,16 @@ public class MapView extends JPanel implements IMapView {
         }
     }
 
-    private class SmoothMapMover extends Thread {
-        private final int SLEEP_TIME = 10;
-        private final int MAX_STEPS = 22;
+    private class SmoothMapZoomer extends Thread {
+        private final int SLEEP_TIME = 4;
+        private final int MAX_STEPS = 50;
         private final int ANIMATION_STEPS = 2 * MAX_STEPS + 1;
         private double scalePerStep;
         private int currentStep;
 
         private final Runnable[] animationSteps;
 
-        public SmoothMapMover() {
+        public SmoothMapZoomer() {
             setPriority(MAX_PRIORITY);
             currentStep = ANIMATION_STEPS;
             animationSteps = createAnimationSteps();

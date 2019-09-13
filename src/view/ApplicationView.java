@@ -11,9 +11,12 @@ import java.awt.Paint;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -25,6 +28,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import model.IApplication;
+import model.renderEngine.IImageAccessor;
+import model.renderEngine.IImageLoader;
 import model.routing.IRouteManager;
 import model.targets.IPointList;
 
@@ -64,7 +69,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
 
         sidebar = new SidebarView(manager);
         map = new MapView(application.getImageLoader(), list, application.getMap());
-        menuBar = new ApplicationMenuBar();
+        menuBar = new ApplicationMenuBar(application);
         help = new HelpView();
 
         setContentPane(new ContentPane());
@@ -101,6 +106,7 @@ public class ApplicationView extends JFrame implements IApplicationView {
                         menuBar.setCalculating(manager.isCalculating());
                     }
                 });
+                menuBar.setModel(application);
                 repaint();
             }
 
@@ -139,40 +145,45 @@ public class ApplicationView extends JFrame implements IApplicationView {
             super(new BorderLayout());
         }
 
-        // @Override
-        // public void paintComponent(final Graphics g) {
-        // final float[] FRACTIONS = { 0.0f, 1.0f };
-        // final Color[] FILL_COLORS = { Color.white, new Color(230, 230, 230) };
-        // final Paint paint = new LinearGradientPaint(0, 0, getWidth(),
-        // (int) Math.sqrt(getHeight() * getHeight() + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS,
-        // MultipleGradientPaint.CycleMethod.REFLECT);
-        // ((Graphics2D) g).setPaint(paint);
-        // g.fillRect(0, 0, getWidth(), getHeight());
-        // }
+        @Override
+        public void paintComponent(final Graphics g) {
+            final float[] FRACTIONS = { 0.0f, 1.0f };
+            final Color[] FILL_COLORS = { Color.white, new Color(230, 230, 230) };
+            final Paint paint = new LinearGradientPaint(0, 0, getWidth(),
+                    (int) Math.sqrt(getHeight() * getHeight() + getWidth() * getWidth()) / 2, FRACTIONS, FILL_COLORS,
+                    MultipleGradientPaint.CycleMethod.REFLECT);
+            ((Graphics2D) g).setPaint(paint);
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
 
     private class ApplicationMenuBar extends JMenuBar {
         private static final long serialVersionUID = 1L;
 
-        final JMenuItem importItem;
-        final JMenuItem exportItem;
-        final JMenuItem exitItem;
-        final JMenuItem helpItem;
+        final JMenu layersItem;
+        final List<JMenuItem> staticItems;
+        final List<JMenuItem> dynamicItems;
+        final List<ActionListener> listeners;
 
-        public ApplicationMenuBar() {
+        public ApplicationMenuBar(final IApplication application) {
             super();
+
+            staticItems = new ArrayList<>();
+            dynamicItems = new ArrayList<>();
+            listeners = new ArrayList<>();
 
             final JMenu file = new JMenu("Datei");
             file.setMnemonic('D');
-            importItem = new JMenuItem("Kartenpfad Ã¤ndern",
+            final JMenuItem importItem = new JMenuItem("Kartenpfad Ändern",
                     new ImageIcon(ApplicationView.class.getResource("import.png")));
             importItem.setActionCommand("import");
 
-            exportItem = new JMenuItem("Karte exportieren",
+            final JMenuItem exportItem = new JMenuItem("Karte exportieren",
                     new ImageIcon(ApplicationView.class.getResource("export.png")));
             exportItem.setActionCommand("export");
 
-            exitItem = new JMenuItem("Beenden", new ImageIcon(ApplicationView.class.getResource("exit.png")));
+            final JMenuItem exitItem = new JMenuItem("Beenden",
+                    new ImageIcon(ApplicationView.class.getResource("exit.png")));
             exitItem.setActionCommand("exit");
 
             file.add(importItem);
@@ -180,27 +191,57 @@ public class ApplicationView extends JFrame implements IApplicationView {
             file.addSeparator();
             file.add(exitItem);
 
+            layersItem = new JMenu("Ebenen");
+            layersItem.setMnemonic('E');
+
             final JMenu help = new JMenu("Hilfe");
             help.setMnemonic('H');
-            helpItem = new JMenuItem("Hilfe", new ImageIcon(ApplicationView.class.getResource("help.png")));
+            final JMenuItem helpItem = new JMenuItem("Hilfe",
+                    new ImageIcon(ApplicationView.class.getResource("help.png")));
             helpItem.setActionCommand("help");
 
             help.add(helpItem);
 
             add(file);
+            add(layersItem);
             add(help);
+
+            staticItems.add(importItem);
+            staticItems.add(exportItem);
+            staticItems.add(exitItem);
+            staticItems.add(helpItem);
+
+            setModel(application);
         }
 
         public void addActionListener(final ActionListener l) {
-            importItem.addActionListener(l);
-            exportItem.addActionListener(l);
-            exitItem.addActionListener(l);
-            helpItem.addActionListener(l);
+            for (final JMenuItem item : staticItems)
+                item.addActionListener(l);
+            for (final JMenuItem item : dynamicItems)
+                item.addActionListener(l);
+            layersItem.addActionListener(l);
+
+            listeners.add(l);
         }
 
         public void setCalculating(final boolean calculating) {
-            importItem.setEnabled(!calculating);
-            exportItem.setEnabled(!calculating);
+            // importItem.setEnabled(!calculating);
+            // exportItem.setEnabled(!calculating);
+        }
+
+        public void setModel(final IApplication application) {
+            final IImageLoader imageLoader = application.getImageLoader();
+            layersItem.removeAll();
+            for (final IImageAccessor accessor : imageLoader.getImageAccessors()) {
+                final JCheckBoxMenuItem item = new JCheckBoxMenuItem(accessor.getName());
+                accessor.addChangeListener(e -> item.setSelected(accessor.isVisible()));
+                item.setActionCommand(item.getText());
+                item.setSelected(accessor.isVisible());
+                layersItem.add(item);
+                dynamicItems.add(item);
+                for (final ActionListener listener : listeners)
+                    item.addActionListener(listener);
+            }
         }
     }
 

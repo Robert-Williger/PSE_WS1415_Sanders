@@ -7,23 +7,29 @@ import java.util.Map;
 
 import model.IFactory;
 import model.map.IElementIterator;
+import model.map.IMapBounds;
 import model.map.IMapManager;
-import model.map.IMapState;
-import model.map.IPixelConverter;
+import model.map.IPixelMapping;
+import model.map.MapBounds;
 import model.map.MapManager;
-import model.map.MapState;
 import model.map.PixelConverter;
 import model.map.Quadtree;
 import model.map.accessors.CollectiveAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
-import model.map.accessors.ITileConversion;
+import model.map.accessors.IStringAccessor;
+import model.map.accessors.ITileIdConversion;
 import model.map.accessors.POIAccessor;
+import model.map.accessors.StringAccessor;
 import model.map.accessors.TileConversion;
 import model.reader.Reader.ReaderContext;
 
 class MapManagerReader {
     private IMapManager mapManager;
+
+    private IMapBounds bounds;
+    private IPixelMapping mapping;
+    private int tileSize;
 
     public MapManagerReader() {
         super();
@@ -34,39 +40,43 @@ class MapManagerReader {
     }
 
     public void readMapManager(final ReaderContext readerContext) throws IOException {
-        final IMapState state = readMapState(readerContext);
-        final String[] strings = readStrings(readerContext);
+        readHeader(readerContext);
+        final IStringAccessor stringAccessor = readStringAccessor(readerContext);
         final Map<String, IElementIterator> elementIteratorMap = new HashMap<>();
         final Map<String, IFactory<ICollectiveAccessor>> collectiveMap = new HashMap<>();
         final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
-        readElements(readerContext, elementIteratorMap, pointMap, collectiveMap, state.getMinZoom());
+        readElements(readerContext, elementIteratorMap, pointMap, collectiveMap, bounds.getMinZoom());
 
-        final ITileConversion tileConversion = new TileConversion(state);
+        final ITileIdConversion tileConversion = new TileConversion();
 
-        mapManager = new MapManager(pointMap, collectiveMap, elementIteratorMap, tileConversion, strings, state);
+        mapManager = new MapManager(pointMap, collectiveMap, elementIteratorMap, stringAccessor, tileConversion, bounds,
+                mapping, tileSize);
     }
 
-    private IMapState readMapState(final ReaderContext readerContext) throws IOException {
+    private void readHeader(final ReaderContext readerContext) throws IOException {
         final DataInputStream stream = readerContext.createInputStream("header");
         if (stream != null) {
-            final int conversionBits = stream.readInt();
-            final IPixelConverter converter = new PixelConverter(conversionBits);
+            mapping = new PixelConverter(stream.readInt());
 
+            final int x = stream.readInt();
+            final int y = stream.readInt();
             final int width = stream.readInt();
             final int height = stream.readInt();
             final int minZoomStep = stream.readInt();
             final int maxZoomStep = stream.readInt();
-            final int tileSize = stream.readInt();
+            tileSize = stream.readInt();
 
             stream.close();
 
-            return new MapState(width, height, minZoomStep, maxZoomStep, tileSize, converter);
+            bounds = new MapBounds(x, y, width, height, minZoomStep, maxZoomStep);
+        } else {
+            bounds = new MapBounds(0, 0, 1, 1, 0, 1);
+            tileSize = 1;
+            mapping = new PixelConverter(1);
         }
-
-        return new MapState(1, 1, 0, 1, 1, new PixelConverter(1));
     }
 
-    private String[] readStrings(final ReaderContext readerContext) throws IOException {
+    private IStringAccessor readStringAccessor(final ReaderContext readerContext) throws IOException {
         final DataInputStream stream = readerContext.createInputStream("strings");
         if (stream != null) {
             final String[] strings = new String[stream.readInt()];
@@ -75,10 +85,10 @@ class MapManagerReader {
             }
             stream.close();
 
-            return strings;
+            return new StringAccessor(strings);
         }
 
-        return new String[0];
+        return new StringAccessor();
     }
 
     private void readElements(final ReaderContext readerContext, final Map<String, IElementIterator> elementIteratorMap,

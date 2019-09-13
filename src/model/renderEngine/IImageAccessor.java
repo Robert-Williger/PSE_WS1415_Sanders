@@ -3,7 +3,6 @@ package model.renderEngine;
 import java.awt.Image;
 
 import model.IModel;
-import model.map.accessors.ITileConversion;
 
 public interface IImageAccessor extends IModel {
 
@@ -11,11 +10,8 @@ public interface IImageAccessor extends IModel {
 
     boolean isVisible();
 
+    String getName();
+
     Image getImage(int row, int column, int zoom);
 
-    void setTileConversion(ITileConversion conversion);
-
-    void addTileListener(ITileListener listener);
-
-    void removeTileListener(ITileListener listener);
 }

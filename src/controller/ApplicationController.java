@@ -15,6 +15,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import model.IApplication;
 import model.IProgressListener;
+import model.renderEngine.IImageAccessor;
 import view.FileChooserView;
 import view.IApplicationView;
 import view.ImportView;
@@ -84,6 +85,12 @@ public class ApplicationController {
                 case "help":
                     controllHelp();
                     break;
+                default:
+                    for (final IImageAccessor accessor : model.getImageLoader().getImageAccessors()) {
+                        if (accessor.getName().equals(e.getActionCommand()))
+                            accessor.setVisible(!accessor.isVisible());
+                    }
+                    model.getImageLoader().update();
             }
         });
 

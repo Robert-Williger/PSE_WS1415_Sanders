@@ -99,8 +99,8 @@ public class AdminApplication {
             projector.performProjection(points);
             projector = null;
 
-            Aligner aligner = new Aligner();
-            aligner.performAlignment(points, ways, areas);
+            MapBoundsCalculator aligner = new MapBoundsCalculator();
+            aligner.calculateBounds(points, ways, areas);
             final Dimension2D mapSize = aligner.getSize();
             aligner = null;
 

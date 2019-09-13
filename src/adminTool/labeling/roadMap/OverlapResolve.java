@@ -2,9 +2,9 @@ package adminTool.labeling.roadMap;
 
 import java.awt.BasicStroke;
 import java.awt.geom.Area;
-import java.awt.geom.Dimension2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -58,8 +58,8 @@ public class OverlapResolve {
         return junctionSections;
     }
 
-    public void resolve(final List<LabelSection> roadSections, final List<LabelSection> junctionSections, final PointAccess points,
-            final Dimension2D mapSize) {
+    public void resolve(final List<LabelSection> roadSections, final List<LabelSection> junctionSections,
+            final PointAccess points, final Rectangle2D mapBounds) {
         this.points = points;
 
         this.paths = new ArrayList<>(roadSections.size() + junctionSections.size());
@@ -82,7 +82,7 @@ public class OverlapResolve {
                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL)));
         }
 
-        final double size = Math.max(mapSize.getWidth(), mapSize.getHeight());
+        final double size = Math.max(mapBounds.getMaxX(), mapBounds.getMaxY());
         final IQuadtreePolicy policy = new WayQuadtreePolicy(paths, points,
                 (index, height) -> info.getStrokeWidth(paths.get(index).getType()));
         final Quadtree quadtree = new Quadtree(paths.size(), policy, size, DEFAULT_MAX_HEIGHT,
@@ -109,7 +109,8 @@ public class OverlapResolve {
                 }
 
                 if (cuts.get(cuts.size() - 1).getOffset() < 1 - IntersectionUtil.EPSILON)
-                    this.roadSections.add(new LabelSection(elements.get(cuts.size()), road.getType(), road.getRoadId()));
+                    this.roadSections
+                            .add(new LabelSection(elements.get(cuts.size()), road.getType(), road.getRoadId()));
             }
         }
         while (roadIt.hasNext()) {

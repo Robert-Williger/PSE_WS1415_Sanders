@@ -15,7 +15,7 @@ public class MapListener implements IDragListener {
     private final IStateMachine machine;
     private final Point startPoint;
     private final Point movement;
-    private final DragThread thread;
+    private final SmoothMover smoothMover;
 
     private long startTime;
     private long elapsedTime;
@@ -24,11 +24,11 @@ public class MapListener implements IDragListener {
     public MapListener(final IApplication application, final IStateMachine machine) {
         this.application = application;
         this.machine = machine;
-        this.thread = new DragThread();
+        this.smoothMover = new SmoothMover();
         this.startPoint = new Point();
         this.movement = new Point();
 
-        thread.start();
+        smoothMover.start();
     }
 
     @Override
@@ -47,8 +47,7 @@ public class MapListener implements IDragListener {
     }
 
     @Override
-    public void mouseMoved(final MouseEvent e) {
-    }
+    public void mouseMoved(final MouseEvent e) {}
 
     @Override
     public void mouseClicked(final MouseEvent e) {
@@ -66,7 +65,7 @@ public class MapListener implements IDragListener {
             movement.setLocation(0, 0);
             startTime = System.nanoTime();
             startPoint.setLocation(e.getX(), e.getY());
-            thread.haltSpeed();
+            smoothMover.haltSpeed();
         }
     }
 
@@ -75,28 +74,28 @@ public class MapListener implements IDragListener {
         if (e.getButton() == MouseEvent.BUTTON1) {
             pressed = false;
             if (elapsedTime != 0) {
-                thread.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000),
+                smoothMover.setSpeed((int) (movement.getX() / elapsedTime * 10_000_000),
                         (int) (movement.getY() / elapsedTime * 10_000_000));
             }
         }
     }
 
     @Override
-    public void mouseEntered(final MouseEvent e) {
-    }
+    public void mouseEntered(final MouseEvent e) {}
 
     @Override
-    public void mouseExited(final MouseEvent e) {
-    }
+    public void mouseExited(final MouseEvent e) {}
 
-    private class DragThread extends Thread {
+    private class SmoothMover extends Thread {
         private static final int MIN_SMOOTH_DRAG_SPEED = 5;
         private static final int MAX_SMOOTH_DRAG_SPEED = 150;
 
         private final Vector vector;
+        private final Vector buffer;
 
-        public DragThread() {
+        public SmoothMover() {
             vector = new Vector();
+            buffer = new Vector();
         }
 
         @Override
@@ -106,7 +105,11 @@ public class MapListener implements IDragListener {
 
                     SwingUtilities.invokeLater(() -> {
                         vector.scale(0.95);
-                        application.getMap().move(vector.getX(), vector.getY());
+                        int moveX = (int) Math.round(vector.getX() + buffer.getX());
+                        int moveY = (int) Math.round(vector.getY() + buffer.getY());
+                        application.getMap().move(moveX, moveY);
+                        buffer.setDirection(vector.getX() - (moveX - buffer.getX()),
+                                vector.getY() - (moveY - buffer.getY()));
                         application.getImageLoader().update();
                     });
 
@@ -128,6 +131,7 @@ public class MapListener implements IDragListener {
         }
 
         public void haltSpeed() {
+            buffer.setDirection(0, 0);
             vector.setDirection(0, 0);
         }
 
@@ -151,14 +155,14 @@ public class MapListener implements IDragListener {
         private double y;
 
         public Vector() {
-            setDirection(0, 0);
+            this(1, 0);
         }
 
-        public Vector(final int x, final int y) {
+        public Vector(final double x, final double y) {
             setDirection(x, y);
         }
 
-        public void setDirection(final int x, final int y) {
+        public void setDirection(final double x, final double y) {
             this.x = x;
             this.y = y;
         }

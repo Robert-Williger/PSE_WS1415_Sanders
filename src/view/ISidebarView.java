@@ -25,8 +25,6 @@ public interface ISidebarView extends IView {
 
     void setPointOrderChangable(boolean changeable);
 
-//    void setPOIChangeable(boolean changeable);
-
     void setStartable(boolean startable);
 
     void setResettable(boolean resettable);

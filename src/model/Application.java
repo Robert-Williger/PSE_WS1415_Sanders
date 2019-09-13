@@ -5,7 +5,9 @@ import java.io.File;
 import javax.swing.SwingUtilities;
 
 import model.map.IMap;
+import model.map.IMapBounds;
 import model.map.IMapManager;
+import model.map.IPixelMapping;
 import model.map.Map;
 import model.map.MapManager;
 import model.reader.IReader;
@@ -61,6 +63,12 @@ public class Application extends AbstractModel implements IApplication {
             routing = reader.getRouteManager();
             processor = reader.getTextProcessor();
             map = new Map(reader.getMapManager());
+            final IMapBounds bounds = reader.getMapManager().getMapBounds();
+            final IPixelMapping mapping = reader.getMapManager().getPixelMapping();
+
+            map.center(mapping.getPixelDistance(bounds.getX(), 0), mapping.getPixelDistance(bounds.getY(), 0),
+                    mapping.getPixelDistance(bounds.getWidth(), 0), mapping.getPixelDistance(bounds.getHeight(), 0));
+            map.zoom(8);
             loader.setMapManager(reader.getMapManager());
             name = file.getName();
             SwingUtilities.invokeLater(() -> {

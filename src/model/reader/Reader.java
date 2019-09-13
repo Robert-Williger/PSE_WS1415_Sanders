@@ -34,7 +34,7 @@ public class Reader implements IReader {
     public boolean read(final File file) {
         final long size = readerContext.open(file);
         if (size == -1) {
-            progressHandler.fireErrorOccured("Beim Ã–ffnen der Karte ist ein Fehler aufgetreten.");
+            progressHandler.fireErrorOccured("Beim Öffnen der Karte ist ein Fehler aufgetreten.");
             return false;
         }
 

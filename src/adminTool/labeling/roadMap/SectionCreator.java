@@ -1,6 +1,6 @@
 package adminTool.labeling.roadMap;
 
-import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.List;
 
@@ -75,12 +75,12 @@ public class SectionCreator {
         return labelInfo;
     }
 
-    public void createSections(final Collection<Way> ways, final PointAccess points, final Dimension2D mapSize) {
+    public void createSections(final Collection<Way> ways, final PointAccess points, final Rectangle2D mapBounds) {
         long start = System.currentTimeMillis();
         this.points = points;
         identify(ways);
         System.out.println("planarize");
-        planarize(mapSize);
+        planarize(mapBounds);
         System.out.println("fuse");
         fuse();
         System.out.println("simplify");
@@ -90,7 +90,7 @@ public class SectionCreator {
         System.out.println("filter");
         filter();
         System.out.println("resolve");
-        resolve(mapSize);
+        resolve(mapBounds);
         System.out.println("subdivide");
         subdivide();
         System.out.println("decompose");
@@ -112,9 +112,9 @@ public class SectionCreator {
         labelInfo = roadId -> lengths[roadId];
     }
 
-    private void planarize(final Dimension2D mapSize) {
+    private void planarize(final Rectangle2D mapBounds) {
         Planarization planarization = new Planarization(stubThreshold, tCrossThreshold, fuzzyThreshold);
-        planarization.planarize(roadSections, points, mapSize);
+        planarization.planarize(roadSections, points, mapBounds);
         roadSections = planarization.getRoads();
     }
 
@@ -158,9 +158,9 @@ public class SectionCreator {
         junctionSections = junctionConnectionFilter.getJunctionSections();
     }
 
-    private void resolve(final Dimension2D mapSize) {
+    private void resolve(final Rectangle2D mapBounds) {
         final OverlapResolve resolve = new OverlapResolve(drawInfo);
-        resolve.resolve(roadSections, junctionSections, points, mapSize);
+        resolve.resolve(roadSections, junctionSections, points, mapBounds);
         roadSections = resolve.getRoadSections();
         junctionSections = resolve.getJunctionSections();
     }

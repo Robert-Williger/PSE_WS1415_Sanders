@@ -9,7 +9,7 @@ public class LRUCache<K, V> implements ICache<K, V> {
 
     // for set capacity only
     private final LRULinkedHashMap unsynchronizedLRUMap;
-    private Map<K, V> LRUMap;
+    private final Map<K, V> LRUMap;
     private final Collection<V> freeList;
 
     public LRUCache(final int capacity, final boolean isSynchronized, final Collection<V> freeList) {

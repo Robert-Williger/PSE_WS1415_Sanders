@@ -115,21 +115,6 @@ public class SidebarController {
                 case "cancel calculation":
                     machine.cancelCalculation();
                     break;
-                // TODO improve
-                case "poi enabled":
-                    application.getImageLoader().getImageAccessors().get(2).setVisible(true);
-                    application.getImageLoader().update();
-                    break;
-                case "poi disabled":
-                    application.getImageLoader().getImageAccessors().get(2).setVisible(false);
-                    break;
-                case "label enabled":
-                    application.getImageLoader().getImageAccessors().get(0).setVisible(true);
-                    application.getImageLoader().update();
-                    break;
-                case "label disabled":
-                    application.getImageLoader().getImageAccessors().get(0).setVisible(false);
-                    break;
                 default:
                     final String[] names = application.getRouteManager().getRouteSolvers();
                     for (int i = 0; i < names.length; i++) {

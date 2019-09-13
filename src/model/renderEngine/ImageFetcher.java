@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities;
 
 import model.AbstractModel;
 import model.map.IMapManager;
-import model.map.accessors.ITileConversion;
+import model.map.accessors.ITileIdConversion;
 import model.renderEngine.renderers.IRenderer;
 import model.renderEngine.threadPool.ThreadPool;
 
@@ -25,7 +25,7 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
     private final ConcurrentLinkedQueue<Image> freeList;
     private final List<ITileListener> listeners;
 
-    private ITileConversion conversion;
+    private ITileIdConversion conversion;
 
     private int imageSize;
     private int run;
@@ -66,10 +66,10 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
     public void setMapManager(final IMapManager manager) {
         flush();
 
-        conversion = manager.getTileConversion();
+        conversion = manager.getTileIdConversion();
         renderer.setMapManager(manager);
-        if (manager.getState().getPixelTileSize() != imageSize) {
-            updateTileSize(manager.getState().getPixelTileSize());
+        if (manager.getTileState().getTileSize() != imageSize) {
+            updateTileSize(manager.getTileState().getTileSize());
         }
     }
 
@@ -139,15 +139,4 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
             }
         }
     }
-
-    @Override
-    public void addTileListener(ITileListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeTileListener(ITileListener listener) {
-        listeners.remove(listener);
-    }
-
 }

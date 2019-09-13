@@ -147,6 +147,9 @@ public class BackgroundRenderer extends AbstractRenderer implements IRenderer {
         clearPaths(paths, styles.length);
 
         final ICollectiveAccessor accessor = manager.createCollectiveAccessor(accessorName);
+        if (accessor == null)
+            return false;
+
         accessor.setZoom(zoom);
         for (final OfInt iterator = elementIterator.iterator(row, column, zoom); iterator.hasNext();) {
             accessor.setId(iterator.nextInt());

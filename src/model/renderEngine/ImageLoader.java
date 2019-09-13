@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.map.IMapManager;
-import model.map.IMapState;
-import model.map.accessors.ITileConversion;
+import model.map.IMapSection;
+import model.map.ITileState;
+import model.map.accessors.ITileIdConversion;
 import model.renderEngine.renderers.BackgroundRenderer;
 import model.renderEngine.renderers.IRenderRoute;
 import model.renderEngine.renderers.IRouteRenderer;
@@ -19,10 +20,10 @@ import model.renderEngine.threadPool.ThreadPool;
 public class ImageLoader implements IImageLoader {
 
     private IMapManager mapManager;
-    private ITileConversion conversion;
-    private IMapState state;
+    private ITileState tileState;
+    private ITileIdConversion conversion;
+    private IMapSection section;
 
-    private final PriorityManager priorityManager;
     private final List<Layer> layers;
 
     private final IImageFetcher routeFetcher;
@@ -36,26 +37,16 @@ public class ImageLoader implements IImageLoader {
     private final ThreadPool pool;
 
     private int lastZoomStep;
-    private int lastRow;
-    private int lastColumn;
-    private int lastVisibleRows;
-    private int lastVisibleColumns;
+    private int lastFirstRow;
+    private int lastFirstColumn;
+    private int lastLastRow;
+    private int lastLastColumn;
     private final int prefetchCount = 1;
 
-    public ImageLoader(final IMapManager manager) {
-        mapManager = manager;
-        state = mapManager.getState();
-        conversion = mapManager.getTileConversion();
-
-        // set zoomStep to minZoomStep - 1, so on first update all tiles in
-        // current view will be rendered
-        lastZoomStep = state.getMinZoom() - 1;
-        lastRow = mapManager.getFirstRow(state.getZoom());
-        lastColumn = mapManager.getFirstColumn(state.getZoom());
-
+    public ImageLoader(final IMapManager mapManager) {
+        conversion = mapManager.getTileIdConversion();
         routeRenderer = new RouteRenderer(mapManager);
 
-        priorityManager = new PriorityManager();
         final ColorScheme colorScheme = new GoogleColorScheme();
         final int processors = Runtime.getRuntime().availableProcessors();
         pool = new ThreadPool(processors);
@@ -66,10 +57,10 @@ public class ImageLoader implements IImageLoader {
         routeFetcher = new ImageFetcher(routeRenderer, mapManager, pool, 128);
         final IImageFetcher labelFetcher = new ImageFetcher(new LabelRenderer(mapManager), mapManager, pool, 128);
 
-        ImageAccessor backgroundAccessor = new ImageAccessor(conversion, backgroundFetcher);
-        ImageAccessor POIAccessor = new ImageAccessor(conversion, POIFetcher);
-        routeAccessor = new ImageAccessor(conversion, routeFetcher);
-        ImageAccessor labelAccessor = new ImageAccessor(conversion, labelFetcher);
+        ImageAccessor backgroundAccessor = new ImageAccessor(conversion, backgroundFetcher, "Hintergrund");
+        ImageAccessor POIAccessor = new ImageAccessor(conversion, POIFetcher, "Points of Interest");
+        routeAccessor = new ImageAccessor(conversion, routeFetcher, "Route");
+        ImageAccessor labelAccessor = new ImageAccessor(conversion, labelFetcher, "Beschriftung");
 
         imageAccessors = new ArrayList<>(4);
 
@@ -84,6 +75,8 @@ public class ImageLoader implements IImageLoader {
         layers.add(new Layer(POIFetcher, POIAccessor, false));
         layers.add(new Layer(backgroundFetcher, backgroundAccessor, true));
 
+        setMapManager(mapManager);
+
         delayedLoader = new DelayedLoader();
         delayedLoader.start();
     }
@@ -91,14 +84,14 @@ public class ImageLoader implements IImageLoader {
     @Override
     public void setMapManager(final IMapManager manager) {
         mapManager = manager;
-        state = mapManager.getState();
-        conversion = manager.getTileConversion();
+        section = mapManager.getMapSection();
+        tileState = mapManager.getTileState();
+        conversion = mapManager.getTileIdConversion();
 
-        // set zoomStep to minZoomStep -1, so on first update all tiles in current view will
-        // be rendered
-        lastZoomStep = state.getMinZoom() - 1;
-        lastRow = 0;
-        lastColumn = 0;
+        // set zoomStep to -1, so on first update all tiles in current view will be rendered
+        lastZoomStep = -1;
+        lastFirstRow = 0;
+        lastFirstColumn = 0;
 
         for (final Layer layer : layers) {
             layer.setMapManager(manager);
@@ -107,12 +100,12 @@ public class ImageLoader implements IImageLoader {
 
     @Override
     public int getTileSize() {
-        return state.getPixelTileSize();
+        return tileState.getTileSize();
     }
 
     @Override
     public void update() {
-        if (mapManager.getState().getZoom() != lastZoomStep) {
+        if (section.getZoom() != lastZoomStep) {
             pool.flush();
         }
 
@@ -125,11 +118,10 @@ public class ImageLoader implements IImageLoader {
         }
 
         if (loadNewTiles()) {
-            // delayedLoader.moved = true;
-            // synchronized (delayedLoader) {
-            // delayedLoader.notify();
-            // }
-            priorityManager.update();
+            delayedLoader.moved = true;
+            synchronized (delayedLoader) {
+                delayedLoader.notify();
+            }
         }
     }
 
@@ -146,17 +138,15 @@ public class ImageLoader implements IImageLoader {
         routeAccessor.setVisible(route != null);
 
         loadCurrentTiles(routeFetcher);
-
-        priorityManager.update();
     }
 
     private void loadTile(final IImageFetcher imageFetcher, final long id) {
-        imageFetcher.loadImage(id, priorityManager.priority(id));
+        imageFetcher.loadImage(id, 0);
     }
 
     private void loadCurrentTiles(final IImageFetcher imageFetcher) {
-        for (int i = lastRow; i < lastVisibleRows + lastRow; i++) {
-            for (int j = lastColumn; j < lastVisibleColumns + lastColumn; j++) {
+        for (int i = lastFirstRow; i <= lastLastRow; i++) {
+            for (int j = lastFirstColumn; j <= lastLastColumn; j++) {
                 loadTile(imageFetcher, conversion.getId(i, j, lastZoomStep));
             }
         }
@@ -165,64 +155,65 @@ public class ImageLoader implements IImageLoader {
     private boolean loadNewTiles() {
         boolean ret = false;
 
-        final int zoom = mapManager.getState().getZoom();
+        final int zoom = section.getZoom();
 
-        final int row = mapManager.getFirstRow(zoom);
-        final int column = mapManager.getFirstColumn(zoom);
-        final int visibleRows = mapManager.getVisibleRows(zoom);
-        final int visibleColumns = mapManager.getVisibleColumns(zoom);
+        final int firstRow = tileState.getFirstRow(zoom);
+        final int firstColumn = tileState.getFirstColumn(zoom);
+        final int lastRow = tileState.getLastRow(zoom);
+        final int lastColumn = tileState.getLastColumn(zoom);
 
         if (zoom != lastZoomStep) {
-            loadTiles(row, row + visibleRows, column, column + visibleColumns, zoom);
+            loadTiles(firstRow, lastRow, firstColumn, lastColumn, zoom);
             ret = true;
         } else {
-            int fromColumn = column;
-            int toColumn = column + visibleColumns;
-            if (column < lastColumn) {
-                fromColumn = Math.min(column + visibleColumns, lastColumn);
-                loadTiles(row, row + visibleRows, column, fromColumn, zoom);
-                loadBorderTiles(row, row + visibleRows, column - 2, column, zoom);
+            int fromColumn = firstColumn;
+            int toColumn = lastColumn;
+            if (firstColumn < lastFirstColumn) {
+                fromColumn = Math.min(lastColumn, lastFirstColumn);
+                loadTiles(firstRow, lastRow, firstColumn, fromColumn, zoom);
                 ret = true;
             }
             // no else if for resize of map view..
-            if (column + visibleColumns > lastColumn + lastVisibleColumns) {
-                toColumn = Math.max(lastColumn + lastVisibleColumns, column);
-                loadTiles(row, row + visibleRows, toColumn, column + visibleColumns, zoom);
-                loadBorderTiles(row, row + visibleRows, column + visibleColumns, column + visibleColumns + 2, zoom);
+            if (lastColumn > lastLastColumn) {
+                toColumn = Math.max(lastLastColumn, firstColumn);
+                loadTiles(firstRow, lastRow, toColumn, lastColumn, zoom);
                 ret = true;
             }
-            if (row < lastRow) {
-                loadTiles(row, Math.min(row + visibleRows, lastRow), fromColumn, toColumn, zoom);
-                loadBorderTiles(row - 2, row, fromColumn, toColumn, zoom);
+            if (firstRow < lastFirstRow) {
+                loadTiles(firstRow, Math.min(lastRow, lastFirstRow), fromColumn, toColumn, zoom);
                 ret = true;
             }
-            if (row + visibleRows > lastRow + lastVisibleRows) {
-                loadTiles(Math.max(lastRow + lastVisibleRows, row), row + visibleRows, fromColumn, toColumn, zoom);
-                loadBorderTiles(row + visibleRows, row + visibleRows + 2, fromColumn, toColumn, zoom);
+            if (lastRow > lastLastRow) {
+                loadTiles(Math.max(lastLastRow, firstRow), lastRow, fromColumn, toColumn, zoom);
                 ret = true;
             }
         }
 
         lastZoomStep = zoom;
-        lastRow = row;
-        lastColumn = column;
-        lastVisibleRows = visibleRows;
-        lastVisibleColumns = visibleColumns;
+        lastFirstRow = firstRow;
+        lastFirstColumn = firstColumn;
+        lastLastRow = lastRow;
+        lastLastColumn = lastColumn;
 
         return ret;
     }
 
     private void loadTiles(final int r1, final int r2, final int c1, final int c2, final int zoom) {
-        for (int y = r1; y < r2; y++) {
-            for (int x = c1; x < c2; x++) {
+        for (int y = r1; y <= r2; y++) {
+            for (int x = c1; x <= c2; x++) {
                 loadVisibleTile(conversion.getId(y, x, zoom));
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     private void loadBorderTiles(final int r1, final int r2, final int c1, final int c2, final int zoom) {
-        for (int row = r1; row < r2; row++) {
-            for (int column = c1; column < c2; column++) {
+        for (int row = r1; row <= r2; row++) {
+            for (int column = c1; column <= c2; column++) {
                 loadBorderTile(conversion.getId(row, column, zoom));
             }
         }
@@ -230,17 +221,17 @@ public class ImageLoader implements IImageLoader {
 
     private void loadBorderTiles() {
         // up
-        loadBorderTiles(Math.max(lastRow - prefetchCount, 0), lastRow, Math.max(lastColumn - prefetchCount, 0),
-                lastColumn + lastVisibleColumns + prefetchCount, lastZoomStep);
+        loadBorderTiles(lastFirstRow - prefetchCount, lastFirstRow - prefetchCount, lastFirstColumn - prefetchCount,
+                lastLastColumn + prefetchCount, lastZoomStep);
         // bot
-        loadBorderTiles(lastRow + lastVisibleRows, lastRow + lastVisibleRows + prefetchCount,
-                Math.max(lastColumn - prefetchCount, 0), lastColumn + lastVisibleColumns + prefetchCount, lastZoomStep);
+        loadBorderTiles(lastLastRow + prefetchCount, lastLastRow + prefetchCount, lastFirstColumn - prefetchCount,
+                lastLastColumn + prefetchCount, lastZoomStep);
         // left
-        loadBorderTiles(lastRow, lastRow + lastVisibleRows, Math.max(lastColumn - prefetchCount, 0), lastColumn,
+        loadBorderTiles(lastFirstRow, lastLastRow, lastFirstColumn - prefetchCount, lastFirstColumn - prefetchCount,
                 lastZoomStep);
         // right
-        loadBorderTiles(lastRow, lastRow + lastVisibleRows, lastColumn + lastVisibleColumns,
-                lastColumn + lastVisibleColumns + prefetchCount, lastZoomStep);
+        loadBorderTiles(lastFirstRow, lastLastRow, lastLastColumn + prefetchCount, lastLastColumn + prefetchCount,
+                lastZoomStep);
     }
 
     protected void loadVisibleTile(final long id) {
@@ -255,35 +246,6 @@ public class ImageLoader implements IImageLoader {
         for (final Layer layer : layers) {
             if (layer.prefetch && layer.imageAccessor.isVisible())
                 loadTile(layer.imageFetcher, id);
-        }
-    }
-
-    private class PriorityManager {
-        private int priority;
-        private int midRow;
-        private int midColumn;
-
-        public int priority(long id) {
-            int row = conversion.getRow(id);
-            int column = conversion.getColumn(id);
-            int up = row < midRow ? 1 : 0;
-            int left = column < midColumn ? 1 : 0;
-
-            return priority + 2 * Math.abs(midRow - row) + 2 * Math.abs(midColumn - column) + up + left;
-        }
-
-        public void update() {
-            final int zoom = mapManager.getState().getZoom();
-
-            final int row = mapManager.getFirstRow(zoom);
-            final int column = mapManager.getFirstColumn(zoom);
-            final int visibleRows = mapManager.getVisibleRows(zoom);
-            final int visibleColumns = mapManager.getVisibleColumns(zoom);
-
-            midRow = row + visibleRows / 2;
-            midColumn = column + visibleColumns / 2;
-
-            priority -= visibleColumns * visibleRows;
         }
     }
 
@@ -303,7 +265,6 @@ public class ImageLoader implements IImageLoader {
 
         public void setMapManager(final IMapManager manager) {
             imageFetcher.setMapManager(manager);
-            imageAccessor.setTileConversion(manager.getTileConversion());
         }
     }
 
@@ -314,6 +275,14 @@ public class ImageLoader implements IImageLoader {
         @Override
         public void run() {
             while (!isInterrupted()) {
+                synchronized (this) {
+                    while (!moved) {
+                        try {
+                            wait();
+                        } catch (InterruptedException e) {}
+                    }
+                    moved = false;
+                }
                 try {
                     Thread.sleep(DELAY_TIME);
                 } catch (InterruptedException e) {
@@ -322,7 +291,6 @@ public class ImageLoader implements IImageLoader {
                 if (!moved)
                     loadBorderTiles();
 
-                moved = false;
             }
         }
     }

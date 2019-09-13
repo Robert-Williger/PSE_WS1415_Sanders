@@ -1,6 +1,6 @@
 package adminTool.labeling;
 
-import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,14 +37,14 @@ public class RoadLabelCreator {
     private static final double OVERLAP_OFFSET = 10;
 
     private Collection<Way> ways;
-    private Dimension2D mapSize;
+    private Rectangle2D mapBounds;
 
     private List<LineLabel> labeling;
     private PointAccess points;
 
-    public RoadLabelCreator(final Collection<Way> ways, final IPointAccess points, final Dimension2D mapSize) {
+    public RoadLabelCreator(final Collection<Way> ways, final IPointAccess points, final Rectangle2D mapBounds) {
         this.ways = ways;
-        this.mapSize = mapSize;
+        this.mapBounds = mapBounds;
 
         this.points = new PointAccess(points.size());
         for (int i = 0; i < points.size(); ++i) {
@@ -69,7 +69,7 @@ public class RoadLabelCreator {
         SectionCreator sectionCreator = new SectionCreator(drawInfo, new StringWidthInfo(pixelsToCoords),
                 qualityMeasure, stubThreshold, tThreshold, fuzzyThreshold, simplificationThreshold, junctionThreshold,
                 lengthThreshold);
-        sectionCreator.createSections(ways, points, mapSize);
+        sectionCreator.createSections(ways, points, mapBounds);
         List<LabelSection> roadSections = sectionCreator.getRoadSections();
         List<LabelSection> junctionSections = sectionCreator.getJunctionSections();
         points = sectionCreator.getPoints();
