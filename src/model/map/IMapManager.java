@@ -3,7 +3,6 @@ package model.map;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
-import model.map.accessors.ITileIdConversion;
 
 public interface IMapManager {
 
@@ -14,8 +13,6 @@ public interface IMapManager {
     IMapBounds getMapBounds();
 
     IPixelMapping getPixelMapping();
-
-    ITileIdConversion getTileIdConversion();
 
     ITileState getTileState();
 

@@ -6,6 +6,7 @@ import javax.swing.event.ChangeListener;
 
 import model.AbstractModel;
 import model.map.accessors.ITileIdConversion;
+import model.map.accessors.TileConversion;
 
 public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
@@ -15,8 +16,8 @@ public class ImageAccessor extends AbstractModel implements IImageAccessor {
 
     private boolean isVisible;
 
-    public ImageAccessor(final ITileIdConversion conversion, final IImageFetcher imageFetcher, final String name) {
-        this.conversion = conversion;
+    public ImageAccessor(final IImageFetcher imageFetcher, final String name) {
+        this.conversion = new TileConversion();
         this.imageFetcher = imageFetcher;
         this.name = name;
         this.isVisible = true;

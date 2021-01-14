@@ -2,6 +2,7 @@ package model;
 
 import java.io.File;
 
+import model.addressIndex.IAddressMatcher;
 import model.map.IMap;
 import model.renderEngine.IImageLoader;
 import model.routing.IRouteManager;
@@ -12,7 +13,7 @@ public interface IApplication extends IModel, Progressable {
 
     IRouteManager getRouteManager();
 
-    ITextProcessor getTextProcessing();
+    IAddressMatcher getTextProcessing();
 
     IImageLoader getImageLoader();
 

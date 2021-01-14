@@ -1,4 +1,3 @@
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -10,7 +9,7 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import model.renderEngine.TextStroke;
+//import model.renderEngine.TextStroke;
 
 public class StrokeTest extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -42,7 +41,7 @@ public class StrokeTest extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
 
         g2.setRenderingHints(hints);
-        g2.setStroke(new TextStroke("Test", new Font("Arial", Font.BOLD, 20)));
+        //g2.setStroke(new TextStroke("Test", new Font("Arial", Font.BOLD, 20)));
         Path2D path = new Path2D.Double();
         path.moveTo(20, 20);
         path.lineTo(100, 100);

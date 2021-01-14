@@ -7,10 +7,13 @@ import model.map.IMapManager;
 import model.map.IMapSection;
 import model.map.ITileState;
 import model.map.accessors.ITileIdConversion;
+import model.map.accessors.TileConversion;
 import model.renderEngine.renderers.BackgroundRenderer;
 import model.renderEngine.renderers.IRenderRoute;
+import model.renderEngine.renderers.IRenderer;
 import model.renderEngine.renderers.IRouteRenderer;
 import model.renderEngine.renderers.LabelRenderer;
+import model.renderEngine.renderers.OnlineRenderer;
 import model.renderEngine.renderers.POIRenderer;
 import model.renderEngine.renderers.RouteRenderer;
 import model.renderEngine.schemes.ColorScheme;
@@ -44,36 +47,34 @@ public class ImageLoader implements IImageLoader {
     private final int prefetchCount = 1;
 
     public ImageLoader(final IMapManager mapManager) {
-        conversion = mapManager.getTileIdConversion();
-        routeRenderer = new RouteRenderer(mapManager);
+        conversion = new TileConversion();
 
         final ColorScheme colorScheme = new GoogleColorScheme();
+
+        final IRenderer[] renderers = new IRenderer[] { new POIRenderer(mapManager), new LabelRenderer(mapManager),
+                new BackgroundRenderer(mapManager, colorScheme) };
+        // final IRenderer[] renderers = new IRenderer[] { new OnlineRenderer("https://[abc].tile.openstreetmap.de") };
+        final int[] cacheSizes = new int[] { 128, 128, 1024 };
+        final boolean[] prefetch = new boolean[] { false, false, true };
+        final String[] names = new String[] { "Points Of Interest", "Beschriftung", "Hintergrund" };
+
         final int processors = Runtime.getRuntime().availableProcessors();
         pool = new ThreadPool(processors);
+        layers = new ArrayList<>();
+        imageAccessors = new ArrayList<>();
 
-        final IImageFetcher backgroundFetcher = new ImageFetcher(new BackgroundRenderer(mapManager, colorScheme),
-                mapManager, pool, 1024);
-        final IImageFetcher POIFetcher = new ImageFetcher(new POIRenderer(mapManager), mapManager, pool, 128);
+        routeRenderer = new RouteRenderer(mapManager);
         routeFetcher = new ImageFetcher(routeRenderer, mapManager, pool, 128);
-        final IImageFetcher labelFetcher = new ImageFetcher(new LabelRenderer(mapManager), mapManager, pool, 128);
-
-        ImageAccessor backgroundAccessor = new ImageAccessor(conversion, backgroundFetcher, "Hintergrund");
-        ImageAccessor POIAccessor = new ImageAccessor(conversion, POIFetcher, "Points of Interest");
-        routeAccessor = new ImageAccessor(conversion, routeFetcher, "Route");
-        ImageAccessor labelAccessor = new ImageAccessor(conversion, labelFetcher, "Beschriftung");
-
-        imageAccessors = new ArrayList<>(4);
-
-        imageAccessors.add(labelAccessor);
+        routeAccessor = new ImageAccessor(routeFetcher, "Route");
         imageAccessors.add(routeAccessor);
-        imageAccessors.add(POIAccessor);
-        imageAccessors.add(backgroundAccessor);
-
-        layers = new ArrayList<>(4);
-        layers.add(new Layer(labelFetcher, labelAccessor, false));
         layers.add(new Layer(routeFetcher, routeAccessor, false));
-        layers.add(new Layer(POIFetcher, POIAccessor, false));
-        layers.add(new Layer(backgroundFetcher, backgroundAccessor, true));
+
+        for (int i = 0; i < renderers.length; ++i) {
+            final IImageFetcher imageFetcher = new ImageFetcher(renderers[i], mapManager, pool, cacheSizes[i]);
+            final IImageAccessor imageAccessor = new ImageAccessor(imageFetcher, names[i]);
+            layers.add(new Layer(imageFetcher, imageAccessor, prefetch[i]));
+            imageAccessors.add(imageAccessor);
+        }
 
         setMapManager(mapManager);
 
@@ -86,7 +87,6 @@ public class ImageLoader implements IImageLoader {
         mapManager = manager;
         section = mapManager.getMapSection();
         tileState = mapManager.getTileState();
-        conversion = mapManager.getTileIdConversion();
 
         // set zoomStep to -1, so on first update all tiles in current view will be rendered
         lastZoomStep = -1;

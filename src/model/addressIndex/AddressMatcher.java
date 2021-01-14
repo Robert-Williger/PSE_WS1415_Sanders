@@ -1,4 +1,4 @@
-package model;
+package model.addressIndex;
 
 import java.awt.Point;
 import java.util.Arrays;
@@ -16,7 +16,10 @@ import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
 import model.targets.AddressPoint;
 
-public class TextProcessor implements ITextProcessor {
+public class AddressMatcher implements IAddressMatcher {
+    private static int DEFAULT_MAX_SUGGESTIONS = 5;
+    private static int DEFAULT_MAX_DISTANCE = 2;
+
     private final int maxDistance;
     private final int suggestions;
     private final BoundedHeap<Tuple> heap;
@@ -28,15 +31,15 @@ public class TextProcessor implements ITextProcessor {
     private final IStringAccessor stringAccessor;
     private final IMapManager manager;
 
-    public TextProcessor() {
+    public AddressMatcher() {
         this(Collections.emptyList(), new MapManager());
     }
 
-    public TextProcessor(final Collection<Entry> entries, final IMapManager manager) {
-        this(entries, manager, 5, 2);
+    public AddressMatcher(final Collection<Entry> entries, final IMapManager manager) {
+        this(entries, manager, DEFAULT_MAX_SUGGESTIONS, DEFAULT_MAX_DISTANCE);
     }
 
-    public TextProcessor(final Collection<Entry> entries, final IMapManager manager, final int suggestions,
+    public AddressMatcher(final Collection<Entry> entries, final IMapManager manager, final int suggestions,
             final int maxDistance) {
 
         this.suggestions = suggestions;
@@ -338,10 +341,10 @@ public class TextProcessor implements ITextProcessor {
         name = name.toLowerCase();
 
         final StringBuilder nameSB = new StringBuilder(name);
-        replaceAll(nameSB, "ÃŸ", "ss");
-        replaceAll(nameSB, "Ã¤", "ae");
-        replaceAll(nameSB, "Ã¼", "ue");
-        replaceAll(nameSB, "Ã¶", "oe");
+        replaceAll(nameSB, "ß", "ss");
+        replaceAll(nameSB, "ä", "ae");
+        replaceAll(nameSB, "ü", "ue");
+        replaceAll(nameSB, "ö", "oe");
         // TODO is that reasonable?
         replaceAll(nameSB, " ", "");
         replaceAll(nameSB, "-", "");

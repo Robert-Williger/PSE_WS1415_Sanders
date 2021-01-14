@@ -6,30 +6,30 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import model.ITextProcessor;
-import model.TextProcessor;
-import model.TextProcessor.Entry;
+import model.addressIndex.IAddressMatcher;
+import model.addressIndex.AddressMatcher;
+import model.addressIndex.AddressMatcher.Entry;
 import model.map.IMapManager;
 import model.reader.Reader.ReaderContext;
 
 class TextProcessorReader {
-    private ITextProcessor textProcessor;
+    private IAddressMatcher textProcessor;
 
     public TextProcessorReader() {
         super();
     }
 
-    public ITextProcessor getTextProcessor() {
+    public IAddressMatcher getTextProcessor() {
         return textProcessor;
     }
 
     public void readIndex(final ReaderContext readerContext, final IMapManager mapManager) throws IOException {
         final Collection<Entry> entries = readStreets(readerContext);
-        textProcessor = new TextProcessor(entries, mapManager);
+        textProcessor = new AddressMatcher(entries, mapManager);
     }
 
     private Collection<Entry> readStreets(final ReaderContext readerContext) throws IOException {
-        final List<TextProcessor.Entry> list = new ArrayList<>();
+        final List<AddressMatcher.Entry> list = new ArrayList<>();
         final DataInputStream stream = readerContext.createInputStream("index");
         if (stream != null) {
             final String[] cities = readCities(stream);
@@ -45,7 +45,7 @@ class TextProcessorReader {
                         final int city = stream.readInt();
                         final String cityName = city != -1 ? cities[city] : "";
 
-                        list.add(new TextProcessor.Entry(cityName, street));
+                        list.add(new AddressMatcher.Entry(cityName, street));
                     }
                 }
             }

@@ -7,14 +7,14 @@ import adminTool.elements.IPointAccess;
 import adminTool.elements.PointAccess;
 import adminTool.quadtree.DynamicQuadtreeAccess;
 import adminTool.quadtree.IQuadtree;
-import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.SquareQuadtreePolicy;
+import adminTool.quadtree.policies.IQuadtreePolicy;
+import adminTool.quadtree.policies.SquareQuadtreePolicy;
 import util.IntList;
 
 public class FuzzyPointMap {
-    private static final int DEFAULT_MAX_HEIGHT = 10;
+    private static final int DEFAULT_MAX_HEIGHT = 20;
+    private static final int DEFAULT_MAX_ELEMENTS = 4;
     private static final int DEFAULT_NULL_ELEMENT = -1;
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 32;
     private final double maxDistanceSq;
     private final DynamicQuadtreeAccess access;
     private final PointAccess points;
@@ -22,7 +22,7 @@ public class FuzzyPointMap {
     private final int nullElement;
 
     public FuzzyPointMap(final double maxX, final double maxY, final double maxDistance) {
-        this(maxX, maxY, maxDistance, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_NULL_ELEMENT);
+        this(maxX, maxY, maxDistance, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS, DEFAULT_NULL_ELEMENT);
     }
 
     public FuzzyPointMap(final double maxX, final double maxY, final double maxDistance, final int maxHeight,
@@ -40,18 +40,7 @@ public class FuzzyPointMap {
     public int get(final double x, final double y) {
         int ret = nullElement;
 
-        IQuadtree tree = access.getRoot();
-        double qX = 0;
-        double qY = 0;
-        double qSize = access.getSize();
-        while (!tree.isLeaf()) {
-            qSize /= 2;
-            final int xOffset = x < qX + qSize ? 0 : 1;
-            final int yOffset = y < qY + qSize ? 0 : 1;
-            tree = tree.getChild(xOffset, yOffset);
-            qX += xOffset * qSize;
-            qY += yOffset * qSize;
-        }
+        IQuadtree tree = access.getRoot().locate(0, 0, access.getSize(), x, y);
 
         double minDistanceSq = maxDistanceSq;
 

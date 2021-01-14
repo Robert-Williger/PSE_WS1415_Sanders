@@ -29,7 +29,6 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
     private List<LabelCandidate> candidates;
     private List<LabelPath> labeling;
     private LPWizard lpw;
-
     public MILPSolver(final QualityMeasure measure) {
         this(measure, DEFAULT_OVERLAP_OFFSET);
     }
@@ -47,11 +46,13 @@ public class MILPSolver implements IRoadMapLabelAlgorithm {
     @Override
     public void calculateLabeling(RoadMap roadMap) {
         init(roadMap);
-        candidateCreator.createCandidates(roadMap);
-        candidates = new ArrayList<>(candidateCreator.getCandidates());
-        if (!findTrivialSolution()) {
-            createProgram();
-            retrieveSolution();
+        if (solver != null) {
+            candidateCreator.createCandidates(roadMap);
+            candidates = new ArrayList<>(candidateCreator.getCandidates());
+            if (!findTrivialSolution()) {
+                createProgram();
+                retrieveSolution();
+            }
         }
     }
 

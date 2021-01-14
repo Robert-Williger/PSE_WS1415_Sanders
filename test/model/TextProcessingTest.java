@@ -8,6 +8,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import model.addressIndex.AddressMatcher;
+
 //import model.targets.AddressPoint;
 //TODO
 public class TextProcessingTest {
@@ -46,8 +48,8 @@ public class TextProcessingTest {
 
     @Test
     public void testNormalize() {
-        String name = "Wss√ü√§a√§√º√º√∂√∂ssw. 31";
-        name = TextProcessor.normalize(name);
+        String name = "Wﬂﬂ‰a‰¸¸ˆˆssw. 31";
+        name = AddressMatcher.normalize(name);
         final String normName = "wssssaeaaeueueoeoessw.31";
         assertEquals(normName, name);
 

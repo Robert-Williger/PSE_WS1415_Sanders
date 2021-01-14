@@ -10,16 +10,13 @@ import model.IFactory;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
-import model.map.accessors.ITileIdConversion;
 import model.map.accessors.StringAccessor;
-import model.map.accessors.TileConversion;
 
 public class MapManager implements IMapManager {
     private final java.util.Map<String, IFactory<IPointAccessor>> pointMap;
     private final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap;
     private final IStringAccessor stringAccessor;
 
-    private final ITileIdConversion tileConversion;
     private final ITileState tileState;
 
     private final IMapBounds mapBounds;
@@ -31,16 +28,14 @@ public class MapManager implements IMapManager {
     private final java.util.Map<String, IElementIterator> iteratorMap;
 
     public MapManager() {
-        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new StringAccessor(), new TileConversion(),
-                new MapBounds(0, 0, 1, 1, 0, 1), new PixelConverter(1), 256);
+        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new StringAccessor(),
+                new MapBounds(0, 0, 1 << 21, 1 << 21, 0, 19), new PixelConverter(21), 256);
     }
 
     public MapManager(final java.util.Map<String, IFactory<IPointAccessor>> pointMap,
             final java.util.Map<String, IFactory<ICollectiveAccessor>> collectiveMap,
             java.util.Map<String, IElementIterator> iteratorMap, final IStringAccessor stringAccessor,
-            final ITileIdConversion conversion, final IMapBounds mapBounds, final IPixelMapping mapping,
-            final int tileSize) {
-
+            final IMapBounds mapBounds, final IPixelMapping mapping, final int tileSize) {
         this.pointMap = pointMap;
         this.collectiveMap = collectiveMap;
         this.stringAccessor = stringAccessor;
@@ -50,20 +45,14 @@ public class MapManager implements IMapManager {
         this.pixelMapping = mapping;
         this.mapSection = new MapSection();
 
-        this.tileConversion = conversion;
         this.tileState = new TileState(mapSection, mapping, tileSize);
 
         IElementIterator streetIterator = getElementIterator("street");
         IElementIterator buildingIterator = getElementIterator("building");
         ICollectiveAccessor buildingAccessor = createCollectiveAccessor("building");
         ICollectiveAccessor streetAccessor = createCollectiveAccessor("street");
-        this.addressFinder = new AddressFinder(conversion, streetIterator, buildingIterator, buildingAccessor,
-                streetAccessor, stringAccessor, mapBounds, mapSection, pixelMapping, tileState);
-    }
-
-    @Override
-    public ITileIdConversion getTileIdConversion() {
-        return tileConversion;
+        this.addressFinder = new AddressFinder(streetIterator, buildingIterator, buildingAccessor, streetAccessor,
+                stringAccessor, mapBounds, mapSection, pixelMapping, tileState);
     }
 
     @Override

@@ -5,4 +5,6 @@ public interface IDrawInfo {
     double getStrokeWidth(int type);
 
     double getFontSize(int type);
+
+    boolean isVisible(int type);
 }

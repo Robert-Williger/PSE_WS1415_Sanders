@@ -23,17 +23,14 @@ public abstract class AbstractQuadtree implements IQuadtree {
     }
 
     @Override
-    public void traverse(final double size, final ElementConsumer consumer) {
-        traverse(consumer, 0, 0, size);
-    }
-
-    private void traverse(final ElementConsumer consumer, final double x, final double y, final double size) {
+    public void traverse(final double x, final double y, final double size, final ElementConsumer consumer) {
         if (isLeaf())
             consumer.consume(elements, x, y, size);
         else {
-            final double hs = size / 2;
-            for (int i = 0; i < IQuadtree.NUM_CHILDREN; ++i) {
-                getChild(i).traverse(consumer, x + IQuadtree.getXOffset(i) * hs, y + IQuadtree.getYOffset(i) * hs, hs);
+            final double childSize = IQuadtree.childSize(size);
+            for (int c = 0; c < IQuadtree.NUM_CHILDREN; ++c) {
+                getChild(c).traverse(IQuadtree.childX(x, childSize, c), IQuadtree.childY(y, childSize, c), childSize,
+                        consumer);
             }
         }
     }

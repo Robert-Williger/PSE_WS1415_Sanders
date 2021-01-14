@@ -1,7 +1,7 @@
 package adminTool.labeling.roadMap.visualizer;
 
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,10 +38,15 @@ public class OverlapResolveVisualizer extends JFrame {
             public double getFontSize(final int type) {
                 return WAY_WIDTH;
             }
+
+            @Override
+            public boolean isVisible(int type) {
+                return true;
+            }
         };
 
         final OverlapResolve resolve = new OverlapResolve(info);
-        resolve.resolve(ways, Collections.emptyList(), points, new Dimension(615, 270));
+        resolve.resolve(ways, Collections.emptyList(), points, new Rectangle2D.Double(0, 0, 615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, ways);
         final JPanel cutPaths = new WayVisualizer(points, resolve.getRoadSections());

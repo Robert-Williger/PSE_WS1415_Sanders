@@ -18,9 +18,10 @@ import org.junit.Test;
 
 public class LRUCacheTest {
 
-    private LRUCache cache;
+    private LRUCache<Long, Image> cache;
     private int capacity;
     private static Image image;
+    private long imageId;
 
     @BeforeClass
     public static void setUpClass() {
@@ -31,62 +32,63 @@ public class LRUCacheTest {
     public void setUp() {
         final Queue<Image> freeList = new LinkedList<>();
         capacity = 10;
+        imageId = 0;
         for (int i = 0; i < capacity; i++) {
             freeList.add(new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB));
         }
 
-        cache = new LRUCache(capacity, false, freeList);
+        cache = new LRUCache<>(capacity, false, freeList);
     }
 
     @Test
     public void testContains() {
-        assertFalse(cache.contains(5));
-        cache.put(5, image);
-        assertTrue(cache.contains(5));
+        assertFalse(cache.contains(imageId));
+        cache.put(imageId, image);
+        assertTrue(cache.contains(imageId));
     }
 
     @Test
     public void testGetImage() {
-        assertNull(cache.get(8));
-        cache.put(8, image);
-        assertEquals(cache.get(8), image);
+        assertNull(cache.get(imageId));
+        cache.put(imageId, image);
+        assertEquals(cache.get(imageId), image);
     }
 
     @Test
     public void testLRUFunctionality() {
         final BufferedImage image2 = new BufferedImage(11, 11, BufferedImage.TYPE_INT_ARGB);
-        cache.put(0, image2);
-        assertEquals(image2, cache.get(0));
+        cache.put(imageId, image2);
+        assertEquals(image2, cache.get(imageId));
 
-        for (int i = 1; i < capacity; i++) {
+        for (long i = 1; i < capacity; i++) {
             cache.put(i, image);
         }
 
-        for (int i = 1; i < capacity; i++) {
+        for (long i = 1; i < capacity; i++) {
             cache.get(i);
         }
 
-        assertTrue(cache.contains(0));
-        cache.put(100, image);
-        assertNull(cache.get(0));
+        assertTrue(cache.contains(imageId));
+        cache.put(imageId + 100, image);
+        assertNull(cache.get(imageId));
     }
 
     @Test
     public void testReset() {
-        assertFalse(cache.contains(5));
-        cache.put(5, image);
-        assertTrue(cache.contains(5));
+        assertFalse(cache.contains(imageId));
+        cache.put(imageId, image);
+        assertTrue(cache.contains(imageId));
         cache.clear();
-        assertFalse(cache.contains(5));
+        assertFalse(cache.contains(imageId));
     }
 
     @Test
     public void testResize() {
         cache.setSize(2);
-        cache.put(0, image);
-        cache.put(1, image);
-        assertTrue(cache.contains(0));
-        cache.put(2, image);
-        assertFalse(cache.contains(0));
+        cache.put(imageId, image);
+        cache.put(imageId + 1, image);
+        assertTrue(cache.contains(imageId));
+        cache.put(imageId + 2, image);
+        assertFalse(cache.contains(imageId));
     }
 }

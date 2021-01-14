@@ -1,9 +1,7 @@
-package adminTool.quadtree;
+package adminTool.quadtree.policies;
 
 import java.awt.geom.Rectangle2D;
 import java.util.List;
-
-import adminTool.quadtree.IQuadtreePolicy;
 
 public class MultipleBoundingBoxQuadtreePolicy implements IQuadtreePolicy {
 

@@ -9,6 +9,7 @@ import model.map.accessors.CollectiveUtil;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IStringAccessor;
 import model.map.accessors.ITileIdConversion;
+import model.map.accessors.TileConversion;
 import model.targets.AddressPoint;
 
 public class AddressFinder implements IAddressFinder {
@@ -30,12 +31,11 @@ public class AddressFinder implements IAddressFinder {
 
     private final long streetBuildingCoordDistanceSq;
 
-    public AddressFinder(ITileIdConversion tileConversion, IElementIterator streetIterator,
-            IElementIterator buildingIterator, ICollectiveAccessor buildingAccessor, ICollectiveAccessor streetAccessor,
-            IStringAccessor stringAccessor, IMapBounds mapBounds, IMapSection mapSection, IPixelMapping pixelMapping,
-            ITileState tileState) {
+    public AddressFinder(IElementIterator streetIterator, IElementIterator buildingIterator,
+            ICollectiveAccessor buildingAccessor, ICollectiveAccessor streetAccessor, IStringAccessor stringAccessor,
+            IMapBounds mapBounds, IMapSection mapSection, IPixelMapping pixelMapping, ITileState tileState) {
         super();
-        this.tileConversion = tileConversion;
+        this.tileConversion = new TileConversion();
         this.streetIterator = streetIterator;
         this.buildingIterator = buildingIterator;
         this.buildingAccessor = buildingAccessor;

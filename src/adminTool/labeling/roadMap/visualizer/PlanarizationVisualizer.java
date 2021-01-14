@@ -1,7 +1,7 @@
 package adminTool.labeling.roadMap.visualizer;
 
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,11 +24,17 @@ public class PlanarizationVisualizer extends JFrame {
         final PointAccess points = createPoints();
         final List<LabelSection> roads = createRoads();
         final Planarization planarization = new Planarization(10, 5, 1);
-        planarization.planarize(roads, points, new Dimension(615, 270));
+        planarization.planarize(roads, points, new Rectangle2D.Double(0, 0, 615, 270));
 
         final JPanel origPaths = new WayVisualizer(points, roads);
         final JPanel cutPaths = new WayVisualizer(points, planarization.getRoads());
 
+        System.out.println("orig:");
+        for (final LabelSection road : roads) {
+            System.out.println(road.toList());
+        }
+
+        System.out.println("planarized:");
         for (final LabelSection road : planarization.getRoads()) {
             System.out.println(road.toList());
         }

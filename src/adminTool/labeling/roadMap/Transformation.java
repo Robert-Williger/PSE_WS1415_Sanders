@@ -16,19 +16,23 @@ import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.elements.CutPerformer.Cut;
 import adminTool.labeling.IDrawInfo;
+import adminTool.labeling.INameInfo;
 import adminTool.util.IntersectionUtil;
 import util.IntList;
 
 public class Transformation {
-    private final IDrawInfo info;
+    private final IDrawInfo drawInfo;
+    private final INameInfo nameInfo;
     private final double junctionThreshold;
     private final double displacement;
     private PointAccess points;
     private List<LabelSection> roadSections;
     private List<LabelSection> junctionSections;
 
-    public Transformation(final IDrawInfo info, final double junctionThreshold, final double displacement) {
-        this.info = info;
+    public Transformation(final IDrawInfo drawInfo, final INameInfo nameInfo, final double junctionThreshold,
+            final double displacement) {
+        this.drawInfo = drawInfo;
+        this.nameInfo = nameInfo;
         this.junctionThreshold = junctionThreshold;
         this.displacement = displacement;
     }
@@ -84,8 +88,9 @@ public class Transformation {
 
         roadSections = new ArrayList<>(paths.size());
         junctionSections = new ArrayList<>(paths.size());
-        for (final RoadCutPerformer cut : cutPerformers)
-            cut.performCuts(roadSections, junctionSections);
+        for (final RoadCutPerformer cutPerformer : cutPerformers)
+            if (!nameInfo.getName(cutPerformer.road.getRoadId()).isEmpty())
+                cutPerformer.performCuts(roadSections, junctionSections);
     }
 
     private HashMap<Integer, List<IndexedWay>> createOccuranceMap(final List<? extends MultiElement> paths) {
@@ -134,7 +139,8 @@ public class Transformation {
 
     private void displaceCut(final Cut cut, final MultiElement element) {
         int node = cut.getSegment();
-        final Point2D last = new Point2D.Double(points.getX(element.getPoint(node)), points.getY(element.getPoint(node)));
+        final Point2D last = new Point2D.Double(points.getX(element.getPoint(node)),
+                points.getY(element.getPoint(node)));
         final Point2D current = new Point2D.Double();
 
         double remainDistance = last.distance(points.getX(cut.getPoint()), points.getY(cut.getPoint())) + displacement;
@@ -173,7 +179,7 @@ public class Transformation {
         final Area[] shapes = new Area[elements.size()];
         for (int i = 0; i < shapes.length; ++i) {
             final MultiElement element = elements.get(i).element;
-            shapes[i] = new Area(createBoundedStrokedShape(element, info.getStrokeWidth(element.getType())));
+            shapes[i] = new Area(createBoundedStrokedShape(element, drawInfo.getStrokeWidth(element.getType())));
         }
         return shapes;
     }
@@ -217,7 +223,7 @@ public class Transformation {
         final Point2D last = new Point2D.Double(points.getX(path.getPoint(cut.getSegment())),
                 points.getY(path.getPoint(cut.getSegment())));
         final Point2D current = new Point2D.Double();
-        final double wayWidth = info.getStrokeWidth(path.getType()) / 2;
+        final double wayWidth = drawInfo.getStrokeWidth(path.getType()) / 2;
 
         for (int segment = cut.getSegment(); segment < path.size() - 1; ++segment) {
             current.setLocation(points.getX(path.getPoint(segment + 1)), points.getY(path.getPoint(segment + 1)));

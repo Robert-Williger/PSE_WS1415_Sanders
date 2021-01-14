@@ -1,7 +1,5 @@
 package adminTool.labeling.roadMap;
 
-import static adminTool.util.IntersectionUtil.rectangleContainsPoint;
-import static adminTool.util.IntersectionUtil.rectangleIntersectsSegment;
 import static adminTool.util.IntersectionUtil.lineIntersectsline;
 import static adminTool.util.IntersectionUtil.inIntervall;
 import static adminTool.util.IntersectionUtil.EPSILON;
@@ -9,25 +7,28 @@ import static adminTool.util.IntersectionUtil.EPSILON;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator.OfInt;
+import java.util.Set;
 
 import adminTool.elements.CutPerformer;
 import adminTool.elements.PointAccess;
 import adminTool.elements.CutPerformer.Cut;
-import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.Quadtree;
-import adminTool.quadtree.WayQuadtreePolicy;
+import adminTool.quadtree.DynamicQuadtreeAccess;
 import adminTool.quadtree.IQuadtree.ElementConsumer;
+import adminTool.quadtree.policies.IQuadtreePolicy;
+import adminTool.quadtree.policies.WayQuadtreePolicy;
 import adminTool.util.ElementAdapter;
 import adminTool.util.FuzzyPointMap;
 import util.IntList;
 
 public class Planarization {
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
-    private static final int DEFAULT_MAX_HEIGHT = 15;
+    private static final int DEFAULT_MAX_ELEMENTS = 4;
+    private static final int DEFAULT_MAX_HEIGHT = 20;
 
-    private final int maxElementsPerTile;
+    private final int maxElements;
     private final int maxHeight;
     private FuzzyPointMap fuzzyMap;
 
@@ -47,12 +48,12 @@ public class Planarization {
     }
 
     public Planarization(final double stubThreshold, final double tCrossThreshold, final double fuzzyThreshold) {
-        this(stubThreshold, tCrossThreshold, fuzzyThreshold, DEFAULT_MAX_ELEMENTS_PER_TILE, DEFAULT_MAX_HEIGHT);
+        this(stubThreshold, tCrossThreshold, fuzzyThreshold, DEFAULT_MAX_ELEMENTS, DEFAULT_MAX_HEIGHT);
     }
 
     public Planarization(final double stubThreshold, final double tCrossThreshold, final double fuzzyThreshold,
-            final int maxElementsPerTile, final int maxHeight) {
-        this.maxElementsPerTile = maxElementsPerTile;
+            final int maxElements, final int maxHeight) {
+        this.maxElements = maxElements;
         this.maxHeight = maxHeight;
         this.offsets = new double[2];
         this.stubThreshold = stubThreshold;
@@ -76,9 +77,17 @@ public class Planarization {
         countNodes(roads);
         mapEndNodes(roads, size);
 
-        final Quadtree quadtree = createQuadtree(roads, size);
+        final List<Rectangle2D> lineBounds = WayQuadtreePolicy.calculateLineBounds(roads, points);
+        final IQuadtreePolicy policy = new WayQuadtreePolicy(roads, points, (index, height) -> 0, lineBounds);
+        final DynamicQuadtreeAccess quadtree = new DynamicQuadtreeAccess(policy, maxHeight, maxElements, size);
         final ArrayList<List<Cut>> cuts = createInitialCutList(roads);
-        quadtree.traverse(size, createElementConsumer(roads, cuts));
+
+        Set<Integer> comparedElements = new HashSet<Integer>();
+        ElementConsumer consumer = createElementConsumer(roads, cuts, lineBounds, comparedElements);
+        for (int i = 0; i < roads.size(); ++i) {
+            comparedElements.clear();
+            quadtree.add(i, consumer);
+        }
 
         cutRoads(roads, cuts);
     }
@@ -99,10 +108,9 @@ public class Planarization {
         }
     }
 
-    private Quadtree createQuadtree(final List<LabelSection> roads, final double size) {
-        final IQuadtreePolicy policy = new WayQuadtreePolicy(roads, points, (index, height) -> 0);
-        final Quadtree quadtree = new Quadtree(roads.size(), policy, size, maxHeight, maxElementsPerTile);
-        return quadtree;
+    private void putNode(final int node) {
+        if (fuzzyMap.get(points.getX(node), points.getY(node)) == -1)
+            fuzzyMap.put(points.getX(node), points.getY(node), node);
     }
 
     private ArrayList<List<Cut>> createInitialCutList(final List<LabelSection> roads) {
@@ -112,41 +120,27 @@ public class Planarization {
         return cutList;
     }
 
-    private void putNode(final int node) {
-        int v = fuzzyMap.get(points.getX(node), points.getY(node));
-        if (v == -1)
-            fuzzyMap.put(points.getX(node), points.getY(node), node);
-    }
+    private ElementConsumer createElementConsumer(final List<LabelSection> roads, final List<List<Cut>> cuts,
+            final List<Rectangle2D> lineBounds, final Set<Integer> comparedElements) {
+        return (elements, x, y, size) -> {
+            final int eu = elements.get(elements.size() - 1);
+            final LabelSection ru = roads.get(eu);
+            for (final OfInt it = elements.iterator(); it.hasNext();) {
+                final int ev = it.nextInt();
+                if (!comparedElements.add(ev) || !lineBounds.get(eu).intersects(lineBounds.get(ev)))
+                    continue;
 
-    private ElementConsumer createElementConsumer(final List<LabelSection> roads, final ArrayList<List<Cut>> cuts) {
-        return (elements, tileX, tileY, tileSize) -> {
-            for (int u = 0; u < elements.size(); ++u) {
-                final int eu = elements.get(u);
-                final LabelSection ru = roads.get(eu);
-                for (int su = -1; (su = nextSegmentInTile(tileX, tileY, tileSize, su, ru)) != -1;) {
-                    for (int v = u + 1; v < elements.size(); ++v) {
-                        final int ev = elements.get(v);
-                        final LabelSection rv = roads.get(ev);
-                        for (int sv = -1; (sv = nextSegmentInTile(tileX, tileY, tileSize, sv, rv)) != -1;) {
-
-                            if (intersectsBiased(ru, rv, su, sv))
-                                update(tileX, tileY, tileSize, cuts.get(eu), cuts.get(ev), su, sv, ru);
-                        }
-                    }
-
-                    // check for self intersections
-                    int next = nextSegmentInTile(tileX, tileY, tileSize, su, ru);
-
-                    if (next == -1)
-                        continue;
-
-                    for (int sv = next; (sv = nextSegmentInTile(tileX, tileY, tileSize, sv, ru)) != -1;) {
-                        if (intersectsBiased(ru, ru, su, sv))
-                            update(tileX, tileY, tileSize, cuts.get(eu), cuts.get(eu), su, sv, ru);
+                final LabelSection rv = roads.get(ev);
+                for (int su = 0; su < ru.size() - 1; ++su) {
+                    // also check for self intersection
+                    for (int sv = eu != ev ? 0 : su + 2; sv < rv.size() - 1; ++sv) {
+                        if (intersectsBiased(ru, rv, su, sv))
+                            update(cuts.get(eu), cuts.get(ev), su, sv, ru);
                     }
                 }
             }
         };
+
     }
 
     private void cutRoads(final List<LabelSection> roads, final ArrayList<List<Cut>> cutList) {
@@ -173,29 +167,12 @@ public class Planarization {
         }
     }
 
-    private int nextSegmentInTile(final double x, final double y, final double size, final int s,
-            final LabelSection r) {
-        for (int ret = s + 1; ret < r.size() - 1; ++ret)
-            if (segmentInTile(x, y, size, r, ret))
-                return ret;
-        return -1;
-    }
-
-    private boolean segmentInTile(final double x, final double y, final double size, final LabelSection road,
-            int segment) {
-        return rectangleIntersectsSegment(x, y, size, size, x(road, segment), y(road, segment), x(road, segment + 1),
-                y(road, segment + 1));
-    }
-
-    private void update(double tileX, double tileY, double size, List<Cut> cu, List<Cut> cv, int su, int sv,
-            LabelSection ru) {
-        double x = x(ru, su) + offsets[0] * (x(ru, su + 1) - x(ru, su));
-        double y = y(ru, su) + offsets[0] * (y(ru, su + 1) - y(ru, su));
-        if (rectangleContainsPoint(tileX, tileY, tileX + size, tileY + size, x, y)) {
-            final int point = getPoint(x, y);
-            cu.add(new Cut(point, su, offsets[0]));
-            cv.add(new Cut(point, sv, offsets[1]));
-        }
+    private void update(List<Cut> cu, List<Cut> cv, int su, int sv, LabelSection ru) {
+        final double px = x(ru, su) + offsets[0] * (x(ru, su + 1) - x(ru, su));
+        final double py = y(ru, su) + offsets[0] * (y(ru, su + 1) - y(ru, su));
+        final int point = getPoint(px, py);
+        cu.add(new Cut(point, su, offsets[0]));
+        cv.add(new Cut(point, sv, offsets[1]));
     }
 
     private int getPoint(final double x, final double y) {

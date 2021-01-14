@@ -10,7 +10,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import model.IProgressListener;
-import model.ITextProcessor;
+import model.addressIndex.IAddressMatcher;
 import model.map.IMapManager;
 import model.routing.IRouteManager;
 
@@ -71,7 +71,7 @@ public class Reader implements IReader {
     }
 
     @Override
-    public ITextProcessor getTextProcessor() {
+    public IAddressMatcher getTextProcessor() {
         return textProcessorReader.getTextProcessor();
     }
 

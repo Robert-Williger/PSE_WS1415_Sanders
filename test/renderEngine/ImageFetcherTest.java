@@ -1,21 +1,17 @@
 package renderEngine;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
-import javax.swing.event.ChangeListener;
 
 import model.map.IMapManager;
 import model.map.MapManager;
-import model.renderEngine.AbstractImageFetcher;
 import model.renderEngine.ImageFetcher;
-import model.renderEngine.SequentialImageFetcher;
 import model.renderEngine.renderers.IRenderer;
 
 import org.junit.Before;
@@ -27,7 +23,6 @@ public class ImageFetcherTest {
     private static volatile boolean isRendered = false;
     private static DummyRenderer renderer;
     private final long defaultID = -2;
-    private Image defaultImage;
 
     private static class DummyRenderer implements IRenderer {
 
@@ -60,7 +55,6 @@ public class ImageFetcherTest {
         renderer.lastTileID = defaultID;
         isRendered = false;
         fetcher = new ImageFetcher(renderer, new MapManager());
-        defaultImage = fetcher.getImage(0);
     }
 
     public boolean imagesEqual(final BufferedImage image1, final BufferedImage image2) {
@@ -98,15 +92,7 @@ public class ImageFetcherTest {
         assertEquals(tileID, renderer.lastTileID);
         renderer.lastTileID = defaultID;
         fetcher.flush();
-        assertTrue(imagesEqual((BufferedImage) defaultImage, (BufferedImage) fetcher.getImage(tileID)));
+        assertNull(fetcher.getImage(tileID));
     }
 
-    @Test
-    public void testSetMapManager() {
-        final BufferedImage image = (BufferedImage) fetcher.getImage(0);
-        fetcher.setMapManager(new MapManager());
-        final BufferedImage image2 = (BufferedImage) fetcher.getImage(0);
-
-        assertFalse(image.getHeight() != image2.getHeight() && image.getWidth() != image2.getWidth());
-    }
 }

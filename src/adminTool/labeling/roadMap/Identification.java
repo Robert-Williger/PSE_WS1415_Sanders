@@ -21,11 +21,10 @@ public class Identification {
 
         int roadId = 0;
         for (final Way way : ways) {
-            if (way.getName() == null || way.getName().isEmpty())
-                continue;
-            Integer id = idMap.get(way.getName());
+            String name = getName(way);
+            Integer id = idMap.get(name);
             if (id == null) {
-                idMap.put(way.getName(), roadId);
+                idMap.put(name, roadId);
                 id = roadId;
                 ++roadId;
             }
@@ -50,5 +49,9 @@ public class Identification {
 
     public int getRoadIds() {
         return roadIds;
+    }
+
+    private String getName(final Way way) {
+        return way.getName() != null ? way.getName() : "";
     }
 }

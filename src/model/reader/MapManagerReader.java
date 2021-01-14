@@ -18,10 +18,8 @@ import model.map.accessors.CollectiveAccessor;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.IPointAccessor;
 import model.map.accessors.IStringAccessor;
-import model.map.accessors.ITileIdConversion;
 import model.map.accessors.POIAccessor;
 import model.map.accessors.StringAccessor;
-import model.map.accessors.TileConversion;
 import model.reader.Reader.ReaderContext;
 
 class MapManagerReader {
@@ -47,10 +45,8 @@ class MapManagerReader {
         final Map<String, IFactory<IPointAccessor>> pointMap = new HashMap<>();
         readElements(readerContext, elementIteratorMap, pointMap, collectiveMap, bounds.getMinZoom());
 
-        final ITileIdConversion tileConversion = new TileConversion();
-
-        mapManager = new MapManager(pointMap, collectiveMap, elementIteratorMap, stringAccessor, tileConversion, bounds,
-                mapping, tileSize);
+        mapManager = new MapManager(pointMap, collectiveMap, elementIteratorMap, stringAccessor, bounds, mapping,
+                tileSize);
     }
 
     private void readHeader(final ReaderContext readerContext) throws IOException {

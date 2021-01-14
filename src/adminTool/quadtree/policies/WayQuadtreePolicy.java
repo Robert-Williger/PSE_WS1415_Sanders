@@ -1,7 +1,8 @@
-package adminTool.quadtree;
+package adminTool.quadtree.policies;
 
 import adminTool.elements.IPointAccess;
 import adminTool.elements.MultiElement;
+import adminTool.quadtree.BoundingBoxQuadtreePolicy;
 import adminTool.util.ElementAdapter;
 import adminTool.util.IntersectionUtil;
 
@@ -16,11 +17,16 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy implements IQua
     private final IWayWidthInfo widthInfo;
 
     public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
-            final IWayWidthInfo widthInfo) {
-        super(calculateBounds(ways, points));
+            final IWayWidthInfo widthInfo, final List<Rectangle2D> lineBounds) {
+        super(lineBounds);
         this.widthInfo = widthInfo;
         this.points = points;
         this.ways = ways;
+    }
+
+    public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
+            final IWayWidthInfo widthInfo) {
+        this(ways, points, widthInfo, calculateLineBounds(ways, points));
     }
 
     public WayQuadtreePolicy(final List<? extends MultiElement> ways, final IPointAccess points,
@@ -54,7 +60,7 @@ public class WayQuadtreePolicy extends BoundingBoxQuadtreePolicy implements IQua
         return false;
     }
 
-    private static List<Rectangle2D> calculateBounds(final List<? extends MultiElement> elements,
+    public static List<Rectangle2D> calculateLineBounds(final List<? extends MultiElement> elements,
             final IPointAccess points) {
         final List<Rectangle2D> bounds = new ArrayList<>(elements.size());
         final ElementAdapter adapter = new ElementAdapter(points);

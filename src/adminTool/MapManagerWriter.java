@@ -21,15 +21,15 @@ import adminTool.elements.LineLabel;
 import adminTool.elements.Typeable;
 import adminTool.metrics.IDistanceMap;
 import adminTool.metrics.PixelToCoordDistanceMap;
-import adminTool.quadtree.AreaQuadtreePolicy;
-import adminTool.quadtree.MultipleBoundingBoxQuadtreePolicy;
 import adminTool.quadtree.Quadtree;
 import adminTool.quadtree.QuadtreeWriter;
 import adminTool.quadtree.CollisionlessQuadtree;
 import adminTool.quadtree.ICollisionPolicy;
 import adminTool.quadtree.IQuadtree;
-import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.WayQuadtreePolicy;
+import adminTool.quadtree.policies.AreaQuadtreePolicy;
+import adminTool.quadtree.policies.IQuadtreePolicy;
+import adminTool.quadtree.policies.MultipleBoundingBoxQuadtreePolicy;
+import adminTool.quadtree.policies.WayQuadtreePolicy;
 
 public class MapManagerWriter extends AbstractMapFileWriter {
     private static final int TILE_LENGTH_BITS = 8;

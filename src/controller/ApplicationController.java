@@ -113,13 +113,16 @@ public class ApplicationController {
         });
 
         importer.setAcceptAllFileFilterUsed(false);
-        importer.setDialogTitle("Kartendatei ausw√§hlen");
+        importer.setDialogTitle("Kartendatei ausw‰hlen");
         importer.setFileFilter(new FileNameExtensionFilter("MAP (*.map)", "map"));
 
         exporter.setAcceptAllFileFilterUsed(false);
         exporter.setDialogTitle("Speichern unter");
         exporter.setFileFilter(new FileNameExtensionFilter("PNG (*.png)", "png"));
 
+        model.getMap().setSize(view.getMap().getWidth(), view.getMap().getHeight());
+        model.getMap().move(model.getImageLoader().getTileSize() / 2, model.getImageLoader().getTileSize() / 2);
+        model.getImageLoader().update();
         final File file = new File("default.map");
         if (file.exists()) {
             importMap(file);

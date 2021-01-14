@@ -13,6 +13,7 @@ import javax.swing.SwingUtilities;
 import model.AbstractModel;
 import model.map.IMapManager;
 import model.map.accessors.ITileIdConversion;
+import model.map.accessors.TileConversion;
 import model.renderEngine.renderers.IRenderer;
 import model.renderEngine.threadPool.ThreadPool;
 
@@ -25,13 +26,17 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
     private final ConcurrentLinkedQueue<Image> freeList;
     private final List<ITileListener> listeners;
 
-    private ITileIdConversion conversion;
+    private final ITileIdConversion conversion;
 
     private int imageSize;
     private int run;
 
     static {
         config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    }
+
+    public ImageFetcher(final IRenderer renderer, final IMapManager manager) {
+        this(renderer, manager, new ThreadPool(1), 20);
     }
 
     public ImageFetcher(final IRenderer renderer, final IMapManager manager, final ThreadPool pool,
@@ -41,6 +46,7 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
         this.freeList = new ConcurrentLinkedQueue<>();
         this.cache = new LRUCache<>(cacheSize, false, freeList);
         this.listeners = new ArrayList<>();
+        this.conversion = new TileConversion();
 
         setMapManager(manager);
         // updateTileSize(manager.getState().getPixelTileSize());
@@ -66,7 +72,6 @@ public class ImageFetcher extends AbstractModel implements IImageFetcher {
     public void setMapManager(final IMapManager manager) {
         flush();
 
-        conversion = manager.getTileIdConversion();
         renderer.setMapManager(manager);
         if (manager.getTileState().getTileSize() != imageSize) {
             updateTileSize(manager.getTileState().getTileSize());

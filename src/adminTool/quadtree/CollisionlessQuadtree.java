@@ -3,6 +3,8 @@ package adminTool.quadtree;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.function.IntFunction;
 
+import adminTool.quadtree.policies.IQuadtreePolicy;
+
 public class CollisionlessQuadtree extends AbstractQuadtree implements IQuadtree {
 
     private CollisionlessQuadtree[] children;

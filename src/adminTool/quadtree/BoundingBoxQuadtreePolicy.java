@@ -3,7 +3,7 @@ package adminTool.quadtree;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-import adminTool.quadtree.IQuadtreePolicy;
+import adminTool.quadtree.policies.IQuadtreePolicy;
 
 public class BoundingBoxQuadtreePolicy implements IQuadtreePolicy {
 

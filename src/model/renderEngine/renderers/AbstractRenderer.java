@@ -10,6 +10,7 @@ import model.map.IMapManager;
 import model.map.IPixelMapping;
 import model.map.accessors.ICollectiveAccessor;
 import model.map.accessors.ITileIdConversion;
+import model.map.accessors.TileConversion;
 
 abstract class AbstractRenderer implements IRenderer {
 
@@ -21,7 +22,7 @@ abstract class AbstractRenderer implements IRenderer {
     public void setMapManager(final IMapManager manager) {
         this.manager = manager;
         this.converter = manager.getPixelMapping();
-        this.conversion = manager.getTileIdConversion();
+        this.conversion = new TileConversion();
     }
 
     @Override

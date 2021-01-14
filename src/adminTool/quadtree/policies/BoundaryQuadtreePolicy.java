@@ -1,4 +1,4 @@
-package adminTool.quadtree;
+package adminTool.quadtree.policies;
 
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -34,6 +34,10 @@ public class BoundaryQuadtreePolicy implements IQuadtreePolicy {
     @Override
     public boolean intersects(final int element, final int height, final double x, final double y, final double size) {
         return areas.get(element).intersects(x, y, size, size);
+    }
+    
+    public boolean contains(final int element, final double x, final double y) {
+        return areas.get(element).contains(x, y);
     }
 
 }

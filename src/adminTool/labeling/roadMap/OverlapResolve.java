@@ -18,22 +18,21 @@ import adminTool.elements.MultiElement;
 import adminTool.elements.PointAccess;
 import adminTool.elements.CutPerformer.Cut;
 import adminTool.labeling.IDrawInfo;
-import adminTool.quadtree.IQuadtree;
-import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.Quadtree;
-import adminTool.quadtree.WayQuadtreePolicy;
+import adminTool.quadtree.DynamicQuadtreeAccess;
+import adminTool.quadtree.IQuadtree.ElementConsumer;
+import adminTool.quadtree.policies.IQuadtreePolicy;
+import adminTool.quadtree.policies.WayQuadtreePolicy;
 import adminTool.util.ElementAdapter;
 import adminTool.util.IntersectionUtil;
 import adminTool.util.ShapeUtil;
 import util.IntList;
 
 public class OverlapResolve {
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 16;
-    private static final int DEFAULT_MAX_HEIGHT = 10;
+    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
+    private static final int DEFAULT_MAX_HEIGHT = 15;
 
     private final IDrawInfo info;
     private final CutPerformer cutPerformer;
-    private List<Set<Integer>> sets;
     private List<List<Overlap>> overlaps;
     private float[] isect;
 
@@ -62,20 +61,18 @@ public class OverlapResolve {
             final PointAccess points, final Rectangle2D mapBounds) {
         this.points = points;
 
-        this.paths = new ArrayList<>(roadSections.size() + junctionSections.size());
+        this.paths = roadSections;// new ArrayList<>(roadSections.size() + junctionSections.size());
         this.roadSections = new ArrayList<>(roadSections.size());
-        this.junctionSections = new ArrayList<>(junctionSections.size());
+        this.junctionSections = junctionSections;// new ArrayList<>(junctionSections.size());
 
-        paths.addAll(roadSections);
-        paths.addAll(junctionSections);
+        // paths.addAll(roadSections);
+        // paths.addAll(junctionSections);
 
-        this.sets = new ArrayList<>(paths.size());
         this.overlaps = new ArrayList<>(paths.size());
         this.areas = new ArrayList<>(paths.size());
 
         final ElementAdapter element = new ElementAdapter(points);
         for (final LabelSection path : paths) {
-            sets.add(new HashSet<>());
             overlaps.add(new ArrayList<>());
             element.setMultiElement(path);
             areas.add(new Area(ShapeUtil.createStrokedPath(element, (float) (info.getStrokeWidth(path.getType())),
@@ -83,17 +80,17 @@ public class OverlapResolve {
         }
 
         final double size = Math.max(mapBounds.getMaxX(), mapBounds.getMaxY());
-        final IQuadtreePolicy policy = new WayQuadtreePolicy(paths, points,
-                (index, height) -> info.getStrokeWidth(paths.get(index).getType()));
-        final Quadtree quadtree = new Quadtree(paths.size(), policy, size, DEFAULT_MAX_HEIGHT,
-                DEFAULT_MAX_ELEMENTS_PER_TILE);
+        final DynamicQuadtreeAccess quadtree = createQuadtree(points, size);
+        Set<Integer> comparedElements = new HashSet<Integer>();
+        for (int i = 0; i < paths.size(); ++i) {
+            comparedElements.clear();
+            quadtree.add(i, createElementConsumer(comparedElements));
+        }
 
-        findOverlapsRec(quadtree, 0, 0, size);
-
-        final Iterator<LabelSection> roadIt = paths.iterator();
+        // final Iterator<LabelSection> roadIt = paths.iterator();
         final Iterator<List<Overlap>> overlapIt = overlaps.iterator();
         for (int i = 0; i < roadSections.size(); ++i) {
-            final LabelSection road = roadIt.next();
+            final LabelSection road = roadSections.get(i);// roadIt.next();
             final List<Overlap> overlap = overlapIt.next();
             if (overlap.isEmpty())
                 this.roadSections.add(road);
@@ -113,11 +110,18 @@ public class OverlapResolve {
                             .add(new LabelSection(elements.get(cuts.size()), road.getType(), road.getRoadId()));
             }
         }
-        while (roadIt.hasNext()) {
-            final LabelSection road = roadIt.next();
-            if (overlapIt.next().isEmpty())
-                this.junctionSections.add(road);
-        }
+        // while (roadIt.hasNext()) {
+        // final LabelSection road = roadIt.next();
+        // if (overlapIt.next().isEmpty())
+        // this.junctionSections.add(road);
+        // }
+    }
+
+    private DynamicQuadtreeAccess createQuadtree(final PointAccess points, final double size) {
+        final IQuadtreePolicy policy = new WayQuadtreePolicy(paths, points,
+                (index, height) -> info.getStrokeWidth(paths.get(index).getType()));
+
+        return new DynamicQuadtreeAccess(policy, DEFAULT_MAX_HEIGHT, DEFAULT_MAX_ELEMENTS_PER_TILE, size);
     }
 
     private List<Cut> createCutList(final List<Overlap> sections) {
@@ -144,26 +148,12 @@ public class OverlapResolve {
         return cuts;
     }
 
-    private void findOverlapsRec(final Quadtree tree, final double x, final double y, final double size) {
-        if (tree.isLeaf())
-            findOverlaps(tree, x, y, size);
-        else {
-            final double hs = size / 2;
-            for (int i = 0; i < IQuadtree.NUM_CHILDREN; ++i) {
-                findOverlapsRec(tree.getChild(i), x + IQuadtree.getXOffset(i) * hs, y + IQuadtree.getYOffset(i) * hs,
-                        hs);
-            }
-        }
-    }
-
-    private void findOverlaps(final Quadtree quadtree, final double x, final double y, final double size) {
-        final IntList elements = quadtree.getElements();
-        for (int i = 0; i < elements.size() - 1; ++i) {
-            final int ui = elements.get(i);
-
-            for (int j = i + 1; j < elements.size(); ++j) {
-                final int vi = elements.get(j);
-                if (connected(paths.get(ui), paths.get(vi)) || !sets.get(ui).add(vi) || !sets.get(vi).add(ui))
+    private ElementConsumer createElementConsumer(final Set<Integer> comparedElements) {
+        return (elements, x, y, size) -> {
+            final int ui = elements.get(elements.size() - 1);
+            for (int i = 0; i < elements.size() - 1; ++i) {
+                final int vi = elements.get(i);
+                if (!comparedElements.add(vi))
                     continue;
 
                 final Area intersection = new Area(areas.get(vi));
@@ -171,13 +161,13 @@ public class OverlapResolve {
                 final int ei = paths.get(ui).getRoadId() < paths.get(vi).getRoadId() ? ui : vi;
                 addOverlaps(intersection.getPathIterator(null), paths.get(ei), overlaps.get(ei));
             }
-        }
+        };
     }
 
-    private boolean connected(final MultiElement a, final MultiElement b) {
-        return a.getPoint(0) == b.getPoint(0) || a.getPoint(0) == b.getPoint(b.size() - 1)
-                || a.getPoint(a.size() - 1) == b.getPoint(0) || a.getPoint(a.size() - 1) == b.getPoint(b.size() - 1);
-    }
+    // private boolean connected(final MultiElement a, final MultiElement b) {
+    // return a.getPoint(0) == b.getPoint(0) || a.getPoint(0) == b.getPoint(b.size() - 1)
+    // || a.getPoint(a.size() - 1) == b.getPoint(0) || a.getPoint(a.size() - 1) == b.getPoint(b.size() - 1);
+    // }
 
     private void addOverlaps(final PathIterator iterator, final MultiElement e, final List<Overlap> overlaps) {
         Overlap sect = null;

@@ -4,6 +4,8 @@ import java.io.File;
 
 import javax.swing.SwingUtilities;
 
+import model.addressIndex.IAddressMatcher;
+import model.addressIndex.AddressMatcher;
 import model.map.IMap;
 import model.map.IMapBounds;
 import model.map.IMapManager;
@@ -25,7 +27,7 @@ public class Application extends AbstractModel implements IApplication {
     private IMap map;
     private String name;
     private final IImageLoader loader;
-    private ITextProcessor processor;
+    private IAddressMatcher processor;
 
     public Application() {
         reader = new Reader();
@@ -33,7 +35,7 @@ public class Application extends AbstractModel implements IApplication {
         final IMapManager manager = new MapManager();
         loader = new ImageLoader(manager);
         routing = new RouteManager(new DirectedGraph(), manager);
-        processor = new TextProcessor();
+        processor = new AddressMatcher();
         map = new Map(manager);
     }
 
@@ -48,7 +50,7 @@ public class Application extends AbstractModel implements IApplication {
     }
 
     @Override
-    public ITextProcessor getTextProcessing() {
+    public IAddressMatcher getTextProcessing() {
         return processor;
     }
 

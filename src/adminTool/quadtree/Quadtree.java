@@ -2,6 +2,7 @@ package adminTool.quadtree;
 
 import java.util.PrimitiveIterator.OfInt;
 
+import adminTool.quadtree.policies.IQuadtreePolicy;
 import util.IntList;
 
 public class Quadtree extends AbstractQuadtree implements IQuadtree {
@@ -34,11 +35,11 @@ public class Quadtree extends AbstractQuadtree implements IQuadtree {
             final double size, final int maxHeight, final int maxElementsPerTile) {
         final Quadtree[] children;
         if (elements.size() > maxElementsPerTile && height + 1 < maxHeight) {
-            final double halfSize = size / 2;
+            final double childSize = IQuadtree.childSize(size);
             children = new Quadtree[NUM_CHILDREN];
-            for (int i = 0; i < children.length; i++) {
-                children[i] = new Quadtree(elements, policy, x + IQuadtree.getXOffset(i) * halfSize,
-                        y + IQuadtree.getYOffset(i) * halfSize, height + 1, halfSize, maxHeight, maxElementsPerTile);
+            for (int c = 0; c < children.length; c++) {
+                children[c] = new Quadtree(elements, policy, IQuadtree.childX(x, childSize, c),
+                        IQuadtree.childY(y, childSize, c), height + 1, childSize, maxHeight, maxElementsPerTile);
             }
         } else {
             children = null;

@@ -1,4 +1,4 @@
-package adminTool.quadtree;
+package adminTool.quadtree.policies;
 
 @FunctionalInterface
 public interface IQuadtreePolicy {

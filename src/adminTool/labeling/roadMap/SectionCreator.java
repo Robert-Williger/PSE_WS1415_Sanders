@@ -1,8 +1,10 @@
 package adminTool.labeling.roadMap;
 
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import adminTool.VisvalingamWyatt;
 import adminTool.elements.PointAccess;
@@ -32,7 +34,6 @@ public class SectionCreator {
     private final double simplificationThreshold;
     private final double lengthThreshold;
 
-    private int roadIds;
     private List<LabelSection> roadSections;
     private List<LabelSection> junctionSections;
     private PointAccess points;
@@ -78,22 +79,26 @@ public class SectionCreator {
     public void createSections(final Collection<Way> ways, final PointAccess points, final Rectangle2D mapBounds) {
         long start = System.currentTimeMillis();
         this.points = points;
-        identify(ways);
-        System.out.println("planarize");
+        Collection<Way> visibleWays = ways.stream().filter(w -> drawInfo.isVisible(w.getType()))
+                .collect(Collectors.toList());
+        System.out.println(ways.size() + ", " + visibleWays.size());
+        identify(visibleWays);
+        visibleWays = null;
+        System.out.println("planarize (" + roadSections.size() + ", " + junctionSections.size() + ")");
         planarize(mapBounds);
-        System.out.println("fuse");
+        System.out.println("fuse (" + roadSections.size() + ", " + junctionSections.size() + ")");
         fuse();
-        System.out.println("simplify");
+        System.out.println("simplify (" + roadSections.size() + ", " + junctionSections.size() + ")");
         simplify();
-        System.out.println("transform");
+        System.out.println("transform (" + roadSections.size() + ", " + junctionSections.size() + ")");
         transform();
-        System.out.println("filter");
+        System.out.println("filter (" + roadSections.size() + ", " + junctionSections.size() + ")");
         filter();
-        System.out.println("resolve");
+        System.out.println("resolve (" + roadSections.size() + ", " + junctionSections.size() + ")");
         resolve(mapBounds);
-        System.out.println("subdivide");
+        System.out.println("subdivide (" + roadSections.size() + ", " + junctionSections.size() + ")");
         subdivide();
-        System.out.println("decompose");
+        System.out.println("decompose (" + roadSections.size() + ", " + junctionSections.size() + ")");
         decompose();
         double time = (System.currentTimeMillis() - start) / 1000.;
         System.out.println("label section creation time: " + time + "s");
@@ -103,8 +108,9 @@ public class SectionCreator {
         Identification identification = new Identification();
         identification.identify(ways);
         roadSections = identification.getRoads();
+        junctionSections = new ArrayList<>();
         nameInfo = identification.getNameInfo();
-        roadIds = identification.getRoadIds();
+        int roadIds = identification.getRoadIds();
 
         double[] lengths = new double[roadIds];
         for (int roadId = 0; roadId < roadIds; ++roadId)
@@ -113,9 +119,11 @@ public class SectionCreator {
     }
 
     private void planarize(final Rectangle2D mapBounds) {
+        long start = System.currentTimeMillis();
         Planarization planarization = new Planarization(stubThreshold, tCrossThreshold, fuzzyThreshold);
         planarization.planarize(roadSections, points, mapBounds);
         roadSections = planarization.getRoads();
+        System.out.println(System.currentTimeMillis() - start);
     }
 
     private void fuse() {
@@ -140,7 +148,7 @@ public class SectionCreator {
 
     private void transform() {
         // TODO own threshold
-        Transformation transformation = new Transformation(drawInfo, junctionThreshold, tCrossThreshold);
+        Transformation transformation = new Transformation(drawInfo, nameInfo, junctionThreshold, tCrossThreshold);
         transformation.transform(roadSections, points);
         roadSections = transformation.getRoadSections();
         junctionSections = transformation.getJunctionSections();
@@ -159,10 +167,12 @@ public class SectionCreator {
     }
 
     private void resolve(final Rectangle2D mapBounds) {
+        long start = System.currentTimeMillis();
         final OverlapResolve resolve = new OverlapResolve(drawInfo);
         resolve.resolve(roadSections, junctionSections, points, mapBounds);
         roadSections = resolve.getRoadSections();
         junctionSections = resolve.getJunctionSections();
+        System.out.println(System.currentTimeMillis() - start);
     }
 
     private void subdivide() {

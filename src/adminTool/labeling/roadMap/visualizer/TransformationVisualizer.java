@@ -39,8 +39,13 @@ public class TransformationVisualizer extends JFrame {
             public double getFontSize(int type) {
                 return WAY_WIDTH;
             }
+
+            @Override
+            public boolean isVisible(int type) {
+                return true;
+            }
         };
-        final Transformation transformation = new Transformation(info, THRESHOLD, 0);
+        final Transformation transformation = new Transformation(info, e -> "test", THRESHOLD, 0);
         transformation.transform(roads, points);
         final JPanel cutPaths = new WayVisualizer(points, transformation.getRoadSections());
 

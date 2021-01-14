@@ -1,7 +1,7 @@
 package controller.stateMachine;
 
 import model.IApplication;
-import model.ITextProcessor;
+import model.addressIndex.IAddressMatcher;
 import model.map.IMap;
 import model.renderEngine.IImageLoader;
 import model.routing.IRouteManager;
@@ -58,7 +58,7 @@ class AbstractState implements IState {
         return application.getRouteManager().getPointList();
     }
 
-    protected ITextProcessor getTextProcessor() {
+    protected IAddressMatcher getTextProcessor() {
         return application.getTextProcessing();
     }
 

@@ -1,58 +1,39 @@
-package adminTool;
+package adminTool.addressIndex;
 
-import java.awt.Rectangle;
-import java.awt.geom.Dimension2D;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.ZipOutputStream;
 import java.util.Set;
 
-import adminTool.elements.Boundary;
-import adminTool.elements.IPointAccess;
-import adminTool.elements.MultiElement;
+import adminTool.AbstractMapFileWriter;
+import adminTool.Sorting;
 import adminTool.elements.Street;
-import adminTool.quadtree.BoundaryQuadtreePolicy;
-import adminTool.quadtree.IQuadtree;
-import adminTool.quadtree.IQuadtreePolicy;
-import adminTool.quadtree.Quadtree;
-import adminTool.util.IntersectionUtil;
-import util.IntList;
 
 public class IndexWriter extends AbstractMapFileWriter {
-    private static final int DEFAULT_MAX_ELEMENTS_PER_TILE = 8;
-    private static final int DEFAULT_MAX_HEIGHT = 20;
-
-    private Rectangle[] bounds;
     private Sorting<Street> streets;
-    private Collection<Boundary> boundaries;
     private Map<String, Integer> cityMap;
     private int cityId;
-    private final IPointAccess points;
-
-    private final List<IQuadtree> quadtrees;
+    private final StreetLocator locator;
 
     // TODO speedup
-    public IndexWriter(final Collection<Boundary> boundaries, final Sorting<Street> streets, final IPointAccess points,
-            final Dimension2D mapSize, final ZipOutputStream zipOutput) {
+    public IndexWriter(final StreetLocator streetLocator, final Sorting<Street> streets,
+            final ZipOutputStream zipOutput) {
         super(zipOutput);
 
-        this.streets = streets;
-        this.boundaries = boundaries;
         this.cityMap = new LinkedHashMap<>();
+        cityMap.put(null, -1);
         this.cityId = -1;
-        this.points = points;
-        this.quadtrees = createQuadtrees(boundaries, points, mapSize);
+        this.locator = streetLocator;
+        this.streets = streets;
     }
 
     @Override
     public void write() throws IOException {
+
         AssociatedStreet[][][] streets = orderStreets();
 
         putNextEntry("index");
@@ -62,39 +43,13 @@ public class IndexWriter extends AbstractMapFileWriter {
 
     }
 
-    private List<IQuadtree> createQuadtrees(final Collection<Boundary> boundaries, final IPointAccess points,
-            final Dimension2D mapSize) {
-        int maxType = 0;
-        for (final Boundary boundary : boundaries) {
-            maxType = Math.max(maxType, boundary.getType());
-        }
-        final ArrayList<IQuadtree> quadtrees = new ArrayList<>(maxType + 1);
-
-        final List<List<Boundary>> sortedBoundaries = new ArrayList<>(maxType + 1);
-        for (int i = 0; i <= maxType; ++i) {
-            sortedBoundaries.add(new ArrayList<>());
-        }
-        for (final Boundary boundary : boundaries) {
-            sortedBoundaries.get(boundary.getType()).add(boundary);
-        }
-        final int size = 1 << (int) Math.ceil(log2(Math.max(mapSize.getWidth(), mapSize.getHeight())));
-        for (int i = 0; i <= maxType; ++i) {
-            final IQuadtreePolicy policy = new BoundaryQuadtreePolicy(sortedBoundaries.get(i), points);
-            final IQuadtree quadtree = new Quadtree(sortedBoundaries.size(), policy, size, DEFAULT_MAX_HEIGHT,
-                    DEFAULT_MAX_ELEMENTS_PER_TILE);
-            quadtrees.add(quadtree);
-        }
-
-        return quadtrees;
-    }
-
     // orderStreets(...)[i][j][k]:
     // i -> all streets existing in exactly i cities; i in [0, getMaxOccurance(...))
     // j -> j-th street within i cities
     // k -> street in k-th city with j-th street name; k in [0, i)
     private AssociatedStreet[][][] orderStreets() {
-        final Map<String, Set<AssociatedStreet>> streetMap = createStreetMap();
 
+        final Map<String, Set<AssociatedStreet>> streetMap = createStreetMap();
         AssociatedStreet[][][] ret = new AssociatedStreet[getMaxOccurance(streetMap)][][];
 
         int[] occurances = new int[ret.length];
@@ -136,7 +91,8 @@ public class IndexWriter extends AbstractMapFileWriter {
         for (final Street street : streets.elements) {
             final String name = street.getName();
             if (name != null) {
-                final int cityId = getCityId(street);
+                final String city = locator.getCity(street);
+                final int cityId = generateCityId(city);
 
                 Set<AssociatedStreet> streetSet = streetMap.get(name);
                 if (streetSet == null) {
@@ -149,20 +105,6 @@ public class IndexWriter extends AbstractMapFileWriter {
         }
 
         return streetMap;
-    }
-
-    private int getCityId(final Street street) {
-        for (int i = quadtrees.size() - 1; i >= 0; --i) {
-            final IQuadtree quadtree = quadtrees.get(i);
-            final int node = street.getPoint(street.size() / 2);
-
-            // if (quadtree)
-            // if (contains(boundary, bounds[boundary.getID()], points.getX(node), points.getY(node))) {
-            // return generateCityId(boundary.getName());
-            // }
-        }
-
-        return -1;
     }
 
     private int generateCityId(final String city) {
@@ -190,14 +132,11 @@ public class IndexWriter extends AbstractMapFileWriter {
     }
 
     private void writeCities() throws IOException {
+        cityMap.remove(null);
         dataOutput.writeInt(cityMap.size());
         for (final Entry<String, Integer> entry : cityMap.entrySet()) {
             dataOutput.writeUTF(entry.getKey());
         }
-    }
-
-    private final double log2(final double value) {
-        return (Math.log(value) / Math.log(2));
     }
 
     private static class AssociatedStreet implements Comparable<AssociatedStreet> {

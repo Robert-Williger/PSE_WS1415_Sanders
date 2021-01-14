@@ -1,4 +1,4 @@
-package adminTool.quadtree;
+package adminTool.quadtree.policies;
 
 import adminTool.elements.IPointAccess;
 import adminTool.util.IntersectionUtil;
